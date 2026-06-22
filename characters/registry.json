@@ -1,0 +1,38 @@
+{
+  "version": "1.0.0",
+  "registry": "procharacters-cloud-characters",
+  "active_models": {
+    "default_male": "twink-default",
+    "default_female": "female-default"
+  },
+  "entries": [
+    {
+      "id": "twink-default",
+      "name": "Twink Default",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "twink-default",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/twink-default/v1/model.json",
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["gay", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "female-default",
+      "name": "Female Default",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "female-default",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/female-default/v1/model.json",
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["straight", "bi"],
+        "uncensored": true
+      }
+    }
+  ]
+}

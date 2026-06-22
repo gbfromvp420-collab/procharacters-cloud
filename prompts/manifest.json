@@ -1,0 +1,42 @@
+{
+  "version": "1.0.0",
+  "library": "procharacters-cloud-prompts",
+  "entries": [
+    {
+      "id": "system-core",
+      "version": "1.0.0",
+      "brand": "naughty-syntax",
+      "name": "System Core Prompt",
+      "content_rating": "nsfw",
+      "path": "library/naughty-syntax/system-core/v1.0.0/prompt.md",
+      "tags": ["system", "core", "platform"],
+      "changelog": {
+        "1.0.0": "Initial v1 foundation seed — platform-wide system instructions"
+      }
+    },
+    {
+      "id": "twink-default",
+      "version": "1.0.0",
+      "brand": "naughty-syntax",
+      "name": "Twink Default Character Prompt",
+      "content_rating": "nsfw",
+      "path": "library/naughty-syntax/twink-default/v1.0.0/prompt.md",
+      "tags": ["character", "twink", "male", "latino", "default"],
+      "changelog": {
+        "1.0.0": "Initial seed — signature Naughty Syntax twink model"
+      }
+    },
+    {
+      "id": "female-default",
+      "version": "1.0.0",
+      "brand": "naughty-syntax",
+      "name": "Female Default Character Prompt",
+      "content_rating": "nsfw",
+      "path": "library/naughty-syntax/female-default/v1.0.0/prompt.md",
+      "tags": ["character", "female", "default"],
+      "changelog": {
+        "1.0.0": "Initial seed — signature Naughty Syntax female model"
+      }
+    }
+  ]
+}
