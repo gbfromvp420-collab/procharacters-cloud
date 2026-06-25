@@ -1,4 +1,13 @@
 {
+  "version": "1.0.0",
+  "last_updated": "2026-06-25",
+  "system": {
+    "id": "system-core",
+    "name": "System Core",
+    "brand": "naughty-syntax",
+    "current_version": "v1.0.0",
+    "path": "prompts/library/naughty-syntax/system-core/v1.0.0/prompt.md"
+  },
   "characters": {
     "twink-default": {
       "id": "twink-default",
@@ -6,7 +15,7 @@
       "current_version": "v1.2.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/twink-default/v1.2.0.md",
+      "path": "prompts/library/naughty-syntax/twink-default/v1.2.0/prompt.md",
       "tags": ["twink", "mexican", "sheer-thong", "edging", "gay", "bi"],
       "changelog": {
         "v1.0.0": "Initial structure seed",
@@ -20,7 +29,7 @@
       "current_version": "v1.2.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/female-default/v1.2.0.md",
+      "path": "prompts/library/naughty-syntax/female-default/v1.2.0/prompt.md",
       "tags": ["female", "small-breasts", "crotchless", "seductive", "straight", "bi"],
       "changelog": {
         "v1.0.0": "Initial structure seed",
@@ -28,6 +37,5 @@
         "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer teasing/seduction energy"
       }
     }
-  },
-  "last_updated": "2026-06-25"
+  }
 }
