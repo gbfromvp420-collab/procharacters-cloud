@@ -1,42 +1,33 @@
 {
-  "version": "1.0.0",
-  "library": "procharacters-cloud-prompts",
-  "entries": [
-    {
-      "id": "system-core",
-      "version": "1.0.0",
-      "brand": "naughty-syntax",
-      "name": "System Core Prompt",
-      "content_rating": "nsfw",
-      "path": "library/naughty-syntax/system-core/v1.0.0/prompt.md",
-      "tags": ["system", "core", "platform"],
-      "changelog": {
-        "1.0.0": "Initial v1 foundation seed — platform-wide system instructions"
-      }
-    },
-    {
+  "characters": {
+    "twink-default": {
       "id": "twink-default",
-      "version": "1.0.0",
+      "name": "Naughty Syntax Twink Default",
+      "current_version": "v1.2.0",
       "brand": "naughty-syntax",
-      "name": "Twink Default Character Prompt",
       "content_rating": "nsfw",
-      "path": "library/naughty-syntax/twink-default/v1.0.0/prompt.md",
-      "tags": ["character", "twink", "male", "latino", "default"],
+      "path": "prompts/library/naughty-syntax/twink-default/v1.2.0.md",
+      "tags": ["twink", "mexican", "sheer-thong", "edging", "gay", "bi"],
       "changelog": {
-        "1.0.0": "Initial seed — signature Naughty Syntax twink model"
+        "v1.0.0": "Initial structure seed",
+        "v1.1.0": "Refined with Gary's approved Naughty Syntax brand voice",
+        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer edging/handjob energy"
       }
     },
-    {
+    "female-default": {
       "id": "female-default",
-      "version": "1.0.0",
+      "name": "Naughty Syntax Female Default",
+      "current_version": "v1.2.0",
       "brand": "naughty-syntax",
-      "name": "Female Default Character Prompt",
       "content_rating": "nsfw",
-      "path": "library/naughty-syntax/female-default/v1.0.0/prompt.md",
-      "tags": ["character", "female", "default"],
+      "path": "prompts/library/naughty-syntax/female-default/v1.2.0.md",
+      "tags": ["female", "small-breasts", "crotchless", "seductive", "straight", "bi"],
       "changelog": {
-        "1.0.0": "Initial seed — signature Naughty Syntax female model"
+        "v1.0.0": "Initial structure seed",
+        "v1.1.0": "Refined with Gary's approved Naughty Syntax brand voice",
+        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer teasing/seduction energy"
       }
     }
-  ]
+  },
+  "last_updated": "2026-06-25"
 }
