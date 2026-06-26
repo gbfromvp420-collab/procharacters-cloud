@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-brand-bg text-brand-text antialiased;
+}
+
+* {
+  scrollbar-color: #2a2a3a #0a0a0f;
+}
+
+@keyframes typing-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+}
+
+.typing-dot {
+  @apply inline-block h-2 w-2 rounded-full bg-brand-accent;
+  animation: typing-bounce 1.2s ease-in-out infinite;
+}
+
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
+
+.animation-delay-300 {
+  animation-delay: 300ms;
+}
+
+.avatar-ring {
+  box-shadow: 0 0 0 2px #12121a, 0 0 20px rgba(225, 29, 143, 0.25);
+  transition: box-shadow 0.5s ease, background 0.5s ease;
+}

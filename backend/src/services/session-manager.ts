@@ -73,6 +73,7 @@ export class SessionManager {
       characterId: promptSnapshot.characterId,
       promptVersion: promptSnapshot.promptVersion,
       wsUrl,
+      avatarState: record.avatarState,
     };
   }
 

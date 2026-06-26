@@ -2,6 +2,7 @@ import type { FastifyRequest } from "fastify";
 import type { WebSocket } from "ws";
 import { z } from "zod";
 import type { ChatOrchestrator } from "../services/chat-orchestrator.js";
+import type { MediaWorker } from "../services/media-worker.js";
 import type { SessionManager } from "../services/session-manager.js";
 import { SessionAuthError, SessionNotFoundError } from "../services/session-manager.js";
 import type { ClientEvent, ServerEvent } from "../types/websocket.js";
@@ -24,6 +25,7 @@ function send(socket: WebSocket, event: ServerEvent): void {
 export function createWebSocketHandler(
   sessionManager: SessionManager,
   chat: ChatOrchestrator,
+  media: MediaWorker,
 ) {
   return async (socket: WebSocket, request: FastifyRequest) => {
     const { sessionId } = request.params as { sessionId: string };
@@ -49,11 +51,14 @@ export function createWebSocketHandler(
       return;
     }
 
+    const initialAvatar = media.enrich(session.characterId, session.avatarState);
+
     send(socket, {
       type: "session_ready",
       sessionId: session.id,
       characterId: session.characterId,
       characterName: session.promptSnapshot.characterName,
+      avatarState: initialAvatar,
     });
 
     socket.on("message", async (raw) => {
@@ -85,6 +90,11 @@ export function createWebSocketHandler(
 
           case "user_message": {
             const result = await chat.handleUserMessage(sessionId, parsed.content);
+            const avatarState = await media.publish(
+              sessionId,
+              session.characterId,
+              result.avatarIntent,
+            );
 
             for (const chunk of result.content.split(" ")) {
               send(socket, {
@@ -98,12 +108,12 @@ export function createWebSocketHandler(
               type: "assistant_complete",
               messageId: result.messageId,
               content: result.content,
-              avatarIntent: result.avatarIntent,
+              avatarIntent: avatarState,
             });
 
             send(socket, {
               type: "avatar_update",
-              avatarState: result.avatarIntent,
+              avatarState,
             });
             break;
           }

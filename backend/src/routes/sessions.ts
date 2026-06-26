@@ -7,8 +7,10 @@ import {
   LiveCharacterError,
   LivePromptInjector,
 } from "../lib/live/index.js";
+import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { listManifestCharacters } from "../lib/prompts/manifest.js";
+import type { MediaWorker } from "../services/media-worker.js";
 import type { SessionManager } from "../services/session-manager.js";
 
 const createSessionSchema = z.object({
@@ -20,6 +22,8 @@ const injector = new LivePromptInjector();
 
 export const createSessionRoutes = (
   sessionManager: SessionManager,
+  media: MediaWorker,
+  livekit: LiveKitService,
 ): FastifyPluginAsync => {
   return async (app) => {
     app.get("/characters", async () => {
@@ -58,12 +62,44 @@ export const createSessionRoutes = (
 
       try {
         const session = await sessionManager.createSession(body, wsBaseUrl);
-        return reply.code(201).send(session);
+        const record = sessionManager.getSession(session.sessionId);
+        const avatarState = media.enrich(record.characterId, record.avatarState);
+
+        sessionManager.updateSession(session.sessionId, { avatarState });
+
+        let livekitJoin;
+        if (livekit.isConfigured) {
+          const identity = `user-${session.sessionId.slice(0, 8)}`;
+          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
+          await media.publish(session.sessionId, record.characterId, avatarState);
+        }
+
+        return reply.code(201).send({
+          ...session,
+          avatarState,
+          livekit: livekitJoin,
+        });
       } catch (error) {
         if (error instanceof CharacterNotFoundError || error instanceof LiveCharacterError) {
           return reply.code(404).send({ error: error.message });
         }
         throw error;
+      }
+    });
+
+    app.get("/sessions/:sessionId/livekit-token", async (request, reply) => {
+      const { sessionId } = request.params as { sessionId: string };
+
+      if (!livekit.isConfigured) {
+        return reply.code(503).send({ error: "LiveKit is not configured on this server" });
+      }
+
+      try {
+        sessionManager.getSession(sessionId);
+        const identity = `user-${sessionId.slice(0, 8)}`;
+        return await livekit.buildJoinInfo(sessionId, identity);
+      } catch {
+        return reply.code(404).send({ error: "Session not found" });
       }
     });
 
@@ -81,6 +117,7 @@ export const createSessionRoutes = (
           promptVersion: session.promptVersion,
           status: session.status,
           messageCount: memory.getRecentContext().messageCount,
+          avatarState: session.avatarState,
           createdAt: session.createdAt,
           expiresAt: session.expiresAt,
         };

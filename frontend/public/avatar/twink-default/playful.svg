@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" role="img" aria-label="Playful">
+  <defs>
+    <linearGradient id="g" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#12121a"/>
+      <stop offset="50%" stop-color="#9d1470"/>
+      <stop offset="100%" stop-color="#e11d8f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="600" fill="url(#g)"/>
+  <text x="200" y="290" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="28" font-weight="600">Playful</text>
+  <text x="200" y="325" text-anchor="middle" fill="#f4c4e0" font-family="system-ui,sans-serif" font-size="14">Twink Default</text>
+</svg>

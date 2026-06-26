@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" role="img" aria-label="Idle">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="45%" stop-color="#201018"/>
+      <stop offset="100%" stop-color="#4a1a3a"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="35%" r="55%">
+      <stop offset="0%" stop-color="#f43f8b" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#f43f8b" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="400" height="600" fill="url(#g)"/>
+  <rect width="400" height="600" fill="url(#glow)"/>
+  <text x="200" y="290" text-anchor="middle" fill="#f4f4f8" font-family="system-ui,sans-serif" font-size="28" font-weight="600">Idle</text>
+  <text x="200" y="325" text-anchor="middle" fill="#9ca3af" font-family="system-ui,sans-serif" font-size="14">Female Default</text>
+</svg>

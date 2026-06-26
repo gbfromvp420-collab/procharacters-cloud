@@ -28,10 +28,12 @@ secrets/
 *.local.json
 *.local.yaml
 
-# Node / backend
+# Node
 node_modules/
 backend/dist/
 backend/.env
+frontend/.next/
+frontend/out/
 
 # Cursor / local tooling
 terminals/

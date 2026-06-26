@@ -2,9 +2,11 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
+import { LiveKitService } from "./lib/livekit/service.js";
 import { healthRoutes } from "./routes/health.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { ChatOrchestrator } from "./services/chat-orchestrator.js";
+import { MediaWorker } from "./services/media-worker.js";
 import { MemoryManager } from "./services/memory-manager.js";
 import { SessionManager } from "./services/session-manager.js";
 import { createWebSocketHandler } from "./ws/handler.js";
@@ -33,17 +35,36 @@ export async function buildApp() {
     xaiTemperature: env.XAI_TEMPERATURE,
   });
 
+  const livekit = new LiveKitService(
+    env.livekitConfigured
+      ? {
+          url: env.LIVEKIT_URL!,
+          apiKey: env.LIVEKIT_API_KEY!,
+          apiSecret: env.LIVEKIT_API_SECRET!,
+        }
+      : null,
+  );
+  const media = new MediaWorker(livekit);
+
   if (!env.XAI_API_KEY) {
     app.log.warn("XAI_API_KEY not set — chat will use stub replies until configured");
   } else {
     app.log.info({ model: env.XAI_MODEL }, "Grok/xAI chat enabled");
   }
 
+  if (livekit.isConfigured) {
+    app.log.info({ url: livekit.serverUrl }, "LiveKit room metadata sync enabled");
+  } else {
+    app.log.warn("LiveKit not configured — video uses WebSocket mediaUrl only");
+  }
+
   await app.register(healthRoutes);
-  await app.register(createSessionRoutes(sessionManager), { prefix: "/api/v1" });
+  await app.register(createSessionRoutes(sessionManager, media, livekit), {
+    prefix: "/api/v1",
+  });
 
   app.get("/ws/sessions/:sessionId", { websocket: true }, (socket, request) => {
-    void createWebSocketHandler(sessionManager, chat)(socket, request);
+    void createWebSocketHandler(sessionManager, chat, media)(socket, request);
   });
 
   return app;

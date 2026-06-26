@@ -41,6 +41,7 @@ export interface SessionReadyEvent extends ServerEventBase {
   sessionId: string;
   characterId: string;
   characterName: string;
+  avatarState: AvatarState;
 }
 
 export interface AssistantStreamEvent extends ServerEventBase {

@@ -17,6 +17,9 @@ const envSchema = z.object({
   XAI_BASE_URL: z.string().default("https://api.x.ai/v1"),
   XAI_MAX_COMPLETION_TOKENS: z.coerce.number().default(1024),
   XAI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.85),
+  LIVEKIT_URL: z.string().optional(),
+  LIVEKIT_API_KEY: z.string().optional(),
+  LIVEKIT_API_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -26,8 +29,14 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+const livekitConfigured =
+  !!parsed.data.LIVEKIT_URL &&
+  !!parsed.data.LIVEKIT_API_KEY &&
+  !!parsed.data.LIVEKIT_API_SECRET;
+
 export const env = {
   ...parsed.data,
   repoRoot: parsed.data.REPO_ROOT ?? resolveRepoRoot(),
   isDev: parsed.data.NODE_ENV === "development",
+  livekitConfigured,
 };

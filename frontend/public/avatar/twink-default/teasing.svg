@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" role="img" aria-label="Teasing">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0a0a0f"/>
+      <stop offset="50%" stop-color="#7a1a5c"/>
+      <stop offset="100%" stop-color="#e11d8f"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="600" fill="url(#g)"/>
+  <ellipse cx="200" cy="220" rx="120" ry="160" fill="#e11d8f" opacity="0.12"/>
+  <text x="200" y="290" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="28" font-weight="600">Teasing</text>
+  <text x="200" y="325" text-anchor="middle" fill="#f4c4e0" font-family="system-ui,sans-serif" font-size="14">Twink Default</text>
+</svg>

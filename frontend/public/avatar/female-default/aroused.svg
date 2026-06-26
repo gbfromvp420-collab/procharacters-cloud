@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600" role="img" aria-label="Aroused">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a0818"/>
+      <stop offset="60%" stop-color="#be185d"/>
+      <stop offset="100%" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="600" fill="url(#g)"/>
+  <circle cx="200" cy="250" r="90" fill="#fb7185" opacity="0.2"/>
+  <text x="200" y="290" text-anchor="middle" fill="#fff" font-family="system-ui,sans-serif" font-size="28" font-weight="600">Aroused</text>
+  <text x="200" y="325" text-anchor="middle" fill="#ffe4e6" font-family="system-ui,sans-serif" font-size="14">Female Default</text>
+</svg>

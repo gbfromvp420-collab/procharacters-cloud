@@ -31,10 +31,18 @@ export interface CreateSessionInput {
   promptVersion?: string;
 }
 
+export interface LiveKitJoinInfo {
+  url: string;
+  token: string;
+  roomName: string;
+}
+
 export interface CreateSessionResult {
   sessionId: string;
   wsToken: string;
   characterId: string;
   promptVersion: string;
   wsUrl: string;
+  livekit?: LiveKitJoinInfo;
+  avatarState: AvatarState;
 }
