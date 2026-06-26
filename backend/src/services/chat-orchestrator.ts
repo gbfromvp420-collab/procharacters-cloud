@@ -23,33 +23,18 @@ export interface ChatTurnResult {
 
 export interface ChatOrchestratorConfig {
   maxMessageWindow: number;
-  xaiApiKey?: string;
-  xaiModel: string;
-  xaiBaseUrl?: string;
-  xaiMaxCompletionTokens?: number;
-  xaiTemperature?: number;
 }
 
 const injector = new LivePromptInjector();
 
 export class ChatOrchestrator {
-  private readonly xai: XaiChatClient | null;
+  private readonly xai: XaiChatClient | null = null;
 
   constructor(
     private readonly sessions: SessionManager,
     private readonly avatarMemory: MemoryManager,
     private readonly config: ChatOrchestratorConfig,
-  ) {
-    this.xai = config.xaiApiKey
-      ? new XaiChatClient({
-          apiKey: config.xaiApiKey,
-          model: config.xaiModel,
-          baseUrl: config.xaiBaseUrl,
-          maxCompletionTokens: config.xaiMaxCompletionTokens,
-          temperature: config.xaiTemperature,
-        })
-      : null;
-  }
+  ) {}
 
   get llmConfigured(): boolean {
     return this.xai !== null;
@@ -176,7 +161,7 @@ export class ChatOrchestrator {
       console.error(`[grok] ${error.status} ${error.code ?? ""} ${error.message}`);
 
       if (error.status === 401 || error.status === 403) {
-        return "*[System: API key issue — check XAI_API_KEY in backend .env]*";
+        return "*[System: API key issue — check LLM credentials in secret store]*";
       }
       if (error.status === 429) {
         return "*Mmm, give me just a second… things got a little busy. Try again.*";
@@ -193,7 +178,7 @@ export class ChatOrchestrator {
   private buildStubReply(characterId: string, userContent: string, promptHash: string): string {
     const pronoun = characterId === "female-default" ? "she" : "he";
     return [
-      `*[${characterId} v1.2.0 — set XAI_API_KEY in .env]*`,
+      `*[${characterId} v1.2.0 — LLM not configured]*`,
       `Mmm, I hear you... "${userContent.slice(0, 80)}".`,
       `Stay with me — ${pronoun}'s keeping that slow, teasing energy going just for you.`,
       `(prompt hash: ${promptHash})`,

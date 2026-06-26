@@ -110,14 +110,6 @@ npm run test:memory -- --character female-default
 
 The script creates a session, sends 3 test messages over WebSocket, and prints memory state after each turn.
 
-### Grok / xAI live chat
-
-1. Copy `.env.example` → `.env` and set `XAI_API_KEY` from [console.x.ai](https://console.x.ai/)
-2. Keep `backend/.env` local only and use your host's secret manager for deployed environments.
-3. If `XAI_API_KEY` is ever exposed outside those secret stores, revoke it and rotate to a new key before restarting services.
-4. Restart `npm run dev` — log should show `Grok/xAI chat enabled`
-5. Run `npm run test:memory` — replies should be real in-character text (not stubs)
-
 ## v1 integration
 
 - Prompts indexed in `prompts/manifest.json` (system + characters)

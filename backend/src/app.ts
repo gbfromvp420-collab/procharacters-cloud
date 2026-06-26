@@ -29,11 +29,6 @@ export async function buildApp() {
   );
   const chat = new ChatOrchestrator(sessionManager, avatarMemory, {
     maxMessageWindow: env.MAX_MESSAGE_WINDOW,
-    xaiApiKey: env.XAI_API_KEY,
-    xaiModel: env.XAI_MODEL,
-    xaiBaseUrl: env.XAI_BASE_URL,
-    xaiMaxCompletionTokens: env.XAI_MAX_COMPLETION_TOKENS,
-    xaiTemperature: env.XAI_TEMPERATURE,
   });
 
   const livekit = new LiveKitService(
@@ -46,12 +41,6 @@ export async function buildApp() {
       : null,
   );
   const media = new MediaWorker(livekit);
-
-  if (!env.XAI_API_KEY) {
-    app.log.warn("XAI_API_KEY not set — chat will use stub replies until configured");
-  } else {
-    app.log.info({ model: env.XAI_MODEL }, "Grok/xAI chat enabled");
-  }
 
   if (livekit.isConfigured) {
     app.log.info({ url: livekit.serverUrl }, "LiveKit room metadata sync enabled");

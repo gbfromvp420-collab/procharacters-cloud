@@ -51,7 +51,6 @@ Start from [`backend/.env.example`](backend/.env.example).
 
 Important variables:
 
-- `XAI_API_KEY` — required for real model responses
 - `PUBLIC_API_URL` — required in deployed environments so session responses use the public HTTPS/WSS host
 - `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` — optional LiveKit room sync
 

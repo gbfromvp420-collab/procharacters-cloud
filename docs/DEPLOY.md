@@ -6,7 +6,6 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 
 - GitHub repo pushed (includes `prompts/`, `characters/`, avatar MP4s)
 - Secrets ready:
-  - `XAI_API_KEY` (required for real chat)
   - `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (optional)
 - Keep those values only in your deployment provider's secret dashboard or a local untracked `.env`.
 - If any secret is exposed in chat, screenshots, logs, or a tracked file, revoke it and rotate it before the next deploy.
@@ -30,8 +29,6 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 | `REPO_ROOT` | `/app` |
 | `HOST` | `0.0.0.0` |
 | `PUBLIC_API_URL` | `https://<your-backend>.up.railway.app` |
-| `XAI_API_KEY` | your xAI key (set it in Railway Variables only; do not commit it) |
-| `XAI_MODEL` | `grok-3` |
 | `LIVEKIT_URL` | `wss://....livekit.cloud` (optional) |
 | `LIVEKIT_API_KEY` | (optional) |
 | `LIVEKIT_API_SECRET` | (optional) |
@@ -67,7 +64,7 @@ Open the frontend URL → Start Session → chat. WebSocket should use `wss://` 
 2. Set sync=false secrets in Render dashboard only:
    - `PUBLIC_API_URL` = `https://procharacters-api.onrender.com` (your API URL)
    - `NEXT_PUBLIC_API_URL` = same API URL
-   - `XAI_API_KEY`, LiveKit vars
+   - LiveKit vars
 3. Deploy both services
 
 ---
@@ -104,4 +101,4 @@ Uses `backend/.env` for secrets.
 | Chat works locally, not deployed | Check `NEXT_PUBLIC_API_URL` matches backend HTTPS URL |
 | WebSocket fails | Confirm `PUBLIC_API_URL` on backend; browser must use `wss://` |
 | Character/prompt errors | Ensure Docker image includes `prompts/` + `characters/` (`REPO_ROOT=/app`) |
-| Stub replies only | Set `XAI_API_KEY` on backend service |
+| Stub replies only | LLM not configured — wire up a chat client in `chat-orchestrator.ts` |
