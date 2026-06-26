@@ -8,6 +8,8 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 - Secrets ready:
   - `XAI_API_KEY` (required for real chat)
   - `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (optional)
+- Keep those values only in your deployment provider's secret dashboard or a local untracked `.env`.
+- If any secret is exposed in chat, screenshots, logs, or a tracked file, revoke it and rotate it before the next deploy.
 - Avatar footage in `frontend/public/avatar/` (committed or built into image)
 
 ## Option A — Railway (recommended)
@@ -28,7 +30,7 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 | `REPO_ROOT` | `/app` |
 | `HOST` | `0.0.0.0` |
 | `PUBLIC_API_URL` | `https://<your-backend>.up.railway.app` |
-| `XAI_API_KEY` | your xAI key |
+| `XAI_API_KEY` | your xAI key (set it in Railway Variables only; do not commit it) |
 | `XAI_MODEL` | `grok-3` |
 | `LIVEKIT_URL` | `wss://....livekit.cloud` (optional) |
 | `LIVEKIT_API_KEY` | (optional) |
@@ -62,7 +64,7 @@ Open the frontend URL → Start Session → chat. WebSocket should use `wss://` 
 ## Option B — Render
 
 1. **New → Blueprint** → connect repo → uses `render.yaml`
-2. Set sync=false secrets in Render dashboard:
+2. Set sync=false secrets in Render dashboard only:
    - `PUBLIC_API_URL` = `https://procharacters-api.onrender.com` (your API URL)
    - `NEXT_PUBLIC_API_URL` = same API URL
    - `XAI_API_KEY`, LiveKit vars
