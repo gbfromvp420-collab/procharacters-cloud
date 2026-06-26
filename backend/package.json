@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test:memory": "tsx scripts/smoke-test-memory.ts"
+    "test:memory": "tsx scripts/smoke-test-memory.ts",
+    "test:livekit": "tsx scripts/verify-livekit.ts",
+    "generate:avatar-loops": "tsx scripts/generate-avatar-loops.ts"
   },
   "engines": {
     "node": ">=20"
@@ -27,6 +29,7 @@
     "@types/node": "^22.15.30",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
+    "ffmpeg-static": "^5.3.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "ws": "^8.18.2"

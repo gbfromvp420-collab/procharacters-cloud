@@ -29,12 +29,12 @@ function pickClipName(state: AvatarState): string {
 
 /**
  * Maps avatar intent to a client-served clip path.
- * v2.0 uses pre-made loops/stills in frontend/public/avatar/{character}/{clip}.svg
- * Replace with .mp4 loops when production assets are ready.
+ * Loops live in frontend/public/avatar/{character}/{clip}.mp4
+ * (run `npm run generate:avatar-loops` to regenerate placeholders).
  */
 export function resolveClipPath(characterId: string, state: AvatarState): string {
   const clip = pickClipName(state);
-  return `/avatar/${characterId}/${clip}.svg`;
+  return `/avatar/${characterId}/${clip}.mp4`;
 }
 
 export function enrichAvatarWithMedia(characterId: string, state: AvatarState): AvatarState {

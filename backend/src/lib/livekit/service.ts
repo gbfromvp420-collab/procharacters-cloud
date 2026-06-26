@@ -18,13 +18,36 @@ export interface LiveKitRoomMetadata {
   updatedAt: number;
 }
 
+/** RoomServiceClient expects https:// — clients connect via wss:// */
+export function normalizeLiveKitApiHost(url: string): string {
+  return url
+    .trim()
+    .replace(/^wss:\/\//i, "https://")
+    .replace(/^ws:\/\//i, "http://")
+    .replace(/\/$/, "");
+}
+
+export function normalizeLiveKitClientUrl(url: string): string {
+  return url
+    .trim()
+    .replace(/^https:\/\//i, "wss://")
+    .replace(/^http:\/\//i, "ws://")
+    .replace(/\/$/, "");
+}
+
 export class LiveKitService {
   private readonly client: RoomServiceClient | null;
+  private readonly clientUrl: string | null;
 
   constructor(private readonly config: LiveKitConfig | null) {
-    this.client = config
-      ? new RoomServiceClient(config.url, config.apiKey, config.apiSecret)
-      : null;
+    if (config) {
+      const apiHost = normalizeLiveKitApiHost(config.url);
+      this.client = new RoomServiceClient(apiHost, config.apiKey, config.apiSecret);
+      this.clientUrl = normalizeLiveKitClientUrl(config.url);
+    } else {
+      this.client = null;
+      this.clientUrl = null;
+    }
   }
 
   get isConfigured(): boolean {
@@ -32,7 +55,7 @@ export class LiveKitService {
   }
 
   get serverUrl(): string | null {
-    return this.config?.url ?? null;
+    return this.clientUrl;
   }
 
   async createJoinToken(roomName: string, identity: string): Promise<string> {
@@ -57,15 +80,31 @@ export class LiveKitService {
   }
 
   async buildJoinInfo(roomName: string, identity: string): Promise<LiveKitJoinInfo> {
-    if (!this.config) {
+    if (!this.config || !this.clientUrl) {
       throw new Error("LiveKit is not configured");
     }
 
+    await this.ensureRoom(roomName);
+
     return {
-      url: this.config.url,
+      url: this.clientUrl,
       token: await this.createJoinToken(roomName, identity),
       roomName,
     };
+  }
+
+  async ensureRoom(roomName: string): Promise<void> {
+    if (!this.client) return;
+
+    try {
+      await this.client.createRoom({
+        name: roomName,
+        emptyTimeout: 600,
+        maxParticipants: 20,
+      });
+    } catch {
+      // Room already exists — fine
+    }
   }
 
   async syncAvatarState(roomName: string, avatar: AvatarState): Promise<void> {
@@ -77,10 +116,32 @@ export class LiveKitService {
     };
 
     try {
+      await this.ensureRoom(roomName);
       await this.client.updateRoomMetadata(roomName, JSON.stringify(metadata));
     } catch (error) {
-      // Room may not exist until the first participant joins — non-fatal for MVP
-      console.warn(`[livekit] metadata sync skipped for room ${roomName}:`, error);
+      console.warn(`[livekit] metadata sync failed for room ${roomName}:`, error);
+    }
+  }
+
+  /** Smoke-test API credentials (creates + deletes a throwaway room). */
+  async verifyConnection(): Promise<{ ok: true; room: string } | { ok: false; error: string }> {
+    if (!this.client) {
+      return { ok: false, error: "LiveKit is not configured" };
+    }
+
+    const testRoom = `lk-verify-${Date.now()}`;
+
+    try {
+      await this.client.createRoom({ name: testRoom, emptyTimeout: 60 });
+      await this.client.updateRoomMetadata(
+        testRoom,
+        JSON.stringify({ avatar: { emotion: "idle" }, updatedAt: Date.now() }),
+      );
+      await this.client.deleteRoom(testRoom);
+      return { ok: true, room: testRoom };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ok: false, error: message };
     }
   }
 }

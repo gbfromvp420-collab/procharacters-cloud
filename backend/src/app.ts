@@ -3,7 +3,7 @@ import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
 import { LiveKitService } from "./lib/livekit/service.js";
-import { healthRoutes } from "./routes/health.js";
+import { createHealthRoutes } from "./routes/health.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { ChatOrchestrator } from "./services/chat-orchestrator.js";
 import { MediaWorker } from "./services/media-worker.js";
@@ -58,7 +58,7 @@ export async function buildApp() {
     app.log.warn("LiveKit not configured — video uses WebSocket mediaUrl only");
   }
 
-  await app.register(healthRoutes);
+  await app.register(createHealthRoutes(livekit));
   await app.register(createSessionRoutes(sessionManager, media, livekit), {
     prefix: "/api/v1",
   });
