@@ -1,12 +1,82 @@
-# Procharacters.cloud — v1 Foundation
+# Procharacters.cloud
 
 **KGC Ventures / Naughty Syntax**
 
-Live uncensored NSFW AI video chat platform. This repo is **Version 1: Foundation only** — stable structure for prompts, characters, and agent workflows. No streaming, accounts, or public UI yet.
+Procharacters.cloud is a live character-chat stack with:
 
-## Quick start
+- a **Fastify backend** for session creation, WebSocket chat, prompt injection, and optional LiveKit sync
+- a **Next.js frontend** for the chat UI and avatar playback
+- a shared **prompt library** and **character registry** used by both services
 
-**PowerShell (Windows — no install needed):**
+## Repository layout
+
+| Path | Purpose |
+|------|---------|
+| `backend/` | Fastify API, WebSocket session server, xAI integration |
+| `frontend/` | Next.js web client |
+| `prompts/` | Versioned prompt library |
+| `characters/` | Character registry and model metadata |
+| `docs/` | Deployment and project planning docs |
+| `scripts/` | Prompt and character inspection utilities |
+
+## Local development
+
+### 1. Backend
+
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Default backend URL: `http://localhost:3001`
+
+### 2. Frontend
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Default frontend URL: `http://localhost:3000`
+
+## Environment files
+
+### `backend/.env`
+
+Start from [`backend/.env.example`](backend/.env.example).
+
+Important variables:
+
+- `XAI_API_KEY` — required for real model responses
+- `PUBLIC_API_URL` — required in deployed environments so session responses use the public HTTPS/WSS host
+- `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` — optional LiveKit room sync
+
+### `frontend/.env.local`
+
+Start from [`frontend/.env.example`](frontend/.env.example).
+
+Important variables:
+
+- `NEXT_PUBLIC_API_URL` — backend base URL used by the browser client
+
+## Validation
+
+- Backend: `npm run typecheck` and `npm run build`
+- Frontend: `npm run build`
+
+## Useful docs
+
+- Backend details: [`backend/README.md`](backend/README.md)
+- Deployment guide: [`docs/DEPLOY.md`](docs/DEPLOY.md)
+- Gary notes: [`docs/README-for-Gary.md`](docs/README-for-Gary.md)
+
+## Prompt and character utilities
+
+**PowerShell**
 
 ```powershell
 .\scripts\prompt_list.ps1
@@ -14,7 +84,7 @@ Live uncensored NSFW AI video chat platform. This repo is **Version 1: Foundatio
 .\scripts\character_list.ps1
 ```
 
-**Python (if installed):**
+**Python**
 
 ```bash
 python scripts/prompt_list.py
@@ -22,41 +92,12 @@ python scripts/prompt_get.py --id twink-default
 python scripts/character_list.py
 ```
 
-## Project structure
-
-| Path | Purpose |
-|------|---------|
-| `.grok/skills/kgc-delegate/` | KGC Grok Delegate persona for agents |
-| `docs/` | Gary-friendly guides and v1 scope |
-| `prompts/` | Versioned prompt library |
-| `characters/` | Character model registry |
-| `scripts/` | CLI retrieval tools |
-
-## For Gary
-
-Start here: [`docs/README-for-Gary.md`](docs/README-for-Gary.md)
-
-## v1 scope
-
-**In:** Project structure, delegate persona, prompt library, character management, documentation.
-
-**Out:** Streaming, accounts, payments, real-time assistants, complex UI, public features.
-
-Full details: [`docs/v1-scope.md`](docs/v1-scope.md)
-
-## Default characters (Naughty Syntax)
+## Default characters
 
 | Slot | Character | Status |
 |------|-----------|--------|
 | `default_male` | Twink Default | active |
 | `default_female` | Female Default | active |
-
-## Agent workflow
-
-1. Load `/kgc-delegate` skill at session start
-2. Check `docs/v1-scope.md` before building
-3. Use prompt/character scripts for retrieval
-4. End with 1–3 proactive next-step suggestions
 
 ## License
 
