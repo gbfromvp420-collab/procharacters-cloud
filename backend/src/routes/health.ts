@@ -3,6 +3,12 @@ import type { LiveKitService } from "../lib/livekit/service.js";
 
 export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync => {
   return async (app) => {
+    app.get("/", async () => ({
+      service: "procharacters-backend",
+      status: "ok",
+      health: "/health",
+    }));
+
     app.get("/health", async () => ({
       status: "ok",
       service: "procharacters-backend",

@@ -21,7 +21,12 @@ const envSchema = z.object({
   LIVEKIT_API_KEY: z.string().optional(),
   LIVEKIT_API_SECRET: z.string().optional(),
   /** Public API base URL for WebSocket links (e.g. https://api.procharacters.cloud) */
-  PUBLIC_API_URL: z.string().url().optional(),
+  PUBLIC_API_URL: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^https?:\/\//.test(v), {
+      message: "PUBLIC_API_URL must start with http:// or https://",
+    }),
 });
 
 const parsed = envSchema.safeParse(process.env);
