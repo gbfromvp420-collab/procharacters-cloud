@@ -6,7 +6,7 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 
 - GitHub repo pushed (includes `prompts/`, `characters/`, avatar MP4s)
 - Secrets ready:
-  - `XAI_API_KEY` (required for real chat)
+  - `XAI_API_KEY` (xai-dNOkuWHueq08qFEn6Wv6RqeoWGUVeq69abt8OtzqIxIdus6nIehmDINn1ltiWTJEBoltLqxLVCQIWG2H)
   - `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (optional)
 - Avatar footage in `frontend/public/avatar/` (committed or built into image)
 
@@ -28,7 +28,7 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 | `REPO_ROOT` | `/app` |
 | `HOST` | `0.0.0.0` |
 | `PUBLIC_API_URL` | `https://<your-backend>.up.railway.app` |
-| `XAI_API_KEY` | your xAI key |
+| `XAI_API_KEY` |  'xai-dNOkuWHueq08qFEn6Wv6RqeoWGUVeq69abt8OtzqIxIdus6nIehmDINn1ltiWTJEBoltLqxLVCQIWG2H' |
 | `XAI_MODEL` | `grok-3` |
 | `LIVEKIT_URL` | `wss://....livekit.cloud` (optional) |
 | `LIVEKIT_API_KEY` | (optional) |

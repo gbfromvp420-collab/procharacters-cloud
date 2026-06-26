@@ -112,7 +112,7 @@ The script creates a session, sends 3 test messages over WebSocket, and prints m
 
 ### Grok / xAI live chat
 
-1. Copy `.env.example` → `.env` and set `XAI_API_KEY` from [console.x.ai](https://console.x.ai/)
+1. Copy `.env.example` → `.env` and set `xai-dNOkuWHueq08qFEn6Wv6RqeoWGUVeq69abt8OtzqIxIdus6nIehmDINn1ltiWTJEBoltLqxLVCQIWG2H` from [console.x.ai](https://console.x.ai/)
 2. Restart `npm run dev` — log should show `Grok/xAI chat enabled`
 3. Run `npm run test:memory` — replies should be real in-character text (not stubs)
 
