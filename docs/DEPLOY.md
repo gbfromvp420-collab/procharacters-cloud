@@ -14,8 +14,12 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 
 ### 1. Backend service
 
-1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub** → this repo
-2. **Add Service** → use **Dockerfile** path: `backend/Dockerfile`, root context `.`
+1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub** → repo **`procharacters-cloud`**
+2. **Confirm the connected repo** — logs must show `node dist/index.js`, **not** Python/uvicorn/FastAPI
+3. **Settings → Build**:
+   - Builder: **Dockerfile** (not Nixpacks)
+   - Dockerfile path: `backend/Dockerfile`
+   - Root directory: `/` (repo root)
 3. **Variables**:
 
 | Variable | Value |
@@ -94,6 +98,7 @@ Uses `backend/.env` for secrets.
 
 | Symptom | Fix |
 |---------|-----|
+| `python-multipart` / `uvicorn` / FastAPI crash | **Wrong repo or builder** — service is not running `procharacters-cloud` Node backend. Reconnect GitHub repo, force **Dockerfile** `backend/Dockerfile` |
 | Chat works locally, not deployed | Check `NEXT_PUBLIC_API_URL` matches backend HTTPS URL |
 | WebSocket fails | Confirm `PUBLIC_API_URL` on backend; browser must use `wss://` |
 | Character/prompt errors | Ensure Docker image includes `prompts/` + `characters/` (`REPO_ROOT=/app`) |
