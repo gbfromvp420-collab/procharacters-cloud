@@ -14,6 +14,7 @@ import { createWebSocketHandler } from "./ws/handler.js";
 export async function buildApp() {
   const app = Fastify({
     logger: env.isDev,
+    trustProxy: true,
   });
 
   await app.register(cors, { origin: true });

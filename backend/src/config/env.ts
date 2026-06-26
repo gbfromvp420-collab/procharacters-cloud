@@ -20,6 +20,8 @@ const envSchema = z.object({
   LIVEKIT_URL: z.string().optional(),
   LIVEKIT_API_KEY: z.string().optional(),
   LIVEKIT_API_SECRET: z.string().optional(),
+  /** Public API base URL for WebSocket links (e.g. https://api.procharacters.cloud) */
+  PUBLIC_API_URL: z.string().url().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

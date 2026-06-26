@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
+import { env } from "../config/env.js";
 import { listActiveCharacters } from "../lib/characters/registry.js";
 import { CharacterNotFoundError } from "../lib/characters/loader.js";
 import {
@@ -19,6 +20,25 @@ const createSessionSchema = z.object({
 });
 
 const injector = new LivePromptInjector();
+
+function resolveWsBaseUrl(
+  requestHost: string | undefined,
+  forwardedProto: string | string[] | undefined,
+): string {
+  if (env.PUBLIC_API_URL) {
+    const publicUrl = new URL(env.PUBLIC_API_URL);
+    const wsProtocol = publicUrl.protocol === "https:" ? "wss" : "ws";
+    return `${wsProtocol}://${publicUrl.host}`;
+  }
+
+  const protocol =
+    typeof forwardedProto === "string"
+      ? forwardedProto.split(",")[0]?.trim()
+      : "http";
+  const host = requestHost ?? "localhost:3001";
+  const wsProtocol = protocol === "https" ? "wss" : "ws";
+  return `${wsProtocol}://${host}`;
+}
 
 export const createSessionRoutes = (
   sessionManager: SessionManager,
@@ -55,10 +75,7 @@ export const createSessionRoutes = (
 
     app.post("/sessions", async (request, reply) => {
       const body = createSessionSchema.parse(request.body ?? {});
-      const protocol = request.headers["x-forwarded-proto"] ?? "http";
-      const host = request.headers.host ?? "localhost:3001";
-      const wsProtocol = protocol === "https" ? "wss" : "ws";
-      const wsBaseUrl = `${wsProtocol}://${host}`;
+      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
 
       try {
         const session = await sessionManager.createSession(body, wsBaseUrl);
