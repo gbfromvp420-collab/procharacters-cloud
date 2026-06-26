@@ -6,7 +6,7 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 
 - GitHub repo pushed (includes `prompts/`, `characters/`, avatar MP4s)
 - Secrets ready:
-  - `XAI_API_KEY` (xai-dNOkuWHueq08qFEn6Wv6RqeoWGUVeq69abt8OtzqIxIdus6nIehmDINn1ltiWTJEBoltLqxLVCQIWG2H)
+  - `XAI_API_KEY` (from https://console.x.ai/)
   - `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` (optional)
 - Avatar footage in `frontend/public/avatar/` (committed or built into image)
 
@@ -28,7 +28,7 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 | `REPO_ROOT` | `/app` |
 | `HOST` | `0.0.0.0` |
 | `PUBLIC_API_URL` | `https://<your-backend>.up.railway.app` |
-| `XAI_API_KEY` |  'xai-dNOkuWHueq08qFEn6Wv6RqeoWGUVeq69abt8OtzqIxIdus6nIehmDINn1ltiWTJEBoltLqxLVCQIWG2H' |
+| `XAI_API_KEY` | `<your_xai_api_key>` |
 | `XAI_MODEL` | `grok-3` |
 | `LIVEKIT_URL` | `wss://....livekit.cloud` (optional) |
 | `LIVEKIT_API_KEY` | (optional) |
@@ -65,7 +65,7 @@ Open the frontend URL → Start Session → chat. WebSocket should use `wss://` 
 2. Set sync=false secrets in Render dashboard:
    - `PUBLIC_API_URL` = `https://procharacters-api.onrender.com` (your API URL)
    - `NEXT_PUBLIC_API_URL` = same API URL
-   - `XAI_API_KEY`, LiveKit vars
+  - `XAI_API_KEY`, LiveKit vars
 3. Deploy both services
 
 ---
