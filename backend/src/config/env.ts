@@ -27,6 +27,16 @@ const envSchema = z.object({
     .refine((v) => !v || /^https?:\/\//.test(v), {
       message: "PUBLIC_API_URL must start with http:// or https://",
     }),
+
+  /* ── Media generation provider ─────────────────────── */
+  MEDIA_PROVIDER: z.enum(["placeholder", "runwayml", "internal", "flux", "sdxl"]).default("placeholder"),
+  MEDIA_API_KEY: z.string().optional(),
+  MEDIA_BASE_URL: z.string().optional(),
+  MEDIA_MODEL_ID: z.string().optional(),
+  MEDIA_CONCURRENCY: z.coerce.number().default(2),
+  MEDIA_WIDTH: z.coerce.number().default(512),
+  MEDIA_HEIGHT: z.coerce.number().default(768),
+  MEDIA_VIDEO_DURATION: z.coerce.number().default(6),
 });
 
 const parsed = envSchema.safeParse(process.env);
