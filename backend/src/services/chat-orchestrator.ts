@@ -23,18 +23,33 @@ export interface ChatTurnResult {
 
 export interface ChatOrchestratorConfig {
   maxMessageWindow: number;
+  xaiApiKey?: string;
+  xaiModel: string;
+  xaiBaseUrl?: string;
+  xaiMaxCompletionTokens?: number;
+  xaiTemperature?: number;
 }
 
 const injector = new LivePromptInjector();
 
 export class ChatOrchestrator {
-  private readonly xai: XaiChatClient | null = null;
+  private readonly xai: XaiChatClient | null;
 
   constructor(
     private readonly sessions: SessionManager,
     private readonly avatarMemory: MemoryManager,
     private readonly config: ChatOrchestratorConfig,
-  ) {}
+  ) {
+    this.xai = config.xaiApiKey
+      ? new XaiChatClient({
+          apiKey: config.xaiApiKey,
+          model: config.xaiModel,
+          baseUrl: config.xaiBaseUrl,
+          maxCompletionTokens: config.xaiMaxCompletionTokens,
+          temperature: config.xaiTemperature,
+        })
+      : null;
+  }
 
   get llmConfigured(): boolean {
     return this.xai !== null;
