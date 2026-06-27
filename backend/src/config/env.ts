@@ -29,7 +29,7 @@ const envSchema = z.object({
     }),
 
   /* ── Media generation provider ─────────────────────── */
-  MEDIA_PROVIDER: z.enum(["placeholder", "runwayml", "internal", "flux", "sdxl"]).default("placeholder"),
+  MEDIA_PROVIDER: z.enum(["placeholder", "generic", "internal", "flux", "sdxl"]).default("placeholder"),
   MEDIA_API_KEY: z.string().optional(),
   MEDIA_BASE_URL: z.string().optional(),
   MEDIA_MODEL_ID: z.string().optional(),
@@ -37,6 +37,25 @@ const envSchema = z.object({
   MEDIA_WIDTH: z.coerce.number().default(512),
   MEDIA_HEIGHT: z.coerce.number().default(768),
   MEDIA_VIDEO_DURATION: z.coerce.number().default(6),
+  MEDIA_SAMPLER: z.string().optional(),
+  MEDIA_STEPS: z.coerce.number().optional(),
+  MEDIA_CFG_SCALE: z.coerce.number().optional(),
+
+  /* ── ElevenLabs voice generation ─────────────────────── */
+  ELEVENLABS_API_KEY: z.string().optional(),
+  ELEVENLABS_BASE_URL: z.string().default("https://api.elevenlabs.io/v1"),
+  /** Default voice ID for character speech (can be overridden per character). */
+  ELEVENLABS_DEFAULT_VOICE_ID: z.string().optional(),
+  /** Model ID: eleven_multilingual_v2, eleven_turbo_v2, etc. */
+  ELEVENLABS_MODEL_ID: z.string().default("eleven_multilingual_v2"),
+  /** Stability (0-1): lower = more expressive, higher = more consistent. */
+  ELEVENLABS_STABILITY: z.coerce.number().min(0).max(1).default(0.5),
+  /** Similarity boost (0-1): how closely to match the original voice. */
+  ELEVENLABS_SIMILARITY_BOOST: z.coerce.number().min(0).max(1).default(0.75),
+  /** Style (0-1): amplifies style of original speaker. */
+  ELEVENLABS_STYLE: z.coerce.number().min(0).max(1).default(0.4),
+  /** Output format: mp3_44100_128, pcm_16000, etc. */
+  ELEVENLABS_OUTPUT_FORMAT: z.string().default("mp3_44100_128"),
 });
 
 const parsed = envSchema.safeParse(process.env);

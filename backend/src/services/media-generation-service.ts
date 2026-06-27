@@ -2,8 +2,11 @@
  * Media generation service — orchestrates image/video generation
  * using a pluggable provider architecture.
  *
- * Supports hot-swapping between RunwayML, Flux, SDXL, or our
- * private NSFW AI generation model family.
+ * Supports hot-swapping between any self-hosted NSFW endpoint
+ * (ComfyUI, Automatic1111, Fooocus, custom API), Flux, SDXL,
+ * or our private NSFW model family.
+ *
+ * NOTE: RunwayML was removed — it does not allow NSFW content.
  */
 
 import { v4 as uuid } from "uuid";
@@ -51,42 +54,52 @@ class PlaceholderProvider implements IMediaGenerationProvider {
   }
 }
 
-/* ── RunwayML-compatible provider ───────────────────────── */
+/* ── Generic self-hosted NSFW provider ──────────────────── */
+
+/**
+ * Works with any self-hosted NSFW-capable image/video generation API:
+ * - ComfyUI (with API mode)
+ * - Automatic1111 / Forge WebUI API
+ * - Fooocus API
+ * - Any custom endpoint that accepts POST with prompt + params
+ *
+ * Expected API contract:
+ *   POST {baseUrl}/generate/image → { url, seed? }
+ *   POST {baseUrl}/generate/video → { url, thumbnail_url? }
+ *   GET  {baseUrl}/health         → 200 OK
+ *
+ * Set MEDIA_BASE_URL to your endpoint. API key is optional
+ * (depends on your deployment's auth setup).
+ */
 
 /** Build an authorization header value from an API key. */
 function bearerAuth(apiKey: string): string {
   return "Bearer " + apiKey;
 }
 
-class RunwayMLProvider implements IMediaGenerationProvider {
-  readonly name: MediaProvider = "runwayml";
+class GenericNSFWProvider implements IMediaGenerationProvider {
+  readonly name: MediaProvider = "generic";
 
   constructor(private config: MediaProviderConfig) {}
 
   async generateImage(request: MediaGenerationRequest): Promise<GenerateImageResult> {
-    if (!this.config.apiKey) throw new MediaGenerationError("RunwayML API key not configured");
+    if (!this.config.baseUrl) throw new MediaGenerationError("Generic NSFW provider base URL not configured (set MEDIA_BASE_URL)");
 
-    const fullPrompt = this.buildPrompt(request);
+    const payload = this.buildPayload(request, "image");
 
     try {
-      const response = await fetch(`${this.config.baseUrl ?? "https://api.runwayml.com/v1"}/image/generate`, {
+      const response = await fetch(`${this.config.baseUrl}/generate/image`, {
         method: "POST",
         headers: {
-          "Authorization": bearerAuth(this.config.apiKey),
+          ...(this.config.apiKey ? { Authorization: bearerAuth(this.config.apiKey) } : {}),
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: this.config.modelId ?? "gen-3",
-          prompt: fullPrompt,
-          negative_prompt: request.negativePrompt ?? "cartoon, anime, deformed, blurry, low quality",
-          width: this.config.width,
-          height: this.config.height,
-        }),
-        signal: AbortSignal.timeout(30000),
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(60000),
       });
 
       if (!response.ok) {
-        throw new MediaGenerationError(`RunwayML API error: ${response.status} ${response.statusText}`);
+        throw new MediaGenerationError(`Generic NSFW provider error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json() as { url: string; seed?: number };
@@ -98,35 +111,28 @@ class RunwayMLProvider implements IMediaGenerationProvider {
       };
     } catch (err) {
       if (err instanceof MediaGenerationError) throw err;
-      throw new MediaGenerationError(`RunwayML generation failed: ${(err as Error).message}`);
+      throw new MediaGenerationError(`Generic NSFW image generation failed: ${(err as Error).message}`);
     }
   }
 
   async generateVideo(request: MediaGenerationRequest): Promise<GenerateVideoResult> {
-    if (!this.config.apiKey) throw new MediaGenerationError("RunwayML API key not configured");
+    if (!this.config.baseUrl) throw new MediaGenerationError("Generic NSFW provider base URL not configured (set MEDIA_BASE_URL)");
 
-    const fullPrompt = this.buildPrompt(request);
+    const payload = this.buildPayload(request, "video");
 
     try {
-      const response = await fetch(`${this.config.baseUrl ?? "https://api.runwayml.com/v1"}/video/generate`, {
+      const response = await fetch(`${this.config.baseUrl}/generate/video`, {
         method: "POST",
         headers: {
-          "Authorization": bearerAuth(this.config.apiKey),
+          ...(this.config.apiKey ? { Authorization: bearerAuth(this.config.apiKey) } : {}),
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: this.config.modelId ?? "gen-3",
-          prompt: fullPrompt,
-          negative_prompt: request.negativePrompt ?? "cartoon, anime, deformed, blurry, low quality",
-          width: this.config.width,
-          height: this.config.height,
-          duration: this.config.videoDurationSeconds ?? 6,
-        }),
-        signal: AbortSignal.timeout(60000),
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(120000),
       });
 
       if (!response.ok) {
-        throw new MediaGenerationError(`RunwayML video API error: ${response.status} ${response.statusText}`);
+        throw new MediaGenerationError(`Generic NSFW provider video error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json() as { url: string; thumbnail_url?: string };
@@ -139,15 +145,14 @@ class RunwayMLProvider implements IMediaGenerationProvider {
       };
     } catch (err) {
       if (err instanceof MediaGenerationError) throw err;
-      throw new MediaGenerationError(`RunwayML video generation failed: ${(err as Error).message}`);
+      throw new MediaGenerationError(`Generic NSFW video generation failed: ${(err as Error).message}`);
     }
   }
 
   async healthCheck(): Promise<boolean> {
-    if (!this.config.apiKey) return false;
+    if (!this.config.baseUrl) return false;
     try {
-      const response = await fetch(`${this.config.baseUrl ?? "https://api.runwayml.com/v1"}/health`, {
-        headers: { Authorization: bearerAuth(this.config.apiKey) },
+      const response = await fetch(`${this.config.baseUrl}/health`, {
         signal: AbortSignal.timeout(5000),
       });
       return response.ok;
@@ -156,19 +161,45 @@ class RunwayMLProvider implements IMediaGenerationProvider {
     }
   }
 
-  private buildPrompt(request: MediaGenerationRequest): string {
+  private buildPayload(request: MediaGenerationRequest, type: "image" | "video"): Record<string, unknown> {
     const appearance = Object.entries(request.appearanceRef)
       .map(([k, v]) => `${k}: ${v}`)
       .join(", ");
 
-    return [
-      `Photorealistic, NSFW, adult content.`,
-      `Character appearance: ${appearance}.`,
-      `Current state: ${request.avatarState.emotion}, ${request.avatarState.pose}, ${request.avatarState.action}.`,
-      `Arousal level: ${Math.round(request.avatarState.arousalLevel * 100)}%.`,
-      `Clothing: ${request.avatarState.clothingState}.`,
-      `Scene: ${request.prompt}`,
+    const prompt = [
+      `Photorealistic adult NSFW content. 18+ only. Explicit.`,
+      `Character: ${appearance}.`,
+      `Expression: ${request.avatarState.emotion}. Pose: ${request.avatarState.pose}. Action: ${request.avatarState.action}.`,
+      `Arousal: ${Math.round(request.avatarState.arousalLevel * 100)}%. Clothing: ${request.avatarState.clothingState}.`,
+      request.prompt,
     ].join(" ");
+
+    const payload: Record<string, unknown> = {
+      prompt,
+      negative_prompt: request.negativePrompt ?? "cartoon, anime, 3d render, deformed, blurry, low quality, watermark",
+      width: this.config.width,
+      height: this.config.height,
+      nsfw: true,
+      character_ref: request.appearanceRef,
+      avatar_state: request.avatarState,
+    };
+
+    // Add model-specific params if configured
+    if (this.config.modelId) payload.model = this.config.modelId;
+    if (this.config.sampler) payload.sampler = this.config.sampler;
+    if (this.config.steps) payload.steps = this.config.steps;
+    if (this.config.cfgScale) payload.cfg_scale = this.config.cfgScale;
+
+    if (type === "video") {
+      payload.duration = this.config.videoDurationSeconds ?? 6;
+    }
+
+    // Pass through any provider-specific options
+    if (request.providerOptions) {
+      Object.assign(payload, request.providerOptions);
+    }
+
+    return payload;
   }
 }
 
@@ -294,8 +325,8 @@ export class MediaGenerationService {
 
   static createProvider(config: MediaProviderConfig): IMediaGenerationProvider {
     switch (config.provider) {
-      case "runwayml":
-        return new RunwayMLProvider(config);
+      case "generic":
+        return new GenericNSFWProvider(config);
       case "internal":
         return new InternalNSFWProvider(config);
       case "placeholder":

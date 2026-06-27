@@ -2,8 +2,11 @@
  * Media generation pipeline types.
  *
  * Abstracts image and video generation behind a provider interface
- * so we can swap between RunwayML-style APIs, Flux, SDXL, or our
+ * so we can swap between any self-hosted NSFW-capable endpoint
+ * (ComfyUI, A1111, Fooocus, custom API), Flux, SDXL, or our
  * own private NSFW model family.
+ *
+ * NOTE: RunwayML was removed — it blocks NSFW content.
  */
 
 export type MediaType = "image" | "video";
@@ -28,7 +31,7 @@ export interface MediaGenerationRequest {
     arousalLevel: number;
     clothingState: string;
   };
-  /** Provider-specific overrides. */
+  /** Provider-specific overrides (sampler, steps, cfg, LoRA, etc.). */
   providerOptions?: Record<string, unknown>;
   status: MediaStatus;
   resultUrl?: string;
@@ -38,7 +41,13 @@ export interface MediaGenerationRequest {
 
 /* ── Provider abstraction ───────────────────────────────── */
 
-export type MediaProvider = "internal" | "runwayml" | "flux" | "sdxl" | "placeholder";
+/**
+ * "generic" = any self-hosted NSFW endpoint (ComfyUI, A1111, Fooocus, etc.)
+ * "internal" = our own private NSFW model service
+ * "flux" / "sdxl" = specific model APIs with known schemas
+ * "placeholder" = dev/offline fallback
+ */
+export type MediaProvider = "internal" | "generic" | "flux" | "sdxl" | "placeholder";
 
 export interface MediaProviderConfig {
   provider: MediaProvider;
@@ -52,6 +61,12 @@ export interface MediaProviderConfig {
   height: number;
   /** For video: duration in seconds. */
   videoDurationSeconds?: number;
+  /** Sampler name for diffusion models (e.g. "euler_a", "dpmpp_2m"). */
+  sampler?: string;
+  /** Number of inference steps. */
+  steps?: number;
+  /** Classifier-free guidance scale. */
+  cfgScale?: number;
 }
 
 export interface GenerateImageResult {
@@ -71,7 +86,7 @@ export interface GenerateVideoResult {
 
 /**
  * Minimal interface every media provider must implement.
- * Allows hot-swapping between RunwayML, our private NSFW model, etc.
+ * Allows hot-swapping between any NSFW-capable generation backend.
  */
 export interface IMediaGenerationProvider {
   readonly name: MediaProvider;

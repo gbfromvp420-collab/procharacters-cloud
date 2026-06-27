@@ -60,7 +60,7 @@ export async function buildApp() {
   const tokenService = new TokenService();
   const liveCam = new LiveCamService(tokenService);
   const mediaGen = new MediaGenerationService({
-    provider: env.MEDIA_PROVIDER as "placeholder" | "runwayml" | "internal" | "flux" | "sdxl",
+    provider: env.MEDIA_PROVIDER as "placeholder" | "generic" | "internal" | "flux" | "sdxl",
     apiKey: env.MEDIA_API_KEY,
     baseUrl: env.MEDIA_BASE_URL,
     modelId: env.MEDIA_MODEL_ID,
@@ -68,6 +68,9 @@ export async function buildApp() {
     width: env.MEDIA_WIDTH,
     height: env.MEDIA_HEIGHT,
     videoDurationSeconds: env.MEDIA_VIDEO_DURATION,
+    sampler: env.MEDIA_SAMPLER,
+    steps: env.MEDIA_STEPS,
+    cfgScale: env.MEDIA_CFG_SCALE,
   });
 
   /* ── Logging ────────────────────────────────────────── */
