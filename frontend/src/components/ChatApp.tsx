@@ -438,6 +438,12 @@ export function ChatApp() {
         </span>
         {sessionId && <span>Session {sessionId.slice(0, 8)}…</span>}
         {error && <span className="text-red-400">{error}</span>}
+        <a
+          href="/livecam"
+          className="ml-auto text-pink-500 hover:text-pink-400 font-medium transition-colors"
+        >
+          🎥 Live Cam →
+        </a>
       </footer>
     </main>
   );
