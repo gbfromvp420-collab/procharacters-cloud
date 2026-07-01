@@ -8,12 +8,14 @@ import { UserService } from "./lib/auth/index.js";
 import { connectPostgres, connectRedis, createSessionStore } from "./lib/db/index.js";
 import { LiveKitService } from "./lib/livekit/service.js";
 import { createAuthRoutes } from "./routes/auth.js";
+import { createCustomCharacterRoutes } from "./routes/custom-characters.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createLiveCamRoutes } from "./routes/livecam.js";
 import { createMediaRoutes } from "./routes/media.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createTokenRoutes } from "./routes/tokens.js";
 import { ChatOrchestrator } from "./services/chat-orchestrator.js";
+import { CustomCharacterService } from "./services/custom-character-service.js";
 import { LiveCamService } from "./services/livecam-service.js";
 import { MediaGenerationService } from "./services/media-generation-service.js";
 import { MediaWorker } from "./services/media-worker.js";
@@ -98,6 +100,7 @@ export async function buildApp() {
   /* ── Authentication service ─────────────────────────── */
 
   const userService = new UserService(pg);
+  const customCharacters = new CustomCharacterService();
 
   /* ── Logging ────────────────────────────────────────── */
 
