@@ -40,17 +40,17 @@ export function createMediaRoutes(
       }
       const { sessionId, userId, characterId, prompt, appearanceRef, avatarState } = parsed.data;
 
-      // Debit tokens for image generation
-      try {
-        const cost = tokenService.getCostForAction("imageGeneration");
-        tokenService.debit(userId, cost, "media_generation", {
-          sessionId,
-          type: "image",
-        });
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Token debit failed";
-        return reply.status(402).send({ error: msg });
-      }
+//      // Debit tokens for image generation
+//      try {
+//        const cost = tokenService.getCostForAction("imageGeneration");
+//        tokenService.debit(userId, cost, "media_generation", {
+//          sessionId,
+//          type: "image",
+//        });
+//      } catch (err) {
+//        const msg = err instanceof Error ? err.message : "Token debit failed";
+//        return reply.status(402).send({ error: msg });
+//      }
 
       try {
         const result = await mediaGen.generateImage(
@@ -93,17 +93,17 @@ export function createMediaRoutes(
       }
       const { sessionId, userId, characterId, prompt, appearanceRef, avatarState } = parsed.data;
 
-      // Debit tokens for video generation
-      try {
-        const cost = tokenService.getCostForAction("videoGeneration");
-        tokenService.debit(userId, cost, "media_generation", {
-          sessionId,
-          type: "video",
-        });
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Token debit failed";
-        return reply.status(402).send({ error: msg });
-      }
+//      // Debit tokens for video generation
+//      try {
+//        const cost = tokenService.getCostForAction("videoGeneration");
+//        tokenService.debit(userId, cost, "media_generation", {
+//          sessionId,
+//          type: "video",
+//        });
+//      } catch (err) {
+//        const msg = err instanceof Error ? err.message : "Token debit failed";
+//        return reply.status(402).send({ error: msg });
+//      }
 
       try {
         const result = await mediaGen.generateVideo(
