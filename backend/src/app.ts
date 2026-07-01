@@ -121,5 +121,37 @@ export async function buildApp() {
     void createWebSocketHandler(sessionManager, chat, media)(socket, request);
   });
 
+  /* ── Global error handler ──────────────────────────── */
+
+  app.setErrorHandler((error, _request, reply) => {
+    const statusCode = reply.statusCode >= 400 ? reply.statusCode : 500;
+    const err = error as Record<string, unknown>;
+    const code = typeof err["statusCode"] === "number" ? err["statusCode"] : statusCode;
+    const message = error instanceof Error ? error.message : "Unknown error";
+
+    if (code === 429) {
+      return reply.status(429).send({
+        error: "Too Many Requests",
+        message: "Rate limit exceeded. Please slow down.",
+      });
+    }
+
+    const isInternal = code >= 500;
+
+    if (isInternal) {
+      app.log.error(error);
+    }
+
+    return reply.status(code).send({
+      error: isInternal ? "Internal Server Error" : message,
+    });
+  });
+
+  /* ── 404 handler ───────────────────────────────────── */
+
+  app.setNotFoundHandler((_request, reply) => {
+    return reply.status(404).send({ error: "Not Found" });
+  });
+
   return app;
 }
