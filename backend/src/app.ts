@@ -4,7 +4,10 @@ import rateLimit from "@fastify/rate-limit";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
+import { UserService } from "./lib/auth/index.js";
+import { connectPostgres, connectRedis, createSessionStore } from "./lib/db/index.js";
 import { LiveKitService } from "./lib/livekit/service.js";
+import { createAuthRoutes } from "./routes/auth.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createLiveCamRoutes } from "./routes/livecam.js";
 import { createMediaRoutes } from "./routes/media.js";
@@ -38,23 +41,13 @@ export async function buildApp() {
   });
   await app.register(websocket);
 
-  /* ── Core services (v2 MVP) ─────────────────────────── */
+  /* ── Database connections (optional — falls back to in-memory) ── */
 
-  const avatarMemory = new MemoryManager();
-  const sessionManager = new SessionManager(
-    avatarMemory,
-    env.DEFAULT_CHARACTER_ID,
-    env.SESSION_TTL_MINUTES,
-    env.MAX_MESSAGE_WINDOW,
-  );
-  const chat = new ChatOrchestrator(sessionManager, avatarMemory, {
-    maxMessageWindow: env.MAX_MESSAGE_WINDOW,
-    xaiApiKey: env.XAI_API_KEY,
-    xaiModel: env.XAI_MODEL,
-    xaiBaseUrl: env.XAI_BASE_URL,
-    xaiMaxCompletionTokens: env.XAI_MAX_COMPLETION_TOKENS,
-    xaiTemperature: env.XAI_TEMPERATURE,
-  });
+  const redis = await connectRedis(env.REDIS_URL);
+  const pg = await connectPostgres(env.DATABASE_URL);
+  const sessionStore = createSessionStore(redis, pg);
+
+  /* ── Core services (v2 MVP) ─────────────────────────── */
 
   const livekit = new LiveKitService(
     env.livekitConfigured
@@ -85,6 +78,27 @@ export async function buildApp() {
     cfgScale: env.MEDIA_CFG_SCALE,
   });
 
+  const avatarMemory = new MemoryManager();
+  const sessionManager = new SessionManager(
+    avatarMemory,
+    env.DEFAULT_CHARACTER_ID,
+    env.SESSION_TTL_MINUTES,
+    env.MAX_MESSAGE_WINDOW,
+    sessionStore,
+  );
+  const chat = new ChatOrchestrator(sessionManager, avatarMemory, {
+    maxMessageWindow: env.MAX_MESSAGE_WINDOW,
+    xaiApiKey: env.XAI_API_KEY,
+    xaiModel: env.XAI_MODEL,
+    xaiBaseUrl: env.XAI_BASE_URL,
+    xaiMaxCompletionTokens: env.XAI_MAX_COMPLETION_TOKENS,
+    xaiTemperature: env.XAI_TEMPERATURE,
+  }, mediaGen);
+
+  /* ── Authentication service ─────────────────────────── */
+
+  const userService = new UserService(pg);
+
   /* ── Logging ────────────────────────────────────────── */
 
   if (!env.XAI_API_KEY) {
@@ -99,11 +113,24 @@ export async function buildApp() {
     app.log.warn("LiveKit not configured — video uses WebSocket mediaUrl only");
   }
 
+  if (redis) {
+    app.log.info("Redis session cache active");
+  }
+  if (pg) {
+    app.log.info("PostgreSQL persistence active");
+  }
+  if (!redis && !pg) {
+    app.log.warn("No Redis/Postgres configured — using in-memory storage (data lost on restart)");
+  }
+
   app.log.info({ provider: mediaGen.providerName }, "Media generation provider active");
 
   /* ── Routes ─────────────────────────────────────────── */
 
   await app.register(createHealthRoutes(livekit));
+
+  // Auth routes
+  await app.register(createAuthRoutes(userService), { prefix: "/api/v1" });
 
   // v2 MVP routes
   await app.register(createSessionRoutes(sessionManager, media, livekit), {

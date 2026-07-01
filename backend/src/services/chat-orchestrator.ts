@@ -7,8 +7,10 @@ import {
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
 import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
+import { maybeGenerateImage } from "../lib/media/image-gen-hook.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import type { AvatarState } from "../types/session.js";
+import type { MediaGenerationService } from "./media-generation-service.js";
 import { MemoryManager } from "./memory-manager.js";
 import { SessionManager } from "./session-manager.js";
 
@@ -19,6 +21,7 @@ export interface ChatTurnResult {
   promptHash: string;
   consistencyDrift?: string[];
   usedLlm: boolean;
+  generatedImageUrl?: string;
 }
 
 export interface ChatOrchestratorConfig {
@@ -34,11 +37,13 @@ const injector = new LivePromptInjector();
 
 export class ChatOrchestrator {
   private readonly xai: XaiChatClient | null;
+  private readonly mediaGen: MediaGenerationService | null;
 
   constructor(
     private readonly sessions: SessionManager,
     private readonly avatarMemory: MemoryManager,
     private readonly config: ChatOrchestratorConfig,
+    mediaGen?: MediaGenerationService | null,
   ) {
     this.xai = config.xaiApiKey
       ? new XaiChatClient({
@@ -49,6 +54,7 @@ export class ChatOrchestrator {
           temperature: config.xaiTemperature,
         })
       : null;
+    this.mediaGen = mediaGen ?? null;
   }
 
   get llmConfigured(): boolean {
@@ -107,12 +113,34 @@ export class ChatOrchestrator {
 
     const lastMessage = memory.getRecentContext().messages.at(-1);
 
+    // Step 6: Image generation hook — fire-and-forget for key intents
+    let generatedImageUrl: string | undefined;
+    if (this.mediaGen) {
+      // Build appearance ref from the appearance anchor text
+      const appearanceRef: Record<string, string> = {
+        character: session.characterId,
+        appearance: session.promptSnapshot.appearanceAnchor ?? "",
+      };
+      const imgUrl = await maybeGenerateImage(
+        sessionId,
+        session.characterId,
+        assistantContent,
+        avatarIntent,
+        appearanceRef,
+        this.mediaGen,
+      );
+      if (imgUrl) {
+        generatedImageUrl = imgUrl;
+      }
+    }
+
     return {
       messageId: lastMessage?.id ?? "",
       content: assistantContent,
       avatarIntent,
       promptHash: injection.hash,
       usedLlm,
+      generatedImageUrl,
     };
   }
 

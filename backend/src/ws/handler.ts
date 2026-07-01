@@ -134,6 +134,17 @@ export function createWebSocketHandler(
               type: "avatar_update",
               avatarState,
             });
+
+            // Send generated image if the intent hook produced one
+            if (result.generatedImageUrl) {
+              send(socket, {
+                type: "media_generated",
+                mediaType: "image",
+                url: result.generatedImageUrl,
+                width: 512,
+                height: 768,
+              });
+            }
             break;
           }
         }

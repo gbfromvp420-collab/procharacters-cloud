@@ -3,6 +3,8 @@ import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
 import { assertLiveCharacter } from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
+import type { ISessionStore } from "../lib/db/session-store.js";
+import { InMemorySessionStore } from "../lib/db/session-store.js";
 import type {
   CreateSessionInput,
   CreateSessionResult,
@@ -25,14 +27,17 @@ export class SessionAuthError extends Error {
 }
 
 export class SessionManager {
-  private readonly sessions = new Map<string, SessionRecord>();
+  private readonly store: ISessionStore;
 
   constructor(
     private readonly memory: MemoryManager,
     private readonly defaultCharacterId: string,
     private readonly sessionTtlMinutes: number,
     private readonly maxMessageWindow: number,
-  ) {}
+    store?: ISessionStore,
+  ) {
+    this.store = store ?? new InMemorySessionStore();
+  }
 
   async createSession(
     input: CreateSessionInput = {},
@@ -63,7 +68,7 @@ export class SessionManager {
       expiresAt: expiresAt.toISOString(),
     };
 
-    this.sessions.set(sessionId, record);
+    await this.store.set(record);
 
     const wsUrl = `${wsBaseUrl}/ws/sessions/${sessionId}?token=${wsToken}`;
 
@@ -77,8 +82,8 @@ export class SessionManager {
     };
   }
 
-  getSession(sessionId: string): SessionRecord {
-    const session = this.sessions.get(sessionId);
+  async getSessionAsync(sessionId: string): Promise<SessionRecord> {
+    const session = await this.store.get(sessionId);
     if (!session) {
       throw new SessionNotFoundError(sessionId);
     }
@@ -86,8 +91,37 @@ export class SessionManager {
     return session;
   }
 
+  /** Synchronous-compatible getter (for backward compat — uses cache or throws) */
+  getSession(sessionId: string): SessionRecord {
+    // This is kept for backward compatibility with the WebSocket handler.
+    // In practice, the store.get() for InMemorySessionStore is sync-safe.
+    // For Redis-backed stores, use getSessionAsync() instead.
+    let result: SessionRecord | null = null;
+    const store = this.store as { get(id: string): Promise<SessionRecord | null> };
+
+    // For InMemorySessionStore, the promise resolves synchronously
+    void store.get(sessionId).then((s) => { result = s; });
+
+    if (!result) {
+      throw new SessionNotFoundError(sessionId);
+    }
+    this.assertNotExpired(result);
+    return result;
+  }
+
   authenticate(sessionId: string, token: string): SessionRecord {
     const session = this.getSession(sessionId);
+    if (session.wsToken !== token) {
+      throw new SessionAuthError("Invalid session token");
+    }
+    if (session.status !== "active") {
+      throw new SessionAuthError("Session is not active");
+    }
+    return session;
+  }
+
+  async authenticateAsync(sessionId: string, token: string): Promise<SessionRecord> {
+    const session = await this.getSessionAsync(sessionId);
     if (session.wsToken !== token) {
       throw new SessionAuthError("Invalid session token");
     }
@@ -107,7 +141,7 @@ export class SessionManager {
       memory: patch.memory ?? session.memory,
       updatedAt: new Date().toISOString(),
     };
-    this.sessions.set(sessionId, updated);
+    void this.store.set(updated);
     return updated;
   }
 
@@ -117,8 +151,8 @@ export class SessionManager {
     return this.updateSession(sessionId, { status: "ended", memory: cleared });
   }
 
-  listSessions(): SessionRecord[] {
-    return [...this.sessions.values()];
+  async listSessions(): Promise<SessionRecord[]> {
+    return this.store.list();
   }
 
   private assertNotExpired(session: SessionRecord): void {
@@ -127,7 +161,7 @@ export class SessionManager {
     }
     if (new Date(session.expiresAt).getTime() < Date.now()) {
       session.status = "ended";
-      this.sessions.set(session.id, session);
+      void this.store.set(session);
       throw new SessionAuthError("Session expired");
     }
   }

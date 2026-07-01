@@ -1,5 +1,24 @@
 # Local production-style stack (docker compose up --build)
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: procharacters
+      POSTGRES_USER: procharacters
+      POSTGRES_PASSWORD: localdev
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
   backend:
     build:
       context: .
@@ -11,6 +30,11 @@ services:
     environment:
       PORT: "3001"
       PUBLIC_API_URL: http://localhost:3001
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: ******postgres:5432/procharacters
+    depends_on:
+      - postgres
+      - redis
     restart: unless-stopped
 
   frontend:
@@ -24,3 +48,6 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+volumes:
+  pgdata:

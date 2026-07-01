@@ -64,6 +64,13 @@ const envSchema = z.object({
   RATE_LIMIT_MAX: z.coerce.number().default(100),
   /** Rate limit window in milliseconds. */
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60_000),
+
+  /* ── Database persistence (v2.1+) ───────────────────── */
+  REDIS_URL: z.string().optional(),
+  DATABASE_URL: z.string().optional(),
+
+  /* ── Authentication ─────────────────────────────────── */
+  JWT_SECRET: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);
