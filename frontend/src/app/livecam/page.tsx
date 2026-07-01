@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AvatarVideo } from "@/components/AvatarVideo";
+import { CharacterSwitcher } from "@/components/CharacterSwitcher";
 import { CommandPanel } from "@/components/CommandPanel";
 import { GiftPanel } from "@/components/GiftPanel";
 import { RoomChat } from "@/components/RoomChat";
@@ -24,6 +25,7 @@ import {
 } from "@/lib/api";
 import type {
   AvatarState,
+  CharacterId,
   CommandDefinition,
   GiftDefinition,
   GiftSendEvent,
@@ -59,6 +61,7 @@ export default function LiveCamPage() {
   const [leaderboard, setLeaderboard] = useState<TipLeaderboardEntry[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
   const [avatarState, setAvatarState] = useState<AvatarState | null>(null);
+  const [activeCharacterId, setActiveCharacterId] = useState<CharacterId>("twink-default");
   const [error, setError] = useState<string | null>(null);
 
   // Load initial data
@@ -99,10 +102,18 @@ export default function LiveCamPage() {
     setAvatarState(null);
     const room = rooms.find((r) => r.id === roomId);
     setViewerCount(room?.viewerCount ?? 0);
+    if (room?.characterId) {
+      setActiveCharacterId(room.characterId as CharacterId);
+    }
   }, [rooms]);
 
   const handleAvatarUpdate = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
+  }, []);
+
+  const handleCharacterSwitch = useCallback((characterId: CharacterId) => {
+    setActiveCharacterId(characterId);
+    setAvatarState(null);
   }, []);
 
   const handleSendTip = useCallback(
@@ -250,7 +261,7 @@ export default function LiveCamPage() {
                 <AvatarVideo
                   avatar={avatarState}
                   characterName={selectedRoom?.title ?? null}
-                  characterId={selectedRoom?.characterId}
+                  characterId={activeCharacterId}
                 />
                 {/* Live badge overlay */}
                 {selectedRoom?.status === "live" && (
@@ -279,9 +290,14 @@ export default function LiveCamPage() {
 
             {/* Sidebar (right) — interactions */}
             <div className="space-y-4">
+              <CharacterSwitcher
+                currentCharacterId={activeCharacterId}
+                onSwitch={handleCharacterSwitch}
+                compact
+              />
               <RoomChat
                 roomId={selectedRoomId}
-                characterId={selectedRoom?.characterId ?? "twink-default"}
+                characterId={activeCharacterId}
                 onAvatarUpdate={handleAvatarUpdate}
               />
               <TipPanel
