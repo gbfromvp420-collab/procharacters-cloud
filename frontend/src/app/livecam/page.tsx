@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { CommandPanel } from "@/components/CommandPanel";
 import { GiftPanel } from "@/components/GiftPanel";
+import { RoomChat } from "@/components/RoomChat";
 import { RoomList } from "@/components/RoomList";
 import { ShowSchedule } from "@/components/ShowSchedule";
 import { TipPanel } from "@/components/TipPanel";
@@ -279,6 +280,10 @@ export default function LiveCamPage() {
 
             {/* Sidebar (right) — interactions */}
             <div className="space-y-4">
+              <RoomChat
+                roomId={selectedRoomId}
+                characterId={selectedRoom?.characterId ?? "twink-default"}
+              />
               <TipPanel
                 roomId={selectedRoomId}
                 userId={userId}
