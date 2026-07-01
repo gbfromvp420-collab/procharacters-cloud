@@ -56,6 +56,14 @@ const envSchema = z.object({
   ELEVENLABS_STYLE: z.coerce.number().min(0).max(1).default(0.4),
   /** Output format: mp3_44100_128, pcm_16000, etc. */
   ELEVENLABS_OUTPUT_FORMAT: z.string().default("mp3_44100_128"),
+
+  /* ── Rate limiting & security ─────────────────────────── */
+  /** Comma-separated allowed origins, or leave empty for permissive (dev). */
+  CORS_ORIGIN: z.string().optional(),
+  /** Max requests per window per IP. */
+  RATE_LIMIT_MAX: z.coerce.number().default(100),
+  /** Rate limit window in milliseconds. */
+  RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60_000),
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -75,4 +83,8 @@ export const env = {
   repoRoot: parsed.data.REPO_ROOT ?? resolveRepoRoot(),
   isDev: parsed.data.NODE_ENV === "development",
   livekitConfigured,
-};
+  /** Parsed CORS origins: array of strings or `true` for permissive mode. */
+  CORS_ORIGIN: parsed.data.CORS_ORIGIN
+    ? parsed.data.CORS_ORIGIN.split(",").map((s) => s.trim())
+    : true,
+} as const;

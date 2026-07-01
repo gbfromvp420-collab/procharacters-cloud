@@ -1,4 +1,6 @@
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
@@ -23,7 +25,17 @@ export async function buildApp() {
     trustProxy: true,
   });
 
-  await app.register(cors, { origin: true });
+  await app.register(cors, {
+    origin: env.CORS_ORIGIN ?? true,
+    credentials: true,
+  });
+  await app.register(helmet, {
+    contentSecurityPolicy: false, // handled by frontend
+  });
+  await app.register(rateLimit, {
+    max: env.RATE_LIMIT_MAX,
+    timeWindow: env.RATE_LIMIT_WINDOW_MS,
+  });
   await app.register(websocket);
 
   /* ── Core services (v2 MVP) ─────────────────────────── */

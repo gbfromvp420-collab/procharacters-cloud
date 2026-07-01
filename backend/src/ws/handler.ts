@@ -61,6 +61,25 @@ export function createWebSocketHandler(
       avatarState: initialAvatar,
     });
 
+    /* ── Heartbeat: close zombie connections after 60s without pong ── */
+    let isAlive = true;
+    const heartbeat = setInterval(() => {
+      if (!isAlive) {
+        socket.terminate();
+        return;
+      }
+      isAlive = false;
+      socket.ping();
+    }, 30_000);
+
+    socket.on("pong", () => {
+      isAlive = true;
+    });
+
+    socket.on("close", () => {
+      clearInterval(heartbeat);
+    });
+
     socket.on("message", async (raw) => {
       let parsed: ClientEvent;
 
