@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { AvatarVideo } from "@/components/AvatarVideo";
 import { CommandPanel } from "@/components/CommandPanel";
 import { GiftPanel } from "@/components/GiftPanel";
 import { RoomChat } from "@/components/RoomChat";
@@ -22,6 +23,7 @@ import {
   creditTokens,
 } from "@/lib/api";
 import type {
+  AvatarState,
   CommandDefinition,
   GiftDefinition,
   GiftSendEvent,
@@ -56,6 +58,7 @@ export default function LiveCamPage() {
   const [recentGifts, setRecentGifts] = useState<GiftSendEvent[]>([]);
   const [leaderboard, setLeaderboard] = useState<TipLeaderboardEntry[]>([]);
   const [viewerCount, setViewerCount] = useState(0);
+  const [avatarState, setAvatarState] = useState<AvatarState | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Load initial data
@@ -93,9 +96,14 @@ export default function LiveCamPage() {
   // Handlers
   const handleSelectRoom = useCallback((roomId: string) => {
     setSelectedRoomId(roomId);
+    setAvatarState(null);
     const room = rooms.find((r) => r.id === roomId);
     setViewerCount(room?.viewerCount ?? 0);
   }, [rooms]);
+
+  const handleAvatarUpdate = useCallback((avatar: AvatarState) => {
+    setAvatarState(avatar);
+  }, []);
 
   const handleSendTip = useCallback(
     async (amount: number, message?: string) => {
@@ -237,31 +245,22 @@ export default function LiveCamPage() {
                 </div>
               </div>
 
-              {/* Video placeholder */}
-              <div className="aspect-video bg-gray-800 rounded-xl flex items-center justify-center relative overflow-hidden border border-gray-700">
-                <div className="text-center">
-                  <div className="text-6xl mb-3">
-                    {selectedRoom?.characterId?.includes("twink") ? "👨" : "👩"}
-                    {selectedRoom?.pairedCharacterId && (
-                      <span className="ml-4">
-                        {selectedRoom.pairedCharacterId.includes("twink") ? "👨" : "👩"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-gray-400 text-sm">Live video stream</p>
-                  <p className="text-gray-600 text-xs mt-1">
-                    Connect media provider to enable real video
-                  </p>
-                </div>
+              {/* Live avatar video */}
+              <div className="relative overflow-hidden rounded-xl border border-gray-700">
+                <AvatarVideo
+                  avatar={avatarState}
+                  characterName={selectedRoom?.title ?? null}
+                  characterId={selectedRoom?.characterId}
+                />
                 {/* Live badge overlay */}
                 {selectedRoom?.status === "live" && (
-                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-red-600 rounded-full">
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 bg-red-600 rounded-full z-10">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
                     <span className="text-white text-xs font-bold">LIVE</span>
                   </div>
                 )}
                 {/* Viewer count overlay */}
-                <div className="absolute top-3 right-3 px-2 py-1 bg-black/70 rounded text-white text-xs">
+                <div className="absolute top-3 right-3 px-2 py-1 bg-black/70 rounded text-white text-xs z-10">
                   👁 {viewerCount}
                 </div>
               </div>
@@ -283,6 +282,7 @@ export default function LiveCamPage() {
               <RoomChat
                 roomId={selectedRoomId}
                 characterId={selectedRoom?.characterId ?? "twink-default"}
+                onAvatarUpdate={handleAvatarUpdate}
               />
               <TipPanel
                 roomId={selectedRoomId}
