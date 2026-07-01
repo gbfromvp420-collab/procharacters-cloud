@@ -5,6 +5,7 @@
 import type { FastifyInstance } from "fastify";
 import type { MediaGenerationService } from "../services/media-generation-service.js";
 import type { TokenService } from "../services/token-service.js";
+import { mediaGenerateBodySchema } from "./schemas.js";
 
 export function createMediaRoutes(
   mediaGen: MediaGenerationService,
@@ -33,7 +34,11 @@ export function createMediaRoutes(
         };
       };
     }>("/media/generate/image", async (request, reply) => {
-      const { sessionId, userId, characterId, prompt, appearanceRef, avatarState } = request.body;
+      const parsed = mediaGenerateBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: "Validation failed", details: parsed.error.flatten().fieldErrors });
+      }
+      const { sessionId, userId, characterId, prompt, appearanceRef, avatarState } = parsed.data;
 
       // Debit tokens for image generation
       try {
@@ -82,7 +87,11 @@ export function createMediaRoutes(
         };
       };
     }>("/media/generate/video", async (request, reply) => {
-      const { sessionId, userId, characterId, prompt, appearanceRef, avatarState } = request.body;
+      const parsed = mediaGenerateBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: "Validation failed", details: parsed.error.flatten().fieldErrors });
+      }
+      const { sessionId, userId, characterId, prompt, appearanceRef, avatarState } = parsed.data;
 
       // Debit tokens for video generation
       try {

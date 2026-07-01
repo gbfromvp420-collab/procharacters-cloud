@@ -4,6 +4,14 @@
 
 import type { FastifyInstance } from "fastify";
 import type { LiveCamService } from "../services/livecam-service.js";
+import {
+  commandBodySchema,
+  createRoomBodySchema,
+  giftBodySchema,
+  scheduleShowBodySchema,
+  tipBodySchema,
+  userIdBodySchema,
+} from "./schemas.js";
 
 export function createLiveCamRoutes(liveCam: LiveCamService) {
   return async function liveCamRoutes(app: FastifyInstance) {
@@ -33,8 +41,12 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
         pairedCharacterId?: string;
         scheduledAt?: string;
       };
-    }>("/livecam/rooms", async (request) => {
-      const { characterId, title, tags, pairedCharacterId, scheduledAt } = request.body;
+    }>("/livecam/rooms", async (request, reply) => {
+      const result = createRoomBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
+      const { characterId, title, tags, pairedCharacterId, scheduledAt } = result.data;
       const room = liveCam.createRoom(characterId, title, tags, pairedCharacterId, scheduledAt);
       return { room };
     });
@@ -62,8 +74,12 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
       Params: { roomId: string };
       Body: { userId: string };
     }>("/livecam/rooms/:roomId/join", async (request, reply) => {
+      const result = userIdBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
       try {
-        const count = liveCam.joinRoom(request.params.roomId, request.body.userId);
+        const count = liveCam.joinRoom(request.params.roomId, result.data.userId);
         return { viewerCount: count };
       } catch {
         return reply.status(404).send({ error: "Room not found" });
@@ -75,8 +91,12 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
       Params: { roomId: string };
       Body: { userId: string };
     }>("/livecam/rooms/:roomId/leave", async (request, reply) => {
+      const result = userIdBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
       try {
-        const count = liveCam.leaveRoom(request.params.roomId, request.body.userId);
+        const count = liveCam.leaveRoom(request.params.roomId, result.data.userId);
         return { viewerCount: count };
       } catch {
         return reply.status(404).send({ error: "Room not found" });
@@ -90,8 +110,12 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
       Params: { roomId: string };
       Body: { userId: string; displayName: string; amount: number; message?: string };
     }>("/livecam/rooms/:roomId/tip", async (request, reply) => {
+      const result = tipBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
       try {
-        const { userId, displayName, amount, message } = request.body;
+        const { userId, displayName, amount, message } = result.data;
         const tip = liveCam.sendTip(request.params.roomId, userId, displayName, amount, message);
         return { tip };
       } catch (err) {
@@ -131,8 +155,12 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
       Params: { roomId: string };
       Body: { userId: string; displayName: string; giftId: string };
     }>("/livecam/rooms/:roomId/gift", async (request, reply) => {
+      const result = giftBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
       try {
-        const { userId, displayName, giftId } = request.body;
+        const { userId, displayName, giftId } = result.data;
         const event = liveCam.sendGift(request.params.roomId, userId, displayName, giftId);
         return { gift: event };
       } catch (err) {
@@ -162,8 +190,12 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
       Params: { roomId: string };
       Body: { userId: string; displayName: string; commandId: string; customPrompt?: string };
     }>("/livecam/rooms/:roomId/command", async (request, reply) => {
+      const result = commandBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
       try {
-        const { userId, displayName, commandId, customPrompt } = request.body;
+        const { userId, displayName, commandId, customPrompt } = result.data;
         const cmd = liveCam.requestCommand(
           request.params.roomId,
           userId,
@@ -206,9 +238,13 @@ export function createLiveCamRoutes(liveCam: LiveCamService) {
         tags?: string[];
         pairedCharacterId?: string;
       };
-    }>("/livecam/shows", async (request) => {
+    }>("/livecam/shows", async (request, reply) => {
+      const result = scheduleShowBodySchema.safeParse(request.body);
+      if (!result.success) {
+        return reply.status(400).send({ error: "Validation failed", details: result.error.flatten().fieldErrors });
+      }
       const { characterId, title, description, scheduledAt, durationMinutes, tags, pairedCharacterId } =
-        request.body;
+        result.data;
       const show = liveCam.scheduleShow(
         characterId,
         title,

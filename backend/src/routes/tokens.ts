@@ -4,6 +4,7 @@
 
 import type { FastifyInstance } from "fastify";
 import type { TokenService } from "../services/token-service.js";
+import { creditBodySchema, grantMonthlyBodySchema } from "./schemas.js";
 
 export function createTokenRoutes(tokenService: TokenService) {
   return async function tokenRoutes(app: FastifyInstance) {
@@ -25,14 +26,15 @@ export function createTokenRoutes(tokenService: TokenService) {
       Body: { amount: number; type?: string; metadata?: Record<string, string> };
     }>("/tokens/:userId/credit", async (request, reply) => {
       const { userId } = request.params;
-      const { amount, type, metadata } = request.body;
-      if (!amount || amount <= 0) {
-        return reply.status(400).send({ error: "Amount must be positive" });
+      const parsed = creditBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: "Validation failed", details: parsed.error.flatten().fieldErrors });
       }
+      const { amount, type, metadata } = parsed.data;
       const tx = tokenService.credit(
         userId,
         amount,
-        (type as "purchase" | "grant") ?? "purchase",
+        type ?? "purchase",
         metadata,
       );
       return { transaction: tx, balance: tokenService.getBalance(userId) };
@@ -59,11 +61,11 @@ export function createTokenRoutes(tokenService: TokenService) {
       Body: { tier: string };
     }>("/tokens/:userId/grant-monthly", async (request, reply) => {
       const { userId } = request.params;
-      const { tier } = request.body;
-      if (!["free", "gold", "platinum"].includes(tier)) {
-        return reply.status(400).send({ error: "Invalid tier" });
+      const parsed = grantMonthlyBodySchema.safeParse(request.body);
+      if (!parsed.success) {
+        return reply.status(400).send({ error: "Validation failed", details: parsed.error.flatten().fieldErrors });
       }
-      const tx = tokenService.grantMonthlyTokens(userId, tier as "free" | "gold" | "platinum");
+      const tx = tokenService.grantMonthlyTokens(userId, parsed.data.tier);
       return { transaction: tx, balance: tokenService.getBalance(userId) };
     });
   };
