@@ -20,7 +20,9 @@ const loginSchema = z.object({
 export function createAuthRoutes(userService: UserService) {
   return async (app: FastifyInstance) => {
     /* ── Register ─────────────────────────────────────── */
-    app.post("/auth/register", async (request, reply) => {
+    app.post("/auth/register", {
+      config: { rateLimit: { max: 5, timeWindow: "1 minute" } },
+    }, async (request, reply) => {
       const parsed = registerSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({ error: "Validation failed", details: parsed.error.flatten().fieldErrors });
@@ -44,7 +46,9 @@ export function createAuthRoutes(userService: UserService) {
     });
 
     /* ── Login ────────────────────────────────────────── */
-    app.post("/auth/login", async (request, reply) => {
+    app.post("/auth/login", {
+      config: { rateLimit: { max: 10, timeWindow: "1 minute" } },
+    }, async (request, reply) => {
       const parsed = loginSchema.safeParse(request.body);
       if (!parsed.success) {
         return reply.status(400).send({ error: "Validation failed", details: parsed.error.flatten().fieldErrors });
