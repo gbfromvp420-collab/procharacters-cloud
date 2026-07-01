@@ -1,4 +1,6 @@
 import type {
+  AuthResponse,
+  AuthUser,
   CharacterId,
   CommandDefinition,
   CreateSessionResponse,
@@ -13,6 +15,49 @@ import type {
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+/* ── Auth API ───────────────────────────────────────────── */
+
+export async function register(
+  email: string,
+  username: string,
+  password: string,
+  displayName?: string,
+): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, username, password, displayName }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data as { error?: string }).error ?? `Registration failed (${res.status})`);
+  }
+  return res.json() as Promise<AuthResponse>;
+}
+
+export async function login(email: string, password: string): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data as { error?: string }).error ?? `Login failed (${res.status})`);
+  }
+  return res.json() as Promise<AuthResponse>;
+}
+
+export async function getMe(token: string): Promise<{ user: AuthUser }> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
+    headers: { Authorization: "Bearer " + token },
+  });
+  if (!res.ok) {
+    throw new Error("Not authenticated");
+  }
+  return res.json() as Promise<{ user: AuthUser }>;
+}
 
 export async function createSession(characterId: CharacterId): Promise<CreateSessionResponse> {
   const res = await fetch(`${API_BASE}/api/v1/sessions`, {

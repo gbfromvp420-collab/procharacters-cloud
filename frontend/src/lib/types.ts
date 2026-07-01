@@ -1,5 +1,22 @@
 export type CharacterId = "twink-default" | "female-default";
 
+/* ── Auth types ─────────────────────────────────────────── */
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string | null;
+  tokens: number;
+  role: string;
+  createdAt: string;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  token: string;
+}
+
 export interface LiveKitJoinInfo {
   url: string;
   token: string;
