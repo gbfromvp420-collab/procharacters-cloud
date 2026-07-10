@@ -473,6 +473,7 @@ export const createAccountRoutes = (
       let fallbackCharacterId: string | undefined;
       let sessionIndex: number | undefined;
       let importAll: boolean | undefined;
+      let openIndex: number | undefined;
 
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         const body = raw as Record<string, unknown>;
@@ -486,6 +487,7 @@ export const createAccountRoutes = (
         }
         if (typeof body.sessionIndex === "number") sessionIndex = body.sessionIndex;
         if (typeof body.importAll === "boolean") importAll = body.importAll;
+        if (typeof body.openIndex === "number") openIndex = body.openIndex;
       }
 
       try {
@@ -495,6 +497,7 @@ export const createAccountRoutes = (
           characterId,
           characterMap,
           fallbackCharacterId,
+          openIndex,
           sessionIndex,
           importAll: importAll ?? (sessionIndex === undefined ? true : undefined),
         });

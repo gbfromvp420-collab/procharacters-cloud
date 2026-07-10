@@ -22,6 +22,10 @@ export interface ImportPreviewPanelProps {
   onRefreshPreview?: () => void;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Which successful session to open live after import (chat). */
+  openIndex?: number | null;
+  onOpenIndexChange?: (index: number) => void;
+  showOpenPicker?: boolean;
 }
 
 export function ImportPreviewPanel({
@@ -37,6 +41,9 @@ export function ImportPreviewPanel({
   onRefreshPreview,
   onConfirm,
   onCancel,
+  openIndex = null,
+  onOpenIndexChange,
+  showOpenPicker = false,
 }: ImportPreviewPanelProps) {
   const options =
     liveCharacters.length > 0
@@ -45,6 +52,12 @@ export function ImportPreviewPanel({
           id: c.id,
           displayName: c.displayName,
         }));
+
+  const openable = preview.sessions.filter((s) => s.ok);
+  const selected =
+    typeof openIndex === "number" && openable.some((s) => s.index === openIndex)
+      ? openIndex
+      : (openable[0]?.index ?? null);
 
   return (
     <div className="space-y-3 rounded-xl border border-brand-accent/40 bg-brand-accent/5 p-3 animate-fade-in">
@@ -60,27 +73,55 @@ export function ImportPreviewPanel({
         </p>
       </div>
 
-      <ul className="max-h-40 space-y-1 overflow-y-auto text-[11px]">
-        {preview.sessions.slice(0, 12).map((s) => (
-          <li
-            key={`${s.index}-${s.originalCharacterId}`}
-            className={`rounded-lg border px-2 py-1.5 ${
-              s.ok
-                ? "border-brand-border/60 bg-brand-bg text-brand-muted"
-                : "border-red-500/30 bg-red-500/5 text-red-200/90"
-            }`}
-          >
-            <span className="font-medium text-brand-text">{s.characterName}</span>
-            {` · ${s.messageCount} msgs`}
-            {s.ok && s.remappedFrom
-              ? ` · remap ${s.remappedFrom} → ${s.characterId}`
-              : s.ok
-                ? ` · ${s.characterId}`
-                : ` · ${s.error ?? "blocked"}`}
-          </li>
-        ))}
-        {preview.sessions.length > 12 && (
-          <li className="text-brand-muted">…and {preview.sessions.length - 12} more</li>
+      {showOpenPicker && openable.length > 1 && (
+        <p className="text-[11px] text-brand-accent">
+          Select which chat to open live (others still import as saved sessions).
+        </p>
+      )}
+
+      <ul className="max-h-48 space-y-1 overflow-y-auto text-[11px]">
+        {preview.sessions.slice(0, 20).map((s) => {
+          const isOpen = showOpenPicker && s.ok && selected === s.index;
+          return (
+            <li key={`${s.index}-${s.originalCharacterId}`}>
+              <label
+                className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2 py-1.5 ${
+                  s.ok
+                    ? isOpen
+                      ? "border-brand-accent bg-brand-accent/10 text-brand-text"
+                      : "border-brand-border/60 bg-brand-bg text-brand-muted"
+                    : "cursor-default border-red-500/30 bg-red-500/5 text-red-200/90"
+                }`}
+              >
+                {showOpenPicker && s.ok && onOpenIndexChange && (
+                  <input
+                    type="radio"
+                    name="import-open-index"
+                    className="mt-0.5 accent-brand-accent"
+                    checked={selected === s.index}
+                    onChange={() => onOpenIndexChange(s.index)}
+                  />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="font-medium text-brand-text">{s.characterName}</span>
+                  {` · ${s.messageCount} msgs`}
+                  {s.ok && s.remappedFrom
+                    ? ` · remap ${s.remappedFrom} → ${s.characterId}`
+                    : s.ok
+                      ? ` · ${s.characterId}`
+                      : ` · ${s.error ?? "blocked"}`}
+                  {isOpen && (
+                    <span className="ml-1 text-[10px] uppercase tracking-wide text-brand-accent">
+                      open
+                    </span>
+                  )}
+                </span>
+              </label>
+            </li>
+          );
+        })}
+        {preview.sessions.length > 20 && (
+          <li className="text-brand-muted">…and {preview.sessions.length - 20} more</li>
         )}
       </ul>
 

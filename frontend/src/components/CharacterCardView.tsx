@@ -1,9 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { loadStoredSession } from "@/lib/session-storage";
 import {
+  buildCharacterShareUrl,
+  buildResumeCodeShareUrl,
   canNativeShare,
   shareOrCopyUrl,
   shareUrlResultLabel,
@@ -17,15 +20,43 @@ interface CharacterCardViewProps {
 export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
+  const [localResume, setLocalResume] = useState<string | null>(null);
 
   const shareUrl = useMemo(() => `${siteOrigin}${card.cardPath}`, [siteOrigin, card.cardPath]);
+  const autostartUrl = useMemo(
+    () => buildCharacterShareUrl(card.id, { origin: siteOrigin, autostart: true, card: false }),
+    [card.id, siteOrigin],
+  );
+  const resumeUrl = useMemo(
+    () =>
+      localResume
+        ? buildResumeCodeShareUrl(localResume, { origin: siteOrigin, characterId: card.id })
+        : null,
+    [localResume, siteOrigin, card.id],
+  );
+
   const poster = card.posterClip.startsWith("http")
     ? card.posterClip
     : card.posterClip.startsWith("/")
       ? card.posterClip
       : `/${card.posterClip}`;
 
-  const onShare = async () => {
+  useEffect(() => {
+    const stored = loadStoredSession();
+    if (stored?.characterId === card.id && stored.resumeCode) {
+      setLocalResume(stored.resumeCode);
+    } else {
+      setLocalResume(null);
+    }
+  }, [card.id]);
+
+  const flash = (label: string | null) => {
+    if (!label) return;
+    setNotice(label);
+    window.setTimeout(() => setNotice(null), 2200);
+  };
+
+  const onShareCard = async () => {
     const result = await shareOrCopyUrl({
       url: shareUrl,
       title: `${card.displayName} · Procharacters`,
@@ -33,12 +64,29 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
         ? `Meet ${card.displayName} — ${card.teaser}`
         : `Meet ${card.displayName} on Procharacters.cloud`,
     });
-    const label = shareUrlResultLabel(result, "Card link");
-    if (label) {
-      setNotice(label);
-      window.setTimeout(() => setNotice(null), 2200);
-    }
+    flash(shareUrlResultLabel(result, "Card link"));
   };
+
+  const onShareAutostart = async () => {
+    const result = await shareOrCopyUrl({
+      url: autostartUrl,
+      title: `Chat with ${card.displayName}`,
+      text: `Start a live chat with ${card.displayName} on Procharacters.cloud`,
+    });
+    flash(shareUrlResultLabel(result, "Start-chat link"));
+  };
+
+  const onShareResume = async () => {
+    if (!resumeUrl || !localResume) return;
+    const result = await shareOrCopyUrl({
+      url: resumeUrl,
+      title: `Resume chat with ${card.displayName}`,
+      text: `Continue your chat with ${card.displayName} (code ${localResume})`,
+    });
+    flash(shareUrlResultLabel(result, `Resume ${localResume}`));
+  };
+
+  const shareLabel = canNativeShare() ? "Share" : "Copy";
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] sm:pb-8">
@@ -123,7 +171,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </Link>
               <button
                 type="button"
-                onClick={() => void onShare()}
+                onClick={() => void onShareCard()}
                 className="btn-ghost px-6"
                 title={
                   canNativeShare()
@@ -131,8 +179,34 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                     : "Copy card link to clipboard"
                 }
               >
-                {canNativeShare() ? "Share card" : "Copy card link"}
+                {shareLabel} card
               </button>
+              <button
+                type="button"
+                onClick={() => void onShareAutostart()}
+                className="btn-ghost px-6"
+                title={
+                  canNativeShare()
+                    ? "Share autostart chat link"
+                    : "Copy autostart chat link"
+                }
+              >
+                {shareLabel} start
+              </button>
+              {localResume && (
+                <button
+                  type="button"
+                  onClick={() => void onShareResume()}
+                  className="btn-ghost border-amber-500/40 px-6 text-amber-200"
+                  title={
+                    canNativeShare()
+                      ? "Share resume code for your last chat"
+                      : "Copy resume link for your last chat"
+                  }
+                >
+                  {shareLabel} resume
+                </button>
+              )}
               <Link
                 href="/chat"
                 className="btn-ghost px-6 text-brand-muted hover:text-brand-text"
@@ -147,9 +221,21 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </p>
             )}
 
-            <div className="rounded-xl border border-brand-border/70 bg-brand-panel/60 p-4 text-xs text-brand-muted">
-              <p className="font-medium text-brand-text">Share this card</p>
-              <p className="mt-1 break-all font-mono text-[11px] text-brand-muted">{shareUrl}</p>
+            <div className="space-y-3 rounded-xl border border-brand-border/70 bg-brand-panel/60 p-4 text-xs text-brand-muted">
+              <div>
+                <p className="font-medium text-brand-text">Card link</p>
+                <p className="mt-1 break-all font-mono text-[11px]">{shareUrl}</p>
+              </div>
+              <div>
+                <p className="font-medium text-brand-text">Start chat (autostart)</p>
+                <p className="mt-1 break-all font-mono text-[11px]">{autostartUrl}</p>
+              </div>
+              {resumeUrl && (
+                <div>
+                  <p className="font-medium text-amber-200">Resume last chat ({localResume})</p>
+                  <p className="mt-1 break-all font-mono text-[11px]">{resumeUrl}</p>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -161,22 +247,33 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
       {/* Mobile sticky CTA */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
-        <div className="mx-auto flex max-w-lg gap-2">
-          <Link href={card.ctaPath} className="btn-primary flex-1">
-            Start chat
+        <div className="mx-auto flex max-w-lg flex-wrap gap-2">
+          <Link href={card.ctaPath} className="btn-primary min-w-[5rem] flex-1">
+            Start
           </Link>
           <button
             type="button"
-            onClick={() => void onShare()}
-            className="btn-ghost flex-1"
-            title={
-              canNativeShare()
-                ? "Share card via system share sheet"
-                : "Copy card link to clipboard"
-            }
+            onClick={() => void onShareCard()}
+            className="btn-ghost min-w-[4.5rem] flex-1"
           >
-            {canNativeShare() ? "Share" : "Copy link"}
+            {shareLabel} card
           </button>
+          <button
+            type="button"
+            onClick={() => void onShareAutostart()}
+            className="btn-ghost min-w-[4.5rem] flex-1"
+          >
+            {shareLabel} start
+          </button>
+          {localResume && (
+            <button
+              type="button"
+              onClick={() => void onShareResume()}
+              className="btn-ghost min-w-[4.5rem] flex-1 border-amber-500/40 text-amber-200"
+            >
+              {shareLabel} resume
+            </button>
+          )}
         </div>
       </div>
     </main>

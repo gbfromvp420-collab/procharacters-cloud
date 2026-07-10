@@ -73,6 +73,8 @@ const importSessionSchema = z.object({
    * Set false to import only sessionIndex (or 0).
    */
   importAll: z.boolean().optional(),
+  /** When importAll, which export index becomes the primary live session. */
+  openIndex: z.number().int().min(0).max(99).optional(),
 });
 
 const mediaOverridesSchema = z
@@ -448,6 +450,7 @@ export const createSessionRoutes = (
       let fallbackCharacterId: string | undefined;
       let sessionIndex: number | undefined;
       let importAll: boolean | undefined;
+      let openIndex: number | undefined;
 
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         const parsedWrap = importSessionSchema.safeParse(raw);
@@ -460,6 +463,7 @@ export const createSessionRoutes = (
           fallbackCharacterId = parsedWrap.data.fallbackCharacterId;
           sessionIndex = parsedWrap.data.sessionIndex;
           importAll = parsedWrap.data.importAll;
+          openIndex = parsedWrap.data.openIndex;
         }
       }
 
@@ -471,7 +475,8 @@ export const createSessionRoutes = (
           sessionIndex,
           importAll: importAll ?? (sessionIndex === undefined ? true : undefined),
         });
-        return preview;
+        // openIndex is client-only for which row to highlight / open; include for convenience
+        return { ...preview, openIndex: openIndex ?? preview.sessions.find((s) => s.ok)?.index };
       } catch (error) {
         if (error instanceof SessionImportError) {
           return reply.code(400).send({ error: error.message, code: error.code });
@@ -513,6 +518,7 @@ export const createSessionRoutes = (
       let fallbackCharacterId: string | undefined;
       let sessionIndex: number | undefined;
       let importAll: boolean | undefined;
+      let openIndex: number | undefined;
 
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         const parsedWrap = importSessionSchema.safeParse(raw);
@@ -525,6 +531,7 @@ export const createSessionRoutes = (
           fallbackCharacterId = parsedWrap.data.fallbackCharacterId;
           sessionIndex = parsedWrap.data.sessionIndex;
           importAll = parsedWrap.data.importAll;
+          openIndex = parsedWrap.data.openIndex;
         }
       }
 
@@ -536,6 +543,7 @@ export const createSessionRoutes = (
           fallbackCharacterId,
           sessionIndex,
           importAll,
+          openIndex,
         });
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });

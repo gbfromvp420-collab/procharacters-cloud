@@ -5,6 +5,8 @@ export interface StoredSession {
   wsToken: string;
   characterId: string;
   characterName?: string;
+  /** Short resume code when available (for share links). */
+  resumeCode?: string;
   savedAt: string;
 }
 

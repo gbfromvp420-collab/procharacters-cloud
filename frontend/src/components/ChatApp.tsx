@@ -163,6 +163,8 @@ export function ChatApp() {
   const [importCharacterMap, setImportCharacterMap] = useState<Record<string, string>>({});
   const [importFallbackId, setImportFallbackId] = useState("twink-default");
   const [importBusy, setImportBusy] = useState(false);
+  /** Which bulk export session to open live after confirm. */
+  const [importOpenIndex, setImportOpenIndex] = useState<number | null>(null);
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
@@ -258,12 +260,14 @@ export function ChatApp() {
       wsToken: string;
       characterId: string;
       characterName?: string | null;
+      resumeCode?: string | null;
     }) => {
       const stored: StoredSession = {
         sessionId: info.sessionId,
         wsToken: info.wsToken,
         characterId: info.characterId,
         characterName: info.characterName ?? undefined,
+        resumeCode: info.resumeCode ?? undefined,
         savedAt: new Date().toISOString(),
       };
       saveStoredSession(stored);
@@ -281,6 +285,7 @@ export function ChatApp() {
         wsToken,
         characterId: activeCharacterId ?? character,
         characterName,
+        resumeCode,
       });
     }
     clearSessionState();
@@ -294,6 +299,7 @@ export function ChatApp() {
     clearSessionState,
     closeSocket,
     rememberSession,
+    resumeCode,
     sessionId,
     wsToken,
   ]);
@@ -401,6 +407,7 @@ export function ChatApp() {
               wsToken: session.wsToken,
               characterId: session.characterId,
               characterName: name,
+              resumeCode,
             });
             setRestarting(false);
             inputRef.current?.focus();
@@ -492,7 +499,7 @@ export function ChatApp() {
         setRestarting(false);
       };
     },
-    [closeSocket, rememberSession],
+    [closeSocket, rememberSession, resumeCode],
   );
 
   const openLiveSession = useCallback(
@@ -571,6 +578,7 @@ export function ChatApp() {
     setImportPreview(null);
     setImportMissing([]);
     setImportCharacterMap({});
+    setImportOpenIndex(null);
   }, []);
 
   const loadChatImportPreview = async (
@@ -588,6 +596,12 @@ export function ChatApp() {
       fallbackCharacterId: options?.fallbackCharacterId,
     });
     setImportPreview(preview);
+    // Default open picker to first successful row (keep user pick if still valid)
+    setImportOpenIndex((prev) => {
+      const ok = preview.sessions.filter((s) => s.ok);
+      if (prev != null && ok.some((s) => s.index === prev)) return prev;
+      return ok[0]?.index ?? null;
+    });
     return preview;
   };
 
@@ -700,6 +714,7 @@ export function ChatApp() {
         importAll: true,
         characterMap: opts.characterMap,
         fallbackCharacterId: opts.fallbackCharacterId ?? "twink-default",
+        openIndex: importOpenIndex ?? undefined,
       });
       clearImportDraft();
       await openLiveSession(session);
@@ -1574,6 +1589,9 @@ export function ChatApp() {
               onRefreshPreview={() => void onRefreshChatImportPreview()}
               onConfirm={() => void confirmChatImport()}
               onCancel={clearImportDraft}
+              showOpenPicker
+              openIndex={importOpenIndex}
+              onOpenIndexChange={setImportOpenIndex}
             />
           </div>
         )}

@@ -663,6 +663,8 @@ export class SessionManager {
       accountId?: string;
       sessionIndex?: number;
       importAll?: boolean;
+      /** When importing all, which export index to open as the primary live session. */
+      openIndex?: number;
     } & ImportCharacterResolveOptions = {},
   ): Promise<SessionImportResult & { bulk?: BulkImportSummary }> {
     const wantAll =
@@ -677,6 +679,7 @@ export class SessionManager {
         characterId: options.characterId,
         characterMap: options.characterMap,
         fallbackCharacterId: options.fallbackCharacterId,
+        openIndex: options.openIndex,
       });
     }
 
@@ -705,6 +708,8 @@ export class SessionManager {
     wsBaseUrl: string,
     options: {
       accountId?: string;
+      /** Prefer this export session index as the live/primary result when it succeeds. */
+      openIndex?: number;
     } & ImportCharacterResolveOptions = {},
   ): Promise<SessionImportResult & { bulk: BulkImportSummary }> {
     const parsed = parseImportDocumentAll(document);
@@ -713,7 +718,8 @@ export class SessionManager {
     }
 
     const results: Array<BulkImportItemOk | BulkImportItemFail> = [];
-    let primary: SessionImportResult | null = null;
+    let first: SessionImportResult | null = null;
+    let preferred: SessionImportResult | null = null;
     let totalMessages = 0;
 
     for (const entry of parsed.entries) {
@@ -739,7 +745,13 @@ export class SessionManager {
           resumeCode: created.resumeCode,
           remappedFrom: created.imported.remappedFrom,
         });
-        if (!primary) primary = created;
+        if (!first) first = created;
+        if (
+          typeof options.openIndex === "number" &&
+          options.openIndex === entry.index
+        ) {
+          preferred = created;
+        }
       } catch (error) {
         const message =
           error instanceof Error ? error.message : "Import failed for this session";
@@ -755,6 +767,7 @@ export class SessionManager {
       }
     }
 
+    const primary = preferred ?? first;
     const succeeded = results.filter((r) => r.ok).length;
     const failed = results.length - succeeded;
 

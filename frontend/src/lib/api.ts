@@ -654,6 +654,8 @@ export type ImportCharacterOptions = {
   sessionIndex?: number;
   /** Default true for bulk account exports when sessionIndex omitted. */
   importAll?: boolean;
+  /** When importAll, which export index becomes the primary live session. */
+  openIndex?: number;
 };
 
 export type ImportPreviewSession = {
@@ -747,6 +749,7 @@ export async function importSessionDocument(
   if (options?.fallbackCharacterId) body.fallbackCharacterId = options.fallbackCharacterId;
   if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
   if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
+  if (typeof options?.openIndex === "number") body.openIndex = options.openIndex;
 
   // Prefer wrapper when we need flags; raw export only when no options
   const needsWrapper =
@@ -754,7 +757,8 @@ export async function importSessionDocument(
     !!options?.fallbackCharacterId ||
     !!(options?.characterMap && Object.keys(options.characterMap).length > 0) ||
     typeof options?.sessionIndex === "number" ||
-    typeof options?.importAll === "boolean";
+    typeof options?.importAll === "boolean" ||
+    typeof options?.openIndex === "number";
 
   const payload =
     document &&
@@ -801,6 +805,7 @@ export async function importAccountSession(
   if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
   if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
   else if (typeof options?.sessionIndex !== "number") body.importAll = true;
+  if (typeof options?.openIndex === "number") body.openIndex = options.openIndex;
 
   const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/import`, {
     method: "POST",
