@@ -34,7 +34,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
       <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-8 sm:py-12">
         <header className="mb-8 flex items-center justify-between gap-3">
           <Link href="/" className="text-sm text-brand-muted transition hover:text-brand-text">
-            ← Procharacters.cloud
+            ← Gallery
           </Link>
           <span className="rounded-full border border-brand-border bg-brand-panel/80 px-3 py-1 text-xs uppercase tracking-[0.2em] text-brand-muted">
             {card.brand}
@@ -114,10 +114,10 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 Copy card link
               </button>
               <Link
-                href="/"
+                href="/chat"
                 className="rounded-xl border border-brand-border px-6 py-3 text-sm text-brand-muted transition hover:border-brand-accent hover:text-brand-text"
               >
-                Open app
+                Open chat
               </Link>
             </div>
 

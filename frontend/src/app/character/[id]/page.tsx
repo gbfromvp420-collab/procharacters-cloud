@@ -65,9 +65,15 @@ export default async function CharacterCardPage({ params }: PageProps) {
         </p>
         <Link
           href="/"
+          className="rounded-lg border border-brand-border px-5 py-2.5 text-sm text-brand-text"
+        >
+          Back to gallery
+        </Link>
+        <Link
+          href="/chat"
           className="rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-medium text-white"
         >
-          Back to live chat
+          Open live chat
         </Link>
       </main>
     );

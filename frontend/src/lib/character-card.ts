@@ -30,6 +30,19 @@ export async function fetchCharacterCard(characterId: string): Promise<Character
   }
 }
 
+export async function fetchCharacterGallery(): Promise<CharacterCard[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/v1/characters/gallery`, {
+      next: { revalidate: 20 },
+    });
+    if (!res.ok) return [];
+    const data = (await res.json()) as { characters?: CharacterCard[] };
+    return data.characters ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** Resolve clip URL against the public web origin when relative. */
 export function absoluteMediaUrl(mediaPath: string, origin?: string): string {
   if (/^https?:\/\//i.test(mediaPath)) return mediaPath;

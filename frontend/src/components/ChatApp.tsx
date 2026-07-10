@@ -946,6 +946,9 @@ export function ChatApp() {
         <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-muted">
           <span>Naughty Syntax — v2.1 Live Chat</span>
           {copyNotice && <span className="text-brand-accent">· {copyNotice}</span>}
+          <a href="/" className="text-xs text-brand-muted hover:text-brand-accent hover:underline">
+            Gallery
+          </a>
           <button
             type="button"
             onClick={() => setShowAccount((v) => !v)}

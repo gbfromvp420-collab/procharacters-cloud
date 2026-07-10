@@ -56,7 +56,8 @@ export function buildCharacterShareUrl(
     return buildCharacterCardUrl(characterId, { origin });
   }
 
-  const url = new URL(origin);
+  // Autostart / deep-links land on the live chat app route.
+  const url = new URL(`${origin.replace(/\/$/, "")}/chat`);
   url.searchParams.set("character", characterId);
   if (options.autostart) {
     url.searchParams.set("autostart", "1");
@@ -74,7 +75,7 @@ export function buildResumeCodeShareUrl(
     (typeof window !== "undefined"
       ? window.location.origin
       : "https://procharacters-web-production-7288.up.railway.app");
-  const url = new URL(origin);
+  const url = new URL(`${origin.replace(/\/$/, "")}/chat`);
   url.searchParams.set("resume", resumeCode.toUpperCase());
   if (options.characterId) {
     url.searchParams.set("character", options.characterId);

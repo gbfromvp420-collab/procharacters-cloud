@@ -93,6 +93,62 @@ export const createSessionRoutes = (
   livekit: LiveKitService,
 ): FastifyPluginAsync => {
   return async (app) => {
+    app.get("/characters/gallery", async () => {
+      const brandTeasers: Record<string, string> = {
+        "twink-default":
+          "Skinny Latino twink energy — sheer thong, slow edging, photorealistic tease.",
+        "female-default":
+          "Fit athletic tease — crotchless undies, wet anticipation, uncensored heat.",
+      };
+
+      const defaults = Object.values(LIVE_CHARACTER_CATALOG).map((profile) => {
+        const clips = listClipUrls(profile.id);
+        return {
+          id: profile.id,
+          displayName: profile.displayName,
+          kind: "default" as const,
+          brand: "Naughty Syntax",
+          energyLabel: profile.energyLabel,
+          teaser: brandTeasers[profile.id] ?? profile.energyLabel,
+          tags: profile.consistencyTraits.slice(0, 4),
+          avatarBase: profile.avatarBase ?? profile.id,
+          posterClip: clips.teasing || clips.idle,
+          clips,
+          ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
+          cardPath: `/character/${encodeURIComponent(profile.id)}`,
+        };
+      });
+
+      const customs = listCustomCharacters().map((profile) => {
+        const clips = listClipUrls(profile.id);
+        const teaser =
+          profile.appearance.length > 160
+            ? `${profile.appearance.slice(0, 157).trim()}…`
+            : profile.appearance;
+        return {
+          id: profile.id,
+          displayName: profile.displayName,
+          kind: "custom" as const,
+          brand: "Naughty Syntax",
+          energyLabel: profile.energyLabel,
+          teaser,
+          tags: profile.consistencyTraits.slice(0, 4),
+          avatarBase: profile.avatarBase,
+          posterClip: clips.teasing || clips.idle,
+          clips,
+          ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
+          cardPath: `/character/${encodeURIComponent(profile.id)}`,
+        };
+      });
+
+      return {
+        brand: "Naughty Syntax",
+        title: "Live character gallery",
+        count: defaults.length + customs.length,
+        characters: [...defaults, ...customs],
+      };
+    });
+
     app.get("/characters", async () => {
       const [registry, manifest] = await Promise.all([
         listActiveCharacters(),
@@ -261,7 +317,7 @@ export const createSessionRoutes = (
           avatarBase: custom.avatarBase,
           posterClip: clips.teasing || clips.idle,
           clips,
-          ctaPath: `/?character=${encodeURIComponent(custom.id)}&autostart=1`,
+          ctaPath: `/chat?character=${encodeURIComponent(custom.id)}&autostart=1`,
           cardPath: `/character/${encodeURIComponent(custom.id)}`,
         };
       }
@@ -277,7 +333,7 @@ export const createSessionRoutes = (
         avatarBase: builtIn!.avatarBase ?? builtIn!.id,
         posterClip: clips.teasing || clips.idle,
         clips,
-        ctaPath: `/?character=${encodeURIComponent(builtIn!.id)}&autostart=1`,
+        ctaPath: `/chat?character=${encodeURIComponent(builtIn!.id)}&autostart=1`,
         cardPath: `/character/${encodeURIComponent(builtIn!.id)}`,
       };
     });
