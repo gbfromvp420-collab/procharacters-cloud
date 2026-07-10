@@ -719,7 +719,12 @@ export function ChatApp() {
           characterId: activeCharacterId ?? character,
           sessionId,
           resumeCode,
-          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          messages: messages
+            .filter((m) => m.role === "user" || m.role === "assistant")
+            .map((m) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            })),
         });
       } else {
         setError("Nothing to copy yet — start chatting first");
@@ -737,7 +742,12 @@ export function ChatApp() {
             characterId: activeCharacterId ?? character,
             sessionId,
             resumeCode,
-            messages: messages.map((m) => ({ role: m.role, content: m.content })),
+            messages: messages
+              .filter((m) => m.role === "user" || m.role === "assistant")
+              .map((m) => ({
+                role: m.role as "user" | "assistant",
+                content: m.content,
+              })),
           });
           const ok = await copyText(markdown);
           flashCopy(ok ? "Transcript copied (local Markdown)" : "Copy failed");
