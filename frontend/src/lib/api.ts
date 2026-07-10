@@ -258,6 +258,44 @@ export async function refreshAllAccountResumes(
   }>;
 }
 
+/** Email all resume links to the account's linked email. */
+export async function emailAccountResumeLinks(accountToken: string): Promise<{
+  ok: boolean;
+  email: string;
+  count: number;
+  delivered: boolean;
+  provider: string;
+  mailError?: string;
+  preview?: Array<{ characterName: string; resumeCode: string; resumeUrl: string }>;
+  devHint?: string;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/email-resumes`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: string; code?: string };
+      if (j.error) detail = j.code ? `${j.error} (${j.code})` : j.error;
+    } catch {
+      /* keep raw */
+    }
+    throw new Error(detail || `Email resumes failed (${res.status})`);
+  }
+  return res.json() as Promise<{
+    ok: boolean;
+    email: string;
+    count: number;
+    delivered: boolean;
+    provider: string;
+    mailError?: string;
+    preview?: Array<{ characterName: string; resumeCode: string; resumeUrl: string }>;
+    devHint?: string;
+  }>;
+}
+
 /** Latest account-owned chat for a character (includes resume code). */
 export async function fetchLatestAccountSessionForCharacter(
   accountToken: string,

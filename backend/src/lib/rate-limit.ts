@@ -97,6 +97,10 @@ export const RATE_LIMITS = {
     limit: Number(process.env.RATE_LIMIT_IMPORT_IP ?? 20),
     windowMs: Number(process.env.RATE_LIMIT_IMPORT_IP_WINDOW_MS ?? 60 * 60 * 1000),
   },
+  resumeEmailPerAccount: {
+    limit: Number(process.env.RATE_LIMIT_RESUME_EMAIL ?? 5),
+    windowMs: Number(process.env.RATE_LIMIT_RESUME_EMAIL_WINDOW_MS ?? 60 * 60 * 1000),
+  },
 };
 
 /** Apply multiple limiters; returns first denial or null if all pass. */

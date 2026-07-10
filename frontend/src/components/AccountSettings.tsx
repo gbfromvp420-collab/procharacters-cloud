@@ -16,6 +16,7 @@ import {
   listAccountSessions,
   listLiveCharacters,
   previewImportDocument,
+  emailAccountResumeLinks,
   refreshAccountSessionResume,
   refreshAllAccountResumes,
   type ImportPreview,
@@ -474,6 +475,41 @@ export function AccountSettings() {
       flash(`Downloaded ${doc.count} resume link(s) → ${doc.filename}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not download resume links");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onEmailResumeLinks = async () => {
+    if (!account) return;
+    if (!email) {
+      setError("Link an email on this account first (magic link section above)");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await emailAccountResumeLinks(account.token);
+      if (result.delivered) {
+        flash(`Emailed ${result.count} resume link(s) to ${result.email}`);
+      } else {
+        flash(
+          result.devHint ||
+            `Email not delivered (${result.provider}) — try Download resumes.md`,
+        );
+        if (result.mailError) setError(result.mailError);
+        else if (!result.delivered && result.count > 0) {
+          // Offer download as fallback when mailer is off
+          const doc = await buildResumeLinksMarkdown();
+          if (doc) {
+            const { downloadMarkdown } = await import("@/lib/download-json");
+            downloadMarkdown(doc.filename, doc.text);
+            flash(`Mailer offline — downloaded ${doc.count} link(s) as ${doc.filename}`);
+          }
+        }
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not email resume links");
     } finally {
       setBusy(false);
     }
@@ -1091,6 +1127,19 @@ export function AccountSettings() {
                         title="Download all resume links as a .md file"
                       >
                         Download resumes.md
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || !sessions.some((s) => s.resumeCode) || !email}
+                        onClick={() => void onEmailResumeLinks()}
+                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
+                        title={
+                          email
+                            ? `Email resume links to ${email}`
+                            : "Link an email first to use this"
+                        }
+                      >
+                        Email resumes
                       </button>
                       <button
                         type="button"

@@ -13,7 +13,12 @@ import {
   setAccountPassphrase,
   verifyMagicLink,
 } from "../lib/accounts/account-store.js";
-import { buildMagicLinkUrl, sendMagicLinkEmail } from "../lib/accounts/mailer.js";
+import {
+  buildMagicLinkUrl,
+  sendMagicLinkEmail,
+  sendResumeLinksEmail,
+  type ResumeLinkItem,
+} from "../lib/accounts/mailer.js";
 import {
   RATE_LIMITS,
   clientIp,
@@ -411,6 +416,93 @@ export const createAccountRoutes = (
       }
       const result = await sessionManager.refreshAllAccountResumeCodes(account.id);
       return { ok: true, ...result };
+    });
+
+    /**
+     * Email all resume links to the account's linked email (Resend).
+     * Requires a linked email. Rate-limited per account.
+     */
+    app.post("/accounts/me/sessions/email-resumes", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      if (!account.email?.trim()) {
+        return reply.code(400).send({
+          error: "Link an email on this account first (magic link or link-email)",
+          code: "EMAIL_REQUIRED",
+        });
+      }
+
+      const denied = enforceRateLimits([
+        {
+          key: `resume-email:acct:${account.id}`,
+          limit: RATE_LIMITS.resumeEmailPerAccount.limit,
+          windowMs: RATE_LIMITS.resumeEmailPerAccount.windowMs,
+        },
+      ]);
+      if (denied) return rateLimited(reply, denied);
+
+      const siteBase =
+        env.MAGIC_LINK_BASE_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        "https://procharacters-web-production-7288.up.railway.app";
+      const base = siteBase.replace(/\/$/, "");
+
+      const sessions = await sessionManager.listAccountSessions(account.id);
+      const items: ResumeLinkItem[] = sessions
+        .filter((s) => s.resumeCode)
+        .map((s) => {
+          const url = new URL(`${base}/chat`);
+          url.searchParams.set("resume", s.resumeCode!);
+          url.searchParams.set("character", s.characterId);
+          return {
+            characterName: s.characterName,
+            characterId: s.characterId,
+            resumeCode: s.resumeCode!,
+            resumeUrl: url.toString(),
+            messageCount: s.messageCount,
+            status: s.status,
+            expiresAt: s.resumeExpiresAt,
+          };
+        });
+
+      if (items.length === 0) {
+        return reply.code(400).send({
+          error: "No resume codes to email — start a chat while signed in first",
+          code: "EMPTY",
+        });
+      }
+
+      const send = await sendResumeLinksEmail({
+        to: account.email.trim(),
+        handle: account.handle,
+        items,
+      });
+
+      const includePreview = !send.delivered || env.isDev;
+
+      return {
+        ok: true,
+        email: account.email.trim(),
+        count: items.length,
+        delivered: send.delivered,
+        provider: send.provider,
+        ...(send.error ? { mailError: send.error } : {}),
+        ...(includePreview
+          ? {
+              // Dev / no-mailer: client can still download/show links
+              preview: items.map((i) => ({
+                characterName: i.characterName,
+                resumeCode: i.resumeCode,
+                resumeUrl: i.resumeUrl,
+              })),
+              devHint: send.delivered
+                ? undefined
+                : "Email not sent (no RESEND_API_KEY) — use Download resumes.md or links below",
+            }
+          : {}),
+      };
     });
 
     /**
