@@ -15,9 +15,16 @@ interface AvatarVideoProps {
   characterName: string | null;
   /** Tighter frame for mobile / side-by-side layouts */
   compact?: boolean;
+  /** Floating picture-in-picture mini player */
+  pip?: boolean;
 }
 
-export function AvatarVideo({ avatar, characterName, compact = false }: AvatarVideoProps) {
+export function AvatarVideo({
+  avatar,
+  characterName,
+  compact = false,
+  pip = false,
+}: AvatarVideoProps) {
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [showIncoming, setShowIncoming] = useState(false);
@@ -51,19 +58,32 @@ export function AvatarVideo({ avatar, characterName, compact = false }: AvatarVi
     };
   }, [mediaUrl, activeSrc]);
 
+  const frameClass = pip
+    ? "aspect-[3/4] w-full rounded-2xl border-brand-accent/40 shadow-glow-sm"
+    : compact
+      ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4] rounded-xl"
+      : "aspect-[3/4] rounded-xl";
+
   return (
     <div
-      className={`relative w-full overflow-hidden rounded-xl border border-brand-border bg-brand-bg shadow-card ${
-        compact ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4]" : "aspect-[3/4]"
-      }`}
+      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ${frameClass}`}
     >
       {!activeSrc && (
-        <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center sm:p-6">
-          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-border to-brand-accentDim opacity-60 sm:h-16 sm:w-16" />
-          <p className="text-sm text-brand-muted">Video layer idle</p>
-          {!compact && (
+        <div
+          className={`flex h-full flex-col items-center justify-center gap-1 text-center ${
+            pip ? "p-2" : "gap-2 p-4 sm:p-6"
+          }`}
+        >
+          <div
+            className={`rounded-full bg-gradient-to-br from-brand-border to-brand-accentDim opacity-60 ${
+              pip ? "h-8 w-8" : "h-12 w-12 sm:h-16 sm:w-16"
+            }`}
+          />
+          {!pip && <p className="text-sm text-brand-muted">Video layer idle</p>}
+          {!compact && !pip && (
             <p className="text-xs text-brand-muted">Start a session to load avatar clips</p>
           )}
+          {pip && <p className="text-[10px] text-brand-muted">Idle</p>}
         </div>
       )}
 
@@ -72,7 +92,7 @@ export function AvatarVideo({ avatar, characterName, compact = false }: AvatarVi
           src={activeSrc}
           isVideo={!!isVideo}
           visible={!showIncoming}
-          label={avatar ? formatLabel(avatar.emotion) : undefined}
+          label={pip ? undefined : avatar ? formatLabel(avatar.emotion) : undefined}
         />
       )}
 
@@ -81,16 +101,25 @@ export function AvatarVideo({ avatar, characterName, compact = false }: AvatarVi
           src={incomingSrc}
           isVideo={incomingSrc.endsWith(".mp4") || incomingSrc.endsWith(".webm")}
           visible={showIncoming}
-          label={avatar ? formatLabel(avatar.emotion) : undefined}
+          label={pip ? undefined : avatar ? formatLabel(avatar.emotion) : undefined}
         />
       )}
 
-      {avatar && (
+      {avatar && !pip && (
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
           <p className="text-sm font-medium text-white">{characterName ?? "Character"}</p>
           <p className="text-xs text-white/70">
             {formatLabel(avatar.emotion)} · {formatLabel(avatar.pose)}
           </p>
+        </div>
+      )}
+
+      {avatar && pip && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent px-2 pb-1.5 pt-6">
+          <p className="truncate text-[10px] font-medium text-white">
+            {characterName ?? "Live"}
+          </p>
+          <p className="truncate text-[9px] text-white/70">{formatLabel(avatar.emotion)}</p>
         </div>
       )}
     </div>
