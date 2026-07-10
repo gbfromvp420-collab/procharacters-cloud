@@ -1460,13 +1460,55 @@ export function ChatApp() {
                         {characters.find((c) => c.id === character)?.displayName}
                       </span>
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowMediaAdvanced((v) => !v)}
-                      className="text-xs text-brand-accent hover:underline"
-                    >
-                      {showMediaAdvanced ? "Hide" : "Edit media"}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-brand-muted">
+                        <input
+                          type="checkbox"
+                          checked={
+                            characters.find((c) => c.id === character)?.featured === true
+                          }
+                          disabled={creating}
+                          onChange={(e) => {
+                            const selected = characters.find((c) => c.id === character);
+                            if (!selected || selected.kind !== "custom") return;
+                            void (async () => {
+                              setCreating(true);
+                              try {
+                                const updated = await updateCustomCharacter(selected.id, {
+                                  featured: e.target.checked,
+                                });
+                                setCharacters((prev) =>
+                                  prev.map((c) =>
+                                    c.id === selected.id
+                                      ? { ...c, featured: updated.featured === true }
+                                      : c,
+                                  ),
+                                );
+                                flashCopy(
+                                  e.target.checked
+                                    ? "Pinned to Featured row"
+                                    : "Removed from Featured",
+                                );
+                              } catch (err) {
+                                setError(
+                                  err instanceof Error ? err.message : "Could not update featured",
+                                );
+                              } finally {
+                                setCreating(false);
+                              }
+                            })();
+                          }}
+                        />
+                        Featured
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaAdvanced((v) => !v)}
+                        className="text-xs text-brand-accent hover:underline"
+                      >
+                        {showMediaAdvanced ? "Hide" : "Edit media"}
+                      </button>
+                    </div>
                   </div>
                   {showMediaAdvanced && (
                     <div className="grid gap-2">

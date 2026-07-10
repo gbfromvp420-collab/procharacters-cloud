@@ -30,6 +30,8 @@ export interface CustomCharacterInput {
   mediaBase?: string;
   /** Optional per-emotion absolute/relative media URLs (override mediaBase). */
   mediaOverrides?: MediaOverrides;
+  /** Pin on gallery Featured row. */
+  featured?: boolean;
 }
 
 export interface CustomCharacterRecord extends LiveCharacterProfile {
@@ -44,6 +46,7 @@ export interface CustomCharacterRecord extends LiveCharacterProfile {
   createdAt: string;
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
+  featured?: boolean;
 }
 
 interface CustomCharacterFile {
@@ -282,6 +285,7 @@ export async function createCustomCharacter(
     characterPrompt,
     appearanceAnchor,
     createdAt: new Date().toISOString(),
+    featured: raw.featured === true,
     ...(mediaBase ? { mediaBase } : {}),
     ...(mediaOverrides ? { mediaOverrides } : {}),
   };
@@ -296,6 +300,7 @@ export interface UpdateCustomCharacterInput {
   mediaOverrides?: MediaOverrides | null;
   energy?: string;
   clothing?: string;
+  featured?: boolean;
 }
 
 export async function updateCustomCharacter(
@@ -337,6 +342,10 @@ export async function updateCustomCharacter(
     next.clothing = patch.clothing.trim();
     next.signatureClothing =
       next.clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit";
+  }
+
+  if (patch.featured !== undefined) {
+    next.featured = patch.featured === true;
   }
 
   store.set(id, next);

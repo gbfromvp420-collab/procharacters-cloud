@@ -57,6 +57,7 @@ const createCustomCharacterSchema = z.object({
   audience: z.enum(["gay", "bi", "straight", "any"]).optional(),
   mediaBase: z.string().min(1).max(300).optional(),
   mediaOverrides: mediaOverridesSchema,
+  featured: z.boolean().optional(),
 });
 
 const updateCustomCharacterSchema = z.object({
@@ -64,6 +65,7 @@ const updateCustomCharacterSchema = z.object({
   mediaOverrides: mediaOverridesSchema.nullable(),
   energy: z.string().min(4).max(500).optional(),
   clothing: z.string().min(2).max(200).optional(),
+  featured: z.boolean().optional(),
 });
 
 const injector = new LivePromptInjector();
@@ -114,6 +116,7 @@ export const createSessionRoutes = (
           avatarBase: profile.avatarBase ?? profile.id,
           posterClip: clips.teasing || clips.idle,
           clips,
+          featured: true,
           ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
           cardPath: `/character/${encodeURIComponent(profile.id)}`,
         };
@@ -136,16 +139,21 @@ export const createSessionRoutes = (
           avatarBase: profile.avatarBase,
           posterClip: clips.teasing || clips.idle,
           clips,
+          featured: profile.featured === true,
           ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
           cardPath: `/character/${encodeURIComponent(profile.id)}`,
         };
       });
 
+      const characters = [...defaults, ...customs];
+      const featured = characters.filter((c) => c.featured);
+
       return {
         brand: "Naughty Syntax",
         title: "Live character gallery",
-        count: defaults.length + customs.length,
-        characters: [...defaults, ...customs],
+        count: characters.length,
+        featured,
+        characters,
       };
     });
 
@@ -164,6 +172,7 @@ export const createSessionRoutes = (
         energyLabel: profile.energyLabel,
         mediaBase: profile.mediaBase,
         mediaOverrides: profile.mediaOverrides,
+        featured: profile.featured === true,
         clips: listClipUrls(profile.id),
       }));
 
@@ -176,6 +185,7 @@ export const createSessionRoutes = (
             kind: "default" as const,
             avatarBase: profile.avatarBase ?? profile.id,
             energyLabel: profile.energyLabel,
+            featured: true,
             clips: listClipUrls(profile.id),
           })),
           ...custom,
@@ -224,6 +234,7 @@ export const createSessionRoutes = (
           createdAt: created.createdAt,
           mediaBase: created.mediaBase,
           mediaOverrides: created.mediaOverrides,
+          featured: created.featured === true,
           clips: listClipUrls(created.id),
         });
       } catch (error) {
@@ -250,6 +261,7 @@ export const createSessionRoutes = (
           avatarBase: updated.avatarBase,
           mediaBase: updated.mediaBase,
           mediaOverrides: updated.mediaOverrides,
+          featured: updated.featured === true,
           clips: listClipUrls(updated.id),
         };
       } catch (error) {
@@ -317,6 +329,7 @@ export const createSessionRoutes = (
           avatarBase: custom.avatarBase,
           posterClip: clips.teasing || clips.idle,
           clips,
+          featured: custom.featured === true,
           ctaPath: `/chat?character=${encodeURIComponent(custom.id)}&autostart=1`,
           cardPath: `/character/${encodeURIComponent(custom.id)}`,
         };
@@ -333,6 +346,7 @@ export const createSessionRoutes = (
         avatarBase: builtIn!.avatarBase ?? builtIn!.id,
         posterClip: clips.teasing || clips.idle,
         clips,
+        featured: true,
         ctaPath: `/chat?character=${encodeURIComponent(builtIn!.id)}&autostart=1`,
         cardPath: `/character/${encodeURIComponent(builtIn!.id)}`,
       };

@@ -15,6 +15,7 @@ export interface LiveCharacterOption {
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
   clips?: Record<MediaClipKey, string>;
+  featured?: boolean;
 }
 
 export interface LiveKitJoinInfo {
@@ -66,6 +67,7 @@ export interface CreateCustomCharacterResponse {
   createdAt: string;
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
+  featured?: boolean;
   clips?: Record<MediaClipKey, string>;
 }
 
@@ -74,6 +76,7 @@ export interface UpdateCustomCharacterInput {
   mediaOverrides?: MediaOverrides | null;
   energy?: string;
   clothing?: string;
+  featured?: boolean;
 }
 
 export interface ChatMessage {

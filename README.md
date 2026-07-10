@@ -17,7 +17,7 @@ What works today:
 - Custom characters **persist** to disk (`CUSTOM_CHARACTERS_PATH`, Railway volume `/data`)
 - `DELETE /api/v1/characters/custom/:id` + UI delete
 - **Cross-visit memory**: transcripts saved under `SESSIONS_PATH`; UI **Resume last chat**
-- **Gallery homepage**: `/` browse models (search/sort/filter); live chat at `/chat`; cards at `/character/<id>`
+- **Gallery homepage**: `/` with **Featured** row, search/sort/filter; chat at `/chat`; cards at `/character/<id>`
 - **Private resume**: `?resume=CODE` (no raw tokens)
 - **Accounts**: email **magic link**, handle/passphrase, **link email** to existing handle accounts
 - **Custom avatar clips**: single + **batch upload**, URL overrides, live previews in the editor

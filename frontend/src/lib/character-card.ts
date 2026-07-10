@@ -15,6 +15,7 @@ export interface CharacterCard {
   clips: Record<MediaClipKey, string>;
   ctaPath: string;
   cardPath: string;
+  featured?: boolean;
 }
 
 export async function fetchCharacterCard(characterId: string): Promise<CharacterCard | null> {
