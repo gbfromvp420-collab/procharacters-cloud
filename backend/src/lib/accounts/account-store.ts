@@ -33,6 +33,8 @@ export interface MagicLinkRecord {
   createdAt: string;
   expiresAt: string;
   consumedAt?: string;
+  /** If set, verifying attaches this email to the existing account (link flow). */
+  linkAccountId?: string;
 }
 
 interface AccountFile {
@@ -267,18 +269,44 @@ async function getOrCreateAccountByEmail(emailRaw: string): Promise<AccountRecor
  * Create a one-time magic login token for an email (creates account if needed).
  * Returns the raw token for building the verify URL / sending email.
  */
-export async function requestMagicLink(emailRaw: string): Promise<{
+export async function requestMagicLink(
+  emailRaw: string,
+  options?: { linkAccountId?: string },
+): Promise<{
   email: string;
   token: string;
   expiresAt: string;
   accountId: string;
   handle: string;
   isNewAccount: boolean;
+  linking: boolean;
 }> {
   await ensureLoaded();
   const email = normalizeEmail(emailRaw);
+  if (!isValidEmail(email)) {
+    throw new AccountError("Enter a valid email address", "VALIDATION");
+  }
+
+  const linkAccountId = options?.linkAccountId;
+  if (linkAccountId) {
+    const target = accounts.get(linkAccountId);
+    if (!target) {
+      throw new AccountError("Account not found", "NOT_FOUND");
+    }
+    const ownerOfEmail = emailIndex.get(email);
+    if (ownerOfEmail && ownerOfEmail !== linkAccountId) {
+      throw new AccountError("That email is already linked to another account", "CONFLICT");
+    }
+    if (target.email && normalizeEmail(target.email) === email) {
+      throw new AccountError("This account already uses that email", "VALIDATION");
+    }
+  }
+
   const existed = emailIndex.has(email);
-  const account = await getOrCreateAccountByEmail(email);
+  // Login flow may create; link flow only verifies existing target account
+  const account = linkAccountId
+    ? accounts.get(linkAccountId)!
+    : await getOrCreateAccountByEmail(email);
 
   // Invalidate previous unconsumed magic links for this email
   for (const [hash, record] of magicLinks) {
@@ -293,6 +321,7 @@ export async function requestMagicLink(emailRaw: string): Promise<{
     email,
     createdAt: new Date().toISOString(),
     expiresAt,
+    ...(linkAccountId ? { linkAccountId } : {}),
   });
   await persist();
 
@@ -302,7 +331,8 @@ export async function requestMagicLink(emailRaw: string): Promise<{
     expiresAt,
     accountId: account.id,
     handle: account.handle,
-    isNewAccount: !existed,
+    isNewAccount: !linkAccountId && !existed,
+    linking: !!linkAccountId,
   };
 }
 
@@ -312,6 +342,7 @@ export async function verifyMagicLink(tokenRaw: string): Promise<{
   email?: string;
   token: string;
   expiresAt: string;
+  linked?: boolean;
 }> {
   await ensureLoaded();
   const token = tokenRaw.trim();
@@ -332,13 +363,37 @@ export async function verifyMagicLink(tokenRaw: string): Promise<{
   magic.consumedAt = new Date().toISOString();
   magicLinks.delete(tokenHash);
 
-  const account = await getOrCreateAccountByEmail(magic.email);
+  let account: AccountRecord;
+  let linked = false;
+
+  if (magic.linkAccountId) {
+    account = accounts.get(magic.linkAccountId)!;
+    if (!account) {
+      throw new AccountError("Account not found for email link", "NOT_FOUND");
+    }
+    const ownerOfEmail = emailIndex.get(magic.email);
+    if (ownerOfEmail && ownerOfEmail !== account.id) {
+      throw new AccountError("That email is already linked to another account", "CONFLICT");
+    }
+    // Detach email from any stale index
+    if (account.email) {
+      emailIndex.delete(normalizeEmail(account.email));
+    }
+    account = { ...account, email: magic.email };
+    accounts.set(account.id, account);
+    emailIndex.set(magic.email, account.id);
+    linked = true;
+  } else {
+    account = await getOrCreateAccountByEmail(magic.email);
+  }
+
   const issued = await issueToken(account.id);
   await persist();
   return {
     id: account.id,
     handle: account.handle,
     email: account.email,
+    linked,
     ...issued,
   };
 }

@@ -17,10 +17,10 @@ What works today:
 - Custom characters **persist** to disk (`CUSTOM_CHARACTERS_PATH`, Railway volume `/data`)
 - `DELETE /api/v1/characters/custom/:id` + UI delete
 - **Cross-visit memory**: transcripts saved under `SESSIONS_PATH`; UI **Resume last chat**
-- **Gallery homepage**: `/` browse models; live chat at `/chat`; share cards at `/character/<id>`
+- **Gallery homepage**: `/` browse models (search/sort/filter); live chat at `/chat`; cards at `/character/<id>`
 - **Private resume**: `?resume=CODE` (no raw tokens)
-- **Accounts**: email **magic link** (Resend optional) + handle/passphrase fallback; multi-device sessions
-- **Custom avatar clips**: `mediaBase`, URL overrides, and **in-browser mp4/webm upload** to API volume
+- **Accounts**: email **magic link**, handle/passphrase, **link email** to existing handle accounts
+- **Custom avatar clips**: uploads + URL overrides + **live clip previews** in the editor
 - Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,
   `assistant_stream`, `assistant_complete`, `avatar_update`, `session_ended`, `error`

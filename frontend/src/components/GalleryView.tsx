@@ -10,14 +10,47 @@ interface GalleryViewProps {
   siteOrigin: string;
 }
 
+type SortMode = "name" | "kind" | "energy";
+
 export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [filter, setFilter] = useState<"all" | "default" | "custom">("all");
+  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState<SortMode>("kind");
   const [notice, setNotice] = useState<string | null>(null);
 
   const visible = useMemo(() => {
-    if (filter === "all") return characters;
-    return characters.filter((c) => c.kind === filter);
-  }, [characters, filter]);
+    const q = query.trim().toLowerCase();
+    let list = characters.filter((c) => {
+      if (filter !== "all" && c.kind !== filter) return false;
+      if (!q) return true;
+      const hay = [
+        c.displayName,
+        c.teaser,
+        c.energyLabel,
+        c.kind,
+        ...(c.tags ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+
+    list = [...list].sort((a, b) => {
+      if (sort === "name") {
+        return a.displayName.localeCompare(b.displayName);
+      }
+      if (sort === "energy") {
+        return a.energyLabel.localeCompare(b.energyLabel) || a.displayName.localeCompare(b.displayName);
+      }
+      // kind: signature first, then custom, then name
+      if (a.kind !== b.kind) {
+        return a.kind === "default" ? -1 : 1;
+      }
+      return a.displayName.localeCompare(b.displayName);
+    });
+
+    return list;
+  }, [characters, filter, query, sort]);
 
   const copyCard = async (card: CharacterCard) => {
     const url = `${siteOrigin}${card.cardPath}`;
@@ -38,8 +71,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               Live character gallery
             </h1>
             <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
-              Browse signature models and custom characters. Open a card to share, or jump
-              straight into uncensored live chat.
+              Browse signature models and custom characters. Search, sort, open a card to share, or
+              jump into uncensored live chat.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -53,7 +86,28 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </div>
         </header>
 
-        <div className="mb-6 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search name, energy, tags…"
+            className="w-full flex-1 rounded-xl border border-brand-border bg-brand-panel px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none"
+          />
+          <label className="flex items-center gap-2 text-xs text-brand-muted">
+            Sort
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+            >
+              <option value="kind">Signature first</option>
+              <option value="name">Name A–Z</option>
+              <option value="energy">Energy</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           {(
             [
               ["all", "All"],
@@ -81,17 +135,32 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               </span>
             </button>
           ))}
+          <span className="ml-auto text-xs text-brand-muted">
+            Showing {visible.length} of {characters.length}
+          </span>
         </div>
 
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-brand-border bg-brand-panel p-10 text-center">
-            <p className="text-brand-text">No characters in this filter yet.</p>
+            <p className="text-brand-text">No characters match this search.</p>
             <p className="mt-2 text-sm text-brand-muted">
-              Create a custom model in live chat, then it will appear here.
+              Try another filter, clear search, or create a custom model in chat.
             </p>
-            <Link href="/chat" className="mt-4 inline-block text-sm text-brand-accent hover:underline">
-              Go to chat →
-            </Link>
+            <div className="mt-4 flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setQuery("");
+                  setFilter("all");
+                }}
+                className="text-sm text-brand-accent hover:underline"
+              >
+                Clear filters
+              </button>
+              <Link href="/chat" className="text-sm text-brand-accent hover:underline">
+                Go to chat →
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

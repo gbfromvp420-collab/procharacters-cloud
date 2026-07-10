@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AvatarPanel } from "@/components/AvatarPanel";
 import { AvatarVideo } from "@/components/AvatarVideo";
+import { ClipPreview } from "@/components/ClipPreview";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import {
@@ -12,6 +13,7 @@ import {
   deleteCustomCharacter,
   listAccountSessions,
   listLiveCharacters,
+  linkEmailToAccount,
   loginAccount,
   logoutAccount,
   registerAccount,
@@ -690,6 +692,26 @@ export function ChatApp() {
     }
   };
 
+  const handleLinkEmail = async () => {
+    if (!account) return;
+    setAccountBusy(true);
+    setError(null);
+    setMagicDevLink(null);
+    try {
+      const result = await linkEmailToAccount(account.token, accountEmail.trim());
+      if (result.magicUrl) {
+        setMagicDevLink(result.magicUrl);
+        flashCopy("Confirm email link ready");
+      } else {
+        flashCopy(result.delivered ? "Check your email to confirm" : "Link request sent");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not link email");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
   const handleAccountLogout = async () => {
     if (account) {
       try {
@@ -963,7 +985,9 @@ export function ChatApp() {
             {account ? (
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-brand-text">Signed in as <strong>@{account.handle}</strong></span>
+                  <span className="text-brand-text">
+                    Signed in as <strong>@{account.handle}</strong>
+                  </span>
                   <button
                     type="button"
                     onClick={handleAccountLogout}
@@ -979,6 +1003,34 @@ export function ChatApp() {
                     Refresh chats
                   </button>
                 </div>
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    placeholder="Link email for magic sign-in"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <button
+                    type="button"
+                    disabled={accountBusy || !accountEmail.includes("@")}
+                    onClick={() => void handleLinkEmail()}
+                    className="rounded-lg border border-brand-accent/50 px-3 py-2 text-sm text-brand-text hover:border-brand-accent disabled:opacity-50"
+                  >
+                    Link email
+                  </button>
+                </div>
+                {magicDevLink && (
+                  <div className="rounded-lg border border-brand-accent/40 bg-brand-bg p-2 text-xs">
+                    <p className="text-brand-muted">Confirm link (open to attach email):</p>
+                    <a
+                      href={magicDevLink}
+                      className="mt-1 block break-all text-brand-accent hover:underline"
+                    >
+                      {magicDevLink}
+                    </a>
+                  </div>
+                )}
                 {accountSessions.length === 0 ? (
                   <p className="text-xs text-brand-muted">
                     No saved chats on this account yet. Start a session while signed in.
@@ -1314,31 +1366,33 @@ export function ChatApp() {
                       placeholder="Media base folder — /avatar/packs/your-name"
                       className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                     />
-                    <div className="grid gap-1 sm:grid-cols-2">
-                      <input
-                        value={clipIdle}
-                        onChange={(e) => setClipIdle(e.target.value)}
-                        placeholder="idle clip URL (optional)"
-                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                      />
-                      <input
-                        value={clipTeasing}
-                        onChange={(e) => setClipTeasing(e.target.value)}
-                        placeholder="teasing clip URL (optional)"
-                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                      />
-                      <input
-                        value={clipPlayful}
-                        onChange={(e) => setClipPlayful(e.target.value)}
-                        placeholder="playful clip URL (optional)"
-                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                      />
-                      <input
-                        value={clipAroused}
-                        onChange={(e) => setClipAroused(e.target.value)}
-                        placeholder="aroused clip URL (optional)"
-                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                      />
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(
+                        [
+                          ["idle", clipIdle, setClipIdle],
+                          ["teasing", clipTeasing, setClipTeasing],
+                          ["playful", clipPlayful, setClipPlayful],
+                          ["aroused", clipAroused, setClipAroused],
+                        ] as const
+                      ).map(([emotion, value, setValue]) => (
+                        <div key={emotion} className="space-y-1">
+                          <ClipPreview
+                            src={
+                              value ||
+                              (mediaBase
+                                ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
+                                : `/avatar/${customBase}/${emotion}.mp4`)
+                            }
+                            label={emotion}
+                          />
+                          <input
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            placeholder={`${emotion} clip URL (optional)`}
+                            className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                          />
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
@@ -1371,7 +1425,7 @@ export function ChatApp() {
                         placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
                         className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                       />
-                      <div className="grid gap-2 sm:grid-cols-2">
+                      <div className="grid gap-3 sm:grid-cols-2">
                         {(
                           [
                             ["idle", clipIdle, setClipIdle],
@@ -1379,30 +1433,42 @@ export function ChatApp() {
                             ["playful", clipPlayful, setClipPlayful],
                             ["aroused", clipAroused, setClipAroused],
                           ] as const
-                        ).map(([emotion, value, setValue]) => (
-                          <div key={emotion} className="space-y-1">
-                            <input
-                              value={value}
-                              onChange={(e) => setValue(e.target.value)}
-                              placeholder={`${emotion} URL (optional)`}
-                              className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                            />
-                            <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
-                              <span>Upload {emotion}.mp4</span>
+                        ).map(([emotion, value, setValue]) => {
+                          const selected = characters.find((c) => c.id === character);
+                          const previewSrc =
+                            value ||
+                            selected?.clips?.[emotion] ||
+                            (mediaBase
+                              ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
+                              : selected?.avatarBase
+                                ? `/avatar/${selected.avatarBase}/${emotion}.mp4`
+                                : null);
+                          return (
+                            <div key={emotion} className="space-y-1">
+                              <ClipPreview src={previewSrc} label={emotion} />
                               <input
-                                type="file"
-                                accept="video/mp4,video/webm"
-                                className="hidden"
-                                disabled={creating}
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] ?? null;
-                                  e.target.value = "";
-                                  void handleUploadClip(emotion, file);
-                                }}
+                                value={value}
+                                onChange={(e) => setValue(e.target.value)}
+                                placeholder={`${emotion} URL (optional)`}
+                                className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
                               />
-                            </label>
-                          </div>
-                        ))}
+                              <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
+                                <span>Upload {emotion}.mp4</span>
+                                <input
+                                  type="file"
+                                  accept="video/mp4,video/webm"
+                                  className="hidden"
+                                  disabled={creating}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] ?? null;
+                                    e.target.value = "";
+                                    void handleUploadClip(emotion, file);
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          );
+                        })}
                       </div>
                       <p className="text-[11px] text-brand-muted">
                         Uploads store on the API volume and update this character&apos;s clip map

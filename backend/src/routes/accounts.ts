@@ -136,6 +136,7 @@ export const createAccountRoutes = (
           delivered: send.delivered,
           provider: send.provider,
           isNewAccount: magic.isNewAccount,
+          linking: magic.linking,
           // Dev / no-mailer fallback so Gary can still sign in without SMTP setup
           ...(includeLink ? { magicUrl, devHint: "Open this link to sign in (email not sent)" } : {}),
           ...(send.error ? { mailError: send.error } : {}),
@@ -145,7 +146,53 @@ export const createAccountRoutes = (
           return reply.code(400).send({ error: error.flatten() });
         }
         if (error instanceof AccountError) {
-          return reply.code(400).send({ error: error.message, code: error.code });
+          const status = error.code === "CONFLICT" ? 409 : 400;
+          return reply.code(status).send({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
+    });
+
+    /** Link an email to the currently signed-in handle/passphrase account. */
+    app.post("/accounts/me/link-email", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      try {
+        const body = magicRequestSchema.parse(request.body ?? {});
+        const magic = await requestMagicLink(body.email, { linkAccountId: account.id });
+        const siteBase =
+          env.MAGIC_LINK_BASE_URL ||
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          "https://procharacters-web-production-7288.up.railway.app";
+        const magicUrl = buildMagicLinkUrl(magic.token, siteBase);
+        const send = await sendMagicLinkEmail({
+          to: magic.email,
+          magicUrl,
+          expiresAt: magic.expiresAt,
+        });
+        const includeLink = !send.delivered || env.isDev;
+        return {
+          ok: true,
+          email: magic.email,
+          expiresAt: magic.expiresAt,
+          delivered: send.delivered,
+          provider: send.provider,
+          linking: true,
+          ...(includeLink
+            ? { magicUrl, devHint: "Open this link to confirm email on your account" }
+            : {}),
+          ...(send.error ? { mailError: send.error } : {}),
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof AccountError) {
+          const status =
+            error.code === "CONFLICT" ? 409 : error.code === "NOT_FOUND" ? 404 : 400;
+          return reply.code(status).send({ error: error.message, code: error.code });
         }
         throw error;
       }
@@ -161,13 +208,16 @@ export const createAccountRoutes = (
           email: account.email,
           token: account.token,
           expiresAt: account.expiresAt,
+          linked: account.linked === true,
         };
       } catch (error) {
         if (error instanceof z.ZodError) {
           return reply.code(400).send({ error: error.flatten() });
         }
         if (error instanceof AccountError) {
-          return reply.code(401).send({ error: error.message, code: error.code });
+          const status =
+            error.code === "CONFLICT" ? 409 : error.code === "AUTH" ? 401 : 400;
+          return reply.code(status).send({ error: error.message, code: error.code });
         }
         throw error;
       }

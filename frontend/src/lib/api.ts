@@ -133,6 +133,22 @@ export async function requestMagicLink(email: string): Promise<MagicRequestRespo
   return res.json() as Promise<MagicRequestResponse>;
 }
 
+export async function linkEmailToAccount(
+  accountToken: string,
+  email: string,
+): Promise<MagicRequestResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/link-email`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Link email failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<MagicRequestResponse>;
+}
+
 export async function verifyMagicLink(token: string): Promise<AccountAuthResponse> {
   const res = await fetch(`${API_BASE}/api/v1/accounts/magic/verify`, {
     method: "POST",
