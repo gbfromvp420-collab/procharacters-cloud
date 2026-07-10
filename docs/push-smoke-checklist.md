@@ -56,7 +56,7 @@ Expect exit 0 and `configured: true`.
    - Create a session with a resume code, or temporarily lower `RESUME_EXPIRY_PUSH_DAYS` on a staging env.
    - Or POST `/api/v1/accounts/me/push/check-expiry` with `Authorization: Bearer <token>` after ensuring a code is within the window.
 
-7. Notification should open **Account** (or later Continue chat).
+7. Notification should open **the soonest-expiring chat** (`/chat?resume=CODE&character=…`) when a resume code exists — otherwise Account.
 
 ---
 
