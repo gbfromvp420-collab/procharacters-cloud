@@ -219,3 +219,57 @@ export function shareResultLabel(
   if (result.method === "share") return `${kind} opened in share sheet`;
   return `${kind} copied (Markdown)`;
 }
+
+/**
+ * Share a URL via the system share sheet when available (mobile).
+ * Falls back to copying the URL. Prefer this for character cards / links.
+ */
+export async function shareOrCopyUrl(options: {
+  url: string;
+  title?: string;
+  text?: string;
+}): Promise<ShareOrCopyResult> {
+  const title = options.title ?? "Procharacters";
+  const url = options.url;
+  const text = options.text ?? title;
+
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      // Prefer url field when supported (iOS Messages, etc.)
+      const withUrl = { title, text, url };
+      if (typeof navigator.canShare !== "function" || navigator.canShare(withUrl)) {
+        await navigator.share(withUrl);
+        return { ok: true, method: "share" };
+      }
+      // Some browsers only accept text
+      const textOnly = { title, text: `${text}\n${url}` };
+      if (typeof navigator.canShare !== "function" || navigator.canShare(textOnly)) {
+        await navigator.share(textOnly);
+        return { ok: true, method: "share" };
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return { ok: false, reason: "cancelled" };
+      }
+      if (err instanceof Error && err.name === "AbortError") {
+        return { ok: false, reason: "cancelled" };
+      }
+      // Fall through to clipboard
+    }
+  }
+
+  const copied = await copyText(url);
+  return copied ? { ok: true, method: "copy" } : { ok: false, reason: "failed" };
+}
+
+export function shareUrlResultLabel(
+  result: ShareOrCopyResult,
+  kind = "Link",
+): string | null {
+  if (!result.ok) {
+    if (result.reason === "cancelled") return null;
+    return "Share failed";
+  }
+  if (result.method === "share") return `${kind} opened in share sheet`;
+  return `${kind} copied`;
+}

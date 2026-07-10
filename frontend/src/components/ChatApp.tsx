@@ -53,7 +53,9 @@ import {
   parseShareQuery,
   replaceCharacterInUrl,
   shareOrCopyText,
+  shareOrCopyUrl,
   shareResultLabel,
+  shareUrlResultLabel,
 } from "@/lib/share-links";
 import type {
   AvatarState,
@@ -700,14 +702,20 @@ export function ChatApp() {
 
   const shareCharacterLink = async (autostart = false) => {
     const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
-    const ok = await copyText(url);
-    flashCopy(
-      ok
-        ? autostart
-          ? "Autostart link copied"
-          : "Character card link copied"
-        : "Copy failed",
+    const name =
+      characters.find((c) => c.id === character)?.displayName ?? characterName ?? character;
+    const result = await shareOrCopyUrl({
+      url,
+      title: `${name} · Procharacters`,
+      text: autostart
+        ? `Chat with ${name} on Procharacters.cloud`
+        : `Meet ${name} on Procharacters.cloud`,
+    });
+    const label = shareUrlResultLabel(
+      result,
+      autostart ? "Autostart link" : "Character card",
     );
+    if (label) flashCopy(label);
   };
 
   const sharePrivateResumeLink = async () => {
@@ -718,8 +726,13 @@ export function ChatApp() {
     const url = buildResumeCodeShareUrl(resumeCode, {
       characterId: activeCharacterId ?? character,
     });
-    const ok = await copyText(url);
-    flashCopy(ok ? `Resume link copied (${resumeCode})` : "Copy failed");
+    const result = await shareOrCopyUrl({
+      url,
+      title: "Resume Procharacters chat",
+      text: `Continue your chat (code ${resumeCode})`,
+    });
+    const label = shareUrlResultLabel(result, `Resume ${resumeCode}`);
+    if (label) flashCopy(label);
   };
 
   const exportChat = async (format: "json" | "md" = "json") => {
@@ -1570,19 +1583,27 @@ export function ChatApp() {
                   )}
                   <button
                     type="button"
-                    onClick={() => shareCharacterLink(false)}
+                    onClick={() => void shareCharacterLink(false)}
                     className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                    title="Copy pretty character card link"
+                    title={
+                      canNativeShare()
+                        ? "Share character card via system sheet"
+                        : "Copy character card link"
+                    }
                   >
-                    Share card
+                    {canNativeShare() ? "Share card" : "Copy card"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => shareCharacterLink(true)}
+                    onClick={() => void shareCharacterLink(true)}
                     className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                    title="Copy link that auto-starts this character"
+                    title={
+                      canNativeShare()
+                        ? "Share autostart chat link"
+                        : "Copy autostart chat link"
+                    }
                   >
-                    Share ▶
+                    {canNativeShare() ? "Share chat" : "Copy ▶"}
                   </button>
                   <a
                     href={`/character/${encodeURIComponent(character)}`}
@@ -1611,19 +1632,27 @@ export function ChatApp() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => shareCharacterLink(true)}
+                    onClick={() => void shareCharacterLink(true)}
                     disabled={status === "connecting" || restarting}
                     className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title="Copy public character autostart link"
+                    title={
+                      canNativeShare()
+                        ? "Share public character link"
+                        : "Copy public character link"
+                    }
                   >
-                    Share
+                    {canNativeShare() ? "Share" : "Copy link"}
                   </button>
                   <button
                     type="button"
-                    onClick={sharePrivateResumeLink}
+                    onClick={() => void sharePrivateResumeLink()}
                     disabled={status !== "ready" || !resumeCode}
                     className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
-                    title="Copy ?resume=CODE link — short code, no raw ws token"
+                    title={
+                      canNativeShare()
+                        ? "Share resume code link"
+                        : "Copy resume code link"
+                    }
                   >
                     {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
                   </button>

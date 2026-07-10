@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
-import { copyText } from "@/lib/share-links";
+import {
+  canNativeShare,
+  shareOrCopyUrl,
+  shareUrlResultLabel,
+} from "@/lib/share-links";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -24,7 +28,7 @@ function CharacterTile({
   compact = false,
 }: {
   card: CharacterCard;
-  onCopy: (card: CharacterCard) => void;
+  onCopy: (card: CharacterCard) => void; // share-or-copy card link
   compact?: boolean;
 }) {
   const poster = posterUrl(card);
@@ -88,8 +92,13 @@ function CharacterTile({
               type="button"
               onClick={() => onCopy(card)}
               className="btn-ghost min-h-0 px-3 py-2 text-xs text-brand-muted hover:text-brand-text"
+              title={
+                canNativeShare()
+                  ? "Share card via system share sheet"
+                  : "Copy card link to clipboard"
+              }
             >
-              Copy link
+              {canNativeShare() ? "Share" : "Copy link"}
             </button>
           )}
         </div>
@@ -157,11 +166,20 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     return list;
   }, [characters, filter, query, sort]);
 
-  const copyCard = async (card: CharacterCard) => {
+  const shareCard = async (card: CharacterCard) => {
     const url = `${siteOrigin}${card.cardPath}`;
-    const ok = await copyText(url);
-    setNotice(ok ? `Copied ${card.displayName}` : "Copy failed");
-    window.setTimeout(() => setNotice(null), 2000);
+    const result = await shareOrCopyUrl({
+      url,
+      title: `${card.displayName} · Procharacters`,
+      text: card.teaser
+        ? `Meet ${card.displayName} — ${card.teaser}`
+        : `Meet ${card.displayName} on Procharacters.cloud`,
+    });
+    const label = shareUrlResultLabel(result, card.displayName);
+    if (label) {
+      setNotice(label);
+      window.setTimeout(() => setNotice(null), 2200);
+    }
   };
 
   const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0;
@@ -224,7 +242,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </div>
             <div className="scroll-strip -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:gap-4 sm:px-0">
               {featuredRow.map((card) => (
-                <CharacterTile key={`feat-${card.id}`} card={card} onCopy={copyCard} compact />
+                <CharacterTile key={`feat-${card.id}`} card={card} onCopy={shareCard} compact />
               ))}
             </div>
           </section>
@@ -311,7 +329,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {visible.map((card) => (
-              <CharacterTile key={card.id} card={card} onCopy={copyCard} />
+              <CharacterTile key={card.id} card={card} onCopy={shareCard} />
             ))}
           </div>
         )}

@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
-import { copyText } from "@/lib/share-links";
+import {
+  canNativeShare,
+  shareOrCopyUrl,
+  shareUrlResultLabel,
+} from "@/lib/share-links";
 
 interface CharacterCardViewProps {
   card: CharacterCard;
@@ -21,10 +25,19 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
       ? card.posterClip
       : `/${card.posterClip}`;
 
-  const onCopy = async () => {
-    const ok = await copyText(shareUrl);
-    setNotice(ok ? "Card link copied" : "Copy failed");
-    window.setTimeout(() => setNotice(null), 2000);
+  const onShare = async () => {
+    const result = await shareOrCopyUrl({
+      url: shareUrl,
+      title: `${card.displayName} · Procharacters`,
+      text: card.teaser
+        ? `Meet ${card.displayName} — ${card.teaser}`
+        : `Meet ${card.displayName} on Procharacters.cloud`,
+    });
+    const label = shareUrlResultLabel(result, "Card link");
+    if (label) {
+      setNotice(label);
+      window.setTimeout(() => setNotice(null), 2200);
+    }
   };
 
   return (
@@ -108,8 +121,17 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               <Link href={card.ctaPath} className="btn-primary px-6">
                 Start live chat
               </Link>
-              <button type="button" onClick={onCopy} className="btn-ghost px-6">
-                Copy card link
+              <button
+                type="button"
+                onClick={() => void onShare()}
+                className="btn-ghost px-6"
+                title={
+                  canNativeShare()
+                    ? "Share card via system share sheet"
+                    : "Copy card link to clipboard"
+                }
+              >
+                {canNativeShare() ? "Share card" : "Copy card link"}
               </button>
               <Link
                 href="/chat"
@@ -143,8 +165,17 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
           <Link href={card.ctaPath} className="btn-primary flex-1">
             Start chat
           </Link>
-          <button type="button" onClick={onCopy} className="btn-ghost flex-1">
-            Copy link
+          <button
+            type="button"
+            onClick={() => void onShare()}
+            className="btn-ghost flex-1"
+            title={
+              canNativeShare()
+                ? "Share card via system share sheet"
+                : "Copy card link to clipboard"
+            }
+          >
+            {canNativeShare() ? "Share" : "Copy link"}
           </button>
         </div>
       </div>
