@@ -7,6 +7,8 @@ import {
   LIVE_CHARACTER_CATALOG,
   LiveCharacterError,
   LivePromptInjector,
+  createCustomCharacter,
+  listCustomCharacters,
 } from "../lib/live/index.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
@@ -17,6 +19,15 @@ import type { SessionManager } from "../services/session-manager.js";
 const createSessionSchema = z.object({
   characterId: z.string().optional(),
   promptVersion: z.string().optional(),
+});
+
+const createCustomCharacterSchema = z.object({
+  name: z.string().min(2).max(80),
+  appearance: z.string().min(12).max(2000),
+  energy: z.string().min(4).max(500).optional(),
+  clothing: z.string().min(2).max(200).optional(),
+  avatarBase: z.enum(["twink-default", "female-default"]).optional(),
+  audience: z.enum(["gay", "bi", "straight", "any"]).optional(),
 });
 
 const injector = new LivePromptInjector();
@@ -52,12 +63,28 @@ export const createSessionRoutes = (
         listManifestCharacters(),
       ]);
 
+      const custom = listCustomCharacters().map((profile) => ({
+        id: profile.id,
+        displayName: profile.displayName,
+        defaultVersion: profile.defaultVersion,
+        kind: "custom" as const,
+        avatarBase: profile.avatarBase,
+        energyLabel: profile.energyLabel,
+      }));
+
       return {
-        live: Object.values(LIVE_CHARACTER_CATALOG).map((profile) => ({
-          id: profile.id,
-          displayName: profile.displayName,
-          defaultVersion: profile.defaultVersion,
-        })),
+        live: [
+          ...Object.values(LIVE_CHARACTER_CATALOG).map((profile) => ({
+            id: profile.id,
+            displayName: profile.displayName,
+            defaultVersion: profile.defaultVersion,
+            kind: "default" as const,
+            avatarBase: profile.avatarBase ?? profile.id,
+            energyLabel: profile.energyLabel,
+          })),
+          ...custom,
+        ],
+        custom,
         registry: registry.map((entry) => ({
           id: entry.id,
           name: entry.name,
@@ -71,6 +98,30 @@ export const createSessionRoutes = (
           path: entry.path,
         })),
       };
+    });
+
+    app.post("/characters/custom", async (request, reply) => {
+      try {
+        const body = createCustomCharacterSchema.parse(request.body ?? {});
+        const created = createCustomCharacter(body);
+        return reply.code(201).send({
+          id: created.id,
+          displayName: created.displayName,
+          defaultVersion: created.defaultVersion,
+          kind: "custom",
+          avatarBase: created.avatarBase,
+          energyLabel: created.energyLabel,
+          signatureClothing: created.signatureClothing,
+          consistencyTraits: created.consistencyTraits,
+          createdAt: created.createdAt,
+        });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        const message = error instanceof Error ? error.message : "Failed to create character";
+        return reply.code(400).send({ error: message });
+      }
     });
 
     app.post("/sessions", async (request, reply) => {

@@ -1,3 +1,5 @@
+import { getCustomCharacter } from "./custom-characters.js";
+
 export interface LiveCharacterProfile {
   id: string;
   displayName: string;
@@ -5,14 +7,19 @@ export interface LiveCharacterProfile {
   consistencyTraits: string[];
   signatureClothing: string;
   energyLabel: string;
+  /** Clip folder to use when character has no dedicated media set. */
+  avatarBase?: string;
+  kind?: "default" | "custom";
 }
 
-/** Supported v2 live characters — both use v1.2.0 prompts from the library. */
+/** Built-in v2 live characters — both use v1.2.0 prompts from the library. */
 export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-default": {
     id: "twink-default",
     displayName: "Twink Default",
     defaultVersion: "v1.2.0",
+    kind: "default",
+    avatarBase: "twink-default",
     consistencyTraits: [
       "skinny Mexican/Latino twink",
       "sheer thong / g-string",
@@ -28,6 +35,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     id: "female-default",
     displayName: "Female Default",
     defaultVersion: "v1.2.0",
+    kind: "default",
+    avatarBase: "female-default",
     consistencyTraits: [
       "fit athletic female, small breasts",
       "crotchless undies",
@@ -44,7 +53,27 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
 export const LIVE_CHARACTER_IDS = Object.keys(LIVE_CHARACTER_CATALOG);
 
 export function getLiveCharacterProfile(characterId: string): LiveCharacterProfile | null {
-  return LIVE_CHARACTER_CATALOG[characterId] ?? null;
+  const builtIn = LIVE_CHARACTER_CATALOG[characterId];
+  if (builtIn) return builtIn;
+
+  const custom = getCustomCharacter(characterId);
+  if (!custom) return null;
+
+  return {
+    id: custom.id,
+    displayName: custom.displayName,
+    defaultVersion: custom.defaultVersion,
+    consistencyTraits: custom.consistencyTraits,
+    signatureClothing: custom.signatureClothing,
+    energyLabel: custom.energyLabel,
+    avatarBase: custom.avatarBase,
+    kind: "custom",
+  };
+}
+
+export function resolveAvatarBaseId(characterId: string): string {
+  const profile = getLiveCharacterProfile(characterId);
+  return profile?.avatarBase ?? (LIVE_CHARACTER_CATALOG[characterId] ? characterId : "twink-default");
 }
 
 export class LiveCharacterError extends Error {
@@ -58,7 +87,7 @@ export function assertLiveCharacter(characterId: string): LiveCharacterProfile {
   const profile = getLiveCharacterProfile(characterId);
   if (!profile) {
     throw new LiveCharacterError(
-      `Character '${characterId}' is not enabled for live sessions. Supported: ${LIVE_CHARACTER_IDS.join(", ")}`,
+      `Character '${characterId}' is not enabled for live sessions. Create a custom character or use: ${LIVE_CHARACTER_IDS.join(", ")}`,
     );
   }
   return profile;

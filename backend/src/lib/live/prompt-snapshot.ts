@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { loadCharacterBundle } from "../characters/loader.js";
 import { loadSystemCorePrompt } from "../prompts/loader.js";
 import { assertLiveCharacter } from "./character-catalog.js";
+import { getCustomCharacter } from "./custom-characters.js";
 import type { PromptSnapshot } from "./types.js";
 
 export async function createPromptSnapshot(
@@ -9,12 +10,38 @@ export async function createPromptSnapshot(
   promptVersion?: string,
 ): Promise<PromptSnapshot> {
   const profile = assertLiveCharacter(characterId);
-  const version = promptVersion ?? profile.defaultVersion;
+  const systemCorePrompt = await loadSystemCorePrompt();
 
-  const [bundle, systemCorePrompt] = await Promise.all([
-    loadCharacterBundle(characterId, version),
-    loadSystemCorePrompt(),
-  ]);
+  const custom = getCustomCharacter(characterId);
+  if (custom) {
+    const hashInput = [
+      custom.id,
+      custom.defaultVersion,
+      custom.characterPrompt,
+      systemCorePrompt,
+      custom.appearanceAnchor,
+      custom.consistencyTraits.join("|"),
+    ].join("\n");
+    const hash = createHash("sha256").update(hashInput).digest("hex").slice(0, 16);
+
+    return {
+      characterId: custom.id,
+      characterName: custom.displayName,
+      promptVersion: custom.defaultVersion,
+      promptPath: `runtime/custom/${custom.id}`,
+      systemCorePath: "prompts/library/naughty-syntax/system-core/v1.0.0/prompt.md",
+      characterPrompt: custom.characterPrompt,
+      systemCorePrompt,
+      appearanceAnchor: custom.appearanceAnchor,
+      consistencyTraits: custom.consistencyTraits,
+      signatureClothing: custom.signatureClothing,
+      hash,
+      createdAt: new Date().toISOString(),
+    };
+  }
+
+  const version = promptVersion ?? profile.defaultVersion;
+  const bundle = await loadCharacterBundle(characterId, version);
 
   const hashInput = [
     bundle.id,

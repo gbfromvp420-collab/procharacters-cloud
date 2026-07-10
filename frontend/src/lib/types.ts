@@ -1,4 +1,14 @@
-export type CharacterId = "twink-default" | "female-default";
+/** Built-in defaults plus runtime custom character ids. */
+export type CharacterId = string;
+
+export interface LiveCharacterOption {
+  id: string;
+  displayName: string;
+  defaultVersion: string;
+  kind: "default" | "custom";
+  avatarBase?: string;
+  energyLabel?: string;
+}
 
 export interface LiveKitJoinInfo {
   url: string;
@@ -14,6 +24,27 @@ export interface CreateSessionResponse {
   wsUrl: string;
   avatarState: AvatarState;
   livekit?: LiveKitJoinInfo;
+}
+
+export interface CreateCustomCharacterInput {
+  name: string;
+  appearance: string;
+  energy?: string;
+  clothing?: string;
+  avatarBase?: "twink-default" | "female-default";
+  audience?: "gay" | "bi" | "straight" | "any";
+}
+
+export interface CreateCustomCharacterResponse {
+  id: string;
+  displayName: string;
+  defaultVersion: string;
+  kind: "custom";
+  avatarBase: string;
+  energyLabel: string;
+  signatureClothing: string;
+  consistencyTraits: string[];
+  createdAt: string;
 }
 
 export interface ChatMessage {

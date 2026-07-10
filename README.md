@@ -8,20 +8,20 @@ room metadata sync for the video layer.
 
 ## Status
 
-**v2 Live MVP** — backend (Fastify + WS + xAI) and frontend (Next.js 15) are wired
-together and run end-to-end. Default characters: `twink-default`, `female-default`
-(both at prompt `v1.2.0`).
+**v2.1 Live** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
+Defaults: `twink-default`, `female-default` (prompt `v1.2.0`) plus **runtime custom characters**.
 
 What works today:
 - `POST /api/v1/sessions` creates a session and returns a WebSocket URL
+- `GET /api/v1/characters` lists defaults + custom; `POST /api/v1/characters/custom` creates one
+- Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,
   `assistant_stream`, `assistant_complete`, `avatar_update`, `session_ended`, `error`
 - LiveKit room metadata sync (when `LIVEKIT_*` env vars are set)
-- Stub replies when `XAI_API_KEY` is missing or still a placeholder
+- Stub / credit-aware errors when xAI is unavailable
 - Session-scoped memory (cleared on session end)
 
-What's next (v2.1+): persistent memory across sessions, model switching in UI,
-custom character creation, voice I/O.
+What's next (v2.2+): persistent memory, voice I/O, dedicated custom avatar footage.
 
 Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md)
 

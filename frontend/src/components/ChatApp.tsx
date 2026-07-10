@@ -5,18 +5,29 @@ import { AvatarPanel } from "@/components/AvatarPanel";
 import { AvatarVideo } from "@/components/AvatarVideo";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
 import { TypingIndicator } from "@/components/TypingIndicator";
-import { createSession } from "@/lib/api";
+import { createCustomCharacter, createSession, listLiveCharacters } from "@/lib/api";
 import type {
   AvatarState,
   CharacterId,
   ChatMessage,
   ConnectionStatus,
+  LiveCharacterOption,
   LiveKitJoinInfo,
 } from "@/lib/types";
 
-const CHARACTER_OPTIONS: { id: CharacterId; label: string }[] = [
-  { id: "twink-default", label: "Twink Default (v1.2.0)" },
-  { id: "female-default", label: "Female Default (v1.2.0)" },
+const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
+  {
+    id: "twink-default",
+    displayName: "Twink Default",
+    defaultVersion: "v1.2.0",
+    kind: "default",
+  },
+  {
+    id: "female-default",
+    displayName: "Female Default",
+    defaultVersion: "v1.2.0",
+    kind: "default",
+  },
 ];
 
 function makeId(): string {
@@ -37,6 +48,7 @@ function StatusDot({ status }: { status: ConnectionStatus }) {
 }
 
 export function ChatApp() {
+  const [characters, setCharacters] = useState<LiveCharacterOption[]>(FALLBACK_CHARACTERS);
   const [character, setCharacter] = useState<CharacterId>("twink-default");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [characterName, setCharacterName] = useState<string | null>(null);
@@ -50,6 +62,13 @@ export function ChatApp() {
   const [avatarState, setAvatarState] = useState<AvatarState | null>(null);
   const [livekit, setLivekit] = useState<LiveKitJoinInfo | null>(null);
   const [restarting, setRestarting] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customAppearance, setCustomAppearance] = useState("");
+  const [customEnergy, setCustomEnergy] = useState("");
+  const [customClothing, setCustomClothing] = useState("");
+  const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
@@ -98,6 +117,24 @@ export function ChatApp() {
   useEffect(() => {
     return () => closeSocket(false);
   }, [closeSocket]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listLiveCharacters()
+      .then((list) => {
+        if (cancelled || list.length === 0) return;
+        setCharacters(list);
+        setCharacter((current) =>
+          list.some((c) => c.id === current) ? current : list[0]!.id,
+        );
+      })
+      .catch(() => {
+        /* keep fallback list */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const bindWebSocket = useCallback(
     (ws: WebSocket, session: { sessionId: string; characterId: string }) => {
@@ -253,6 +290,43 @@ export function ChatApp() {
     }
   };
 
+  const handleCreateCustom = async () => {
+    setCreating(true);
+    setError(null);
+    try {
+      const created = await createCustomCharacter({
+        name: customName.trim(),
+        appearance: customAppearance.trim(),
+        energy: customEnergy.trim() || undefined,
+        clothing: customClothing.trim() || undefined,
+        avatarBase: customBase,
+        audience: customBase === "female-default" ? "straight" : "gay",
+      });
+      const option: LiveCharacterOption = {
+        id: created.id,
+        displayName: created.displayName,
+        defaultVersion: created.defaultVersion,
+        kind: "custom",
+        avatarBase: created.avatarBase,
+        energyLabel: created.energyLabel,
+      };
+      setCharacters((prev) => {
+        if (prev.some((c) => c.id === option.id)) return prev;
+        return [...prev, option];
+      });
+      setCharacter(created.id);
+      setShowCreate(false);
+      setCustomName("");
+      setCustomAppearance("");
+      setCustomEnergy("");
+      setCustomClothing("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create custom character");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const sendMessage = () => {
     const ws = wsRef.current;
     const text = input.trim();
@@ -298,7 +372,7 @@ export function ChatApp() {
         <h1 className="bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
           Procharacters.cloud
         </h1>
-        <p className="mt-1 text-sm text-brand-muted">Naughty Syntax — v2 Live Chat</p>
+        <p className="mt-1 text-sm text-brand-muted">Naughty Syntax — v2.1 Live Chat</p>
       </header>
 
       <div className="mb-4 flex flex-col gap-4 lg:flex-row">
@@ -314,51 +388,123 @@ export function ChatApp() {
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <section className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-brand-border bg-brand-panel p-3 sm:gap-3 sm:p-4">
-            <label className="text-sm text-brand-muted" htmlFor="character">
-              Character
-            </label>
-            <select
-              id="character"
-              value={character}
-              onChange={(e) => setCharacter(e.target.value as CharacterId)}
-              disabled={sessionActive}
-              className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text disabled:opacity-50"
-            >
-              {CHARACTER_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-
-            {!sessionActive ? (
-              <button
-                type="button"
-                onClick={startSession}
-                className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim"
+          <section className="mb-4 flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-panel p-3 sm:p-4">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <label className="text-sm text-brand-muted" htmlFor="character">
+                Character
+              </label>
+              <select
+                id="character"
+                value={character}
+                onChange={(e) => setCharacter(e.target.value as CharacterId)}
+                disabled={status === "connecting" || restarting}
+                className="min-w-[12rem] flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text disabled:opacity-50 sm:flex-none"
               >
-                Start Session
-              </button>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={startNewSession}
-                  disabled={status === "connecting" || restarting}
-                  className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
-                >
-                  {restarting ? "Restarting…" : "New Session"}
-                </button>
-                <button
-                  type="button"
-                  onClick={endSession}
-                  disabled={status === "connecting" || restarting}
-                  className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
-                >
-                  End
-                </button>
-              </>
+                {characters.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.kind === "custom" ? "✦ " : ""}
+                    {opt.displayName}
+                    {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
+                  </option>
+                ))}
+              </select>
+
+              {!sessionActive ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={startSession}
+                    className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim"
+                  >
+                    Start Session
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreate((v) => !v)}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
+                  >
+                    {showCreate ? "Close" : "Create Custom"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={startNewSession}
+                    disabled={status === "connecting" || restarting}
+                    className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
+                  >
+                    {restarting ? "Restarting…" : "Switch / New"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={endSession}
+                    disabled={status === "connecting" || restarting}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
+                  >
+                    End
+                  </button>
+                </>
+              )}
+            </div>
+
+            {showCreate && !sessionActive && (
+              <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
+                <p className="text-xs text-brand-muted">
+                  v2.1 custom character — lives for this server run. Uses a default clip pack for video.
+                </p>
+                <input
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Name (e.g. Diego)"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <textarea
+                  value={customAppearance}
+                  onChange={(e) => setCustomAppearance(e.target.value)}
+                  placeholder="Appearance lock (body, hair, skin, face…)"
+                  rows={3}
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <input
+                  value={customEnergy}
+                  onChange={(e) => setCustomEnergy(e.target.value)}
+                  placeholder="Energy (optional — teasing, dominant, shy…)"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <input
+                  value={customClothing}
+                  onChange={(e) => setCustomClothing(e.target.value)}
+                  placeholder="Clothing focus (optional)"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="text-xs text-brand-muted" htmlFor="avatarBase">
+                    Video pack
+                  </label>
+                  <select
+                    id="avatarBase"
+                    value={customBase}
+                    onChange={(e) =>
+                      setCustomBase(e.target.value as "twink-default" | "female-default")
+                    }
+                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                  >
+                    <option value="twink-default">Twink clips</option>
+                    <option value="female-default">Female clips</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={handleCreateCustom}
+                    disabled={
+                      creating || customName.trim().length < 2 || customAppearance.trim().length < 12
+                    }
+                    className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
+                  >
+                    {creating ? "Creating…" : "Save & Select"}
+                  </button>
+                </div>
+              </div>
             )}
           </section>
 

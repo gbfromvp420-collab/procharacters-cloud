@@ -1,3 +1,4 @@
+import { resolveAvatarBaseId } from "../live/character-catalog.js";
 import type { AvatarState } from "../../types/session.js";
 
 const EMOTION_CLIPS = new Set([
@@ -34,7 +35,9 @@ function pickClipName(state: AvatarState): string {
  */
 export function resolveClipPath(characterId: string, state: AvatarState): string {
   const clip = pickClipName(state);
-  return `/avatar/${characterId}/${clip}.mp4`;
+  // Custom characters reuse default model clip packs (no dedicated footage yet).
+  const mediaId = resolveAvatarBaseId(characterId);
+  return `/avatar/${mediaId}/${clip}.mp4`;
 }
 
 export function enrichAvatarWithMedia(characterId: string, state: AvatarState): AvatarState {
