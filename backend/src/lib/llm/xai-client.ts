@@ -19,9 +19,9 @@ interface XaiChatCompletionResponse {
     };
     finish_reason?: string | null;
   }>;
-  error?: {
-    message?: string;
-  };
+  /** xAI may return `error` as a string or as `{ message }`. */
+  error?: string | { message?: string; code?: string };
+  code?: string;
 }
 
 export class XaiApiError extends Error {
@@ -75,8 +75,13 @@ export class XaiChatClient {
       const body = (await response.json()) as XaiChatCompletionResponse;
 
       if (!response.ok) {
-        const message = body.error?.message ?? `xAI request failed (${response.status})`;
-        throw new XaiApiError(message, response.status);
+        const raw = body.error;
+        const message =
+          typeof raw === "string"
+            ? raw
+            : raw?.message ?? `xAI request failed (${response.status})`;
+        const code = typeof raw === "object" ? raw?.code : body.code;
+        throw new XaiApiError(message, response.status, code);
       }
 
       const choice = body.choices?.[0];

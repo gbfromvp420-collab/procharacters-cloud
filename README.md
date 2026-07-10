@@ -1,62 +1,87 @@
-# Procharacters.cloud — v1 Foundation
+# Procharacters.cloud
 
 **KGC Ventures / Naughty Syntax**
 
-Live uncensored NSFW AI video chat platform. This repo is **Version 1: Foundation only** — stable structure for prompts, characters, and agent workflows. No streaming, accounts, or public UI yet.
+Live uncensored NSFW AI video chat platform. Live text sessions stream over WebSocket
+with reactive avatar state, prompt-pinned character consistency, and optional LiveKit
+room metadata sync for the video layer.
+
+## Status
+
+**v2 Live MVP** — backend (Fastify + WS + xAI) and frontend (Next.js 15) are wired
+together and run end-to-end. Default characters: `twink-default`, `female-default`
+(both at prompt `v1.2.0`).
+
+What works today:
+- `POST /api/v1/sessions` creates a session and returns a WebSocket URL
+- WS messages: `user_message`, `ping`, `end_session` → `session_ready`,
+  `assistant_stream`, `assistant_complete`, `avatar_update`, `session_ended`, `error`
+- LiveKit room metadata sync (when `LIVEKIT_*` env vars are set)
+- Stub replies when `XAI_API_KEY` is missing or still a placeholder
+- Session-scoped memory (cleared on session end)
+
+What's next (v2.1+): persistent memory across sessions, model switching in UI,
+custom character creation, voice I/O.
+
+Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md)
 
 ## Quick start
 
-**PowerShell (Windows — no install needed):**
+```bash
+# Backend
+cd backend
+cp .env.example .env       # fill in XAI_API_KEY for real replies, leave blank for stubs
+npm install
+npm run dev                # http://localhost:3001
 
-```powershell
-.\scripts\prompt_list.ps1
-.\scripts\prompt_get.ps1 -Id twink-default
-.\scripts\character_list.ps1
+# Frontend (in another shell)
+cd frontend
+cp .env.example .env       # NEXT_PUBLIC_API_URL=http://localhost:3001
+npm install
+npm run dev                # http://localhost:3000
 ```
 
-**Python (if installed):**
+Or run both in Docker:
 
 ```bash
-python scripts/prompt_list.py
-python scripts/prompt_get.py --id twink-default
-python scripts/character_list.py
+docker compose up --build
+```
+
+## Smoke tests
+
+With backend running:
+
+```bash
+cd backend
+npm run test:memory        # WebSocket loop + memory inspection
+npm run test:livekit       # verifies LiveKit credentials (skipped if not configured)
 ```
 
 ## Project structure
 
 | Path | Purpose |
 |------|---------|
-| `.grok/skills/kgc-delegate/` | KGC Grok Delegate persona for agents |
-| `docs/` | Gary-friendly guides and v1 scope |
-| `prompts/` | Versioned prompt library |
+| `backend/src/routes/` | HTTP endpoints (`/api/v1/sessions`, `/characters`, `/health`) |
+| `backend/src/ws/` | WebSocket handler (`/ws/sessions/:sessionId?token=...`) |
+| `backend/src/services/` | Session, chat, media orchestration |
+| `backend/src/lib/live/` | Prompt assembly + character catalog |
+| `backend/src/lib/llm/` | xAI / Grok chat client |
+| `backend/src/lib/livekit/` | LiveKit room metadata sync |
+| `frontend/src/components/` | Chat UI, avatar video, LiveKit sync |
+| `frontend/public/avatar/` | Pre-rendered avatar loops (idle/teasing/aroused/playful) |
+| `prompts/library/` | Versioned character + system-core prompts |
 | `characters/` | Character model registry |
-| `scripts/` | CLI retrieval tools |
+| `docs/` | Planning + architecture docs |
+
+## Deployment
+
+Railway and Render configs are committed (`render.yaml`, `railway.toml`,
+`backend/railway.toml`, `frontend/railway.toml`).
+See [`docs/DEPLOY.md`](docs/DEPLOY.md) for environment variables and rollout notes.
 
 ## For Gary
 
 Start here: [`docs/README-for-Gary.md`](docs/README-for-Gary.md)
-
-## v1 scope
-
-**In:** Project structure, delegate persona, prompt library, character management, documentation.
-
-**Out:** Streaming, accounts, payments, real-time assistants, complex UI, public features.
-
-Full details: [`docs/v1-scope.md`](docs/v1-scope.md)
-
-## Default characters (Naughty Syntax)
-
-| Slot | Character | Status |
-|------|-----------|--------|
-| `default_male` | Twink Default | active |
-| `default_female` | Female Default | active |
-
-## Agent workflow
-
-1. Load `/kgc-delegate` skill at session start
-2. Check `docs/v1-scope.md` before building
-3. Use prompt/character scripts for retrieval
-4. End with 1–3 proactive next-step suggestions
 
 ## License
 

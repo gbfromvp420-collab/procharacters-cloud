@@ -32,6 +32,26 @@ export interface ChatOrchestratorConfig {
 
 const injector = new LivePromptInjector();
 
+/**
+ * Treat obvious .env.example placeholders as "no key configured" so the stub
+ * reply path runs instead of hitting xAI with a fake Bearer token. Real keys
+ * are non-empty, don't contain spaces, and don't match the placeholder sentinels
+ * shipped in backend/.env.example.
+ */
+function isRealXaiKey(key: string | undefined): key is string {
+  if (!key) return false;
+  const trimmed = key.trim();
+  if (trimmed.length < 16) return false;
+  if (/\s/.test(trimmed)) return false;
+  const placeholders = new Set([
+    "your_xai_api_key_here",
+    "your_api_key",
+    "changeme",
+    "placeholder",
+  ]);
+  return !placeholders.has(trimmed.toLowerCase());
+}
+
 export class ChatOrchestrator {
   private readonly xai: XaiChatClient | null;
 
@@ -40,9 +60,9 @@ export class ChatOrchestrator {
     private readonly avatarMemory: MemoryManager,
     private readonly config: ChatOrchestratorConfig,
   ) {
-    this.xai = config.xaiApiKey
+    this.xai = isRealXaiKey(config.xaiApiKey)
       ? new XaiChatClient({
-          apiKey: config.xaiApiKey,
+          apiKey: config.xaiApiKey!,
           model: config.xaiModel,
           baseUrl: config.xaiBaseUrl,
           maxCompletionTokens: config.xaiMaxCompletionTokens,
@@ -173,8 +193,17 @@ export class ChatOrchestrator {
 
   private buildErrorReply(error: unknown): string {
     if (error instanceof XaiApiError) {
-      console.error(`[grok] ${error.status} ${error.code ?? ""} ${error.message}`);
+      console.error(
+        `[grok] xAI request failed — status=${error.status} code=${error.code ?? "n/a"} message=${error.message}`,
+      );
 
+      const msg = error.message.toLowerCase();
+      if (
+        error.status === 403 &&
+        (msg.includes("credit") || msg.includes("spending limit") || msg.includes("monthly"))
+      ) {
+        return "*[System: xAI credits / spending limit hit — top up or raise limit at console.x.ai]*";
+      }
       if (error.status === 401 || error.status === 403) {
         return "*[System: API key issue — check XAI_API_KEY in backend .env]*";
       }
