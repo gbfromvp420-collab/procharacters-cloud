@@ -1,6 +1,10 @@
 /** Built-in defaults plus runtime custom character ids. */
 export type CharacterId = string;
 
+export type MediaClipKey = "idle" | "teasing" | "playful" | "aroused";
+
+export type MediaOverrides = Partial<Record<MediaClipKey, string>>;
+
 export interface LiveCharacterOption {
   id: string;
   displayName: string;
@@ -8,6 +12,9 @@ export interface LiveCharacterOption {
   kind: "default" | "custom";
   avatarBase?: string;
   energyLabel?: string;
+  mediaBase?: string;
+  mediaOverrides?: MediaOverrides;
+  clips?: Record<MediaClipKey, string>;
 }
 
 export interface LiveKitJoinInfo {
@@ -41,6 +48,8 @@ export interface CreateCustomCharacterInput {
   clothing?: string;
   avatarBase?: "twink-default" | "female-default";
   audience?: "gay" | "bi" | "straight" | "any";
+  mediaBase?: string;
+  mediaOverrides?: MediaOverrides;
 }
 
 export interface CreateCustomCharacterResponse {
@@ -53,6 +62,16 @@ export interface CreateCustomCharacterResponse {
   signatureClothing: string;
   consistencyTraits: string[];
   createdAt: string;
+  mediaBase?: string;
+  mediaOverrides?: MediaOverrides;
+  clips?: Record<MediaClipKey, string>;
+}
+
+export interface UpdateCustomCharacterInput {
+  mediaBase?: string | null;
+  mediaOverrides?: MediaOverrides | null;
+  energy?: string;
+  clothing?: string;
 }
 
 export interface ChatMessage {

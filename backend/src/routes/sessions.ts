@@ -9,8 +9,11 @@ import {
   LivePromptInjector,
   createCustomCharacter,
   deleteCustomCharacter,
+  getCustomCharacter,
   listCustomCharacters,
+  updateCustomCharacter,
 } from "../lib/live/index.js";
+import { listClipUrls } from "../lib/media/clip-resolver.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { listManifestCharacters } from "../lib/prompts/manifest.js";
@@ -30,6 +33,15 @@ const resumeSessionSchema = z.object({
   token: z.string().min(8),
 });
 
+const mediaOverridesSchema = z
+  .object({
+    idle: z.string().min(1).max(500).optional(),
+    teasing: z.string().min(1).max(500).optional(),
+    playful: z.string().min(1).max(500).optional(),
+    aroused: z.string().min(1).max(500).optional(),
+  })
+  .optional();
+
 const createCustomCharacterSchema = z.object({
   name: z.string().min(2).max(80),
   appearance: z.string().min(12).max(2000),
@@ -37,6 +49,15 @@ const createCustomCharacterSchema = z.object({
   clothing: z.string().min(2).max(200).optional(),
   avatarBase: z.enum(["twink-default", "female-default"]).optional(),
   audience: z.enum(["gay", "bi", "straight", "any"]).optional(),
+  mediaBase: z.string().min(1).max(300).optional(),
+  mediaOverrides: mediaOverridesSchema,
+});
+
+const updateCustomCharacterSchema = z.object({
+  mediaBase: z.string().max(300).nullable().optional(),
+  mediaOverrides: mediaOverridesSchema.nullable(),
+  energy: z.string().min(4).max(500).optional(),
+  clothing: z.string().min(2).max(200).optional(),
 });
 
 const injector = new LivePromptInjector();
@@ -79,6 +100,9 @@ export const createSessionRoutes = (
         kind: "custom" as const,
         avatarBase: profile.avatarBase,
         energyLabel: profile.energyLabel,
+        mediaBase: profile.mediaBase,
+        mediaOverrides: profile.mediaOverrides,
+        clips: listClipUrls(profile.id),
       }));
 
       return {
@@ -90,10 +114,23 @@ export const createSessionRoutes = (
             kind: "default" as const,
             avatarBase: profile.avatarBase ?? profile.id,
             energyLabel: profile.energyLabel,
+            clips: listClipUrls(profile.id),
           })),
           ...custom,
         ],
         custom,
+        clipPacks: [
+          {
+            id: "twink-default",
+            label: "Twink Default pack",
+            mediaBase: "/avatar/twink-default",
+          },
+          {
+            id: "female-default",
+            label: "Female Default pack",
+            mediaBase: "/avatar/female-default",
+          },
+        ],
         registry: registry.map((entry) => ({
           id: entry.id,
           name: entry.name,
@@ -123,6 +160,9 @@ export const createSessionRoutes = (
           signatureClothing: created.signatureClothing,
           consistencyTraits: created.consistencyTraits,
           createdAt: created.createdAt,
+          mediaBase: created.mediaBase,
+          mediaOverrides: created.mediaOverrides,
+          clips: listClipUrls(created.id),
         });
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -131,6 +171,54 @@ export const createSessionRoutes = (
         const message = error instanceof Error ? error.message : "Failed to create character";
         return reply.code(400).send({ error: message });
       }
+    });
+
+    app.patch("/characters/custom/:characterId", async (request, reply) => {
+      const { characterId } = request.params as { characterId: string };
+      if (!characterId.startsWith("custom-")) {
+        return reply.code(400).send({ error: "Only custom characters can be updated" });
+      }
+      try {
+        const body = updateCustomCharacterSchema.parse(request.body ?? {});
+        const updated = await updateCustomCharacter(characterId, body);
+        return {
+          id: updated.id,
+          displayName: updated.displayName,
+          kind: "custom",
+          avatarBase: updated.avatarBase,
+          mediaBase: updated.mediaBase,
+          mediaOverrides: updated.mediaOverrides,
+          clips: listClipUrls(updated.id),
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        const message = error instanceof Error ? error.message : "Failed to update character";
+        if (message.includes("not found")) {
+          return reply.code(404).send({ error: message });
+        }
+        return reply.code(400).send({ error: message });
+      }
+    });
+
+    app.get("/characters/:characterId/clips", async (request, reply) => {
+      const { characterId } = request.params as { characterId: string };
+      const isDefault = characterId in LIVE_CHARACTER_CATALOG;
+      const isCustom = !!getCustomCharacter(characterId);
+      if (!isDefault && !isCustom) {
+        return reply.code(404).send({ error: "Character not found" });
+      }
+      return {
+        characterId,
+        clips: listClipUrls(characterId),
+        mediaBase: getCustomCharacter(characterId)?.mediaBase,
+        mediaOverrides: getCustomCharacter(characterId)?.mediaOverrides,
+        avatarBase:
+          getCustomCharacter(characterId)?.avatarBase ??
+          LIVE_CHARACTER_CATALOG[characterId]?.avatarBase ??
+          characterId,
+      };
     });
 
     app.delete("/characters/custom/:characterId", async (request, reply) => {

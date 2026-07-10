@@ -4,7 +4,9 @@ import type {
   CreateCustomCharacterResponse,
   CreateSessionResponse,
   LiveCharacterOption,
+  MediaClipKey,
   MemoryMessage,
+  UpdateCustomCharacterInput,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -77,6 +79,38 @@ export async function deleteCustomCharacter(characterId: string): Promise<void> 
     const text = await res.text();
     throw new Error(`Failed to delete character (${res.status}): ${text}`);
   }
+}
+
+export async function updateCustomCharacter(
+  characterId: string,
+  input: UpdateCustomCharacterInput,
+): Promise<CreateCustomCharacterResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to update character (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<CreateCustomCharacterResponse>;
+}
+
+export async function getCharacterClips(
+  characterId: string,
+): Promise<{ characterId: string; clips: Record<MediaClipKey, string> }> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/characters/${encodeURIComponent(characterId)}/clips`,
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to load clips (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ characterId: string; clips: Record<MediaClipKey, string> }>;
 }
 
 export function getApiBase(): string {

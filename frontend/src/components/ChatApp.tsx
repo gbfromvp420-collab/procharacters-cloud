@@ -11,6 +11,7 @@ import {
   deleteCustomCharacter,
   listLiveCharacters,
   resumeSession,
+  updateCustomCharacter,
 } from "@/lib/api";
 import {
   clearStoredSession,
@@ -89,6 +90,12 @@ export function ChatApp() {
   const [customEnergy, setCustomEnergy] = useState("");
   const [customClothing, setCustomClothing] = useState("");
   const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
+  const [mediaBase, setMediaBase] = useState("");
+  const [clipIdle, setClipIdle] = useState("");
+  const [clipTeasing, setClipTeasing] = useState("");
+  const [clipPlayful, setClipPlayful] = useState("");
+  const [clipAroused, setClipAroused] = useState("");
+  const [showMediaAdvanced, setShowMediaAdvanced] = useState(false);
   const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
   const [wsToken, setWsToken] = useState<string | null>(null);
   const [copyNotice, setCopyNotice] = useState<string | null>(null);
@@ -208,6 +215,17 @@ export function ChatApp() {
   useEffect(() => {
     setSavedSession(loadStoredSession());
   }, []);
+
+  // Prefill clip editors when a custom character is selected.
+  useEffect(() => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") return;
+    setMediaBase(selected.mediaBase ?? "");
+    setClipIdle(selected.mediaOverrides?.idle ?? "");
+    setClipTeasing(selected.mediaOverrides?.teasing ?? "");
+    setClipPlayful(selected.mediaOverrides?.playful ?? "");
+    setClipAroused(selected.mediaOverrides?.aroused ?? "");
+  }, [character, characters]);
 
   // Keep address bar shareable without private tokens after boot.
   useEffect(() => {
@@ -516,6 +534,20 @@ export function ChatApp() {
     }
   };
 
+  const buildMediaOverrides = () => {
+    const mediaOverrides: {
+      idle?: string;
+      teasing?: string;
+      playful?: string;
+      aroused?: string;
+    } = {};
+    if (clipIdle.trim()) mediaOverrides.idle = clipIdle.trim();
+    if (clipTeasing.trim()) mediaOverrides.teasing = clipTeasing.trim();
+    if (clipPlayful.trim()) mediaOverrides.playful = clipPlayful.trim();
+    if (clipAroused.trim()) mediaOverrides.aroused = clipAroused.trim();
+    return Object.keys(mediaOverrides).length > 0 ? mediaOverrides : undefined;
+  };
+
   const handleCreateCustom = async () => {
     setCreating(true);
     setError(null);
@@ -527,6 +559,8 @@ export function ChatApp() {
         clothing: customClothing.trim() || undefined,
         avatarBase: customBase,
         audience: customBase === "female-default" ? "straight" : "gay",
+        mediaBase: mediaBase.trim() || undefined,
+        mediaOverrides: buildMediaOverrides(),
       });
       const option: LiveCharacterOption = {
         id: created.id,
@@ -535,6 +569,9 @@ export function ChatApp() {
         kind: "custom",
         avatarBase: created.avatarBase,
         energyLabel: created.energyLabel,
+        mediaBase: created.mediaBase,
+        mediaOverrides: created.mediaOverrides,
+        clips: created.clips,
       };
       setCharacters((prev) => {
         if (prev.some((c) => c.id === option.id)) return prev;
@@ -547,9 +584,48 @@ export function ChatApp() {
       setCustomAppearance("");
       setCustomEnergy("");
       setCustomClothing("");
-      flashCopy("Custom ready — use Share to copy link");
+      setMediaBase("");
+      setClipIdle("");
+      setClipTeasing("");
+      setClipPlayful("");
+      setClipAroused("");
+      setShowMediaAdvanced(false);
+      flashCopy("Custom ready — clips attached");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create custom character");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSaveMediaForSelected = async () => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character to update clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const updated = await updateCustomCharacter(selected.id, {
+        mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
+        mediaOverrides: buildMediaOverrides() ?? null,
+      });
+      setCharacters((prev) =>
+        prev.map((c) =>
+          c.id === selected.id
+            ? {
+                ...c,
+                mediaBase: updated.mediaBase,
+                mediaOverrides: updated.mediaOverrides,
+                clips: updated.clips,
+              }
+            : c,
+        ),
+      );
+      flashCopy("Clip pack updated");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update clips");
     } finally {
       setCreating(false);
     }
@@ -786,7 +862,7 @@ export function ChatApp() {
                 />
                 <div className="flex flex-wrap items-center gap-2">
                   <label className="text-xs text-brand-muted" htmlFor="avatarBase">
-                    Video pack
+                    Fallback pack
                   </label>
                   <select
                     id="avatarBase"
@@ -801,6 +877,13 @@ export function ChatApp() {
                   </select>
                   <button
                     type="button"
+                    onClick={() => setShowMediaAdvanced((v) => !v)}
+                    className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-muted hover:border-brand-accent"
+                  >
+                    {showMediaAdvanced ? "Hide custom clips" : "Custom clips…"}
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleCreateCustom}
                     disabled={
                       creating || customName.trim().length < 2 || customAppearance.trim().length < 12
@@ -810,8 +893,115 @@ export function ChatApp() {
                     {creating ? "Creating…" : "Save & Select"}
                   </button>
                 </div>
+
+                {showMediaAdvanced && (
+                  <div className="grid gap-2 rounded-lg border border-dashed border-brand-border/80 p-2">
+                    <p className="text-[11px] leading-relaxed text-brand-muted">
+                      Point at a folder of loops under the web app (e.g.{" "}
+                      <code className="text-brand-text">/avatar/packs/diego</code> with{" "}
+                      idle/teasing/playful/aroused.mp4) or paste full https URLs per emotion.
+                    </p>
+                    <input
+                      value={mediaBase}
+                      onChange={(e) => setMediaBase(e.target.value)}
+                      placeholder="Media base folder — /avatar/packs/your-name"
+                      className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                    />
+                    <div className="grid gap-1 sm:grid-cols-2">
+                      <input
+                        value={clipIdle}
+                        onChange={(e) => setClipIdle(e.target.value)}
+                        placeholder="idle clip URL (optional)"
+                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                      />
+                      <input
+                        value={clipTeasing}
+                        onChange={(e) => setClipTeasing(e.target.value)}
+                        placeholder="teasing clip URL (optional)"
+                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                      />
+                      <input
+                        value={clipPlayful}
+                        onChange={(e) => setClipPlayful(e.target.value)}
+                        placeholder="playful clip URL (optional)"
+                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                      />
+                      <input
+                        value={clipAroused}
+                        onChange={(e) => setClipAroused(e.target.value)}
+                        placeholder="aroused clip URL (optional)"
+                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+
+            {!sessionActive &&
+              characters.some((c) => c.id === character && c.kind === "custom") && (
+                <div className="rounded-lg border border-brand-border/70 bg-brand-bg p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-brand-muted">
+                      Edit clips for{" "}
+                      <span className="text-brand-text">
+                        {characters.find((c) => c.id === character)?.displayName}
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaAdvanced((v) => !v)}
+                      className="text-xs text-brand-accent hover:underline"
+                    >
+                      {showMediaAdvanced ? "Hide" : "Edit media"}
+                    </button>
+                  </div>
+                  {showMediaAdvanced && (
+                    <div className="grid gap-2">
+                      <input
+                        value={mediaBase}
+                        onChange={(e) => setMediaBase(e.target.value)}
+                        placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
+                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                      />
+                      <div className="grid gap-1 sm:grid-cols-2">
+                        <input
+                          value={clipIdle}
+                          onChange={(e) => setClipIdle(e.target.value)}
+                          placeholder="idle"
+                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                        />
+                        <input
+                          value={clipTeasing}
+                          onChange={(e) => setClipTeasing(e.target.value)}
+                          placeholder="teasing"
+                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                        />
+                        <input
+                          value={clipPlayful}
+                          onChange={(e) => setClipPlayful(e.target.value)}
+                          placeholder="playful"
+                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                        />
+                        <input
+                          value={clipAroused}
+                          onChange={(e) => setClipAroused(e.target.value)}
+                          placeholder="aroused"
+                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveMediaForSelected}
+                        disabled={creating}
+                        className="justify-self-end rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                      >
+                        {creating ? "Saving…" : "Save clip pack"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
           </section>
 
           <section className="flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel">

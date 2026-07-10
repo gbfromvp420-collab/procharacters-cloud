@@ -6,6 +6,11 @@ import type { LiveCharacterProfile } from "./character-catalog.js";
 
 export type CustomAvatarBase = "twink-default" | "female-default";
 
+/** Four shipped loop slots — map Grok emotions onto these. */
+export type MediaClipKey = "idle" | "teasing" | "playful" | "aroused";
+
+export type MediaOverrides = Partial<Record<MediaClipKey, string>>;
+
 export interface CustomCharacterInput {
   name: string;
   /** Short appearance description the model must stay locked to. */
@@ -18,6 +23,13 @@ export interface CustomCharacterInput {
   avatarBase?: CustomAvatarBase;
   /** Audience tag for prompt framing. */
   audience?: "gay" | "bi" | "straight" | "any";
+  /**
+   * Optional folder of loops, e.g. `/avatar/packs/diego`
+   * Expects idle.mp4, teasing.mp4, playful.mp4, aroused.mp4 inside.
+   */
+  mediaBase?: string;
+  /** Optional per-emotion absolute/relative media URLs (override mediaBase). */
+  mediaOverrides?: MediaOverrides;
 }
 
 export interface CustomCharacterRecord extends LiveCharacterProfile {
@@ -30,6 +42,8 @@ export interface CustomCharacterRecord extends LiveCharacterProfile {
   characterPrompt: string;
   appearanceAnchor: string;
   createdAt: string;
+  mediaBase?: string;
+  mediaOverrides?: MediaOverrides;
 }
 
 interface CustomCharacterFile {
@@ -108,6 +122,34 @@ function buildTraits(input: {
     "photorealistic erotic detail",
     "consistent appearance every turn",
   ].filter(Boolean);
+}
+
+const CLIP_KEYS: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
+
+function sanitizeMediaBase(raw?: string): string | undefined {
+  if (!raw?.trim()) return undefined;
+  let value = raw.trim().replace(/\/+$/, "");
+  if (!/^https?:\/\//i.test(value) && !value.startsWith("/")) {
+    value = `/${value}`;
+  }
+  if (value.length > 300) {
+    throw new Error("mediaBase is too long");
+  }
+  return value;
+}
+
+function sanitizeMediaOverrides(raw?: MediaOverrides): MediaOverrides | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const out: MediaOverrides = {};
+  for (const key of CLIP_KEYS) {
+    const value = raw[key]?.trim();
+    if (!value) continue;
+    if (value.length > 500) {
+      throw new Error(`mediaOverrides.${key} is too long`);
+    }
+    out[key] = /^https?:\/\//i.test(value) || value.startsWith("/") ? value : `/${value}`;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
 
 function isRecord(value: unknown): value is CustomCharacterRecord {
@@ -220,6 +262,9 @@ export async function createCustomCharacter(
     `Audience: ${audience}`,
   ].join("\n");
 
+  const mediaBase = sanitizeMediaBase(raw.mediaBase);
+  const mediaOverrides = sanitizeMediaOverrides(raw.mediaOverrides);
+
   const record: CustomCharacterRecord = {
     kind: "custom",
     id,
@@ -237,11 +282,66 @@ export async function createCustomCharacter(
     characterPrompt,
     appearanceAnchor,
     createdAt: new Date().toISOString(),
+    ...(mediaBase ? { mediaBase } : {}),
+    ...(mediaOverrides ? { mediaOverrides } : {}),
   };
 
   store.set(id, record);
   await persist();
   return record;
+}
+
+export interface UpdateCustomCharacterInput {
+  mediaBase?: string | null;
+  mediaOverrides?: MediaOverrides | null;
+  energy?: string;
+  clothing?: string;
+}
+
+export async function updateCustomCharacter(
+  id: string,
+  patch: UpdateCustomCharacterInput,
+): Promise<CustomCharacterRecord> {
+  if (!loaded) {
+    await initCustomCharacters();
+  }
+  const existing = store.get(id);
+  if (!existing) {
+    throw new Error(`Custom character not found: ${id}`);
+  }
+
+  const next: CustomCharacterRecord = { ...existing };
+
+  if (patch.mediaBase !== undefined) {
+    if (patch.mediaBase === null || patch.mediaBase.trim() === "") {
+      delete next.mediaBase;
+    } else {
+      next.mediaBase = sanitizeMediaBase(patch.mediaBase);
+    }
+  }
+
+  if (patch.mediaOverrides !== undefined) {
+    if (patch.mediaOverrides === null) {
+      delete next.mediaOverrides;
+    } else {
+      next.mediaOverrides = sanitizeMediaOverrides(patch.mediaOverrides);
+      if (!next.mediaOverrides) delete next.mediaOverrides;
+    }
+  }
+
+  if (patch.energy?.trim()) {
+    next.energy = patch.energy.trim();
+    next.energyLabel = next.energy.slice(0, 80);
+  }
+  if (patch.clothing?.trim()) {
+    next.clothing = patch.clothing.trim();
+    next.signatureClothing =
+      next.clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit";
+  }
+
+  store.set(id, next);
+  await persist();
+  return next;
 }
 
 export async function deleteCustomCharacter(id: string): Promise<boolean> {
