@@ -83,26 +83,93 @@ export function AccountSettings() {
   const [liveCharacters, setLiveCharacters] = useState<LiveCharacterOption[]>([]);
   const [fallbackId, setFallbackId] = useState("twink-default");
   const [deleteConfirm, setDeleteConfirm] = useState("");
+  /** Banner for codes expiring soon (within EXPIRY_WARN_DAYS). */
+  const [expiryWarning, setExpiryWarning] = useState<string | null>(null);
+
+  const EXPIRY_WARN_DAYS = 3;
 
   const flash = (msg: string) => {
     setNotice(msg);
     window.setTimeout(() => setNotice(null), 2500);
   };
 
-  const refresh = useCallback(async (token: string) => {
-    const [me, list] = await Promise.all([
-      fetchAccountMe(token),
-      listAccountSessions(token).catch(() => [] as AccountSessionSummary[]),
-    ]);
-    setEmail(me.email ?? null);
-    setHasPassphrase(me.hasPassphrase === true);
-    setSessions(list);
-    setAccount((prev) =>
-      prev
-        ? { ...prev, handle: me.handle, accountId: me.accountId }
-        : prev,
-    );
-  }, []);
+  const checkResumeExpiryWarnings = useCallback(
+    (list: AccountSessionSummary[], opts?: { notify?: boolean }) => {
+      const soon: AccountSessionSummary[] = [];
+      const now = Date.now();
+      const horizon = EXPIRY_WARN_DAYS * 24 * 60 * 60 * 1000;
+      for (const s of list) {
+        if (!s.resumeCode || !s.resumeExpiresAt) continue;
+        const exp = Date.parse(s.resumeExpiresAt);
+        if (Number.isNaN(exp)) continue;
+        const left = exp - now;
+        if (left >= 0 && left <= horizon) soon.push(s);
+      }
+      if (soon.length === 0) {
+        setExpiryWarning(null);
+        return;
+      }
+      const names = soon
+        .slice(0, 3)
+        .map((s) => s.characterName)
+        .join(", ");
+      const more = soon.length > 3 ? ` +${soon.length - 3} more` : "";
+      setExpiryWarning(
+        `${soon.length} resume code(s) expire within ${EXPIRY_WARN_DAYS} days (${names}${more}). Use New code or Refresh all codes.`,
+      );
+
+      // Optional browser notification (permission must already be granted, or we request once)
+      if (opts?.notify && typeof window !== "undefined" && "Notification" in window) {
+        const key = `pc_resume_expiry_notified_${soon.map((s) => s.sessionId).join(",")}`;
+        try {
+          if (sessionStorage.getItem(key)) return;
+        } catch {
+          /* ignore */
+        }
+        const fire = () => {
+          try {
+            new Notification("Procharacters resume codes expiring", {
+              body: `${soon.length} code(s) expire soon: ${names}${more}`,
+              tag: "procharacters-resume-expiry",
+            });
+            try {
+              sessionStorage.setItem(key, "1");
+            } catch {
+              /* ignore */
+            }
+          } catch {
+            /* ignore */
+          }
+        };
+        if (Notification.permission === "granted") fire();
+        else if (Notification.permission === "default") {
+          void Notification.requestPermission().then((p) => {
+            if (p === "granted") fire();
+          });
+        }
+      }
+    },
+    [],
+  );
+
+  const refresh = useCallback(
+    async (token: string) => {
+      const [me, list] = await Promise.all([
+        fetchAccountMe(token),
+        listAccountSessions(token).catch(() => [] as AccountSessionSummary[]),
+      ]);
+      setEmail(me.email ?? null);
+      setHasPassphrase(me.hasPassphrase === true);
+      setSessions(list);
+      setAccount((prev) =>
+        prev
+          ? { ...prev, handle: me.handle, accountId: me.accountId }
+          : prev,
+      );
+      checkResumeExpiryWarnings(list, { notify: true });
+    },
+    [checkResumeExpiryWarnings],
+  );
 
   useEffect(() => {
     const stored = loadStoredAccount();
@@ -478,6 +545,40 @@ export function AccountSettings() {
     } finally {
       setBusy(false);
     }
+  };
+
+  /** Single-session resume snippet as .md */
+  const onDownloadOneResumeMd = async (s: AccountSessionSummary) => {
+    if (!s.resumeCode) {
+      setError("No resume code for this chat");
+      return;
+    }
+    const url = buildResumeCodeShareUrl(s.resumeCode, { characterId: s.characterId });
+    const day = new Date().toISOString().slice(0, 10);
+    const safe = s.characterName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40);
+    const text = [
+      `# Resume: ${s.characterName}`,
+      ``,
+      `- Code: \`${s.resumeCode}\``,
+      `- Character: ${s.characterId}`,
+      `- Messages: ${s.messageCount}`,
+      `- Status: ${s.status}`,
+      s.resumeExpiresAt ? `- Expires: ${s.resumeExpiresAt}` : null,
+      `- Link: ${url}`,
+      ``,
+      `_Open the link on any device to continue this chat._`,
+      ``,
+    ]
+      .filter((l) => l != null)
+      .join("\n");
+    const filename = `procharacters-resume-${safe || "chat"}-${s.resumeCode}-${day}.md`;
+    const { downloadMarkdown } = await import("@/lib/download-json");
+    downloadMarkdown(filename, text);
+    flash(`Downloaded resume → ${filename}`);
   };
 
   const onEmailResumeLinks = async () => {
@@ -1175,6 +1276,33 @@ export function AccountSettings() {
                 be remapped to a live model.
               </p>
 
+              {expiryWarning && (
+                <div
+                  className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+                  role="status"
+                >
+                  <p className="font-medium">Resume codes expiring soon</p>
+                  <p className="mt-1 text-xs text-amber-100/80">{expiryWarning}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onRefreshAllResumes()}
+                      className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
+                    >
+                      Refresh all codes now
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpiryWarning(null)}
+                      className="text-xs text-brand-muted hover:text-brand-text"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {importDoc != null && importPreview ? (
                 <div className="mb-4">
                   <ImportPreviewPanel
@@ -1261,6 +1389,15 @@ export function AccountSettings() {
                             className="text-brand-muted hover:text-brand-accent"
                           >
                             {canNativeShare() ? "Share code" : "Copy code"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void onDownloadOneResumeMd(s)}
+                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                            title="Download this resume as a .md snippet"
+                          >
+                            .md
                           </button>
                           <button
                             type="button"

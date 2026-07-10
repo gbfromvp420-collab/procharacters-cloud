@@ -18,7 +18,7 @@ interface GalleryViewProps {
   siteOrigin: string;
 }
 
-type SortMode = "name" | "kind" | "energy" | "featured";
+type SortMode = "name" | "kind" | "energy" | "featured" | "recent";
 
 function posterUrl(card: CharacterCard): string {
   const poster = card.posterClip;
@@ -257,11 +257,28 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       return hay.includes(q);
     });
 
+    const byRecent = (a: CharacterCard, b: CharacterCard) => {
+      const ra = resumes[a.id]?.updatedAt ?? "";
+      const rb = resumes[b.id]?.updatedAt ?? "";
+      // Chats with resumes first, then by recency, then name
+      if (!!ra !== !!rb) return ra ? -1 : 1;
+      if (ra !== rb) return rb.localeCompare(ra);
+      return a.displayName.localeCompare(b.displayName);
+    };
+
     list = [...list].sort((a, b) => {
+      if (sort === "recent" || filter === "mine") return byRecent(a, b);
       if (sort === "featured") {
         if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
+        // Among same featured flag, prefer recent chats lightly
+        const recent = byRecent(a, b);
+        if (resumes[a.id] || resumes[b.id]) {
+          if (!!resumes[a.id] !== !!resumes[b.id]) return resumes[a.id] ? -1 : 1;
+        }
         if (a.kind !== b.kind) return a.kind === "default" ? -1 : 1;
-        return a.displayName.localeCompare(b.displayName);
+        return recent !== 0 && (resumes[a.id] || resumes[b.id])
+          ? recent
+          : a.displayName.localeCompare(b.displayName);
       }
       if (sort === "name") return a.displayName.localeCompare(b.displayName);
       if (sort === "energy") {
@@ -272,17 +289,6 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       if (a.kind !== b.kind) return a.kind === "default" ? -1 : 1;
       return a.displayName.localeCompare(b.displayName);
     });
-
-    // When browsing "My chats", prefer most-recently updated resume first
-    if (filter === "mine") {
-      list = [...list].sort((a, b) => {
-        const ra = resumes[a.id]?.updatedAt ?? "";
-        const rb = resumes[b.id]?.updatedAt ?? "";
-        if (ra !== rb) return rb.localeCompare(ra);
-        return a.displayName.localeCompare(b.displayName);
-      });
-      return list;
-    }
 
     return list;
   }, [characters, filter, query, sort, resumes]);
@@ -420,6 +426,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 className="field min-h-touch w-full sm:w-auto"
               >
                 <option value="featured">Featured first</option>
+                <option value="recent">Last chat</option>
                 <option value="kind">Signature first</option>
                 <option value="name">Name A–Z</option>
                 <option value="energy">Energy</option>
