@@ -135,9 +135,29 @@ export function ChatApp() {
   const [accountSessions, setAccountSessions] = useState<AccountSessionSummary[]>([]);
   const [accountEmailLinked, setAccountEmailLinked] = useState<string | null>(null);
   const [resumeCodeInput, setResumeCodeInput] = useState("");
+  /** Hide avatar video/panel for more transcript space. */
+  const [avatarCollapsed, setAvatarCollapsed] = useState(false);
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
+  }, []);
+
+  const setAvatarCollapsedPersist = useCallback((next: boolean) => {
+    setAvatarCollapsed(next);
+    try {
+      window.localStorage.setItem("pc_avatar_collapsed", next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("pc_avatar_collapsed");
+      if (raw === "1") setAvatarCollapsed(true);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -1291,24 +1311,74 @@ export function ChatApp() {
           </div>
         )}
 
-        <div className="flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:flex-row lg:gap-4">
-          {/* Avatar rail — compact row on phone, column on desktop */}
-          <div className="flex w-full shrink-0 flex-row gap-2 sm:gap-3 lg:max-w-xs lg:flex-col">
-            <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
-              <AvatarVideo avatar={avatarState} characterName={characterName} compact />
+        <div
+          className={`flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:gap-4 ${
+            avatarCollapsed ? "lg:flex-col" : "lg:flex-row"
+          }`}
+        >
+          {/* LiveKit stays mounted even when collapsed so avatar state keeps syncing */}
+          <div className="sr-only" aria-hidden>
+            <LiveKitAvatarSync livekit={livekit} onAvatarSync={handleAvatarSync} />
+          </div>
+
+          {avatarCollapsed ? (
+            <div className="flex w-full shrink-0 items-center gap-2 rounded-xl border border-brand-border bg-brand-panel/95 px-2.5 py-2 shadow-card backdrop-blur-sm">
+              <div
+                className={`avatar-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white ${
+                  avatarState
+                    ? "from-brand-accentDim to-brand-accent"
+                    : "from-brand-border to-brand-accentDim"
+                }`}
+              >
+                {(characterName ?? "?").charAt(0)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-brand-text">
+                  {characterName ?? "Avatar hidden"}
+                </p>
+                <p className="truncate text-[11px] text-brand-muted">
+                  {avatarState
+                    ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}%`
+                    : "Video collapsed for more chat space"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAvatarCollapsedPersist(false)}
+                className="btn-ghost min-h-0 shrink-0 px-3 py-1.5 text-xs"
+                title="Show avatar video and status"
+              >
+                Show avatar
+              </button>
             </div>
-            <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
-              <AvatarPanel
-                characterName={characterName}
-                characterId={activeCharacterId}
-                avatar={avatarState}
-                status={status}
-              />
-              <div className="hidden lg:block">
-                <LiveKitAvatarSync livekit={livekit} onAvatarSync={handleAvatarSync} />
+          ) : (
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 lg:max-w-xs">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted">Avatar</p>
+                <button
+                  type="button"
+                  onClick={() => setAvatarCollapsedPersist(true)}
+                  className="text-[11px] text-brand-muted transition hover:text-brand-accent"
+                  title="Hide avatar for more chat space"
+                >
+                  Hide · more chat
+                </button>
+              </div>
+              <div className="flex flex-row gap-2 sm:gap-3 lg:flex-col">
+                <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
+                  <AvatarVideo avatar={avatarState} characterName={characterName} compact />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
+                  <AvatarPanel
+                    characterName={characterName}
+                    characterId={activeCharacterId}
+                    avatar={avatarState}
+                    status={status}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
@@ -1734,7 +1804,31 @@ export function ChatApp() {
               )}
           </section>
 
-          <section className="flex min-h-[min(52dvh,420px)] flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm sm:min-h-[380px]">
+          <section
+            className={`flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
+              avatarCollapsed
+                ? "min-h-[min(70dvh,560px)] sm:min-h-[480px]"
+                : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
+              <p className="text-[11px] text-brand-muted">
+                {messages.length > 0 ? `${messages.length} messages` : "Transcript"}
+                {avatarCollapsed ? " · avatar hidden" : ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
+                className="text-[11px] text-brand-accent hover:underline"
+                title={
+                  avatarCollapsed
+                    ? "Show avatar video and status"
+                    : "Hide avatar for more chat space"
+                }
+              >
+                {avatarCollapsed ? "Show avatar" : "Hide avatar"}
+              </button>
+            </div>
             <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
               {messages.length === 0 && !isTyping && (
                 <p className="px-2 py-12 text-center text-sm text-brand-muted sm:py-20">
@@ -1780,13 +1874,23 @@ export function ChatApp() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    // Phone: auto-collapse avatar on focus so keyboard + chat fit
+                    if (
+                      typeof window !== "undefined" &&
+                      window.matchMedia("(max-width: 639px)").matches &&
+                      !avatarCollapsed
+                    ) {
+                      setAvatarCollapsedPersist(true);
+                    }
+                  }}
                   placeholder={
                     status === "ready"
                       ? "Message… (Enter to send)"
                       : "Start a session first"
                   }
                   disabled={status !== "ready" || sending}
-                  rows={2}
+                  rows={avatarCollapsed ? 3 : 2}
                   enterKeyHint="send"
                   className="field min-h-[2.75rem] flex-1 resize-none py-2.5 disabled:opacity-50"
                 />
