@@ -425,19 +425,23 @@ export const createAccountRoutes = (
       let document: unknown = raw;
       let characterId: string | undefined;
       let sessionIndex: number | undefined;
+      let importAll: boolean | undefined;
 
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         const body = raw as Record<string, unknown>;
         if (body.document !== undefined) document = body.document;
         if (typeof body.characterId === "string") characterId = body.characterId;
         if (typeof body.sessionIndex === "number") sessionIndex = body.sessionIndex;
+        if (typeof body.importAll === "boolean") importAll = body.importAll;
       }
 
       try {
+        // Account bulk exports default to import-all (every chat restored + owned).
         const session = await sessionManager.importSession(document, wsBaseUrl, {
           accountId: account.id,
           characterId,
           sessionIndex,
+          importAll: importAll ?? (sessionIndex === undefined ? true : undefined),
         });
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });

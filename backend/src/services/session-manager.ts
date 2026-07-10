@@ -7,7 +7,9 @@ import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
   buildAccountSessionsExport,
   buildSessionExport,
+  isBulkAccountExport,
   parseImportDocument,
+  parseImportDocumentAll,
   type AccountSessionsExport,
   type ImportSessionPayload,
   type SessionExport,
@@ -50,6 +52,48 @@ export class SessionImportError extends Error {
     this.name = "SessionImportError";
   }
 }
+
+type SessionImportResult = CreateSessionResult & {
+  messages: SessionRecord["memory"]["messages"];
+  imported: {
+    messageCount: number;
+    originalSessionId?: string;
+    originalCharacterId: string;
+    characterId: string;
+    truncated?: boolean;
+    dropped?: number;
+    bulkIndex?: number;
+    bulkTotal?: number;
+  };
+};
+
+type BulkImportItemOk = {
+  ok: true;
+  index: number;
+  sessionId: string;
+  characterId: string;
+  characterName: string;
+  messageCount: number;
+  resumeCode?: string;
+};
+
+type BulkImportItemFail = {
+  ok: false;
+  index: number;
+  characterId?: string;
+  characterName?: string;
+  error: string;
+  code?: string;
+};
+
+export type BulkImportSummary = {
+  total: number;
+  succeeded: number;
+  failed: number;
+  capped: boolean;
+  totalMessages: number;
+  results: Array<BulkImportItemOk | BulkImportItemFail>;
+};
 
 export class SessionManager {
   private readonly sessions = new Map<string, SessionRecord>();
@@ -328,6 +372,11 @@ export class SessionManager {
   /**
    * Restore a transcript from export JSON into a brand-new session
    * (new id + wsToken; never reuses old secrets).
+   *
+   * For bulk account exports:
+   * - `importAll: true` (default when bulk + no sessionIndex) restores every chat
+   * - `sessionIndex` forces a single entry
+   * - `importAll: false` with bulk defaults to index 0
    */
   async importSession(
     document: unknown,
@@ -336,22 +385,22 @@ export class SessionManager {
       accountId?: string;
       characterId?: string;
       sessionIndex?: number;
+      importAll?: boolean;
     } = {},
-  ): Promise<
-    CreateSessionResult & {
-      messages: SessionRecord["memory"]["messages"];
-      imported: {
-        messageCount: number;
-        originalSessionId?: string;
-        originalCharacterId: string;
-        characterId: string;
-        truncated?: boolean;
-        dropped?: number;
-        bulkIndex?: number;
-        bulkTotal?: number;
-      };
+  ): Promise<SessionImportResult & { bulk?: BulkImportSummary }> {
+    const wantAll =
+      options.importAll === true ||
+      (options.importAll !== false &&
+        options.sessionIndex === undefined &&
+        isBulkAccountExport(document));
+
+    if (wantAll && isBulkAccountExport(document)) {
+      return this.importSessionsBulk(document, wsBaseUrl, {
+        accountId: options.accountId,
+        characterId: options.characterId,
+      });
     }
-  > {
+
     const parsed = parseImportDocument(document, {
       sessionIndex: options.sessionIndex,
     });
@@ -359,7 +408,110 @@ export class SessionManager {
       throw new SessionImportError(parsed.error, parsed.code);
     }
 
-    const payload: ImportSessionPayload = parsed.session;
+    return this.materializeImport(parsed.session, wsBaseUrl, {
+      accountId: options.accountId,
+      characterId: options.characterId,
+      truncated: parsed.truncated,
+      dropped: parsed.dropped,
+      bulkIndex: parsed.bulkIndex,
+      bulkTotal: parsed.bulkTotal,
+    });
+  }
+
+  /** Restore every valid chat from a bulk (or single) export. */
+  async importSessionsBulk(
+    document: unknown,
+    wsBaseUrl: string,
+    options: {
+      accountId?: string;
+      characterId?: string;
+    } = {},
+  ): Promise<SessionImportResult & { bulk: BulkImportSummary }> {
+    const parsed = parseImportDocumentAll(document);
+    if (!parsed.ok) {
+      throw new SessionImportError(parsed.error, parsed.code);
+    }
+
+    const results: Array<BulkImportItemOk | BulkImportItemFail> = [];
+    let primary: SessionImportResult | null = null;
+    let totalMessages = 0;
+
+    for (const entry of parsed.entries) {
+      try {
+        const created = await this.materializeImport(entry.session, wsBaseUrl, {
+          accountId: options.accountId,
+          // characterId override applies only when a single override was requested
+          // for bulk we only override if explicitly set (same for all)
+          characterId: options.characterId,
+          truncated: entry.truncated,
+          dropped: entry.dropped,
+          bulkIndex: entry.index,
+          bulkTotal: parsed.bulkTotal,
+        });
+        totalMessages += created.imported.messageCount;
+        results.push({
+          ok: true,
+          index: entry.index,
+          sessionId: created.sessionId,
+          characterId: created.characterId,
+          characterName: entry.session.characterName,
+          messageCount: created.imported.messageCount,
+          resumeCode: created.resumeCode,
+        });
+        if (!primary) primary = created;
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Import failed for this session";
+        const code = error instanceof SessionImportError ? error.code : undefined;
+        results.push({
+          ok: false,
+          index: entry.index,
+          characterId: entry.session.characterId,
+          characterName: entry.session.characterName,
+          error: message,
+          code,
+        });
+      }
+    }
+
+    const succeeded = results.filter((r) => r.ok).length;
+    const failed = results.length - succeeded;
+
+    if (!primary || succeeded === 0) {
+      const firstErr = results.find((r) => !r.ok);
+      throw new SessionImportError(
+        firstErr && !firstErr.ok
+          ? `Bulk import failed for all sessions. First error: ${firstErr.error}`
+          : "Bulk import failed for all sessions",
+        "BULK_EMPTY",
+      );
+    }
+
+    return {
+      ...primary,
+      bulk: {
+        total: parsed.bulkTotal,
+        succeeded,
+        failed,
+        capped: parsed.capped,
+        totalMessages,
+        results,
+      },
+    };
+  }
+
+  private async materializeImport(
+    payload: ImportSessionPayload,
+    wsBaseUrl: string,
+    options: {
+      accountId?: string;
+      characterId?: string;
+      truncated?: boolean;
+      dropped?: number;
+      bulkIndex?: number;
+      bulkTotal?: number;
+    },
+  ): Promise<SessionImportResult> {
     const characterId = (options.characterId?.trim() || payload.characterId).trim();
 
     try {
@@ -390,7 +542,6 @@ export class SessionManager {
       createdAt: m.createdAt,
     }));
 
-    // Keep within memory window for live LLM context
     const windowed =
       messages.length > this.maxMessageWindow
         ? messages.slice(-this.maxMessageWindow)
@@ -440,10 +591,10 @@ export class SessionManager {
           payload.sessionId !== "imported" ? payload.sessionId : undefined,
         originalCharacterId: payload.characterId,
         characterId: promptSnapshot.characterId,
-        truncated: parsed.truncated === true || messages.length > windowed.length,
-        dropped: parsed.dropped,
-        bulkIndex: parsed.bulkIndex,
-        bulkTotal: parsed.bulkTotal,
+        truncated: options.truncated === true || messages.length > windowed.length,
+        dropped: options.dropped,
+        bulkIndex: options.bulkIndex,
+        bulkTotal: options.bulkTotal,
       },
     };
   }

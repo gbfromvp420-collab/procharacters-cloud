@@ -245,6 +245,8 @@ export function parseExportFormat(value: unknown): ExportFormat {
 
 const MAX_IMPORT_MESSAGES = Number(process.env.MAX_IMPORT_MESSAGES ?? 100);
 const MAX_MESSAGE_CHARS = Number(process.env.MAX_IMPORT_MESSAGE_CHARS ?? 8000);
+/** Max chats restored from one bulk account export. */
+export const MAX_BULK_IMPORT_SESSIONS = Number(process.env.MAX_BULK_IMPORT_SESSIONS ?? 25);
 
 export type ImportSessionPayload = SessionExport["session"];
 
@@ -482,6 +484,157 @@ export function parseImportDocument(
       sourceSchema: "bare-session",
       truncated: coerced.truncated,
       dropped: coerced.dropped,
+    };
+  }
+
+  return {
+    ok: false,
+    error: `Unsupported export schema. Expected ${SESSION_EXPORT_SCHEMA} or ${ACCOUNT_SESSIONS_EXPORT_SCHEMA}`,
+    code: "BAD_SCHEMA",
+  };
+}
+
+export type BulkImportEntry = {
+  index: number;
+  session: ImportSessionPayload;
+  truncated: boolean;
+  dropped: number;
+};
+
+export type ParseImportAllOk = {
+  ok: true;
+  entries: BulkImportEntry[];
+  sourceSchema: string;
+  bulkTotal: number;
+  capped: boolean;
+};
+
+export type ParseImportAllResult = ParseImportAllOk | ParseImportErr;
+
+/** True when payload is a multi-session account export. */
+export function isBulkAccountExport(input: unknown): boolean {
+  let doc: unknown = input;
+  if (
+    doc &&
+    typeof doc === "object" &&
+    "document" in doc &&
+    (doc as { document: unknown }).document != null
+  ) {
+    doc = (doc as { document: unknown }).document;
+  }
+  if (!doc || typeof doc !== "object") return false;
+  const root = doc as Record<string, unknown>;
+  const schema = typeof root.schema === "string" ? root.schema : "";
+  if (schema === SESSION_EXPORT_SCHEMA) return false;
+  if ("session" in root && root.session && !Array.isArray(root.sessions)) return false;
+  return schema === ACCOUNT_SESSIONS_EXPORT_SCHEMA || Array.isArray(root.sessions);
+}
+
+/**
+ * Parse every valid session from a bulk (or single) export for restore-all.
+ * Caps at MAX_BULK_IMPORT_SESSIONS.
+ */
+export function parseImportDocumentAll(input: unknown): ParseImportAllResult {
+  if (input == null) {
+    return { ok: false, error: "Empty import body", code: "EMPTY" };
+  }
+
+  let doc: unknown = input;
+  if (
+    doc &&
+    typeof doc === "object" &&
+    "document" in doc &&
+    (doc as { document: unknown }).document != null
+  ) {
+    doc = (doc as { document: unknown }).document;
+  }
+
+  if (!doc || typeof doc !== "object") {
+    return { ok: false, error: "Import must be a JSON object", code: "BAD_JSON" };
+  }
+
+  const root = doc as Record<string, unknown>;
+  const schema = typeof root.schema === "string" ? root.schema : "";
+
+  // Single → one entry
+  if (schema === SESSION_EXPORT_SCHEMA || ("session" in root && root.session && !Array.isArray(root.sessions))) {
+    const one = parseImportDocument(doc);
+    if (!one.ok) return one;
+    return {
+      ok: true,
+      entries: [
+        {
+          index: 0,
+          session: one.session,
+          truncated: one.truncated === true,
+          dropped: one.dropped ?? 0,
+        },
+      ],
+      sourceSchema: one.sourceSchema,
+      bulkTotal: 1,
+      capped: false,
+    };
+  }
+
+  // Bare session
+  if (
+    typeof root.characterId === "string" &&
+    Array.isArray(root.messages) &&
+    !Array.isArray(root.sessions)
+  ) {
+    const one = parseImportDocument(doc);
+    if (!one.ok) return one;
+    return {
+      ok: true,
+      entries: [
+        {
+          index: 0,
+          session: one.session,
+          truncated: one.truncated === true,
+          dropped: one.dropped ?? 0,
+        },
+      ],
+      sourceSchema: one.sourceSchema,
+      bulkTotal: 1,
+      capped: false,
+    };
+  }
+
+  // Bulk
+  if (schema === ACCOUNT_SESSIONS_EXPORT_SCHEMA || Array.isArray(root.sessions)) {
+    const list = Array.isArray(root.sessions) ? root.sessions : [];
+    if (list.length === 0) {
+      return { ok: false, error: "Bulk export has no sessions", code: "EMPTY" };
+    }
+
+    const entries: BulkImportEntry[] = [];
+    const limit = Math.min(list.length, MAX_BULK_IMPORT_SESSIONS);
+
+    for (let i = 0; i < limit; i++) {
+      const coerced = coerceSessionShape(list[i]);
+      if (!coerced || coerced.session.messages.length === 0) continue;
+      entries.push({
+        index: i,
+        session: coerced.session,
+        truncated: coerced.truncated,
+        dropped: coerced.dropped,
+      });
+    }
+
+    if (entries.length === 0) {
+      return {
+        ok: false,
+        error: "Bulk export has no sessions with valid messages",
+        code: "EMPTY",
+      };
+    }
+
+    return {
+      ok: true,
+      entries,
+      sourceSchema: schema || ACCOUNT_SESSIONS_EXPORT_SCHEMA,
+      bulkTotal: list.length,
+      capped: list.length > MAX_BULK_IMPORT_SESSIONS,
     };
   }
 

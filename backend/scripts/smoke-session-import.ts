@@ -4,7 +4,9 @@
  */
 import {
   ACCOUNT_SESSIONS_EXPORT_SCHEMA,
+  isBulkAccountExport,
   parseImportDocument,
+  parseImportDocumentAll,
   SESSION_EXPORT_SCHEMA,
 } from "../src/lib/memory/session-export.js";
 
@@ -99,5 +101,16 @@ const junk = parseImportDocument({
 });
 assert(junk.ok && junk.session.messages.length === 1, "sanitize roles");
 assert(junk.ok && junk.dropped === 2, "dropped count");
+
+assert(isBulkAccountExport(bulk) === true, "is bulk");
+assert(isBulkAccountExport(single) === false, "not bulk single");
+
+const all = parseImportDocumentAll(bulk);
+assert(all.ok && all.entries.length === 2, "parse all entries");
+assert(all.ok && all.bulkTotal === 2, "bulk total");
+assert(all.ok && all.entries[1]?.session.messages[0]?.content === "second chat", "all order");
+
+const allSingle = parseImportDocumentAll(single);
+assert(allSingle.ok && allSingle.entries.length === 1, "all of single");
 
 console.log("smoke-session-import: all checks passed");

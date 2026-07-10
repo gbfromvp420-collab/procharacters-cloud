@@ -576,7 +576,46 @@ export interface ImportSessionResult extends CreateSessionResponse {
     bulkIndex?: number;
     bulkTotal?: number;
   };
+  /** Present when a multi-session account export was restored. */
+  bulk?: {
+    total: number;
+    succeeded: number;
+    failed: number;
+    capped: boolean;
+    totalMessages: number;
+    results: Array<
+      | {
+          ok: true;
+          index: number;
+          sessionId: string;
+          characterId: string;
+          characterName: string;
+          messageCount: number;
+          resumeCode?: string;
+        }
+      | {
+          ok: false;
+          index: number;
+          characterId?: string;
+          characterName?: string;
+          error: string;
+          code?: string;
+        }
+    >;
+  };
 }
+
+function importFlashSummary(result: ImportSessionResult): string {
+  if (result.bulk && result.bulk.succeeded + result.bulk.failed > 1) {
+    const { succeeded, failed, totalMessages, capped } = result.bulk;
+    const failPart = failed > 0 ? `, ${failed} failed` : "";
+    const capPart = capped ? " (capped)" : "";
+    return `Imported ${succeeded} chat(s), ${totalMessages} msgs${failPart}${capPart}`;
+  }
+  return `Imported ${result.imported.messageCount} msgs`;
+}
+
+export { importFlashSummary };
 
 /** Restore export JSON as a new live session (optional account via token). */
 export async function importSessionDocument(
@@ -585,21 +624,30 @@ export async function importSessionDocument(
     accountToken?: string | null;
     characterId?: string;
     sessionIndex?: number;
+    /** Default true for bulk account exports when sessionIndex omitted. */
+    importAll?: boolean;
   },
 ): Promise<ImportSessionResult> {
   const body: Record<string, unknown> = { document };
   if (options?.characterId) body.characterId = options.characterId;
   if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
+  if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
 
-  // Also accept posting the export root itself (no wrapper) for convenience
+  // Prefer wrapper when we need flags; raw export only when no options
+  const needsWrapper =
+    !!options?.characterId ||
+    typeof options?.sessionIndex === "number" ||
+    typeof options?.importAll === "boolean";
+
   const payload =
     document &&
     typeof document === "object" &&
     !Array.isArray(document) &&
-    ("schema" in (document as object) || "session" in (document as object) || "sessions" in (document as object))
-      ? options?.characterId || typeof options?.sessionIndex === "number"
-        ? body
-        : document
+    ("schema" in (document as object) ||
+      "session" in (document as object) ||
+      "sessions" in (document as object)) &&
+    !needsWrapper
+      ? document
       : body;
 
   const res = await fetch(`${API_BASE}/api/v1/sessions/import`, {
@@ -621,28 +669,22 @@ export async function importSessionDocument(
   return res.json() as Promise<ImportSessionResult>;
 }
 
-/** Account-owned import (always attaches to signed-in account). */
+/** Account-owned import — bulk exports restore every chat by default. */
 export async function importAccountSession(
   accountToken: string,
   document: unknown,
-  options?: { characterId?: string; sessionIndex?: number },
+  options?: { characterId?: string; sessionIndex?: number; importAll?: boolean },
 ): Promise<ImportSessionResult> {
   const body: Record<string, unknown> = { document };
   if (options?.characterId) body.characterId = options.characterId;
   if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
+  if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
+  else if (typeof options?.sessionIndex !== "number") body.importAll = true;
 
   const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/import`, {
     method: "POST",
     headers: authHeaders(accountToken),
-    body: JSON.stringify(
-      document &&
-        typeof document === "object" &&
-        !options?.characterId &&
-        typeof options?.sessionIndex !== "number" &&
-        ("schema" in (document as object) || "session" in (document as object))
-        ? document
-        : body,
-    ),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const text = await res.text();

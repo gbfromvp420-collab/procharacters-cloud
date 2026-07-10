@@ -9,6 +9,7 @@ import {
   exportAllAccountSessions,
   fetchAccountMe,
   importAccountSession,
+  importFlashSummary,
   linkEmailToAccount,
   listAccountSessions,
   loginAccount,
@@ -346,9 +347,16 @@ export function AccountSettings() {
       }
       const result = await importAccountSession(account.token, document);
       await refresh(account.token);
-      flash(
-        `Imported ${result.imported.messageCount} msgs as new chat (${result.sessionId.slice(0, 8)}…)`,
-      );
+      const summary = importFlashSummary(result);
+      flash(`${summary} · primary ${result.sessionId.slice(0, 8)}…`);
+      if (result.bulk?.failed) {
+        const fails = result.bulk.results
+          .filter((r) => !r.ok)
+          .slice(0, 3)
+          .map((r) => (!r.ok ? `${r.characterName ?? r.characterId}: ${r.error}` : ""))
+          .filter(Boolean);
+        if (fails.length) setError(`Some imports failed: ${fails.join(" · ")}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
     } finally {
@@ -677,8 +685,8 @@ export function AccountSettings() {
                 </div>
               </div>
               <p className="mb-3 text-[11px] text-brand-muted">
-                Import a previously exported chat JSON to restore the transcript as a new saved
-                session (new id — old secrets never reused).
+                Import JSON to restore chats as new sessions (new ids — secrets never reused).
+                Account bulk exports restore <strong>all</strong> chats (up to 25).
               </p>
               {sessions.length === 0 ? (
                 <p className="text-xs text-brand-muted">

@@ -62,8 +62,13 @@ const importSessionSchema = z.object({
   document: z.unknown().optional(),
   /** Optional character override when original id is gone. */
   characterId: z.string().min(2).max(80).optional(),
-  /** Which session in a bulk export (default 0). */
+  /** Which session in a bulk export (forces single when set). */
   sessionIndex: z.number().int().min(0).max(99).optional(),
+  /**
+   * Restore every chat from a bulk account export (default true when bulk + no index).
+   * Set false to import only sessionIndex (or 0).
+   */
+  importAll: z.boolean().optional(),
 });
 
 const mediaOverridesSchema = z
@@ -457,6 +462,7 @@ export const createSessionRoutes = (
       let document: unknown = raw;
       let characterId: string | undefined;
       let sessionIndex: number | undefined;
+      let importAll: boolean | undefined;
 
       if (raw && typeof raw === "object" && !Array.isArray(raw)) {
         const parsedWrap = importSessionSchema.safeParse(raw);
@@ -466,6 +472,7 @@ export const createSessionRoutes = (
           }
           characterId = parsedWrap.data.characterId;
           sessionIndex = parsedWrap.data.sessionIndex;
+          importAll = parsedWrap.data.importAll;
         }
       }
 
@@ -474,10 +481,12 @@ export const createSessionRoutes = (
           accountId: account?.id,
           characterId,
           sessionIndex,
+          importAll,
         });
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });
 
+        // Enrich LiveKit for primary (opened) session only
         let livekitJoin;
         if (livekit.isConfigured) {
           const identity = `user-${session.sessionId.slice(0, 8)}`;

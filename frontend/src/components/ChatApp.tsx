@@ -12,6 +12,7 @@ import {
   createSession,
   deleteCustomCharacter,
   exportLiveSession,
+  importFlashSummary,
   importSessionDocument,
   listAccountSessions,
   listLiveCharacters,
@@ -514,13 +515,18 @@ export function ChatApp() {
       }
       const session = await importSessionDocument(document, {
         accountToken: account?.token,
+        // Bulk exports: restore every chat; open the first live
+        importAll: true,
       });
       await openLiveSession(session);
       flashCopy(
-        `Imported ${session.imported.messageCount} messages${
-          session.imported.truncated ? " (trimmed)" : ""
-        }`,
+        `${importFlashSummary(session)}${session.imported.truncated ? " (trimmed)" : ""}`,
       );
+      if (session.bulk && session.bulk.failed > 0) {
+        setError(
+          `${session.bulk.failed} chat(s) could not be restored (missing character or empty)`,
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
       setStatus("error");
