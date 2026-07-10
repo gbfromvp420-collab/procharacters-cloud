@@ -143,3 +143,79 @@ export async function copyText(text: string): Promise<boolean> {
     return false;
   }
 }
+
+/** True when the browser exposes the Web Share API (typical mobile). */
+export function canNativeShare(): boolean {
+  return typeof navigator !== "undefined" && typeof navigator.share === "function";
+}
+
+export type ShareOrCopyResult =
+  | { ok: true; method: "share" | "copy" }
+  | { ok: false; reason: "cancelled" | "failed" };
+
+/**
+ * Prefer native share sheet (mobile); fall back to clipboard copy.
+ * Tries a .md File first when the OS supports file share, else text.
+ */
+export async function shareOrCopyText(options: {
+  title?: string;
+  text: string;
+  filename?: string;
+}): Promise<ShareOrCopyResult> {
+  const title = options.title ?? "Procharacters transcript";
+  const text = options.text;
+  const filename = options.filename ?? "procharacters-transcript.md";
+
+  if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+    try {
+      // File share (iOS/Android often maps to Files / Notes / Messages)
+      if (typeof File !== "undefined") {
+        const file = new File([text.endsWith("\n") ? text : `${text}\n`], filename, {
+          type: "text/markdown",
+        });
+        const filePayload = { title, files: [file] as File[] };
+        if (
+          typeof navigator.canShare !== "function" ||
+          navigator.canShare(filePayload)
+        ) {
+          await navigator.share(filePayload);
+          return { ok: true, method: "share" };
+        }
+      }
+
+      const textPayload = { title, text };
+      if (
+        typeof navigator.canShare !== "function" ||
+        navigator.canShare(textPayload)
+      ) {
+        await navigator.share(textPayload);
+        return { ok: true, method: "share" };
+      }
+    } catch (err) {
+      // User dismissed the sheet — not an error for the UI
+      if (err instanceof DOMException && err.name === "AbortError") {
+        return { ok: false, reason: "cancelled" };
+      }
+      if (err instanceof Error && err.name === "AbortError") {
+        return { ok: false, reason: "cancelled" };
+      }
+      // Fall through to clipboard
+    }
+  }
+
+  const copied = await copyText(text);
+  return copied ? { ok: true, method: "copy" } : { ok: false, reason: "failed" };
+}
+
+/** Human flash for shareOrCopyText results. */
+export function shareResultLabel(
+  result: ShareOrCopyResult,
+  kind = "Transcript",
+): string | null {
+  if (!result.ok) {
+    if (result.reason === "cancelled") return null;
+    return "Share failed";
+  }
+  if (result.method === "share") return `${kind} opened in share sheet`;
+  return `${kind} copied (Markdown)`;
+}

@@ -47,9 +47,12 @@ import {
 import {
   buildCharacterShareUrl,
   buildResumeCodeShareUrl,
+  canNativeShare,
   copyText,
   parseShareQuery,
   replaceCharacterInUrl,
+  shareOrCopyText,
+  shareResultLabel,
 } from "@/lib/share-links";
 import type {
   AvatarState,
@@ -735,7 +738,22 @@ export function ChatApp() {
     }
   };
 
-  const copyChatMarkdown = async () => {
+  const shareChatMarkdown = async () => {
+    const safeName = (characterName ?? character ?? "chat")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40);
+    const day = new Date().toISOString().slice(0, 10);
+    const filename = `procharacters-${safeName || "chat"}-${day}.md`;
+    const title = `Chat with ${characterName ?? character ?? "character"}`;
+
+    const deliver = async (markdown: string, kind: string) => {
+      const result = await shareOrCopyText({ title, text: markdown, filename });
+      const label = shareResultLabel(result, kind);
+      if (label) flashCopy(label);
+    };
+
     try {
       let markdown: string;
       if (sessionId && wsToken) {
@@ -755,11 +773,10 @@ export function ChatApp() {
             })),
         });
       } else {
-        setError("Nothing to copy yet — start chatting first");
+        setError("Nothing to share yet — start chatting first");
         return;
       }
-      const ok = await copyText(markdown);
-      flashCopy(ok ? "Transcript copied (Markdown)" : "Copy failed");
+      await deliver(markdown, "Transcript");
     } catch (err) {
       // Fallback: build from local messages if server export fails mid-stream
       if (messages.length > 0) {
@@ -777,14 +794,13 @@ export function ChatApp() {
                 content: m.content,
               })),
           });
-          const ok = await copyText(markdown);
-          flashCopy(ok ? "Transcript copied (local Markdown)" : "Copy failed");
+          await deliver(markdown, "Transcript");
           return;
         } catch {
           /* fall through */
         }
       }
-      setError(err instanceof Error ? err.message : "Copy transcript failed");
+      setError(err instanceof Error ? err.message : "Share transcript failed");
     }
   };
 
@@ -1630,12 +1646,16 @@ export function ChatApp() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => void copyChatMarkdown()}
+                    onClick={() => void shareChatMarkdown()}
                     disabled={messages.length === 0 && !(sessionId && wsToken)}
                     className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title="Copy Markdown transcript to clipboard"
+                    title={
+                      canNativeShare()
+                        ? "Share Markdown via system share sheet"
+                        : "Copy Markdown transcript to clipboard"
+                    }
                   >
-                    Copy MD
+                    {canNativeShare() ? "Share MD" : "Copy MD"}
                   </button>
                 </>
               )}

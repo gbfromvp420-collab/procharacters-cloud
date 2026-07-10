@@ -38,7 +38,13 @@ import {
   suggestFallbackId,
   type ExportCharacterRef,
 } from "@/lib/import-characters";
-import { buildResumeCodeShareUrl, copyText } from "@/lib/share-links";
+import {
+  buildResumeCodeShareUrl,
+  canNativeShare,
+  copyText,
+  shareOrCopyText,
+  shareResultLabel,
+} from "@/lib/share-links";
 import type { LiveCharacterOption } from "@/lib/types";
 
 export function AccountSettings() {
@@ -350,31 +356,48 @@ export function AccountSettings() {
     }
   };
 
-  const onCopySessionMd = async (sessionId: string) => {
+  const onShareSessionMd = async (sessionId: string, characterName?: string) => {
     if (!account) return;
     setBusy(true);
     setError(null);
     try {
       const md = await fetchAccountSessionMarkdown(account.token, sessionId);
-      const ok = await copyText(md);
-      flash(ok ? "Transcript copied (Markdown)" : "Copy failed");
+      const safe = (characterName ?? "chat")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
+      const day = new Date().toISOString().slice(0, 10);
+      const result = await shareOrCopyText({
+        title: `Chat with ${characterName ?? "character"}`,
+        text: md,
+        filename: `procharacters-${safe || "chat"}-${sessionId.slice(0, 8)}-${day}.md`,
+      });
+      const label = shareResultLabel(result, "Transcript");
+      if (label) flash(label);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Copy failed");
+      setError(err instanceof Error ? err.message : "Share failed");
     } finally {
       setBusy(false);
     }
   };
 
-  const onCopyAllMd = async () => {
+  const onShareAllMd = async () => {
     if (!account) return;
     setBusy(true);
     setError(null);
     try {
       const md = await fetchAllAccountSessionsMarkdown(account.token);
-      const ok = await copyText(md);
-      flash(ok ? "All chats copied (Markdown)" : "Copy failed");
+      const day = new Date().toISOString().slice(0, 10);
+      const result = await shareOrCopyText({
+        title: "Procharacters chat archive",
+        text: md,
+        filename: `procharacters-all-chats-${day}.md`,
+      });
+      const label = shareResultLabel(result, "Archive");
+      if (label) flash(label);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Copy failed");
+      setError(err instanceof Error ? err.message : "Share failed");
     } finally {
       setBusy(false);
     }
@@ -787,11 +810,15 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => void onCopyAllMd()}
+                        onClick={() => void onShareAllMd()}
                         className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Copy all chats as Markdown to clipboard"
+                        title={
+                          canNativeShare()
+                            ? "Share all chats as Markdown via system sheet"
+                            : "Copy all chats as Markdown to clipboard"
+                        }
                       >
-                        Copy all MD
+                        {canNativeShare() ? "Share all MD" : "Copy all MD"}
                       </button>
                       <button
                         type="button"
@@ -944,11 +971,15 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => void onCopySessionMd(s.sessionId)}
+                        onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
                         className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Copy Markdown transcript to clipboard"
+                        title={
+                          canNativeShare()
+                            ? "Share Markdown via system share sheet"
+                            : "Copy Markdown transcript to clipboard"
+                        }
                       >
-                        Copy MD
+                        {canNativeShare() ? "Share MD" : "Copy MD"}
                       </button>
                       {s.resumeCode && (
                         <button
