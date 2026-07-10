@@ -9,6 +9,7 @@ import { initCustomCharacters } from "./lib/live/index.js";
 import { resolveUploadsDir } from "./lib/media/upload-store.js";
 import { initSessionStore, pruneOldSessions } from "./lib/memory/session-store.js";
 import { LiveKitService } from "./lib/livekit/service.js";
+import { startResumeExpiryPushCron } from "./lib/push/expiry-notify.js";
 import { initPushStore } from "./lib/push/push-store.js";
 import { isWebPushConfigured } from "./lib/push/web-push-service.js";
 import { createAccountRoutes } from "./routes/accounts.js";
@@ -122,6 +123,8 @@ export async function buildApp() {
   await app.register(createPushRoutes(sessionManager), {
     prefix: "/api/v1",
   });
+
+  startResumeExpiryPushCron(sessionManager, app.log);
 
   app.get("/ws/sessions/:sessionId", { websocket: true }, (socket, request) => {
     void createWebSocketHandler(sessionManager, chat, media)(socket, request);

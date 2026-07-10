@@ -16,7 +16,9 @@ import {
   listAccountSessions,
   listLiveCharacters,
   previewImportDocument,
+  checkPushExpiry,
   emailAccountResumeLinks,
+  fetchPushStatus,
   refreshAccountSessionResume,
   refreshAllAccountResumes,
   type ImportPreview,
@@ -71,6 +73,9 @@ export function AccountSettings() {
   const [magicDevLink, setMagicDevLink] = useState<string | null>(null);
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushSupported, setPushSupported] = useState(false);
+  const [pushServerCount, setPushServerCount] = useState(0);
+  const [pushLastNotify, setPushLastNotify] = useState<string | null>(null);
+  const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
 
   // Signed-out forms
   const [handle, setHandle] = useState("");
@@ -162,9 +167,10 @@ export function AccountSettings() {
 
   const refresh = useCallback(
     async (token: string) => {
-      const [me, list] = await Promise.all([
+      const [me, list, push] = await Promise.all([
         fetchAccountMe(token),
         listAccountSessions(token).catch(() => [] as AccountSessionSummary[]),
+        fetchPushStatus(token).catch(() => null),
       ]);
       setEmail(me.email ?? null);
       setHasPassphrase(me.hasPassphrase === true);
@@ -174,6 +180,11 @@ export function AccountSettings() {
           ? { ...prev, handle: me.handle, accountId: me.accountId }
           : prev,
       );
+      if (push) {
+        setPushConfigured(push.configured);
+        setPushServerCount(push.subscriptionCount);
+        setPushLastNotify(push.lastExpiryNotifyAt);
+      }
       checkResumeExpiryWarnings(list, { notify: true });
     },
     [checkResumeExpiryWarnings],
@@ -664,6 +675,7 @@ export function AccountSettings() {
         return;
       }
       setPushEnabled(true);
+      await refresh(account.token);
       flash("Web Push on — you'll get alerts when resume codes expire soon");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not enable push");
@@ -679,9 +691,35 @@ export function AccountSettings() {
     try {
       await disableWebPush(account.token);
       setPushEnabled(false);
+      await refresh(account.token);
       flash("Web Push off for this browser");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not disable push");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCheckPushExpiry = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await checkPushExpiry(account.token);
+      await refresh(account.token);
+      if (!result.configured) {
+        flash("Push not configured on server (VAPID keys)");
+      } else if (result.sent > 0) {
+        flash(`Pushed expiry alert to ${result.sent} device(s)`);
+      } else if ((result.expiring ?? 0) > 0) {
+        flash(
+          `${result.expiring} code(s) expiring — notify on cooldown or no device (${result.skipped} skipped)`,
+        );
+      } else {
+        flash("No codes in the 3-day expiry window");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not check push expiry");
     } finally {
       setBusy(false);
     }
@@ -1401,7 +1439,7 @@ export function AccountSettings() {
                 </div>
               )}
 
-              {pushSupported && (
+              {(pushSupported || pushServerCount > 0) && (
                 <div className="mb-4 rounded-xl border border-brand-border bg-brand-surface/40 px-4 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
@@ -1410,29 +1448,51 @@ export function AccountSettings() {
                       </p>
                       <p className="mt-0.5 text-[11px] text-brand-muted">
                         {pushEnabled
-                          ? "This browser is subscribed. Alerts when codes expire within 3 days."
+                          ? "This browser is subscribed. Alerts when codes expire within 3 days (server also scans hourly)."
                           : "Get a system notification when resume codes are about to expire (even if this tab is closed)."}
                       </p>
+                      <p className="mt-1 text-[10px] text-brand-muted">
+                        Server:{" "}
+                        {pushConfigured === false
+                          ? "VAPID not configured"
+                          : `${pushServerCount} device(s)`}
+                        {pushLastNotify
+                          ? ` · last alert ${new Date(pushLastNotify).toLocaleString()}`
+                          : " · no expiry alert sent yet"}
+                      </p>
                     </div>
-                    {pushEnabled ? (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onDisablePush()}
-                        className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-muted hover:text-brand-text disabled:opacity-50"
-                      >
-                        Disable push
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onEnablePush()}
-                        className="shrink-0 rounded-lg bg-brand-accent/20 px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/30 disabled:opacity-50"
-                      >
-                        Enable push
-                      </button>
-                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {pushEnabled || pushServerCount > 0 ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onCheckPushExpiry()}
+                          className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                          title="Re-check expiring codes and push if needed"
+                        >
+                          Check now
+                        </button>
+                      ) : null}
+                      {pushEnabled ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onDisablePush()}
+                          className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-muted hover:text-brand-text disabled:opacity-50"
+                        >
+                          Disable push
+                        </button>
+                      ) : pushSupported ? (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onEnablePush()}
+                          className="shrink-0 rounded-lg bg-brand-accent/20 px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/30 disabled:opacity-50"
+                        >
+                          Enable push
+                        </button>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               )}

@@ -22,6 +22,13 @@ Think of v1 like building the warehouse before opening the store. We're setting 
 
 These are stored in the project now as structured files. Live video chat comes in v2.
 
+## Live product roadmap (v2.2)
+
+We're past foundation — chat, accounts, resumes, gallery, and Web Push are live.
+
+**Next 10 phases (plain English):** see **[v2.2-roadmap.md](./v2.2-roadmap.md)**  
+**Push smoke on your phone:** see **[push-smoke-checklist.md](./push-smoke-checklist.md)**
+
 ## Folder map (what's where)
 
 | Folder | What it does |

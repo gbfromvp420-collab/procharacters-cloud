@@ -270,6 +270,63 @@ export async function refreshAllAccountResumes(
   }>;
 }
 
+/** Web Push subscription status for Account UI. */
+export async function fetchPushStatus(accountToken: string): Promise<{
+  configured: boolean;
+  subscriptionCount: number;
+  lastExpiryNotifyAt: string | null;
+  devices: Array<{
+    endpointTail: string;
+    createdAt: string;
+    lastExpiryNotifyAt: string | null;
+    userAgent: string | null;
+  }>;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/push/status`, {
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Push status failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    configured: boolean;
+    subscriptionCount: number;
+    lastExpiryNotifyAt: string | null;
+    devices: Array<{
+      endpointTail: string;
+      createdAt: string;
+      lastExpiryNotifyAt: string | null;
+      userAgent: string | null;
+    }>;
+  }>;
+}
+
+/** Ask server to re-check expiring codes and push if needed. */
+export async function checkPushExpiry(
+  accountToken: string,
+  options?: { force?: boolean },
+): Promise<{ sent: number; skipped: number; configured: boolean; expiring?: number }> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/push/check-expiry`, {
+    method: "POST",
+    headers: {
+      ...authHeaders(accountToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ force: options?.force === true }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Push check-expiry failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    sent: number;
+    skipped: number;
+    configured: boolean;
+    expiring?: number;
+  }>;
+}
+
 /** Email all resume links to the account's linked email. */
 export async function emailAccountResumeLinks(accountToken: string): Promise<{
   ok: boolean;

@@ -107,6 +107,18 @@ export async function listPushSubscriptionsForAccount(
   return [...byEndpoint.values()].filter((s) => s.accountId === accountId);
 }
 
+/** All subscriptions (for background expiry scan). */
+export async function listAllPushSubscriptions(): Promise<PushSubscriptionRecord[]> {
+  await ensureLoaded();
+  return [...byEndpoint.values()];
+}
+
+/** Unique account IDs that have at least one push subscription. */
+export async function listPushAccountIds(): Promise<string[]> {
+  await ensureLoaded();
+  return [...new Set([...byEndpoint.values()].map((s) => s.accountId))];
+}
+
 export async function markExpiryNotified(endpoint: string): Promise<void> {
   await ensureLoaded();
   const existing = byEndpoint.get(endpoint);

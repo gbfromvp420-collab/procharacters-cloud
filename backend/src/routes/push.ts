@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 import {
+  listPushSubscriptionsForAccount,
   removePushSubscription,
   savePushSubscription,
 } from "../lib/push/push-store.js";
@@ -86,6 +87,31 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
       }
     });
 
+    /** Subscription status for Account UI (device count + last notify). */
+    app.get("/accounts/me/push/status", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const subs = await listPushSubscriptionsForAccount(account.id);
+      const lastNotified = subs
+        .map((s) => s.lastExpiryNotifyAt)
+        .filter((v): v is string => !!v)
+        .sort()
+        .at(-1);
+      return {
+        configured: isWebPushConfigured(),
+        subscriptionCount: subs.length,
+        lastExpiryNotifyAt: lastNotified ?? null,
+        devices: subs.map((s) => ({
+          endpointTail: s.endpoint.slice(-24),
+          createdAt: s.createdAt,
+          lastExpiryNotifyAt: s.lastExpiryNotifyAt ?? null,
+          userAgent: s.userAgent?.slice(0, 80) ?? null,
+        })),
+      };
+    });
+
     /** Re-check expiry and push if needed (also used after listing sessions). */
     app.post("/accounts/me/push/check-expiry", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));
@@ -94,8 +120,11 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
       }
       const siteBase =
         env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
+      const body = (request.body ?? {}) as { force?: unknown };
+      const force = body.force === true;
       const result = await notifyAccountResumeExpiry(account.id, sessionManager, {
         siteBase,
+        force,
       });
       return { ok: true, ...result };
     });

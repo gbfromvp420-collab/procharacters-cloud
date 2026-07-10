@@ -1,6 +1,7 @@
 import type { SessionManager } from "../../services/session-manager.js";
 import {
   deletePushByEndpoint,
+  listPushAccountIds,
   listPushSubscriptionsForAccount,
   markExpiryNotified,
 } from "./push-store.js";
@@ -10,6 +11,8 @@ const WARN_DAYS = Number(process.env.RESUME_EXPIRY_PUSH_DAYS ?? 3);
 const NOTIFY_COOLDOWN_MS = Number(
   process.env.RESUME_EXPIRY_PUSH_COOLDOWN_MS ?? 12 * 60 * 60 * 1000,
 );
+/** Background scan interval; 0 disables cron. Default 1 hour. */
+const CRON_MS = Number(process.env.RESUME_EXPIRY_PUSH_CRON_MS ?? 60 * 60 * 1000);
 
 /**
  * If the account has push subscriptions and any resume codes expire soon,
@@ -19,9 +22,9 @@ export async function notifyAccountResumeExpiry(
   accountId: string,
   sessionManager: SessionManager,
   options?: { siteBase?: string; force?: boolean },
-): Promise<{ sent: number; skipped: number; configured: boolean }> {
+): Promise<{ sent: number; skipped: number; configured: boolean; expiring: number }> {
   if (!isWebPushConfigured()) {
-    return { sent: 0, skipped: 0, configured: false };
+    return { sent: 0, skipped: 0, configured: false, expiring: 0 };
   }
 
   const sessions = await sessionManager.listAccountSessions(accountId);
@@ -36,7 +39,7 @@ export async function notifyAccountResumeExpiry(
   });
 
   if (soon.length === 0) {
-    return { sent: 0, skipped: 0, configured: true };
+    return { sent: 0, skipped: 0, configured: true, expiring: 0 };
   }
 
   const siteBase = (
@@ -86,5 +89,68 @@ export async function notifyAccountResumeExpiry(
     }
   }
 
-  return { sent, skipped, configured: true };
+  return { sent, skipped, configured: true, expiring: soon.length };
+}
+
+/**
+ * Scan every account that has push subscriptions and notify if needed.
+ * Used by the background cron — not only when the user opens Account.
+ */
+export async function notifyAllSubscribedAccounts(
+  sessionManager: SessionManager,
+  options?: { siteBase?: string },
+): Promise<{ accounts: number; sent: number; skipped: number }> {
+  if (!isWebPushConfigured()) {
+    return { accounts: 0, sent: 0, skipped: 0 };
+  }
+  const accountIds = await listPushAccountIds();
+  let sent = 0;
+  let skipped = 0;
+  for (const accountId of accountIds) {
+    const result = await notifyAccountResumeExpiry(accountId, sessionManager, {
+      siteBase: options?.siteBase,
+    });
+    sent += result.sent;
+    skipped += result.skipped;
+  }
+  return { accounts: accountIds.length, sent, skipped };
+}
+
+let cronTimer: ReturnType<typeof setInterval> | null = null;
+
+/** Start periodic expiry push scan. Safe to call once at boot. */
+export function startResumeExpiryPushCron(
+  sessionManager: SessionManager,
+  log?: { info: (obj: unknown, msg?: string) => void; warn: (obj: unknown, msg?: string) => void },
+): void {
+  if (cronTimer) return;
+  if (!isWebPushConfigured()) {
+    log?.info({}, "Resume expiry push cron skipped (VAPID not configured)");
+    return;
+  }
+  if (!Number.isFinite(CRON_MS) || CRON_MS <= 0) {
+    log?.info({ CRON_MS }, "Resume expiry push cron disabled (RESUME_EXPIRY_PUSH_CRON_MS<=0)");
+    return;
+  }
+
+  const siteBase =
+    process.env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
+
+  const tick = () => {
+    void notifyAllSubscribedAccounts(sessionManager, { siteBase })
+      .then((summary) => {
+        if (summary.sent > 0 || summary.accounts > 0) {
+          log?.info(summary, "Resume expiry push cron tick");
+        }
+      })
+      .catch((error) => {
+        log?.warn({ error }, "Resume expiry push cron failed");
+      });
+  };
+
+  // First run after a short delay so boot isn't blocked
+  setTimeout(tick, Math.min(30_000, CRON_MS));
+  cronTimer = setInterval(tick, CRON_MS);
+  if (typeof cronTimer.unref === "function") cronTimer.unref();
+  log?.info({ intervalMs: CRON_MS, warnDays: WARN_DAYS }, "Resume expiry push cron started");
 }
