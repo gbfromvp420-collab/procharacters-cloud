@@ -53,6 +53,12 @@ import {
   shareUrlResultLabel,
 } from "@/lib/share-links";
 import type { LiveCharacterOption } from "@/lib/types";
+import {
+  disableWebPush,
+  enableWebPush,
+  getLocalPushSubscription,
+  isPushSupported,
+} from "@/lib/web-push-client";
 
 export function AccountSettings() {
   const [account, setAccount] = useState<StoredAccount | null>(null);
@@ -63,6 +69,8 @@ export function AccountSettings() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [magicDevLink, setMagicDevLink] = useState<string | null>(null);
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushSupported, setPushSupported] = useState(false);
 
   // Signed-out forms
   const [handle, setHandle] = useState("");
@@ -172,6 +180,9 @@ export function AccountSettings() {
   );
 
   useEffect(() => {
+    setPushSupported(isPushSupported());
+    void getLocalPushSubscription().then((sub) => setPushEnabled(!!sub));
+
     const stored = loadStoredAccount();
     setAccount(stored);
     if (stored) {
@@ -611,6 +622,40 @@ export function AccountSettings() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not email resume links");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onEnablePush = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await enableWebPush(account.token);
+      if (!result.ok) {
+        setError(result.error || "Could not enable push");
+        return;
+      }
+      setPushEnabled(true);
+      flash("Web Push on — you'll get alerts when resume codes expire soon");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not enable push");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDisablePush = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await disableWebPush(account.token);
+      setPushEnabled(false);
+      flash("Web Push off for this browser");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not disable push");
     } finally {
       setBusy(false);
     }
@@ -1292,6 +1337,16 @@ export function AccountSettings() {
                     >
                       Refresh all codes now
                     </button>
+                    {pushSupported && !pushEnabled && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onEnablePush()}
+                        className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
+                      >
+                        Enable push alerts
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setExpiryWarning(null)}
@@ -1299,6 +1354,42 @@ export function AccountSettings() {
                     >
                       Dismiss
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {pushSupported && (
+                <div className="mb-4 rounded-xl border border-brand-border bg-brand-surface/40 px-4 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-medium text-brand-text">
+                        Web Push · resume expiry
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-brand-muted">
+                        {pushEnabled
+                          ? "This browser is subscribed. Alerts when codes expire within 3 days."
+                          : "Get a system notification when resume codes are about to expire (even if this tab is closed)."}
+                      </p>
+                    </div>
+                    {pushEnabled ? (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onDisablePush()}
+                        className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-muted hover:text-brand-text disabled:opacity-50"
+                      >
+                        Disable push
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onEnablePush()}
+                        className="shrink-0 rounded-lg bg-brand-accent/20 px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/30 disabled:opacity-50"
+                      >
+                        Enable push
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

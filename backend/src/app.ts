@@ -9,8 +9,11 @@ import { initCustomCharacters } from "./lib/live/index.js";
 import { resolveUploadsDir } from "./lib/media/upload-store.js";
 import { initSessionStore, pruneOldSessions } from "./lib/memory/session-store.js";
 import { LiveKitService } from "./lib/livekit/service.js";
+import { initPushStore } from "./lib/push/push-store.js";
+import { isWebPushConfigured } from "./lib/push/web-push-service.js";
 import { createAccountRoutes } from "./routes/accounts.js";
 import { createHealthRoutes } from "./routes/health.js";
+import { createPushRoutes } from "./routes/push.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createUploadRoutes } from "./routes/uploads.js";
 import { ChatOrchestrator } from "./services/chat-orchestrator.js";
@@ -61,6 +64,12 @@ export async function buildApp() {
     "Account store ready",
   );
 
+  const pushStore = await initPushStore();
+  app.log.info(
+    { path: pushStore.path, count: pushStore.count, configured: isWebPushConfigured() },
+    "Web Push store ready",
+  );
+
   const avatarMemory = new MemoryManager();
   const sessionManager = new SessionManager(
     avatarMemory,
@@ -108,6 +117,9 @@ export async function buildApp() {
     prefix: "/api/v1",
   });
   await app.register(createUploadRoutes(), {
+    prefix: "/api/v1",
+  });
+  await app.register(createPushRoutes(sessionManager), {
     prefix: "/api/v1",
   });
 

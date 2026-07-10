@@ -44,6 +44,12 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 | `LIVEKIT_URL` | `wss://....livekit.cloud` (optional) |
 | `LIVEKIT_API_KEY` | (optional) |
 | `LIVEKIT_API_SECRET` | (optional) |
+| `VAPID_PUBLIC_KEY` | (optional) Web Push public key — `npx web-push generate-vapid-keys` |
+| `VAPID_PRIVATE_KEY` | (optional) Web Push private key |
+| `VAPID_SUBJECT` | (optional) `mailto:ops@yourdomain.com` |
+| `PUSH_SUBSCRIPTIONS_PATH` | `/data/push-subscriptions.json` (with volume) |
+| `MAGIC_LINK_BASE_URL` | Frontend origin (magic links + push click-through) |
+| `RESEND_API_KEY` | (optional) magic-link + resume email |
 
 Do **not** set `PORT` — Railway injects it.
 
