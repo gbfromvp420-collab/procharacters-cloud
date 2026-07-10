@@ -1018,34 +1018,54 @@ export function ChatApp() {
             : "Disconnected";
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-6 sm:py-8">
-      <header className="mb-6">
-        <h1 className="bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
-          Procharacters.cloud
-        </h1>
-        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-muted">
-          <span>Naughty Syntax — v2.1 Live Chat</span>
-          {copyNotice && <span className="text-brand-accent">· {copyNotice}</span>}
-          <a href="/" className="text-xs text-brand-muted hover:text-brand-accent hover:underline">
+    <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
+      <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(225,29,143,0.08),transparent_40%)]" />
+
+      {/* Sticky glass top chrome */}
+      <header className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">Naughty Syntax</p>
+            <h1 className="truncate bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-base font-semibold tracking-tight text-transparent sm:text-xl">
+              Live chat
+            </h1>
+          </div>
+          <span className="hidden items-center gap-1.5 rounded-full border border-brand-border bg-brand-panel/80 px-2.5 py-1 text-[11px] text-brand-muted sm:inline-flex">
+            <StatusDot status={status} />
+            {statusLabel}
+          </span>
+          {copyNotice && (
+            <span className="hidden max-w-[10rem] truncate text-[11px] text-brand-accent sm:inline" role="status">
+              {copyNotice}
+            </span>
+          )}
+          <a href="/" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
             Gallery
           </a>
-          <a
-            href="/account"
-            className="text-xs text-brand-muted hover:text-brand-accent hover:underline"
-          >
+          <a href="/account" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
             Settings
           </a>
           <button
             type="button"
             onClick={() => setShowAccount((v) => !v)}
-            className="ml-auto text-xs text-brand-accent hover:underline"
+            className={`btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
+              showAccount ? "border-brand-accent text-brand-accent" : ""
+            }`}
           >
             {account ? `@${account.handle}` : "Account"}
           </button>
         </div>
+        {copyNotice && (
+          <p className="border-t border-brand-border/50 px-3 py-1 text-center text-[11px] text-brand-accent sm:hidden" role="status">
+            {copyNotice}
+          </p>
+        )}
+      </header>
 
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
         {showAccount && (
-          <div className="mt-3 rounded-xl border border-brand-border bg-brand-panel p-3">
+          <div className="mb-3 rounded-xl border border-brand-border bg-brand-panel/95 p-3 shadow-card backdrop-blur-sm animate-fade-in">
             {account ? (
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -1221,24 +1241,40 @@ export function ChatApp() {
             </p>
           </div>
         )}
-      </header>
 
-      <div className="mb-4 flex flex-col gap-4 lg:flex-row">
-        <div className="flex w-full flex-col gap-3 lg:max-w-xs">
-          <AvatarVideo avatar={avatarState} characterName={characterName} />
-          <AvatarPanel
-            characterName={characterName}
-            characterId={activeCharacterId}
-            avatar={avatarState}
-            status={status}
-          />
-          <LiveKitAvatarSync livekit={livekit} onAvatarSync={handleAvatarSync} />
-        </div>
+        {error && (
+          <div
+            className="mb-3 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200 animate-fade-in"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <section className="mb-4 flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-panel p-3 sm:p-4">
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <label className="text-sm text-brand-muted" htmlFor="character">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:flex-row lg:gap-4">
+          {/* Avatar rail — compact row on phone, column on desktop */}
+          <div className="flex w-full shrink-0 flex-row gap-2 sm:gap-3 lg:max-w-xs lg:flex-col">
+            <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
+              <AvatarVideo avatar={avatarState} characterName={characterName} compact />
+            </div>
+            <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
+              <AvatarPanel
+                characterName={characterName}
+                characterId={activeCharacterId}
+                avatar={avatarState}
+                status={status}
+              />
+              <div className="hidden lg:block">
+                <LiveKitAvatarSync livekit={livekit} onAvatarSync={handleAvatarSync} />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+              <label className="shrink-0 text-xs text-brand-muted sm:text-sm" htmlFor="character">
                 Character
               </label>
               <select
@@ -1250,7 +1286,7 @@ export function ChatApp() {
                   replaceCharacterInUrl(next);
                 }}
                 disabled={status === "connecting" || restarting}
-                className="min-w-[12rem] flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text disabled:opacity-50 sm:flex-none"
+                className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
               >
                 {characters.map((opt) => (
                   <option key={opt.id} value={opt.id}>
@@ -1260,38 +1296,40 @@ export function ChatApp() {
                   </option>
                 ))}
               </select>
+              </div>
 
+              <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
               {!sessionActive ? (
                 <>
                   <button
                     type="button"
                     onClick={() => void startSession()}
-                    className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim"
+                    className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
                   >
-                    Start Session
+                    Start
                   </button>
                   {savedSession && (
                     <button
                       type="button"
                       onClick={() => void resumeLastSession()}
-                      className="rounded-lg border border-brand-accent/60 bg-brand-accent/10 px-4 py-2 text-sm font-medium text-brand-text transition hover:border-brand-accent"
+                      className="btn-ghost min-h-0 shrink-0 border-brand-accent/50 bg-brand-accent/10 px-3 py-2 text-xs sm:text-sm"
                       title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
                     >
-                      Resume last chat
+                      Resume last
                     </button>
                   )}
                   <button
                     type="button"
                     onClick={() => setShowCreate((v) => !v)}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
                   >
-                    {showCreate ? "Close" : "Create Custom"}
+                    {showCreate ? "Close" : "Create"}
                   </button>
                   {characters.some((c) => c.id === character && c.kind === "custom") && (
                     <button
                       type="button"
                       onClick={handleDeleteCustom}
-                      className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-300 transition hover:border-red-400"
+                      className="btn-ghost min-h-0 shrink-0 border-red-500/40 px-3 py-2 text-xs text-red-300 sm:text-sm"
                     >
                       Delete
                     </button>
@@ -1299,7 +1337,7 @@ export function ChatApp() {
                   <button
                     type="button"
                     onClick={() => shareCharacterLink(false)}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
                     title="Copy pretty character card link"
                   >
                     Share card
@@ -1307,16 +1345,16 @@ export function ChatApp() {
                   <button
                     type="button"
                     onClick={() => shareCharacterLink(true)}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
                     title="Copy link that auto-starts this character"
                   >
                     Share ▶
                   </button>
                   <a
                     href={`/character/${encodeURIComponent(character)}`}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-muted transition hover:border-brand-accent hover:text-brand-text"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs text-brand-muted sm:text-sm"
                   >
-                    Open card
+                    Card
                   </a>
                 </>
               ) : (
@@ -1325,15 +1363,15 @@ export function ChatApp() {
                     type="button"
                     onClick={startNewSession}
                     disabled={status === "connecting" || restarting}
-                    className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
+                    className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
                   >
-                    {restarting ? "Restarting…" : "Switch / New"}
+                    {restarting ? "…" : "Switch"}
                   </button>
                   <button
                     type="button"
                     onClick={endSession}
                     disabled={status === "connecting" || restarting}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
                   >
                     End
                   </button>
@@ -1341,31 +1379,32 @@ export function ChatApp() {
                     type="button"
                     onClick={() => shareCharacterLink(true)}
                     disabled={status === "connecting" || restarting}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
                     title="Copy public character autostart link"
                   >
-                    Share character
+                    Share
                   </button>
                   <button
                     type="button"
                     onClick={sharePrivateResumeLink}
                     disabled={status !== "ready" || !resumeCode}
-                    className="rounded-lg border border-amber-500/40 px-4 py-2 text-sm text-amber-200 transition hover:border-amber-400 disabled:opacity-50"
+                    className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
                     title="Copy ?resume=CODE link — short code, no raw ws token"
                   >
-                    {resumeCode ? `Copy resume (${resumeCode})` : "Copy resume"}
+                    {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
                   </button>
                   <button
                     type="button"
                     onClick={() => void exportChatJson()}
                     disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
                     title="Download chat history as JSON (no secrets)"
                   >
-                    Export JSON
+                    Export
                   </button>
                 </>
               )}
+              </div>
             </div>
 
             {showCreate && !sessionActive && (
@@ -1630,13 +1669,10 @@ export function ChatApp() {
               )}
           </section>
 
-          <section className="flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel">
-            <div
-              className="flex-1 space-y-3 overflow-y-auto p-4"
-              style={{ minHeight: "380px", maxHeight: "min(60vh, 520px)" }}
-            >
+          <section className="flex min-h-[min(52dvh,420px)] flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm sm:min-h-[380px]">
+            <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
               {messages.length === 0 && !isTyping && (
-                <p className="py-20 text-center text-sm text-brand-muted sm:py-24">
+                <p className="px-2 py-12 text-center text-sm text-brand-muted sm:py-20">
                   {status === "ready"
                     ? "Session live — memory is saved. Come back later and hit Resume last chat."
                     : status === "connecting" || restarting
@@ -1653,9 +1689,9 @@ export function ChatApp() {
                   className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed sm:max-w-[80%] ${
+                    className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[80%] sm:px-4 ${
                       msg.role === "user"
-                        ? "bg-brand-accent text-white shadow-lg shadow-brand-accent/20"
+                        ? "bg-brand-accent text-white shadow-glow-sm"
                         : "border border-brand-border bg-brand-bg text-brand-text"
                     }`}
                   >
@@ -1671,8 +1707,9 @@ export function ChatApp() {
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="border-t border-brand-border p-4">
-              <div className="flex gap-2">
+            {/* Composer — sticky on mobile so keyboard UX stays usable */}
+            <div className="sticky bottom-0 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 backdrop-blur-md sm:p-4">
+              <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -1680,35 +1717,38 @@ export function ChatApp() {
                   onKeyDown={handleKeyDown}
                   placeholder={
                     status === "ready"
-                      ? "Type your message… (Enter to send)"
+                      ? "Message… (Enter to send)"
                       : "Start a session first"
                   }
                   disabled={status !== "ready" || sending}
                   rows={2}
-                  className="flex-1 resize-none rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none disabled:opacity-50"
+                  enterKeyHint="send"
+                  className="field min-h-[2.75rem] flex-1 resize-none py-2.5 disabled:opacity-50"
                 />
                 <button
                   type="button"
                   onClick={sendMessage}
                   disabled={!canSend}
-                  className="self-end rounded-lg bg-brand-accent px-5 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
+                  className="btn-primary min-h-[2.75rem] shrink-0 px-4 disabled:opacity-50 sm:px-5"
                 >
                   Send
                 </button>
               </div>
             </div>
           </section>
+          </div>
         </div>
-      </div>
 
-      <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brand-muted">
-        <span className="inline-flex items-center gap-1.5">
-          <StatusDot status={status} />
-          {statusLabel}
-        </span>
-        {sessionId && <span>Session {sessionId.slice(0, 8)}…</span>}
-        {error && <span className="text-red-400">{error}</span>}
-      </footer>
+        <footer className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-brand-border/40 py-3 text-[11px] text-brand-muted sm:text-xs">
+          <span className="inline-flex items-center gap-1.5 sm:hidden">
+            <StatusDot status={status} />
+            {statusLabel}
+          </span>
+          <span className="hidden sm:inline">Uncensored 18+ · Procharacters.cloud</span>
+          {sessionId && <span className="font-mono">#{sessionId.slice(0, 8)}</span>}
+          <span className="sm:hidden">18+ · KGC</span>
+        </footer>
+      </div>
     </main>
   );
 }

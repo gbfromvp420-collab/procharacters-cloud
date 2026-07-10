@@ -13,9 +13,11 @@ function formatLabel(value: string): string {
 interface AvatarVideoProps {
   avatar: AvatarState | null;
   characterName: string | null;
+  /** Tighter frame for mobile / side-by-side layouts */
+  compact?: boolean;
 }
 
-export function AvatarVideo({ avatar, characterName }: AvatarVideoProps) {
+export function AvatarVideo({ avatar, characterName, compact = false }: AvatarVideoProps) {
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [showIncoming, setShowIncoming] = useState(false);
@@ -50,12 +52,18 @@ export function AvatarVideo({ avatar, characterName }: AvatarVideoProps) {
   }, [mediaUrl, activeSrc]);
 
   return (
-    <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl border border-brand-border bg-brand-bg">
+    <div
+      className={`relative w-full overflow-hidden rounded-xl border border-brand-border bg-brand-bg shadow-card ${
+        compact ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4]" : "aspect-[3/4]"
+      }`}
+    >
       {!activeSrc && (
-        <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
-          <div className="h-16 w-16 rounded-full bg-gradient-to-br from-brand-border to-brand-accentDim opacity-60" />
+        <div className="flex h-full flex-col items-center justify-center gap-2 p-4 text-center sm:p-6">
+          <div className="h-12 w-12 rounded-full bg-gradient-to-br from-brand-border to-brand-accentDim opacity-60 sm:h-16 sm:w-16" />
           <p className="text-sm text-brand-muted">Video layer idle</p>
-          <p className="text-xs text-brand-muted">Start a session to load avatar clips</p>
+          {!compact && (
+            <p className="text-xs text-brand-muted">Start a session to load avatar clips</p>
+          )}
         </div>
       )}
 

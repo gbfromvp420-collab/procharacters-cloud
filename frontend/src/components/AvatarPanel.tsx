@@ -25,23 +25,38 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
 
   return (
-    <aside className="flex flex-col gap-4 rounded-xl border border-brand-border bg-brand-panel p-4 lg:min-w-[240px]">
+    <aside className="flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-panel/90 p-3 shadow-card backdrop-blur-sm sm:gap-4 sm:p-4 lg:min-w-[240px]">
       <div className="flex items-center gap-3">
         <div
-          className={`avatar-ring flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-lg font-semibold text-white ${
+          className={`avatar-ring flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-base font-semibold text-white sm:h-14 sm:w-14 sm:text-lg ${
             avatar ? arousalTone(avatar.arousalLevel) : "from-brand-border to-brand-accentDim"
           }`}
         >
           {initial}
         </div>
-        <div className="min-w-0">
-          <p className="truncate font-medium text-brand-text">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-brand-text sm:text-base">
             {characterName ?? "No character"}
           </p>
-          <p className="text-xs text-brand-muted">
+          <p className="truncate text-[11px] text-brand-muted sm:text-xs">
             {characterId ? formatLabel(characterId) : "Start a session"}
+            {avatar ? ` · ${formatLabel(avatar.emotion)}` : ""}
           </p>
         </div>
+        {avatar && (
+          <div className="hidden w-16 shrink-0 sm:block lg:hidden">
+            <div className="mb-0.5 flex justify-between text-[9px] uppercase text-brand-muted">
+              <span>Arousal</span>
+              <span>{arousalPct}%</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-brand-bg">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand-accentDim to-brand-accent transition-all duration-700"
+                style={{ width: `${arousalPct}%` }}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {status === "connecting" && (
@@ -49,7 +64,7 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
       )}
 
       {avatar ? (
-        <div className="space-y-3 text-sm">
+        <div className="space-y-3 text-sm max-sm:hidden">
           <div>
             <p className="mb-1 text-xs uppercase tracking-wide text-brand-muted">Emotion</p>
             <p className="font-medium text-brand-text">{formatLabel(avatar.emotion)}</p>
@@ -85,10 +100,26 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
           </div>
         </div>
       ) : (
-        <p className="text-xs leading-relaxed text-brand-muted">
+        <p className="hidden text-xs leading-relaxed text-brand-muted sm:block">
           Avatar state updates live as the character responds — emotion, pose, and energy sync
           from each Grok reply.
         </p>
+      )}
+
+      {/* Mobile compact arousal only */}
+      {avatar && (
+        <div className="sm:hidden">
+          <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-wide text-brand-muted">
+            <span>Arousal</span>
+            <span>{arousalPct}%</span>
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-brand-bg">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-brand-accentDim to-brand-accent transition-all duration-700"
+              style={{ width: `${arousalPct}%` }}
+            />
+          </div>
+        </div>
       )}
     </aside>
   );
