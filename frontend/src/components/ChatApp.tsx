@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AvatarPanel } from "@/components/AvatarPanel";
+import { AvatarPip } from "@/components/AvatarPip";
 import { AvatarVideo } from "@/components/AvatarVideo";
 import { ClipPreview } from "@/components/ClipPreview";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
@@ -2039,50 +2040,14 @@ export function ChatApp() {
         </footer>
       </div>
 
-      {/* Picture-in-picture mini avatar — floats above composer when rail is collapsed */}
+      {/* Picture-in-picture mini avatar — draggable when rail is collapsed */}
       {avatarCollapsed && avatarPip && (
-        <div
-          className="fixed z-40 w-[7.25rem] sm:w-36"
-          style={{
-            right: "max(0.75rem, env(safe-area-inset-right))",
-            bottom: "max(5.75rem, calc(env(safe-area-inset-bottom) + 4.75rem))",
-          }}
-        >
-          <div className="animate-rise-in overflow-hidden rounded-2xl border border-brand-accent/50 bg-brand-panel/95 shadow-glow ring-1 ring-black/40 backdrop-blur-md">
-            <div className="flex items-center justify-between gap-1 border-b border-brand-border/60 px-1.5 py-1">
-              <span className="truncate pl-0.5 text-[9px] font-medium uppercase tracking-wide text-brand-accent">
-                Live
-              </span>
-              <div className="flex shrink-0 items-center gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => setAvatarCollapsedPersist(false)}
-                  className="rounded px-1.5 py-0.5 text-[9px] text-brand-text hover:bg-brand-bg"
-                  title="Expand full avatar"
-                >
-                  Full
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAvatarPipPersist(false)}
-                  className="rounded px-1.5 py-0.5 text-[9px] text-brand-muted hover:bg-brand-bg hover:text-brand-text"
-                  title="Dismiss mini avatar"
-                  aria-label="Dismiss picture-in-picture"
-                >
-                  Hide
-                </button>
-              </div>
-            </div>
-            <button
-              type="button"
-              className="block w-full text-left"
-              onClick={() => setAvatarCollapsedPersist(false)}
-              title="Tap to expand avatar"
-            >
-              <AvatarVideo avatar={avatarState} characterName={characterName} pip />
-            </button>
-          </div>
-        </div>
+        <AvatarPip
+          avatar={avatarState}
+          characterName={characterName}
+          onExpand={() => setAvatarCollapsedPersist(false)}
+          onHide={() => setAvatarPipPersist(false)}
+        />
       )}
     </main>
   );
