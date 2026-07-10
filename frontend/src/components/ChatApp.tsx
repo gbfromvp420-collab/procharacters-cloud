@@ -1533,7 +1533,7 @@ export function ChatApp() {
                         </span>
                         <input
                           type="file"
-                          accept="video/mp4,video/webm"
+                          accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
                           multiple
                           className="hidden"
                           disabled={creating}
@@ -1572,10 +1572,10 @@ export function ChatApp() {
                                 className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
                               />
                               <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
-                                <span>Upload {emotion}.mp4</span>
+                                <span>Upload {emotion}.mp4/.webm</span>
                                 <input
                                   type="file"
-                                  accept="video/mp4,video/webm"
+                                  accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
                                   className="hidden"
                                   disabled={creating}
                                   onChange={(e) => {
@@ -1591,7 +1591,7 @@ export function ChatApp() {
                       </div>
                       <p className="text-[11px] text-brand-muted">
                         Uploads store on the API volume and update this character&apos;s clip map
-                        (max ~40MB each, mp4/webm).
+                        (max ~40MB each). Only real MP4/WebM — type + file header checked.
                       </p>
                       <button
                         type="button"

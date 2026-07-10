@@ -2,8 +2,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { repoPath } from "../paths.js";
 import type { MediaClipKey } from "../live/custom-characters.js";
-
-const ALLOWED_EXT = new Set(["mp4", "webm"]);
+import {
+  type ClipFormat,
+  validateClipUpload,
+} from "./clip-validate.js";
 
 export function resolveUploadsDir(): string {
   if (process.env.UPLOADS_PATH?.trim()) return process.env.UPLOADS_PATH.trim();
@@ -17,11 +19,12 @@ export function isClipKey(value: string): value is MediaClipKey {
   return value === "idle" || value === "teasing" || value === "playful" || value === "aroused";
 }
 
-export function extensionFromFilename(filename: string, mimeType?: string): string {
+/** @deprecated prefer validateClipUpload — kept for callers that only need ext guess */
+export function extensionFromFilename(filename: string, mimeType?: string): ClipFormat {
   const fromName = filename.split(".").pop()?.toLowerCase() ?? "";
-  if (ALLOWED_EXT.has(fromName)) return fromName;
+  if (fromName === "mp4" || fromName === "webm") return fromName;
   if (mimeType === "video/webm") return "webm";
-  if (mimeType === "video/mp4") return "mp4";
+  if (mimeType === "video/mp4" || mimeType === "video/x-m4v") return "mp4";
   return "mp4";
 }
 
@@ -31,7 +34,13 @@ export async function saveCharacterClip(options: {
   buffer: Buffer;
   filename: string;
   mimeType?: string;
-}): Promise<{ relativeUrl: string; absolutePath: string; bytes: number }> {
+}): Promise<{
+  relativeUrl: string;
+  absolutePath: string;
+  bytes: number;
+  format: ClipFormat;
+  mime: string;
+}> {
   const safeId = options.characterId.replace(/[^a-zA-Z0-9_-]/g, "");
   if (!safeId || safeId !== options.characterId) {
     throw new Error("Invalid character id for upload");
@@ -40,28 +49,27 @@ export async function saveCharacterClip(options: {
     throw new Error("Invalid clip emotion");
   }
 
-  const ext = extensionFromFilename(options.filename, options.mimeType);
-  if (!ALLOWED_EXT.has(ext)) {
-    throw new Error("Only .mp4 and .webm uploads are supported");
-  }
-
-  const maxBytes = Number(process.env.MAX_UPLOAD_BYTES ?? 40 * 1024 * 1024);
-  if (options.buffer.byteLength > maxBytes) {
-    throw new Error(`File too large (max ${Math.round(maxBytes / (1024 * 1024))}MB)`);
-  }
-  if (options.buffer.byteLength < 1024) {
-    throw new Error("File too small to be a video");
+  const validated = validateClipUpload({
+    buffer: options.buffer,
+    filename: options.filename,
+    mimeType: options.mimeType,
+  });
+  if (!validated.ok) {
+    throw new Error(validated.error);
   }
 
   const dir = join(resolveUploadsDir(), safeId);
   await mkdir(dir, { recursive: true });
-  const absolutePath = join(dir, `${options.emotion}.${ext}`);
+  // Always write with sniffed extension so players get correct type
+  const absolutePath = join(dir, `${options.emotion}.${validated.ext}`);
   await writeFile(absolutePath, options.buffer);
 
   return {
-    relativeUrl: `/media/uploads/${safeId}/${options.emotion}.${ext}`,
+    relativeUrl: `/media/uploads/${safeId}/${options.emotion}.${validated.ext}`,
     absolutePath,
     bytes: options.buffer.byteLength,
+    format: validated.format,
+    mime: validated.mime,
   };
 }
 

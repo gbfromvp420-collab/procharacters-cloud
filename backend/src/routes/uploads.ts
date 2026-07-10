@@ -4,6 +4,7 @@ import { env } from "../config/env.js";
 import type { MediaClipKey, MediaOverrides } from "../lib/live/custom-characters.js";
 import { getCustomCharacter, updateCustomCharacter } from "../lib/live/index.js";
 import { listClipUrls } from "../lib/media/clip-resolver.js";
+import { assertDeclaredClipMime } from "../lib/media/clip-validate.js";
 import {
   isClipKey,
   saveCharacterClip,
@@ -70,18 +71,24 @@ function emotionFromPart(fieldname: string, filename: string): MediaClipKey | nu
 
   const base = filename.toLowerCase().replace(/\.(mp4|webm)$/i, "");
   for (const key of CLIP_KEYS) {
-    if (base === key || base.endsWith(`-${key}`) || base.endsWith(`_${key}`) || base.includes(key)) {
-      // Prefer exact / suffix matches over loose includes
-      if (base === key || base.endsWith(`-${key}`) || base.endsWith(`_${key}`) || base.startsWith(`${key}-`) || base.startsWith(`${key}_`)) {
-        return key;
-      }
+    if (
+      base === key ||
+      base.endsWith(`-${key}`) ||
+      base.endsWith(`_${key}`) ||
+      base.startsWith(`${key}-`) ||
+      base.startsWith(`${key}_`)
+    ) {
+      return key;
     }
   }
-  // Loose fallback: filename contains the emotion token
   for (const key of CLIP_KEYS) {
     if (base.includes(key)) return key;
   }
   return null;
+}
+
+async function drainPart(part: { toBuffer: () => Promise<Buffer> }) {
+  await part.toBuffer().catch(() => Buffer.alloc(0));
 }
 
 export const createUploadRoutes = (): FastifyPluginAsync => {
@@ -120,8 +127,14 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
       }
 
       const mime = file.mimetype ?? "";
-      if (!mime.startsWith("video/") && mime !== "application/octet-stream") {
-        return reply.code(400).send({ error: "Upload must be a video file (mp4/webm)" });
+      const declared = assertDeclaredClipMime(mime);
+      if (declared) {
+        await drainPart(file);
+        return reply.code(400).send({
+          error: declared.error,
+          code: declared.code,
+          allowed: ["video/mp4", "video/webm"],
+        });
       }
 
       try {
@@ -148,12 +161,14 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
           emotion,
           url: publicUrl,
           bytes: saved.bytes,
+          format: saved.format,
+          contentType: saved.mime,
           mediaOverrides: updated.mediaOverrides,
           clips: listClipUrls(characterId),
         };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Upload failed";
-        return reply.code(400).send({ error: message });
+        return reply.code(400).send({ error: message, code: "CLIP_REJECTED" });
       }
     });
 
@@ -175,9 +190,15 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
       if (denied) return rateLimited(reply, denied);
 
       const parts = request.files();
-      const uploaded: Array<{ emotion: MediaClipKey; url: string; bytes: number; filename: string }> =
-        [];
-      const skipped: Array<{ filename: string; reason: string }> = [];
+      const uploaded: Array<{
+        emotion: MediaClipKey;
+        url: string;
+        bytes: number;
+        filename: string;
+        format: string;
+        contentType: string;
+      }> = [];
+      const skipped: Array<{ filename: string; reason: string; code?: string }> = [];
       const overrides: MediaOverrides = {
         ...(getCustomCharacter(characterId)?.mediaOverrides ?? {}),
       };
@@ -191,16 +212,17 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
             skipped.push({
               filename,
               reason: "Could not detect emotion (name file idle/teasing/playful/aroused.mp4)",
+              code: "BAD_EMOTION",
             });
-            // Drain
-            await part.toBuffer().catch(() => Buffer.alloc(0));
+            await drainPart(part);
             continue;
           }
 
           const mime = part.mimetype ?? "";
-          if (!mime.startsWith("video/") && mime !== "application/octet-stream") {
-            skipped.push({ filename, reason: "Not a video file" });
-            await part.toBuffer().catch(() => Buffer.alloc(0));
+          const declared = assertDeclaredClipMime(mime);
+          if (declared) {
+            skipped.push({ filename, reason: declared.error, code: declared.code });
+            await drainPart(part);
             continue;
           }
 
@@ -220,10 +242,12 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
               url: publicUrl,
               bytes: saved.bytes,
               filename,
+              format: saved.format,
+              contentType: saved.mime,
             });
           } catch (error) {
             const message = error instanceof Error ? error.message : "Upload failed";
-            skipped.push({ filename, reason: message });
+            skipped.push({ filename, reason: message, code: "CLIP_REJECTED" });
           }
         }
 
@@ -231,7 +255,8 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
           return reply.code(400).send({
             error: "No valid clips uploaded",
             skipped,
-            hint: "Use field names or filenames: idle, teasing, playful, aroused",
+            hint: "Use .mp4 or .webm only; field names or filenames: idle, teasing, playful, aroused",
+            allowed: ["video/mp4", "video/webm"],
           });
         }
 

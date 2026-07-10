@@ -303,21 +303,40 @@ export async function uploadCharacterClip(
   url: string;
   clips: Record<MediaClipKey, string>;
   mediaOverrides?: MediaOverrides;
+  format?: string;
+  contentType?: string;
 }> {
+  const { validateClipFileClient } = await import("./clip-upload");
+  const check = validateClipFileClient(file);
+  if (!check.ok) throw new Error(check.error);
+
   const body = new FormData();
-  body.append("file", file, file.name || `${emotion}.mp4`);
+  const safeName =
+    file.name && /\.(mp4|webm)$/i.test(file.name)
+      ? file.name
+      : `${emotion}.${file.type.includes("webm") ? "webm" : "mp4"}`;
+  body.append("file", file, safeName);
   const res = await fetch(
     `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}/clips/${emotion}`,
     { method: "POST", body },
   );
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Upload failed (${res.status}): ${text}`);
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: string; code?: string };
+      if (j.error) detail = j.code ? `${j.error} (${j.code})` : j.error;
+    } catch {
+      /* keep raw */
+    }
+    throw new Error(`Upload failed (${res.status}): ${detail}`);
   }
   return res.json() as Promise<{
     url: string;
     clips: Record<MediaClipKey, string>;
     mediaOverrides?: MediaOverrides;
+    format?: string;
+    contentType?: string;
   }>;
 }
 
@@ -325,15 +344,29 @@ export async function uploadCharacterClipsBatch(
   characterId: string,
   files: File[],
 ): Promise<{
-  uploaded: Array<{ emotion: MediaClipKey; url: string; bytes: number; filename: string }>;
-  skipped: Array<{ filename: string; reason: string }>;
+  uploaded: Array<{
+    emotion: MediaClipKey;
+    url: string;
+    bytes: number;
+    filename: string;
+    format?: string;
+    contentType?: string;
+  }>;
+  skipped: Array<{ filename: string; reason: string; code?: string }>;
   clips: Record<MediaClipKey, string>;
   mediaOverrides?: MediaOverrides;
 }> {
+  const { filterValidClipFiles } = await import("./clip-upload");
+  const { accepted, rejected } = filterValidClipFiles(files);
+  if (accepted.length === 0) {
+    throw new Error(
+      rejected.map((r) => r.reason).join(" · ") || "No valid mp4/webm files selected",
+    );
+  }
+
   const body = new FormData();
-  for (const file of files) {
+  for (const file of accepted) {
     const name = file.name || "clip.mp4";
-    // Prefer emotion from filename; also set fieldname when we can detect it
     const base = name.toLowerCase().replace(/\.(mp4|webm)$/i, "");
     const emotions: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
     const emotion =
@@ -354,14 +387,36 @@ export async function uploadCharacterClipsBatch(
   );
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Batch upload failed (${res.status}): ${text}`);
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: string };
+      if (j.error) detail = j.error;
+    } catch {
+      /* keep raw */
+    }
+    throw new Error(`Batch upload failed (${res.status}): ${detail}`);
   }
-  return res.json() as Promise<{
-    uploaded: Array<{ emotion: MediaClipKey; url: string; bytes: number; filename: string }>;
-    skipped: Array<{ filename: string; reason: string }>;
+  const data = (await res.json()) as {
+    uploaded: Array<{
+      emotion: MediaClipKey;
+      url: string;
+      bytes: number;
+      filename: string;
+      format?: string;
+      contentType?: string;
+    }>;
+    skipped: Array<{ filename: string; reason: string; code?: string }>;
     clips: Record<MediaClipKey, string>;
     mediaOverrides?: MediaOverrides;
-  }>;
+  };
+  // Surface client-side rejects alongside server skips
+  if (rejected.length > 0) {
+    data.skipped = [
+      ...rejected.map((r) => ({ filename: r.name, reason: r.reason, code: "CLIENT_REJECT" })),
+      ...(data.skipped ?? []),
+    ];
+  }
+  return data;
 }
 
 export async function fetchAccountMe(
