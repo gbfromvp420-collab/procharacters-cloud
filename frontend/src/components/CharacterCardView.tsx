@@ -28,22 +28,27 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   };
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(225,29,143,0.18),_transparent_55%),radial-gradient(ellipse_at_bottom,_rgba(99,20,140,0.2),_transparent_50%)]" />
+    <main className="relative min-h-dvh overflow-x-hidden pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] sm:pb-8">
+      <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
 
-      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-8 sm:py-12">
-        <header className="mb-8 flex items-center justify-between gap-3">
-          <Link href="/" className="text-sm text-brand-muted transition hover:text-brand-text">
+      <div className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+          <Link
+            href="/"
+            className="min-h-touch inline-flex items-center text-sm text-brand-muted transition hover:text-brand-text"
+          >
             ← Gallery
           </Link>
-          <span className="rounded-full border border-brand-border bg-brand-panel/80 px-3 py-1 text-xs uppercase tracking-[0.2em] text-brand-muted">
+          <span className="rounded-full border border-brand-border bg-brand-panel/80 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-brand-muted sm:text-xs">
             {card.brand}
           </span>
-        </header>
+        </div>
+      </div>
 
-        <section className="grid flex-1 items-center gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="relative mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl flex-col px-4 py-6 sm:py-12">
+        <section className="grid flex-1 items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="relative mx-auto w-full max-w-md">
-            <div className="avatar-ring relative overflow-hidden rounded-[1.75rem] border border-brand-border bg-brand-panel shadow-2xl shadow-brand-accent/10">
+            <div className="avatar-ring relative overflow-hidden rounded-[1.75rem] border border-brand-border bg-brand-panel shadow-card shadow-glow-sm">
               <div className="aspect-[3/4] w-full bg-black">
                 <video
                   key={poster}
@@ -65,23 +70,23 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               <button
                 type="button"
                 onClick={() => setMuted((m) => !m)}
-                className="absolute right-3 top-3 rounded-full border border-white/20 bg-black/50 px-3 py-1 text-xs text-white backdrop-blur"
+                className="absolute right-3 top-3 min-h-touch rounded-full border border-white/20 bg-black/50 px-3 py-1.5 text-xs text-white backdrop-blur active:scale-95"
               >
                 {muted ? "Unmute" : "Mute"}
               </button>
             </div>
           </div>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 sm:gap-6">
             <div>
               <p className="text-sm text-brand-accent">
                 {card.kind === "custom" ? "Custom character" : "Signature model"} ·{" "}
                 {card.energyLabel}
               </p>
-              <h2 className="mt-2 text-3xl font-semibold tracking-tight text-brand-text sm:text-4xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Meet {card.displayName}
               </h2>
-              <p className="mt-4 max-w-xl text-base leading-relaxed text-brand-muted">
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:mt-4 sm:text-base">
                 {card.teaser}
               </p>
             </div>
@@ -99,29 +104,26 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href={card.ctaPath}
-                className="rounded-xl bg-brand-accent px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-accent/30 transition hover:bg-brand-accentDim"
-              >
+            <div className="hidden flex-wrap gap-3 sm:flex">
+              <Link href={card.ctaPath} className="btn-primary px-6">
                 Start live chat
               </Link>
-              <button
-                type="button"
-                onClick={onCopy}
-                className="rounded-xl border border-brand-border bg-brand-panel px-6 py-3 text-sm text-brand-text transition hover:border-brand-accent"
-              >
+              <button type="button" onClick={onCopy} className="btn-ghost px-6">
                 Copy card link
               </button>
               <Link
                 href="/chat"
-                className="rounded-xl border border-brand-border px-6 py-3 text-sm text-brand-muted transition hover:border-brand-accent hover:text-brand-text"
+                className="btn-ghost px-6 text-brand-muted hover:text-brand-text"
               >
                 Open chat
               </Link>
             </div>
 
-            {notice && <p className="text-sm text-brand-accent">{notice}</p>}
+            {notice && (
+              <p className="text-sm text-brand-accent" role="status">
+                {notice}
+              </p>
+            )}
 
             <div className="rounded-xl border border-brand-border/70 bg-brand-panel/60 p-4 text-xs text-brand-muted">
               <p className="font-medium text-brand-text">Share this card</p>
@@ -133,6 +135,18 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
         <footer className="mt-10 text-center text-xs text-brand-muted">
           Uncensored 18+ · Naughty Syntax / KGC Ventures
         </footer>
+      </div>
+
+      {/* Mobile sticky CTA */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
+        <div className="mx-auto flex max-w-lg gap-2">
+          <Link href={card.ctaPath} className="btn-primary flex-1">
+            Start chat
+          </Link>
+          <button type="button" onClick={onCopy} className="btn-ghost flex-1">
+            Copy link
+          </button>
+        </div>
       </div>
     </main>
   );

@@ -333,8 +333,8 @@ export function AccountSettings() {
   };
 
   return (
-    <main className="relative min-h-screen">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(225,29,143,0.14),_transparent_55%)]" />
+    <main className="relative min-h-dvh pb-[env(safe-area-inset-bottom)]">
+      <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div className="relative mx-auto max-w-2xl px-4 py-8 sm:py-12">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -346,10 +346,7 @@ export function AccountSettings() {
               Profile, email magic link, passphrase, and saved chats.
             </p>
           </div>
-          <Link
-            href="/chat"
-            className="rounded-xl bg-brand-accent px-4 py-2 text-sm font-semibold text-white hover:bg-brand-accentDim"
-          >
+          <Link href="/chat" className="btn-primary min-h-0 px-4 py-2 text-sm">
             Live chat
           </Link>
         </header>

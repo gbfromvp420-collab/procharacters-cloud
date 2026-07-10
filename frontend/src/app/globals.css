@@ -4,14 +4,57 @@
 
 :root {
   color-scheme: dark;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  scroll-behavior: smooth;
 }
 
 body {
   @apply bg-brand-bg text-brand-text antialiased;
+  padding-left: var(--safe-left);
+  padding-right: var(--safe-right);
 }
 
 * {
   scrollbar-color: #2a2a3a #0a0a0f;
+}
+
+/* Thin, themed scrollbars on desktop */
+@media (pointer: fine) {
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track {
+    background: #0a0a0f;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #2a2a3a;
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #3a3a4a;
+  }
+}
+
+/* Hide horizontal strip scrollbars (featured row) */
+.scroll-strip {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.scroll-strip::-webkit-scrollbar {
+  display: none;
+}
+.scroll-strip > * {
+  scroll-snap-align: start;
 }
 
 @keyframes typing-bounce {
@@ -43,4 +86,59 @@ body {
 .avatar-ring {
   box-shadow: 0 0 0 2px #12121a, 0 0 20px rgba(225, 29, 143, 0.25);
   transition: box-shadow 0.5s ease, background 0.5s ease;
+}
+
+/* Glass panels / sticky chrome */
+@layer components {
+  .glass-bar {
+    @apply border-b border-brand-border/80 bg-brand-bg/80 backdrop-blur-xl;
+    background-image: linear-gradient(
+      to bottom,
+      rgba(18, 18, 26, 0.92),
+      rgba(10, 10, 15, 0.78)
+    );
+  }
+
+  .chip {
+    @apply inline-flex min-h-touch items-center whitespace-nowrap rounded-full border px-4 py-2 text-xs transition active:scale-[0.98];
+  }
+
+  .chip-active {
+    @apply border-brand-accent bg-brand-accent/15 text-brand-text shadow-glow-sm;
+  }
+
+  .chip-idle {
+    @apply border-brand-border bg-brand-panel text-brand-muted hover:border-brand-accent/70 hover:text-brand-text;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-touch items-center justify-center rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:bg-brand-accentDim active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply inline-flex min-h-touch items-center justify-center rounded-xl border border-brand-border px-4 py-2.5 text-sm text-brand-text transition hover:border-brand-accent active:scale-[0.98];
+  }
+
+  .field {
+    @apply w-full rounded-xl border border-brand-border bg-brand-panel px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent/25;
+  }
+}
+
+/* Focus-visible for keyboard only */
+:focus-visible {
+  outline: 2px solid #e11d8f;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

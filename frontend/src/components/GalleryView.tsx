@@ -30,11 +30,13 @@ function CharacterTile({
   const poster = posterUrl(card);
   return (
     <article
-      className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-xl shadow-black/20 transition hover:border-brand-accent/60 hover:shadow-brand-accent/10 ${
-        compact ? "min-w-[240px] max-w-[280px] shrink-0" : ""
+      className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
+        compact
+          ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]"
+          : "animate-rise-in"
       }`}
     >
-      <div className={`relative overflow-hidden bg-black ${compact ? "aspect-[3/4]" : "aspect-[3/4]"}`}>
+      <div className="relative aspect-[3/4] overflow-hidden bg-black">
         <video
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           src={poster}
@@ -42,9 +44,10 @@ function CharacterTile({
           muted
           loop
           playsInline
+          preload="metadata"
         />
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-4 pt-16">
-          <div className="flex items-center gap-2">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
+          <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
               {card.kind === "custom" ? "Custom" : "Signature"}
             </p>
@@ -54,12 +57,14 @@ function CharacterTile({
               </span>
             )}
           </div>
-          <h2 className="mt-1 text-xl font-semibold text-white">{card.displayName}</h2>
+          <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
+            {card.displayName}
+          </h2>
         </div>
       </div>
-      <div className="space-y-3 p-4">
-        <p className="line-clamp-2 text-sm text-brand-muted">{card.teaser}</p>
-        {card.tags?.length > 0 && (
+      <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
+        <p className="line-clamp-2 text-xs text-brand-muted sm:text-sm">{card.teaser}</p>
+        {card.tags?.length > 0 && !compact && (
           <div className="flex flex-wrap gap-1.5">
             {card.tags.slice(0, 3).map((tag) => (
               <span
@@ -71,26 +76,22 @@ function CharacterTile({
             ))}
           </div>
         )}
-        <div className="flex flex-wrap gap-2">
-          <Link
-            href={card.ctaPath}
-            className="rounded-lg bg-brand-accent px-3 py-2 text-xs font-semibold text-white hover:bg-brand-accentDim"
-          >
+        <div className={`flex flex-wrap gap-2 ${compact ? "gap-1.5" : ""}`}>
+          <Link href={card.ctaPath} className="btn-primary min-h-0 px-3 py-2 text-xs">
             Chat
           </Link>
-          <Link
-            href={card.cardPath}
-            className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-text hover:border-brand-accent"
-          >
+          <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">
             Card
           </Link>
-          <button
-            type="button"
-            onClick={() => onCopy(card)}
-            className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-muted hover:border-brand-accent hover:text-brand-text"
-          >
-            Copy link
-          </button>
+          {!compact && (
+            <button
+              type="button"
+              onClick={() => onCopy(card)}
+              className="btn-ghost min-h-0 px-3 py-2 text-xs text-brand-muted hover:text-brand-text"
+            >
+              Copy link
+            </button>
+          )}
         </div>
       </div>
     </article>
@@ -102,6 +103,15 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("featured");
   const [notice, setNotice] = useState<string | null>(null);
+
+  const counts = useMemo(() => {
+    return {
+      all: characters.length,
+      featured: characters.filter((c) => c.featured).length,
+      default: characters.filter((c) => c.kind === "default").length,
+      custom: characters.filter((c) => c.kind === "custom").length,
+    };
+  }, [characters]);
 
   const featuredRow = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -157,54 +167,62 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0;
 
   return (
-    <main className="relative min-h-screen overflow-hidden">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(225,29,143,0.16),_transparent_55%),radial-gradient(ellipse_at_bottom_right,_rgba(80,20,120,0.2),_transparent_45%)]" />
+    <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(225,29,143,0.06),transparent_40%)]" />
 
-      <div className="relative mx-auto max-w-6xl px-4 py-8 sm:py-12">
-        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
-            <h1 className="mt-2 bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-4xl font-semibold tracking-tight text-transparent sm:text-5xl">
-              Live character gallery
-            </h1>
-            <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
-              Featured models up top — then the full catalog. Search, sort, share a card, or jump
-              into uncensored live chat.
+      {/* Sticky top chrome */}
+      <div className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
+            <p className="truncate text-sm font-semibold text-brand-text sm:text-base">
+              Live gallery
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/account"
-              className="rounded-xl border border-brand-border px-4 py-2.5 text-sm text-brand-text transition hover:border-brand-accent"
-            >
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/account" className="btn-ghost min-h-0 px-3 py-2 text-xs sm:text-sm">
               Account
             </Link>
-            <Link
-              href="/chat"
-              className="rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-accent/25 transition hover:bg-brand-accentDim"
-            >
-              Open live chat
+            <Link href="/chat" className="btn-primary min-h-0 px-3 py-2 text-xs sm:px-4 sm:text-sm">
+              Live chat
             </Link>
-            {notice && <span className="text-xs text-brand-accent">{notice}</span>}
           </div>
+        </div>
+      </div>
+
+      <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
+        <header className="mb-6 animate-fade-in sm:mb-10">
+          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">
+            Live character gallery
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
+            Featured models up top — then the full catalog. Search, sort, share a card, or jump into
+            uncensored live chat.
+          </p>
+          {notice && (
+            <p className="mt-2 text-xs font-medium text-brand-accent" role="status">
+              {notice}
+            </p>
+          )}
         </header>
 
         {showFeaturedStrip && (
-          <section className="mb-10">
+          <section className="mb-8 sm:mb-10">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Spotlight</p>
-                <h2 className="text-lg font-semibold text-brand-text">Featured</h2>
+                <h2 className="text-base font-semibold text-brand-text sm:text-lg">Featured</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setFilter("featured")}
-                className="text-xs text-brand-muted hover:text-brand-accent"
+                className="min-h-touch text-xs text-brand-muted hover:text-brand-accent"
               >
-                View all featured →
+                View all →
               </button>
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="scroll-strip -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:gap-4 sm:px-0">
               {featuredRow.map((card) => (
                 <CharacterTile key={`feat-${card.id}`} card={card} onCopy={copyCard} compact />
               ))}
@@ -212,71 +230,69 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </section>
         )}
 
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, energy, tags…"
-            className="w-full flex-1 rounded-xl border border-brand-border bg-brand-panel px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none"
-          />
-          <label className="flex items-center gap-2 text-xs text-brand-muted">
-            Sort
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value as SortMode)}
-              className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-            >
-              <option value="featured">Featured first</option>
-              <option value="kind">Signature first</option>
-              <option value="name">Name A–Z</option>
-              <option value="energy">Energy</option>
-            </select>
-          </label>
-        </div>
+        {/* Sticky filter / search bar on mobile */}
+        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-5 space-y-3 border-b border-brand-border/50 bg-brand-bg/90 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, energy, tags…"
+              enterKeyHint="search"
+              autoComplete="off"
+              className="field min-h-touch flex-1"
+            />
+            <label className="flex min-h-touch items-center gap-2 text-xs text-brand-muted">
+              <span className="shrink-0">Sort</span>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortMode)}
+                className="field min-h-touch w-full sm:w-auto"
+              >
+                <option value="featured">Featured first</option>
+                <option value="kind">Signature first</option>
+                <option value="name">Name A–Z</option>
+                <option value="energy">Energy</option>
+              </select>
+            </label>
+          </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-2">
-          {(
-            [
-              ["all", "All"],
-              ["featured", "Featured"],
-              ["default", "Signature"],
-              ["custom", "Custom"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setFilter(key)}
-              className={`rounded-full border px-4 py-1.5 text-xs transition ${
-                filter === key
-                  ? "border-brand-accent bg-brand-accent/15 text-brand-text"
-                  : "border-brand-border bg-brand-panel text-brand-muted hover:border-brand-accent"
-              }`}
-            >
-              {label}
-              <span className="ml-1 opacity-70">
-                (
-                {key === "all"
-                  ? characters.length
-                  : key === "featured"
-                    ? characters.filter((c) => c.featured).length
-                    : characters.filter((c) => c.kind === key).length}
-                )
-              </span>
-            </button>
-          ))}
-          <span className="ml-auto text-xs text-brand-muted">
+          <div className="flex items-center gap-2">
+            <div className="scroll-strip flex flex-1 gap-2 overflow-x-auto pb-0.5">
+              {(
+                [
+                  ["all", "All"],
+                  ["featured", "Featured"],
+                  ["default", "Signature"],
+                  ["custom", "Custom"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  className={`chip ${filter === key ? "chip-active" : "chip-idle"}`}
+                >
+                  {label}
+                  <span className="ml-1 opacity-70">({counts[key]})</span>
+                </button>
+              ))}
+            </div>
+            <span className="hidden shrink-0 text-xs text-brand-muted sm:inline">
+              {visible.length}/{characters.length}
+            </span>
+          </div>
+          <p className="text-[11px] text-brand-soft sm:hidden">
             Showing {visible.length} of {characters.length}
-          </span>
+          </p>
         </div>
 
         {visible.length === 0 ? (
-          <div className="rounded-2xl border border-brand-border bg-brand-panel p-10 text-center">
+          <div className="rounded-2xl border border-brand-border bg-brand-panel p-8 text-center sm:p-10">
             <p className="text-brand-text">No characters match this search.</p>
             <p className="mt-2 text-sm text-brand-muted">
               Try another filter, clear search, or create a custom model in chat.
             </p>
-            <div className="mt-4 flex justify-center gap-3">
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -293,16 +309,28 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {visible.map((card) => (
               <CharacterTile key={card.id} card={card} onCopy={copyCard} />
             ))}
           </div>
         )}
 
-        <footer className="mt-12 text-center text-xs text-brand-muted">
+        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">
           Uncensored 18+ · Procharacters.cloud / KGC Ventures
         </footer>
+      </div>
+
+      {/* Mobile bottom CTA dock */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
+        <div className="mx-auto flex max-w-lg gap-2">
+          <Link href="/chat" className="btn-primary flex-1">
+            Open live chat
+          </Link>
+          <Link href="/account" className="btn-ghost flex-1">
+            Account
+          </Link>
+        </div>
       </div>
     </main>
   );
