@@ -1,9 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { loadStoredAccount } from "@/lib/account-storage";
+import { listAccountSessions } from "@/lib/api";
+import { getResumeForCharacter, type ResumeCacheEntry } from "@/lib/resume-cache";
 import {
+  buildResumeCodeShareUrl,
   canNativeShare,
   shareOrCopyUrl,
   shareUrlResultLabel,
@@ -24,11 +28,15 @@ function posterUrl(card: CharacterCard): string {
 
 function CharacterTile({
   card,
-  onCopy,
+  onShareCard,
+  onShareResume,
+  resume,
   compact = false,
 }: {
   card: CharacterCard;
-  onCopy: (card: CharacterCard) => void; // share-or-copy card link
+  onShareCard: (card: CharacterCard) => void;
+  onShareResume: (card: CharacterCard, resume: ResumeCacheEntry) => void;
+  resume: ResumeCacheEntry | null;
   compact?: boolean;
 }) {
   const poster = posterUrl(card);
@@ -50,6 +58,20 @@ function CharacterTile({
           playsInline
           preload="metadata"
         />
+        {resume?.resumeCode && (
+          <div className="absolute right-2 top-2 z-10">
+            <span
+              className="rounded-full border border-amber-400/50 bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-amber-200 backdrop-blur"
+              title={
+                resume.source === "account"
+                  ? "You have a saved chat (account)"
+                  : "You have a saved chat on this device"
+              }
+            >
+              {resume.resumeCode}
+            </span>
+          </div>
+        )}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
@@ -90,7 +112,7 @@ function CharacterTile({
           {!compact && (
             <button
               type="button"
-              onClick={() => onCopy(card)}
+              onClick={() => onShareCard(card)}
               className="btn-ghost min-h-0 px-3 py-2 text-xs text-brand-muted hover:text-brand-text"
               title={
                 canNativeShare()
@@ -100,6 +122,31 @@ function CharacterTile({
             >
               {canNativeShare() ? "Share" : "Copy link"}
             </button>
+          )}
+          {resume?.resumeCode && (
+            <>
+              <Link
+                href={`/chat?resume=${encodeURIComponent(resume.resumeCode)}&character=${encodeURIComponent(card.id)}`}
+                className="btn-ghost min-h-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200"
+                title="Resume your saved chat"
+              >
+                Resume
+              </Link>
+              {!compact && (
+                <button
+                  type="button"
+                  onClick={() => onShareResume(card, resume)}
+                  className="btn-ghost min-h-0 border-amber-500/30 px-3 py-2 text-xs text-amber-200/90"
+                  title={
+                    canNativeShare()
+                      ? "Share resume link"
+                      : "Copy resume link"
+                  }
+                >
+                  {canNativeShare() ? "Share resume" : "Copy resume"}
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -112,6 +159,62 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("featured");
   const [notice, setNotice] = useState<string | null>(null);
+  /** characterId → resume entry (account + local) */
+  const [resumes, setResumes] = useState<Record<string, ResumeCacheEntry>>({});
+  const [signedInHandle, setSignedInHandle] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    // Seed from local cache immediately
+    const seed: Record<string, ResumeCacheEntry> = {};
+    for (const c of characters) {
+      const r = getResumeForCharacter(c.id);
+      if (r) seed[c.id] = r;
+    }
+    if (!cancelled) setResumes(seed);
+
+    const account = loadStoredAccount();
+    if (!account) {
+      setSignedInHandle(null);
+      return;
+    }
+    setSignedInHandle(account.handle);
+
+    void listAccountSessions(account.token)
+      .then((sessions) => {
+        if (cancelled) return;
+        // listAccountSessions already syncs resume-cache
+        const next: Record<string, ResumeCacheEntry> = { ...seed };
+        for (const s of sessions) {
+          if (!s.resumeCode) continue;
+          // newest-first list — keep first per character
+          if (next[s.characterId]?.source === "account") continue;
+          next[s.characterId] = {
+            characterId: s.characterId,
+            characterName: s.characterName,
+            sessionId: s.sessionId,
+            resumeCode: s.resumeCode,
+            updatedAt: s.updatedAt || s.createdAt,
+            source: "account",
+          };
+        }
+        // Re-read cache for any local-only extras
+        for (const c of characters) {
+          if (next[c.id]) continue;
+          const r = getResumeForCharacter(c.id);
+          if (r) next[c.id] = r;
+        }
+        setResumes(next);
+      })
+      .catch(() => {
+        /* keep local seeds */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [characters]);
 
   const counts = useMemo(() => {
     return {
@@ -121,6 +224,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       custom: characters.filter((c) => c.kind === "custom").length,
     };
   }, [characters]);
+
+  const resumeCount = useMemo(() => Object.keys(resumes).length, [resumes]);
 
   const featuredRow = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -166,6 +271,12 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     return list;
   }, [characters, filter, query, sort]);
 
+  const flash = (label: string | null) => {
+    if (!label) return;
+    setNotice(label);
+    window.setTimeout(() => setNotice(null), 2200);
+  };
+
   const shareCard = async (card: CharacterCard) => {
     const url = `${siteOrigin}${card.cardPath}`;
     const result = await shareOrCopyUrl({
@@ -175,11 +286,20 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         ? `Meet ${card.displayName} — ${card.teaser}`
         : `Meet ${card.displayName} on Procharacters.cloud`,
     });
-    const label = shareUrlResultLabel(result, card.displayName);
-    if (label) {
-      setNotice(label);
-      window.setTimeout(() => setNotice(null), 2200);
-    }
+    flash(shareUrlResultLabel(result, card.displayName));
+  };
+
+  const shareResume = async (card: CharacterCard, resume: ResumeCacheEntry) => {
+    const url = buildResumeCodeShareUrl(resume.resumeCode, {
+      origin: siteOrigin,
+      characterId: card.id,
+    });
+    const result = await shareOrCopyUrl({
+      url,
+      title: `Resume chat with ${card.displayName}`,
+      text: `Continue your chat with ${card.displayName} (code ${resume.resumeCode})`,
+    });
+    flash(shareUrlResultLabel(result, `Resume ${resume.resumeCode}`));
   };
 
   const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0;
@@ -189,13 +309,18 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(225,29,143,0.06),transparent_40%)]" />
 
-      {/* Sticky top chrome */}
       <div className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
             <p className="truncate text-sm font-semibold text-brand-text sm:text-base">
               Live gallery
+              {signedInHandle ? (
+                <span className="ml-2 text-xs font-normal text-brand-muted">
+                  · @{signedInHandle}
+                  {resumeCount > 0 ? ` · ${resumeCount} resume` : ""}
+                </span>
+              ) : null}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -217,6 +342,11 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
             Featured models up top — then the full catalog. Search, sort, share a card, or jump into
             uncensored live chat.
+            {resumeCount > 0
+              ? " Amber codes on tiles are your saved chats — Resume or share them."
+              : signedInHandle
+                ? " Start a chat while signed in to get multi-device resume codes on tiles."
+                : " Sign in to sync resume codes across devices."}
           </p>
           {notice && (
             <p className="mt-2 text-xs font-medium text-brand-accent" role="status">
@@ -242,13 +372,19 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </div>
             <div className="scroll-strip -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:gap-4 sm:px-0">
               {featuredRow.map((card) => (
-                <CharacterTile key={`feat-${card.id}`} card={card} onCopy={shareCard} compact />
+                <CharacterTile
+                  key={`feat-${card.id}`}
+                  card={card}
+                  onShareCard={shareCard}
+                  onShareResume={shareResume}
+                  resume={resumes[card.id] ?? null}
+                  compact
+                />
               ))}
             </div>
           </section>
         )}
 
-        {/* Sticky filter / search bar on mobile */}
         <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-5 space-y-3 border-b border-brand-border/50 bg-brand-bg/90 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
             <input
@@ -329,7 +465,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {visible.map((card) => (
-              <CharacterTile key={card.id} card={card} onCopy={shareCard} />
+              <CharacterTile
+                key={card.id}
+                card={card}
+                onShareCard={shareCard}
+                onShareResume={shareResume}
+                resume={resumes[card.id] ?? null}
+              />
             ))}
           </div>
         )}
@@ -339,7 +481,6 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         </footer>
       </div>
 
-      {/* Mobile bottom CTA dock */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
         <div className="mx-auto flex max-w-lg gap-2">
           <Link href="/chat" className="btn-primary flex-1">
