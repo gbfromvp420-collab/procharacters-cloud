@@ -5,6 +5,7 @@ import type {
   CreateSessionResponse,
   LiveCharacterOption,
   MediaClipKey,
+  MediaOverrides,
   MemoryMessage,
   UpdateCustomCharacterInput,
 } from "./types";
@@ -236,6 +237,32 @@ export async function getCharacterClips(
     throw new Error(`Failed to load clips (${res.status}): ${text}`);
   }
   return res.json() as Promise<{ characterId: string; clips: Record<MediaClipKey, string> }>;
+}
+
+export async function uploadCharacterClip(
+  characterId: string,
+  emotion: MediaClipKey,
+  file: File,
+): Promise<{
+  url: string;
+  clips: Record<MediaClipKey, string>;
+  mediaOverrides?: MediaOverrides;
+}> {
+  const body = new FormData();
+  body.append("file", file, file.name || `${emotion}.mp4`);
+  const res = await fetch(
+    `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}/clips/${emotion}`,
+    { method: "POST", body },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Upload failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    url: string;
+    clips: Record<MediaClipKey, string>;
+    mediaOverrides?: MediaOverrides;
+  }>;
 }
 
 export function getApiBase(): string {

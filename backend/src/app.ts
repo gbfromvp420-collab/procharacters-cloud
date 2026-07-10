@@ -1,14 +1,18 @@
 import cors from "@fastify/cors";
+import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
+import { mkdir } from "node:fs/promises";
 import { env } from "./config/env.js";
 import { initAccountStore } from "./lib/accounts/account-store.js";
 import { initCustomCharacters } from "./lib/live/index.js";
+import { resolveUploadsDir } from "./lib/media/upload-store.js";
 import { initSessionStore, pruneOldSessions } from "./lib/memory/session-store.js";
 import { LiveKitService } from "./lib/livekit/service.js";
 import { createAccountRoutes } from "./routes/accounts.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createSessionRoutes } from "./routes/sessions.js";
+import { createUploadRoutes } from "./routes/uploads.js";
 import { ChatOrchestrator } from "./services/chat-orchestrator.js";
 import { MediaWorker } from "./services/media-worker.js";
 import { MemoryManager } from "./services/memory-manager.js";
@@ -19,10 +23,20 @@ export async function buildApp() {
   const app = Fastify({
     logger: env.isDev,
     trustProxy: true,
+    bodyLimit: Number(process.env.MAX_UPLOAD_BYTES ?? 45 * 1024 * 1024),
   });
 
   await app.register(cors, { origin: true });
   await app.register(websocket);
+
+  const uploadsDir = resolveUploadsDir();
+  await mkdir(uploadsDir, { recursive: true });
+  await app.register(fastifyStatic, {
+    root: uploadsDir,
+    prefix: "/media/uploads/",
+    decorateReply: false,
+  });
+  app.log.info({ uploadsDir }, "Clip uploads directory ready");
 
   const customStore = await initCustomCharacters(
     env.CUSTOM_CHARACTERS_PATH?.trim() || undefined,
@@ -91,6 +105,9 @@ export async function buildApp() {
     prefix: "/api/v1",
   });
   await app.register(createAccountRoutes(sessionManager, media, livekit), {
+    prefix: "/api/v1",
+  });
+  await app.register(createUploadRoutes(), {
     prefix: "/api/v1",
   });
 

@@ -20,7 +20,7 @@ What works today:
 - **Share cards**: `/character/<id>` pretty pages + OG metadata; `?character=` autostart still works
 - **Private resume**: `?resume=CODE` (no raw tokens)
 - **Accounts**: handle + passphrase → multi-device session list + claim/resume
-- **Custom avatar clips**: `mediaBase` folder + per-emotion URL overrides (`PATCH` custom chars)
+- **Custom avatar clips**: `mediaBase`, URL overrides, and **in-browser mp4/webm upload** to API volume
 - Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,
   `assistant_stream`, `assistant_complete`, `avatar_update`, `session_ended`, `error`

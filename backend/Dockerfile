@@ -23,6 +23,7 @@ ENV HOST=0.0.0.0
 ENV CUSTOM_CHARACTERS_PATH=/data/custom-characters.json
 ENV SESSIONS_PATH=/data/sessions
 ENV ACCOUNTS_PATH=/data/accounts.json
+ENV UPLOADS_PATH=/data/uploads
 
 COPY --from=build /app/backend/package.json /app/backend/package-lock.json ./
 COPY --from=build /app/backend/node_modules ./node_modules

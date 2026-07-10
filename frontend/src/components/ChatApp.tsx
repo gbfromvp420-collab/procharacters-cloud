@@ -19,6 +19,7 @@ import {
   resumeByCode,
   resumeSession,
   updateCustomCharacter,
+  uploadCharacterClip,
   type AccountSessionSummary,
 } from "@/lib/api";
 import {
@@ -47,6 +48,7 @@ import type {
   ConnectionStatus,
   LiveCharacterOption,
   LiveKitJoinInfo,
+  MediaClipKey,
   MemoryMessage,
 } from "@/lib/types";
 
@@ -777,6 +779,43 @@ export function ChatApp() {
     }
   };
 
+  const handleUploadClip = async (emotion: MediaClipKey, file: File | null) => {
+    if (!file) return;
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character before uploading clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const result = await uploadCharacterClip(selected.id, emotion, file);
+      const setUrl = {
+        idle: setClipIdle,
+        teasing: setClipTeasing,
+        playful: setClipPlayful,
+        aroused: setClipAroused,
+      }[emotion];
+      setUrl(result.url);
+      setCharacters((prev) =>
+        prev.map((c) =>
+          c.id === selected.id
+            ? {
+                ...c,
+                mediaOverrides: result.mediaOverrides,
+                clips: result.clips,
+              }
+            : c,
+        ),
+      );
+      flashCopy(`Uploaded ${emotion} clip`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const handleDeleteCustom = async () => {
     const selected = characters.find((c) => c.id === character);
     if (!selected || selected.kind !== "custom") return;
@@ -1225,32 +1264,43 @@ export function ChatApp() {
                         placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
                         className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                       />
-                      <div className="grid gap-1 sm:grid-cols-2">
-                        <input
-                          value={clipIdle}
-                          onChange={(e) => setClipIdle(e.target.value)}
-                          placeholder="idle"
-                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                        />
-                        <input
-                          value={clipTeasing}
-                          onChange={(e) => setClipTeasing(e.target.value)}
-                          placeholder="teasing"
-                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                        />
-                        <input
-                          value={clipPlayful}
-                          onChange={(e) => setClipPlayful(e.target.value)}
-                          placeholder="playful"
-                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                        />
-                        <input
-                          value={clipAroused}
-                          onChange={(e) => setClipAroused(e.target.value)}
-                          placeholder="aroused"
-                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                        />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {(
+                          [
+                            ["idle", clipIdle, setClipIdle],
+                            ["teasing", clipTeasing, setClipTeasing],
+                            ["playful", clipPlayful, setClipPlayful],
+                            ["aroused", clipAroused, setClipAroused],
+                          ] as const
+                        ).map(([emotion, value, setValue]) => (
+                          <div key={emotion} className="space-y-1">
+                            <input
+                              value={value}
+                              onChange={(e) => setValue(e.target.value)}
+                              placeholder={`${emotion} URL (optional)`}
+                              className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                            />
+                            <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
+                              <span>Upload {emotion}.mp4</span>
+                              <input
+                                type="file"
+                                accept="video/mp4,video/webm"
+                                className="hidden"
+                                disabled={creating}
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0] ?? null;
+                                  e.target.value = "";
+                                  void handleUploadClip(emotion, file);
+                                }}
+                              />
+                            </label>
+                          </div>
+                        ))}
                       </div>
+                      <p className="text-[11px] text-brand-muted">
+                        Uploads store on the API volume and update this character&apos;s clip map
+                        (max ~40MB each, mp4/webm).
+                      </p>
                       <button
                         type="button"
                         onClick={handleSaveMediaForSelected}

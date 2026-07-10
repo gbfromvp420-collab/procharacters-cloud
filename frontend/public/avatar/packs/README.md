@@ -26,6 +26,8 @@ https://cdn.example.com/diego-teasing.mp4
 
 ## Notes
 
-- Clips are served by the **frontend** Next.js app (static files).
-- After adding files, redeploy **procharacters-web** (or restart local `npm run dev`).
+- Packs under `public/avatar/` are served by the **frontend**.
+- You can also **upload in the browser** (Create/Edit custom → Upload idle/teasing/playful/aroused).  
+  Browser uploads go to the **API** volume (`/data/uploads`) and are served at  
+  `https://<api-host>/media/uploads/<characterId>/<emotion>.mp4`.
 - Fallback pack (twink/female defaults) is used when a slot is missing.
