@@ -12,14 +12,25 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 
 ## Option A — Railway (recommended)
 
-### 1. Backend service
+**Live production (July 2026):**
 
-1. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub** → repo **`procharacters-cloud`**
-2. **Confirm the connected repo** — logs must show `node dist/index.js`, **not** Python/uvicorn/FastAPI
-3. **Settings → Build**:
-   - Builder: **Dockerfile** (not Nixpacks)
+| Service | URL | Dockerfile |
+|---------|-----|------------|
+| API | https://procharacters-api-production-0417.up.railway.app | `backend/Dockerfile` |
+| Web | https://procharacters-web-production-7288.up.railway.app | `frontend/Dockerfile` |
+
+Project: **captivating-vision** · services **procharacters-api** + **procharacters-web**.
+
+> **Monorepo note:** each service must set its own **Dockerfile path** in Railway settings  
+> (`backend/Dockerfile` vs `frontend/Dockerfile`). The root `railway.toml` alone is not enough for both.
+
+### 1. Backend service (`procharacters-api`)
+
+1. Connect GitHub repo **`procharacters-cloud`**
+2. **Settings → Build**:
+   - Builder: **Dockerfile**
    - Dockerfile path: `backend/Dockerfile`
-   - Root directory: `/` (repo root)
+   - Root directory: empty / repo root
 3. **Variables**:
 
 | Variable | Value |
@@ -27,32 +38,34 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 | `NODE_ENV` | `production` |
 | `REPO_ROOT` | `/app` |
 | `HOST` | `0.0.0.0` |
-| `PUBLIC_API_URL` | `https://<your-backend>.up.railway.app` |
+| `PUBLIC_API_URL` | `https://procharacters-api-production-0417.up.railway.app` |
 | `XAI_API_KEY` | `<your_xai_api_key>` |
 | `XAI_MODEL` | `grok-3` |
 | `LIVEKIT_URL` | `wss://....livekit.cloud` (optional) |
 | `LIVEKIT_API_KEY` | (optional) |
 | `LIVEKIT_API_SECRET` | (optional) |
 
-4. **Settings** → generate domain → copy HTTPS URL → set `PUBLIC_API_URL` to that URL
-5. **Deploy** — health check: `GET /health`
+Do **not** set `PORT` — Railway injects it.
 
-### 2. Frontend service
+4. Health: `GET /health` → `"status":"ok"`
 
-1. Same project → **Add Service** → Dockerfile: `frontend/Dockerfile`, context `.`
-2. **Build variable** (Railway → Variables → add at build time):
+### 2. Frontend service (`procharacters-web`)
+
+1. Same repo · Dockerfile path: `frontend/Dockerfile` · root empty
+2. **Variable** (must be present at **build** time):
 
 | Variable | Value |
 |----------|--------|
-| `NEXT_PUBLIC_API_URL` | `https://<your-backend>.up.railway.app` |
+| `NEXT_PUBLIC_API_URL` | `https://procharacters-api-production-0417.up.railway.app` |
 
-3. Generate public domain for the frontend (e.g. `https://<app>.up.railway.app`)
+3. Redeploy after changing `NEXT_PUBLIC_API_URL` (baked into the Next bundle).
 
 ### 3. Smoke test
 
 ```bash
-curl https://<backend>/health
-curl -X POST https://<backend>/api/v1/sessions -H "Content-Type: application/json" -d "{\"characterId\":\"twink-default\"}"
+curl https://procharacters-api-production-0417.up.railway.app/health
+curl -X POST https://procharacters-api-production-0417.up.railway.app/api/v1/sessions ^
+  -H "Content-Type: application/json" -d "{\"characterId\":\"twink-default\"}"
 ```
 
 Open the frontend URL → Start Session → chat. WebSocket should use `wss://` automatically.
