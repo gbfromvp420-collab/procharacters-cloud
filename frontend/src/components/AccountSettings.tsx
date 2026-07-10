@@ -44,9 +44,10 @@ import {
 import {
   buildResumeCodeShareUrl,
   canNativeShare,
-  copyText,
   shareOrCopyText,
+  shareOrCopyUrl,
   shareResultLabel,
+  shareUrlResultLabel,
 } from "@/lib/share-links";
 import type { LiveCharacterOption } from "@/lib/types";
 
@@ -306,10 +307,81 @@ export function AccountSettings() {
     }
   };
 
-  const copyResume = async (code: string) => {
+  const copyResume = async (code: string, characterName?: string) => {
     const url = buildResumeCodeShareUrl(code);
-    const ok = await copyText(url);
-    flash(ok ? `Copied resume ${code}` : "Copy failed");
+    const result = await shareOrCopyUrl({
+      url,
+      title: characterName
+        ? `Resume chat with ${characterName}`
+        : `Resume Procharacters chat`,
+      text: characterName
+        ? `Continue your chat with ${characterName} (code ${code})`
+        : `Continue your chat (code ${code})`,
+    });
+    const label = shareUrlResultLabel(result, `Resume ${code}`);
+    if (label) flash(label);
+  };
+
+  /** Bundle every resume link into one share/copy payload. */
+  const onShareAllResumeLinks = async () => {
+    if (!account) return;
+    const withCodes = sessions.filter((s) => s.resumeCode);
+    if (withCodes.length === 0) {
+      setError("No resume codes on saved chats yet — open or refresh chats first");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      // Prefer freshest list so codes are minted/rebound
+      let list = withCodes;
+      try {
+        list = (await listAccountSessions(account.token)).filter((s) => s.resumeCode);
+      } catch {
+        /* use current state */
+      }
+      if (list.length === 0) {
+        setError("No resume codes available");
+        return;
+      }
+
+      const day = new Date().toISOString().slice(0, 10);
+      const lines = [
+        `# Procharacters resume links`,
+        ``,
+        `Account: @${account.handle}`,
+        `Exported: ${day}`,
+        `Chats: ${list.length}`,
+        ``,
+        `---`,
+        ``,
+      ];
+      for (const s of list) {
+        const code = s.resumeCode!;
+        const url = buildResumeCodeShareUrl(code, { characterId: s.characterId });
+        lines.push(`## ${s.characterName}`);
+        lines.push(`- Code: \`${code}\``);
+        lines.push(`- Messages: ${s.messageCount}`);
+        lines.push(`- Status: ${s.status}`);
+        lines.push(`- Link: ${url}`);
+        lines.push(``);
+      }
+      lines.push(`_Open a link on any device to continue that chat._`);
+      lines.push(``);
+
+      const text = lines.join("\n");
+      const result = await shareOrCopyText({
+        title: `Resume links · @${account.handle}`,
+        text,
+        filename: `procharacters-resume-links-${account.handle}-${day}.md`,
+      });
+      const label = shareResultLabel(result, `${list.length} resume links`);
+      if (label) flash(label);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not export resume links");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const onDeleteSession = async (sessionId: string) => {
@@ -905,6 +977,19 @@ export function AccountSettings() {
                       </button>
                       <button
                         type="button"
+                        disabled={busy || !sessions.some((s) => s.resumeCode)}
+                        onClick={() => void onShareAllResumeLinks()}
+                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
+                        title={
+                          canNativeShare()
+                            ? "Share all resume links as Markdown"
+                            : "Copy all resume links as Markdown"
+                        }
+                      >
+                        {canNativeShare() ? "Share all resumes" : "Copy all resumes"}
+                      </button>
+                      <button
+                        type="button"
                         disabled={busy}
                         onClick={() => void onWipeSessions()}
                         className="text-xs text-red-300 hover:underline disabled:opacity-50"
@@ -998,7 +1083,7 @@ export function AccountSettings() {
                       {s.resumeCode && (
                         <button
                           type="button"
-                          onClick={() => void copyResume(s.resumeCode!)}
+                          onClick={() => void copyResume(s.resumeCode!, s.characterName)}
                           className="text-brand-muted hover:text-brand-accent"
                         >
                           Copy
