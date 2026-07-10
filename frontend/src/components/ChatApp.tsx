@@ -563,9 +563,15 @@ export function ChatApp() {
   };
 
   const shareCharacterLink = async (autostart = false) => {
-    const url = buildCharacterShareUrl(character, { autostart });
+    const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
     const ok = await copyText(url);
-    flashCopy(ok ? (autostart ? "Autostart link copied" : "Character link copied") : "Copy failed");
+    flashCopy(
+      ok
+        ? autostart
+          ? "Autostart link copied"
+          : "Character card link copied"
+        : "Copy failed",
+    );
   };
 
   const sharePrivateResumeLink = async () => {
@@ -1025,9 +1031,9 @@ export function ChatApp() {
                     type="button"
                     onClick={() => shareCharacterLink(false)}
                     className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
-                    title="Copy public character link"
+                    title="Copy pretty character card link"
                   >
-                    Share
+                    Share card
                   </button>
                   <button
                     type="button"
@@ -1037,6 +1043,12 @@ export function ChatApp() {
                   >
                     Share ▶
                   </button>
+                  <a
+                    href={`/character/${encodeURIComponent(character)}`}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-muted transition hover:border-brand-accent hover:text-brand-text"
+                  >
+                    Open card
+                  </a>
                 </>
               ) : (
                 <>

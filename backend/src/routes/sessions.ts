@@ -227,6 +227,61 @@ export const createSessionRoutes = (
       };
     });
 
+    /** Public share-card payload for pretty character pages / OG previews. */
+    app.get("/characters/:characterId/card", async (request, reply) => {
+      const { characterId } = request.params as { characterId: string };
+      const builtIn = LIVE_CHARACTER_CATALOG[characterId];
+      const custom = getCustomCharacter(characterId);
+
+      if (!builtIn && !custom) {
+        return reply.code(404).send({ error: "Character not found" });
+      }
+
+      const clips = listClipUrls(characterId);
+      const brandTeasers: Record<string, string> = {
+        "twink-default":
+          "Skinny Latino twink energy — sheer thong, slow edging, photorealistic tease.",
+        "female-default":
+          "Fit athletic tease — crotchless undies, wet anticipation, uncensored heat.",
+      };
+
+      if (custom) {
+        const teaser =
+          custom.appearance.length > 180
+            ? `${custom.appearance.slice(0, 177).trim()}…`
+            : custom.appearance;
+        return {
+          id: custom.id,
+          displayName: custom.displayName,
+          kind: "custom" as const,
+          brand: "Naughty Syntax",
+          energyLabel: custom.energyLabel,
+          teaser,
+          tags: custom.consistencyTraits.slice(0, 4),
+          avatarBase: custom.avatarBase,
+          posterClip: clips.teasing || clips.idle,
+          clips,
+          ctaPath: `/?character=${encodeURIComponent(custom.id)}&autostart=1`,
+          cardPath: `/character/${encodeURIComponent(custom.id)}`,
+        };
+      }
+
+      return {
+        id: builtIn!.id,
+        displayName: builtIn!.displayName,
+        kind: "default" as const,
+        brand: "Naughty Syntax",
+        energyLabel: builtIn!.energyLabel,
+        teaser: brandTeasers[builtIn!.id] ?? builtIn!.energyLabel,
+        tags: builtIn!.consistencyTraits.slice(0, 4),
+        avatarBase: builtIn!.avatarBase ?? builtIn!.id,
+        posterClip: clips.teasing || clips.idle,
+        clips,
+        ctaPath: `/?character=${encodeURIComponent(builtIn!.id)}&autostart=1`,
+        cardPath: `/character/${encodeURIComponent(builtIn!.id)}`,
+      };
+    });
+
     app.delete("/characters/custom/:characterId", async (request, reply) => {
       const { characterId } = request.params as { characterId: string };
       if (!characterId.startsWith("custom-")) {

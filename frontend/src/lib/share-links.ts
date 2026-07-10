@@ -27,13 +27,32 @@ export function parseShareQuery(search: string): ShareQuery {
   return { characterId, autostart, resumeCode, sessionId, token };
 }
 
+/** Pretty public character card (preferred for sharing). */
+export function buildCharacterCardUrl(
+  characterId: string,
+  options: { origin?: string } = {},
+): string {
+  const origin =
+    options.origin ??
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "https://procharacters-web-production-7288.up.railway.app");
+  return `${origin.replace(/\/$/, "")}/character/${encodeURIComponent(characterId)}`;
+}
+
 export function buildCharacterShareUrl(
   characterId: string,
-  options: { origin?: string; autostart?: boolean } = {},
+  options: { origin?: string; autostart?: boolean; card?: boolean } = {},
 ): string {
   const origin =
     options.origin ??
     (typeof window !== "undefined" ? window.location.origin : "https://procharacters-web-production-7288.up.railway.app");
+
+  // Default public share is the pretty card page.
+  if (options.card !== false && !options.autostart) {
+    return buildCharacterCardUrl(characterId, { origin });
+  }
+
   const url = new URL(origin);
   url.searchParams.set("character", characterId);
   if (options.autostart) {

@@ -4,7 +4,9 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_SITE_URL=https://procharacters-web-production-7288.up.railway.app
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 
 COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci
