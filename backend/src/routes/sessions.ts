@@ -437,6 +437,50 @@ export const createSessionRoutes = (
     });
 
     /**
+     * Dry-run import: counts + remaps, no writes.
+     * Same body shape as /sessions/import.
+     */
+    app.post("/sessions/import/preview", async (request, reply) => {
+      const raw = request.body;
+      let document: unknown = raw;
+      let characterId: string | undefined;
+      let characterMap: Record<string, string> | undefined;
+      let fallbackCharacterId: string | undefined;
+      let sessionIndex: number | undefined;
+      let importAll: boolean | undefined;
+
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        const parsedWrap = importSessionSchema.safeParse(raw);
+        if (parsedWrap.success && (parsedWrap.data.document !== undefined || "schema" in raw)) {
+          if (parsedWrap.data.document !== undefined) {
+            document = parsedWrap.data.document;
+          }
+          characterId = parsedWrap.data.characterId;
+          characterMap = parsedWrap.data.characterMap;
+          fallbackCharacterId = parsedWrap.data.fallbackCharacterId;
+          sessionIndex = parsedWrap.data.sessionIndex;
+          importAll = parsedWrap.data.importAll;
+        }
+      }
+
+      try {
+        const preview = sessionManager.previewImport(document, {
+          characterId,
+          characterMap,
+          fallbackCharacterId,
+          sessionIndex,
+          importAll: importAll ?? (sessionIndex === undefined ? true : undefined),
+        });
+        return preview;
+      } catch (error) {
+        if (error instanceof SessionImportError) {
+          return reply.code(400).send({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
+    });
+
+    /**
      * Restore a chat from export JSON into a new live session.
      * Body may be the export itself, or { document, characterId?, sessionIndex? }.
      * Optional Bearer account token attaches the new session to the account.

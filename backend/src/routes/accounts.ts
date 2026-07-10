@@ -399,6 +399,51 @@ export const createAccountRoutes = (
       return doc;
     });
 
+    /** Dry-run import for account (no writes). */
+    app.post("/accounts/me/sessions/import/preview", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const raw = request.body;
+      let document: unknown = raw;
+      let characterId: string | undefined;
+      let characterMap: Record<string, string> | undefined;
+      let fallbackCharacterId: string | undefined;
+      let sessionIndex: number | undefined;
+      let importAll: boolean | undefined;
+
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        const body = raw as Record<string, unknown>;
+        if (body.document !== undefined) document = body.document;
+        if (typeof body.characterId === "string") characterId = body.characterId;
+        if (body.characterMap && typeof body.characterMap === "object" && !Array.isArray(body.characterMap)) {
+          characterMap = body.characterMap as Record<string, string>;
+        }
+        if (typeof body.fallbackCharacterId === "string") {
+          fallbackCharacterId = body.fallbackCharacterId;
+        }
+        if (typeof body.sessionIndex === "number") sessionIndex = body.sessionIndex;
+        if (typeof body.importAll === "boolean") importAll = body.importAll;
+      }
+
+      try {
+        const preview = sessionManager.previewImport(document, {
+          characterId,
+          characterMap,
+          fallbackCharacterId,
+          sessionIndex,
+          importAll: importAll ?? (sessionIndex === undefined ? true : undefined),
+        });
+        return preview;
+      } catch (error) {
+        if (error instanceof SessionImportError) {
+          return reply.code(400).send({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
+    });
+
     /** Restore export JSON onto this account as a new saved chat (then auto-resumable). */
     app.post("/accounts/me/sessions/import", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));

@@ -158,6 +158,43 @@ export function resolveImportCharacterId(
   );
 }
 
+export type ImportPreviewSession = {
+  index: number;
+  ok: boolean;
+  characterName: string;
+  originalCharacterId: string;
+  characterId?: string;
+  remappedFrom?: string;
+  messageCount: number;
+  truncated?: boolean;
+  dropped?: number;
+  error?: string;
+  code?: string;
+};
+
+export type ImportPreviewCharacter = {
+  id: string;
+  name: string;
+  sessionCount: number;
+  available: boolean;
+  resolvedTo?: string;
+  remapped: boolean;
+  error?: string;
+};
+
+export type ImportPreview = {
+  dryRun: true;
+  sourceSchema: string;
+  bulkTotal: number;
+  entriesParsed: number;
+  capped: boolean;
+  willSucceed: number;
+  willFail: number;
+  totalMessages: number;
+  sessions: ImportPreviewSession[];
+  characters: ImportPreviewCharacter[];
+};
+
 type BulkImportItemFail = {
   ok: false;
   index: number;
@@ -448,6 +485,166 @@ export class SessionManager {
       this.sessions.set(record.id, record);
     }
     return buildAccountSessionsExport({ accountId, handle, records });
+  }
+
+  /**
+   * Dry-run import: parse export, resolve remaps, report what would succeed.
+   * Does not create sessions, tokens, or resume codes.
+   */
+  previewImport(
+    document: unknown,
+    options: {
+      sessionIndex?: number;
+      importAll?: boolean;
+    } & ImportCharacterResolveOptions = {},
+  ): ImportPreview {
+    const wantAll =
+      options.importAll === true ||
+      (options.importAll !== false &&
+        options.sessionIndex === undefined &&
+        isBulkAccountExport(document));
+
+    if (wantAll || isBulkAccountExport(document)) {
+      const parsed = parseImportDocumentAll(document);
+      if (!parsed.ok) {
+        throw new SessionImportError(parsed.error, parsed.code);
+      }
+      return this.buildImportPreview(parsed, options);
+    }
+
+    const parsed = parseImportDocument(document, {
+      sessionIndex: options.sessionIndex,
+    });
+    if (!parsed.ok) {
+      throw new SessionImportError(parsed.error, parsed.code);
+    }
+
+    // Normalize single to bulk-shaped preview
+    return this.buildImportPreview(
+      {
+        entries: [
+          {
+            index: parsed.bulkIndex ?? 0,
+            session: parsed.session,
+            truncated: parsed.truncated === true,
+            dropped: parsed.dropped ?? 0,
+          },
+        ],
+        sourceSchema: parsed.sourceSchema,
+        bulkTotal: parsed.bulkTotal ?? 1,
+        capped: false,
+      },
+      options,
+    );
+  }
+
+  private buildImportPreview(
+    parsed: {
+      entries: Array<{
+        index: number;
+        session: ImportSessionPayload;
+        truncated: boolean;
+        dropped: number;
+      }>;
+      sourceSchema: string;
+      bulkTotal: number;
+      capped: boolean;
+    },
+    options: ImportCharacterResolveOptions,
+  ): ImportPreview {
+    const sessions: ImportPreviewSession[] = [];
+    const charAgg = new Map<
+      string,
+      { name: string; sessionCount: number; available: boolean; resolvedTo?: string; remapped: boolean; error?: string }
+    >();
+
+    for (const entry of parsed.entries) {
+      const originalCharacterId = entry.session.characterId;
+      const characterName = entry.session.characterName;
+      const messageCount = entry.session.messages.length;
+
+      let ok = true;
+      let characterId: string | undefined;
+      let remappedFrom: string | undefined;
+      let error: string | undefined;
+      let code: string | undefined;
+
+      try {
+        const resolved = resolveImportCharacterId(originalCharacterId, options);
+        characterId = resolved.characterId;
+        remappedFrom = resolved.remappedFrom;
+      } catch (err) {
+        ok = false;
+        error = err instanceof Error ? err.message : "Resolve failed";
+        code = err instanceof SessionImportError ? err.code : "CHARACTER_MISSING";
+      }
+
+      sessions.push({
+        index: entry.index,
+        ok,
+        characterName,
+        originalCharacterId,
+        characterId,
+        remappedFrom,
+        messageCount,
+        truncated: entry.truncated,
+        dropped: entry.dropped,
+        error,
+        code,
+      });
+
+      const existing = charAgg.get(originalCharacterId);
+      if (existing) {
+        existing.sessionCount += 1;
+        if (!ok && !existing.error) existing.error = error;
+      } else {
+        charAgg.set(originalCharacterId, {
+          name: characterName,
+          sessionCount: 1,
+          available: ok && !remappedFrom,
+          resolvedTo: characterId,
+          remapped: !!remappedFrom,
+          error: ok ? undefined : error,
+        });
+      }
+      if (ok && remappedFrom) {
+        const row = charAgg.get(originalCharacterId)!;
+        row.available = false;
+        row.remapped = true;
+        row.resolvedTo = characterId;
+      }
+    }
+
+    const willSucceed = sessions.filter((s) => s.ok).length;
+    const willFail = sessions.length - willSucceed;
+    const totalMessages = sessions
+      .filter((s) => s.ok)
+      .reduce((n, s) => n + s.messageCount, 0);
+
+    const characters: ImportPreviewCharacter[] = [...charAgg.entries()]
+      .map(([id, v]) => ({
+        id,
+        name: v.name,
+        sessionCount: v.sessionCount,
+        available: v.available,
+        resolvedTo: v.resolvedTo,
+        remapped: v.remapped,
+        error: v.error,
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      dryRun: true,
+      sourceSchema: parsed.sourceSchema,
+      bulkTotal: parsed.bulkTotal,
+      entriesParsed: parsed.entries.length,
+      capped: parsed.capped,
+      willSucceed,
+      willFail,
+      totalMessages,
+      sessions,
+      characters,
+    };
   }
 
   /**

@@ -9,7 +9,11 @@ import {
   parseImportDocumentAll,
   SESSION_EXPORT_SCHEMA,
 } from "../src/lib/memory/session-export.js";
-import { resolveImportCharacterId } from "../src/services/session-manager.js";
+import {
+  resolveImportCharacterId,
+  SessionManager,
+} from "../src/services/session-manager.js";
+import { MemoryManager } from "../src/services/memory-manager.js";
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg);
@@ -138,5 +142,47 @@ try {
   threw = true;
 }
 assert(threw, "missing without map/fallback throws");
+
+// Dry-run preview (no disk writes for resolve-only path)
+const mem = new MemoryManager();
+const sm = new SessionManager(mem, "twink-default", 60, 30);
+const preview = sm.previewImport(bulk, {
+  importAll: true,
+  characterMap: { "custom-gone": "female-default" },
+});
+assert(preview.dryRun === true, "dryRun flag");
+assert(preview.willSucceed === 2, "preview succeed");
+assert(preview.totalMessages === 3, "preview msgs");
+assert(preview.sessions.length === 2, "preview rows");
+
+const previewMissing = sm.previewImport(
+  {
+    schema: SESSION_EXPORT_SCHEMA,
+    session: {
+      ...single.session,
+      characterId: "custom-orphan",
+      characterName: "Ghost",
+    },
+  },
+  { importAll: true },
+);
+assert(previewMissing.willFail === 1 && previewMissing.willSucceed === 0, "preview fail missing");
+
+const previewFallback = sm.previewImport(
+  {
+    schema: SESSION_EXPORT_SCHEMA,
+    session: {
+      ...single.session,
+      characterId: "custom-orphan",
+      characterName: "Ghost",
+    },
+  },
+  { importAll: true, fallbackCharacterId: "twink-default" },
+);
+assert(
+  previewFallback.willSucceed === 1 &&
+    previewFallback.sessions[0]?.remappedFrom === "custom-orphan",
+  "preview fallback remap",
+);
 
 console.log("smoke-session-import: all checks passed");

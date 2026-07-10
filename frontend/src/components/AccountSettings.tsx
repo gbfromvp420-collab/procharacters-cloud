@@ -15,6 +15,8 @@ import {
   linkEmailToAccount,
   listAccountSessions,
   listLiveCharacters,
+  previewImportDocument,
+  type ImportPreview,
   loginAccount,
   logoutAccount,
   registerAccount,
@@ -68,8 +70,9 @@ export function AccountSettings() {
   const [newPass, setNewPass] = useState("");
   const [resumeCode, setResumeCode] = useState("");
 
-  // Import remap draft
+  // Import preview + remap draft
   const [importDoc, setImportDoc] = useState<unknown | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
   const [importMissing, setImportMissing] = useState<ExportCharacterRef[]>([]);
   const [characterMapDraft, setCharacterMapDraft] = useState<Record<string, string>>({});
   const [liveCharacters, setLiveCharacters] = useState<LiveCharacterOption[]>([]);
@@ -405,8 +408,28 @@ export function AccountSettings() {
 
   const clearImportDraft = () => {
     setImportDoc(null);
+    setImportPreview(null);
     setImportMissing([]);
     setCharacterMapDraft({});
+  };
+
+  const loadPreview = async (
+    document: unknown,
+    options?: { characterMap?: Record<string, string>; fallbackCharacterId?: string },
+  ) => {
+    if (!account) return null;
+    const map =
+      options?.characterMap && Object.keys(options.characterMap).length > 0
+        ? options.characterMap
+        : undefined;
+    const preview = await previewImportDocument(document, {
+      accountToken: account.token,
+      importAll: true,
+      characterMap: map,
+      fallbackCharacterId: options?.fallbackCharacterId,
+    });
+    setImportPreview(preview);
+    return preview;
   };
 
   const runImport = async (
@@ -460,32 +483,68 @@ export function AccountSettings() {
         setLiveCharacters(live);
       }
       const liveIds = new Set(live.map((c) => c.id));
-      // Built-ins always available even if list is empty
       liveIds.add("twink-default");
       liveIds.add("female-default");
 
       const refs = collectExportCharacters(document);
       const { missing } = partitionCharacters(refs, liveIds);
 
-      if (missing.length === 0) {
-        await runImport(document);
-        return;
-      }
-
-      // Stage remap UI
       const draft: Record<string, string> = {};
       for (const m of missing) {
         draft[m.id] = suggestFallbackId(m.name, liveIds);
       }
+      const fb = liveIds.has("twink-default")
+        ? "twink-default"
+        : [...liveIds][0] ?? "twink-default";
+
       setImportDoc(document);
       setImportMissing(missing);
       setCharacterMapDraft(draft);
-      setFallbackId(liveIds.has("twink-default") ? "twink-default" : [...liveIds][0] ?? "twink-default");
+      setFallbackId(fb);
+
+      // Dry-run with suggested remaps so counts are accurate
+      const preview = await loadPreview(document, {
+        characterMap: Object.keys(draft).length ? draft : undefined,
+        fallbackCharacterId: missing.length ? fb : undefined,
+      });
+
+      if (missing.length > 0) {
+        flash(
+          `Preview: ${preview?.willSucceed ?? 0} ready · ${missing.length} character(s) need remap`,
+        );
+      } else {
+        flash(
+          `Preview: ${preview?.willSucceed ?? 0} chat(s), ${preview?.totalMessages ?? 0} msgs — confirm to import`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import preview failed");
+      clearImportDraft();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRefreshPreview = async () => {
+    if (!importDoc) return;
+    setBusy(true);
+    setError(null);
+    try {
+      for (const m of importMissing) {
+        if (!characterMapDraft[m.id]?.trim()) {
+          setError(`Map a live character for “${m.name}”`);
+          return;
+        }
+      }
+      const preview = await loadPreview(importDoc, {
+        characterMap: Object.keys(characterMapDraft).length ? characterMapDraft : undefined,
+        fallbackCharacterId: importMissing.length ? fallbackId : undefined,
+      });
       flash(
-        `${missing.length} character(s) missing — map them below, then confirm import`,
+        `Preview updated: ${preview?.willSucceed ?? 0} will import, ${preview?.willFail ?? 0} blocked`,
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Import failed");
+      setError(err instanceof Error ? err.message : "Preview failed");
     } finally {
       setBusy(false);
     }
@@ -493,16 +552,33 @@ export function AccountSettings() {
 
   const onConfirmRemapImport = async () => {
     if (!importDoc) return;
-    // Ensure every missing id is mapped
     for (const m of importMissing) {
       if (!characterMapDraft[m.id]?.trim()) {
         setError(`Map a live character for “${m.name}”`);
         return;
       }
     }
+    // Re-preview so we refuse if still blocked
+    setBusy(true);
+    setError(null);
+    try {
+      const preview = await loadPreview(importDoc, {
+        characterMap: Object.keys(characterMapDraft).length ? characterMapDraft : undefined,
+        fallbackCharacterId: importMissing.length ? fallbackId : undefined,
+      });
+      if (!preview || preview.willSucceed === 0) {
+        setError("Nothing would import — fix remaps or character map");
+        setBusy(false);
+        return;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Preview failed");
+      setBusy(false);
+      return;
+    }
     await runImport(importDoc, {
-      characterMap: characterMapDraft,
-      fallbackCharacterId: fallbackId,
+      characterMap: Object.keys(characterMapDraft).length ? characterMapDraft : undefined,
+      fallbackCharacterId: importMissing.length ? fallbackId : undefined,
     });
   };
 
@@ -840,85 +916,140 @@ export function AccountSettings() {
                 </div>
               </div>
               <p className="mb-3 text-[11px] text-brand-muted">
-                Import JSON to restore chats as new sessions (new ids — secrets never reused).
-                Account bulk exports restore <strong>all</strong> chats (up to 25). Missing customs
-                can be remapped to a live model.
+                Import JSON runs a <strong>dry-run preview</strong> first (counts + remaps, no
+                writes). Confirm to restore chats as new sessions (up to 25). Missing customs can
+                be remapped to a live model.
               </p>
 
-              {importDoc != null && importMissing.length > 0 ? (
-                <div className="mb-4 space-y-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3">
+              {importDoc != null && importPreview ? (
+                <div className="mb-4 space-y-3 rounded-xl border border-brand-accent/40 bg-brand-accent/5 p-3">
                   <div>
-                    <p className="text-sm font-medium text-amber-100">Remap missing characters</p>
+                    <p className="text-sm font-medium text-brand-text">Import preview (dry-run)</p>
                     <p className="mt-1 text-[11px] text-brand-muted">
-                      These ids are not on this server (deleted customs, etc.). Pick a live
-                      character for each, then import.
+                      Nothing written yet.{" "}
+                      <span className="text-brand-text">
+                        {importPreview.willSucceed} will import
+                      </span>
+                      {importPreview.willFail > 0
+                        ? ` · ${importPreview.willFail} blocked`
+                        : ""}
+                      {` · ${importPreview.totalMessages} msgs`}
+                      {importPreview.capped ? " · capped at max bulk size" : ""}
+                      {` · ${importPreview.entriesParsed}/${importPreview.bulkTotal} sessions parsed`}
                     </p>
                   </div>
-                  <ul className="space-y-2">
-                    {importMissing.map((m) => (
+
+                  <ul className="max-h-40 space-y-1 overflow-y-auto text-[11px]">
+                    {importPreview.sessions.slice(0, 12).map((s) => (
                       <li
-                        key={m.id}
-                        className="flex flex-col gap-1 rounded-lg border border-brand-border/70 bg-brand-bg px-3 py-2 sm:flex-row sm:items-center sm:gap-3"
+                        key={`${s.index}-${s.originalCharacterId}`}
+                        className={`rounded-lg border px-2 py-1.5 ${
+                          s.ok
+                            ? "border-brand-border/60 bg-brand-bg text-brand-muted"
+                            : "border-red-500/30 bg-red-500/5 text-red-200/90"
+                        }`}
                       >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-xs font-medium text-brand-text">{m.name}</p>
-                          <p className="truncate font-mono text-[10px] text-brand-muted">
-                            {m.id} · {m.sessionCount} chat(s)
-                          </p>
-                        </div>
-                        <select
-                          value={characterMapDraft[m.id] ?? fallbackId}
-                          onChange={(e) =>
-                            setCharacterMapDraft((prev) => ({
-                              ...prev,
-                              [m.id]: e.target.value,
-                            }))
-                          }
-                          className="field min-h-0 py-1.5 text-xs sm:max-w-[14rem]"
-                        >
-                          {(liveCharacters.length
-                            ? liveCharacters
-                            : [
-                                { id: "twink-default", displayName: "Twink Default" },
-                                { id: "female-default", displayName: "Female Default" },
-                              ]
-                          ).map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.displayName}
-                            </option>
-                          ))}
-                        </select>
+                        <span className="font-medium text-brand-text">
+                          {s.characterName}
+                        </span>
+                        {` · ${s.messageCount} msgs`}
+                        {s.ok && s.remappedFrom
+                          ? ` · remap ${s.remappedFrom} → ${s.characterId}`
+                          : s.ok
+                            ? ` · ${s.characterId}`
+                            : ` · ${s.error ?? "blocked"}`}
                       </li>
                     ))}
+                    {importPreview.sessions.length > 12 && (
+                      <li className="text-brand-muted">
+                        …and {importPreview.sessions.length - 12} more
+                      </li>
+                    )}
                   </ul>
+
+                  {importMissing.length > 0 && (
+                    <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-2.5">
+                      <p className="text-xs font-medium text-amber-100">Remap missing characters</p>
+                      <ul className="space-y-2">
+                        {importMissing.map((m) => (
+                          <li
+                            key={m.id}
+                            className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-xs font-medium text-brand-text">
+                                {m.name}
+                              </p>
+                              <p className="truncate font-mono text-[10px] text-brand-muted">
+                                {m.id} · {m.sessionCount} chat(s)
+                              </p>
+                            </div>
+                            <select
+                              value={characterMapDraft[m.id] ?? fallbackId}
+                              onChange={(e) =>
+                                setCharacterMapDraft((prev) => ({
+                                  ...prev,
+                                  [m.id]: e.target.value,
+                                }))
+                              }
+                              className="field min-h-0 py-1.5 text-xs sm:max-w-[14rem]"
+                            >
+                              {(liveCharacters.length
+                                ? liveCharacters
+                                : [
+                                    { id: "twink-default", displayName: "Twink Default" },
+                                    { id: "female-default", displayName: "Female Default" },
+                                  ]
+                              ).map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.displayName}
+                                </option>
+                              ))}
+                            </select>
+                          </li>
+                        ))}
+                      </ul>
+                      <label className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
+                        Fallback for any other miss
+                        <select
+                          value={fallbackId}
+                          onChange={(e) => setFallbackId(e.target.value)}
+                          className="field min-h-0 py-1 text-xs"
+                        >
+                          <option value="twink-default">Twink Default</option>
+                          <option value="female-default">Female Default</option>
+                          {liveCharacters
+                            .filter(
+                              (c) => c.id !== "twink-default" && c.id !== "female-default",
+                            )
+                            .map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.displayName}
+                              </option>
+                            ))}
+                        </select>
+                      </label>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-2 text-[11px] text-brand-muted">
-                      Fallback for any other miss
-                      <select
-                        value={fallbackId}
-                        onChange={(e) => setFallbackId(e.target.value)}
-                        className="field min-h-0 py-1 text-xs"
+                    {importMissing.length > 0 && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onRefreshPreview()}
+                        className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
                       >
-                        <option value="twink-default">Twink Default</option>
-                        <option value="female-default">Female Default</option>
-                        {liveCharacters
-                          .filter(
-                            (c) => c.id !== "twink-default" && c.id !== "female-default",
-                          )
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.displayName}
-                            </option>
-                          ))}
-                      </select>
-                    </label>
+                        Refresh preview
+                      </button>
+                    )}
                     <button
                       type="button"
-                      disabled={busy}
+                      disabled={busy || (importPreview?.willSucceed ?? 0) === 0}
                       onClick={() => void onConfirmRemapImport()}
-                      className="btn-primary min-h-0 px-3 py-1.5 text-xs"
+                      className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
                     >
-                      Import with remap
+                      Confirm import ({importPreview.willSucceed})
                     </button>
                     <button
                       type="button"

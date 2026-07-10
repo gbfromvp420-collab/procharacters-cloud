@@ -656,6 +656,83 @@ export type ImportCharacterOptions = {
   importAll?: boolean;
 };
 
+export type ImportPreviewSession = {
+  index: number;
+  ok: boolean;
+  characterName: string;
+  originalCharacterId: string;
+  characterId?: string;
+  remappedFrom?: string;
+  messageCount: number;
+  truncated?: boolean;
+  dropped?: number;
+  error?: string;
+  code?: string;
+};
+
+export type ImportPreviewCharacter = {
+  id: string;
+  name: string;
+  sessionCount: number;
+  available: boolean;
+  resolvedTo?: string;
+  remapped: boolean;
+  error?: string;
+};
+
+export type ImportPreview = {
+  dryRun: true;
+  sourceSchema: string;
+  bulkTotal: number;
+  entriesParsed: number;
+  capped: boolean;
+  willSucceed: number;
+  willFail: number;
+  totalMessages: number;
+  sessions: ImportPreviewSession[];
+  characters: ImportPreviewCharacter[];
+};
+
+/** Dry-run import (no sessions written). */
+export async function previewImportDocument(
+  document: unknown,
+  options?: {
+    accountToken?: string | null;
+  } & ImportCharacterOptions,
+): Promise<ImportPreview> {
+  const body: Record<string, unknown> = { document };
+  if (options?.characterId) body.characterId = options.characterId;
+  if (options?.characterMap && Object.keys(options.characterMap).length > 0) {
+    body.characterMap = options.characterMap;
+  }
+  if (options?.fallbackCharacterId) body.fallbackCharacterId = options.fallbackCharacterId;
+  if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
+  if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
+  else if (typeof options?.sessionIndex !== "number") body.importAll = true;
+
+  const path = options?.accountToken
+    ? `${API_BASE}/api/v1/accounts/me/sessions/import/preview`
+    : `${API_BASE}/api/v1/sessions/import/preview`;
+
+  const res = await fetch(path, {
+    method: "POST",
+    headers: authHeaders(options?.accountToken),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: string; code?: string };
+      if (j.error) detail = j.code ? `${j.error} (${j.code})` : j.error;
+    } catch {
+      /* keep raw */
+    }
+    throw new Error(`Import preview failed (${res.status}): ${detail}`);
+  }
+  return res.json() as Promise<ImportPreview>;
+}
+
 export async function importSessionDocument(
   document: unknown,
   options?: {
