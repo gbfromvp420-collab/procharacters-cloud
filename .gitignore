@@ -43,3 +43,8 @@ data/*.json
 # Cursor / local tooling
 terminals/
 mcps/
+
+# Railway local pull junk
+.railway-config-pull-*/
+frontend/tsconfig.tsbuildinfo
+
