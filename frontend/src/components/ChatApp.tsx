@@ -5,6 +5,7 @@ import { AvatarPanel } from "@/components/AvatarPanel";
 import { AvatarPip } from "@/components/AvatarPip";
 import { AvatarVideo } from "@/components/AvatarVideo";
 import { ClipPreview } from "@/components/ClipPreview";
+import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import {
@@ -22,6 +23,7 @@ import {
   linkEmailToAccount,
   loginAccount,
   logoutAccount,
+  previewImportDocument,
   registerAccount,
   requestMagicLink,
   resumeAccountSession,
@@ -32,7 +34,14 @@ import {
   uploadCharacterClipsBatch,
   verifyMagicLink,
   type AccountSessionSummary,
+  type ImportPreview,
 } from "@/lib/api";
+import {
+  collectExportCharacters,
+  partitionCharacters,
+  suggestFallbackId,
+  type ExportCharacterRef,
+} from "@/lib/import-characters";
 import {
   clearStoredAccount,
   loadStoredAccount,
@@ -146,6 +155,14 @@ export function ChatApp() {
   const [avatarCollapsed, setAvatarCollapsed] = useState(false);
   /** Floating mini player while collapsed (picture-in-picture style). */
   const [avatarPip, setAvatarPip] = useState(true);
+
+  // Import JSON dry-run (same panel as account settings)
+  const [importDoc, setImportDoc] = useState<unknown | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [importMissing, setImportMissing] = useState<ExportCharacterRef[]>([]);
+  const [importCharacterMap, setImportCharacterMap] = useState<Record<string, string>>({});
+  const [importFallbackId, setImportFallbackId] = useState("twink-default");
+  const [importBusy, setImportBusy] = useState(false);
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
@@ -549,11 +566,35 @@ export function ChatApp() {
     }
   };
 
+  const clearImportDraft = useCallback(() => {
+    setImportDoc(null);
+    setImportPreview(null);
+    setImportMissing([]);
+    setImportCharacterMap({});
+  }, []);
+
+  const loadChatImportPreview = async (
+    document: unknown,
+    options?: { characterMap?: Record<string, string>; fallbackCharacterId?: string },
+  ) => {
+    const map =
+      options?.characterMap && Object.keys(options.characterMap).length > 0
+        ? options.characterMap
+        : undefined;
+    const preview = await previewImportDocument(document, {
+      accountToken: account?.token,
+      importAll: true,
+      characterMap: map,
+      fallbackCharacterId: options?.fallbackCharacterId,
+    });
+    setImportPreview(preview);
+    return preview;
+  };
+
   const importChatFromFile = async (file: File | null) => {
     if (!file) return;
-    clearSessionState();
     setError(null);
-    setStatus("connecting");
+    setImportBusy(true);
     try {
       const text = await file.text();
       let document: unknown;
@@ -562,19 +603,112 @@ export function ChatApp() {
       } catch {
         throw new Error("File is not valid JSON");
       }
-      // Auto-remap missing customs onto built-ins so bulk restore still works in chat
-      const session = await importSessionDocument(document, {
+
+      const liveIds = new Set(characters.map((c) => c.id));
+      liveIds.add("twink-default");
+      liveIds.add("female-default");
+
+      const refs = collectExportCharacters(document);
+      const { missing } = partitionCharacters(refs, liveIds);
+      const draft: Record<string, string> = {};
+      for (const m of missing) {
+        draft[m.id] = suggestFallbackId(m.name, liveIds);
+      }
+      const fb = liveIds.has("twink-default")
+        ? "twink-default"
+        : [...liveIds][0] ?? "twink-default";
+
+      setImportDoc(document);
+      setImportMissing(missing);
+      setImportCharacterMap(draft);
+      setImportFallbackId(fb);
+
+      const preview = await loadChatImportPreview(document, {
+        characterMap: Object.keys(draft).length ? draft : undefined,
+        // Always offer a safety net for chat imports when anything is missing
+        fallbackCharacterId: missing.length ? fb : undefined,
+      });
+
+      flashCopy(
+        missing.length > 0
+          ? `Preview: ${preview.willSucceed} ready · ${missing.length} need remap`
+          : `Preview: ${preview.willSucceed} chat(s), ${preview.totalMessages} msgs — confirm to open`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import preview failed");
+      clearImportDraft();
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const onRefreshChatImportPreview = async () => {
+    if (!importDoc) return;
+    setImportBusy(true);
+    setError(null);
+    try {
+      for (const m of importMissing) {
+        if (!importCharacterMap[m.id]?.trim()) {
+          setError(`Map a live character for “${m.name}”`);
+          return;
+        }
+      }
+      const preview = await loadChatImportPreview(importDoc, {
+        characterMap: Object.keys(importCharacterMap).length
+          ? importCharacterMap
+          : undefined,
+        fallbackCharacterId: importMissing.length ? importFallbackId : undefined,
+      });
+      flashCopy(
+        `Preview updated: ${preview.willSucceed} will import, ${preview.willFail} blocked`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Preview failed");
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const confirmChatImport = async () => {
+    if (!importDoc) return;
+    for (const m of importMissing) {
+      if (!importCharacterMap[m.id]?.trim()) {
+        setError(`Map a live character for “${m.name}”`);
+        return;
+      }
+    }
+    setImportBusy(true);
+    setError(null);
+    try {
+      const opts = {
+        characterMap: Object.keys(importCharacterMap).length
+          ? importCharacterMap
+          : undefined,
+        fallbackCharacterId: importMissing.length ? importFallbackId : undefined,
+      };
+      const preview = await loadChatImportPreview(importDoc, opts);
+      if (preview.willSucceed === 0) {
+        setError("Nothing would import — fix remaps");
+        setImportBusy(false);
+        return;
+      }
+
+      clearSessionState();
+      setStatus("connecting");
+      const session = await importSessionDocument(importDoc, {
         accountToken: account?.token,
         importAll: true,
-        fallbackCharacterId: "twink-default",
+        characterMap: opts.characterMap,
+        fallbackCharacterId: opts.fallbackCharacterId ?? "twink-default",
       });
+      clearImportDraft();
       await openLiveSession(session);
       const remapped =
         !!session.imported.remappedFrom ||
         !!session.bulk?.results.some((r) => r.ok && r.remappedFrom);
       flashCopy(
         `${importFlashSummary(session)}${session.imported.truncated ? " (trimmed)" : ""}${
-          remapped ? " · remapped missing customs" : ""
+          remapped ? " · remapped" : ""
         }`,
       );
       if (session.bulk && session.bulk.failed > 0) {
@@ -586,6 +720,8 @@ export function ChatApp() {
       setError(err instanceof Error ? err.message : "Import failed");
       setStatus("error");
       setRestarting(false);
+    } finally {
+      setImportBusy(false);
     }
   };
 
@@ -1423,6 +1559,25 @@ export function ChatApp() {
           </div>
         )}
 
+        {importDoc != null && importPreview && (
+          <div className="mb-3">
+            <ImportPreviewPanel
+              preview={importPreview}
+              missing={importMissing}
+              characterMap={importCharacterMap}
+              onCharacterMapChange={setImportCharacterMap}
+              fallbackId={importFallbackId}
+              onFallbackChange={setImportFallbackId}
+              liveCharacters={characters}
+              busy={importBusy}
+              confirmLabel={`Open import (${importPreview.willSucceed})`}
+              onRefreshPreview={() => void onRefreshChatImportPreview()}
+              onConfirm={() => void confirmChatImport()}
+              onCancel={clearImportDraft}
+            />
+          </div>
+        )}
+
         <div
           className={`flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:gap-4 ${
             avatarCollapsed ? "lg:flex-col" : "lg:flex-row"
@@ -1550,14 +1705,17 @@ export function ChatApp() {
                     </button>
                   )}
                   <label
-                    className="btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm"
-                    title="Restore a previously exported chat JSON"
+                    className={`btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
+                      importBusy ? "opacity-50" : ""
+                    }`}
+                    title="Preview then restore exported chat JSON"
                   >
-                    Import
+                    {importBusy ? "…" : "Import"}
                     <input
                       type="file"
                       accept="application/json,.json"
                       className="hidden"
+                      disabled={importBusy}
                       onChange={(e) => {
                         const f = e.target.files?.[0] ?? null;
                         e.target.value = "";

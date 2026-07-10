@@ -34,6 +34,7 @@ import {
   saveStoredAccount,
   type StoredAccount,
 } from "@/lib/account-storage";
+import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -922,144 +923,20 @@ export function AccountSettings() {
               </p>
 
               {importDoc != null && importPreview ? (
-                <div className="mb-4 space-y-3 rounded-xl border border-brand-accent/40 bg-brand-accent/5 p-3">
-                  <div>
-                    <p className="text-sm font-medium text-brand-text">Import preview (dry-run)</p>
-                    <p className="mt-1 text-[11px] text-brand-muted">
-                      Nothing written yet.{" "}
-                      <span className="text-brand-text">
-                        {importPreview.willSucceed} will import
-                      </span>
-                      {importPreview.willFail > 0
-                        ? ` · ${importPreview.willFail} blocked`
-                        : ""}
-                      {` · ${importPreview.totalMessages} msgs`}
-                      {importPreview.capped ? " · capped at max bulk size" : ""}
-                      {` · ${importPreview.entriesParsed}/${importPreview.bulkTotal} sessions parsed`}
-                    </p>
-                  </div>
-
-                  <ul className="max-h-40 space-y-1 overflow-y-auto text-[11px]">
-                    {importPreview.sessions.slice(0, 12).map((s) => (
-                      <li
-                        key={`${s.index}-${s.originalCharacterId}`}
-                        className={`rounded-lg border px-2 py-1.5 ${
-                          s.ok
-                            ? "border-brand-border/60 bg-brand-bg text-brand-muted"
-                            : "border-red-500/30 bg-red-500/5 text-red-200/90"
-                        }`}
-                      >
-                        <span className="font-medium text-brand-text">
-                          {s.characterName}
-                        </span>
-                        {` · ${s.messageCount} msgs`}
-                        {s.ok && s.remappedFrom
-                          ? ` · remap ${s.remappedFrom} → ${s.characterId}`
-                          : s.ok
-                            ? ` · ${s.characterId}`
-                            : ` · ${s.error ?? "blocked"}`}
-                      </li>
-                    ))}
-                    {importPreview.sessions.length > 12 && (
-                      <li className="text-brand-muted">
-                        …and {importPreview.sessions.length - 12} more
-                      </li>
-                    )}
-                  </ul>
-
-                  {importMissing.length > 0 && (
-                    <div className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/5 p-2.5">
-                      <p className="text-xs font-medium text-amber-100">Remap missing characters</p>
-                      <ul className="space-y-2">
-                        {importMissing.map((m) => (
-                          <li
-                            key={m.id}
-                            className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3"
-                          >
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-xs font-medium text-brand-text">
-                                {m.name}
-                              </p>
-                              <p className="truncate font-mono text-[10px] text-brand-muted">
-                                {m.id} · {m.sessionCount} chat(s)
-                              </p>
-                            </div>
-                            <select
-                              value={characterMapDraft[m.id] ?? fallbackId}
-                              onChange={(e) =>
-                                setCharacterMapDraft((prev) => ({
-                                  ...prev,
-                                  [m.id]: e.target.value,
-                                }))
-                              }
-                              className="field min-h-0 py-1.5 text-xs sm:max-w-[14rem]"
-                            >
-                              {(liveCharacters.length
-                                ? liveCharacters
-                                : [
-                                    { id: "twink-default", displayName: "Twink Default" },
-                                    { id: "female-default", displayName: "Female Default" },
-                                  ]
-                              ).map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.displayName}
-                                </option>
-                              ))}
-                            </select>
-                          </li>
-                        ))}
-                      </ul>
-                      <label className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
-                        Fallback for any other miss
-                        <select
-                          value={fallbackId}
-                          onChange={(e) => setFallbackId(e.target.value)}
-                          className="field min-h-0 py-1 text-xs"
-                        >
-                          <option value="twink-default">Twink Default</option>
-                          <option value="female-default">Female Default</option>
-                          {liveCharacters
-                            .filter(
-                              (c) => c.id !== "twink-default" && c.id !== "female-default",
-                            )
-                            .map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.displayName}
-                              </option>
-                            ))}
-                        </select>
-                      </label>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2">
-                    {importMissing.length > 0 && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onRefreshPreview()}
-                        className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
-                      >
-                        Refresh preview
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      disabled={busy || (importPreview?.willSucceed ?? 0) === 0}
-                      onClick={() => void onConfirmRemapImport()}
-                      className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
-                    >
-                      Confirm import ({importPreview.willSucceed})
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={clearImportDraft}
-                      className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                <div className="mb-4">
+                  <ImportPreviewPanel
+                    preview={importPreview}
+                    missing={importMissing}
+                    characterMap={characterMapDraft}
+                    onCharacterMapChange={setCharacterMapDraft}
+                    fallbackId={fallbackId}
+                    onFallbackChange={setFallbackId}
+                    liveCharacters={liveCharacters}
+                    busy={busy}
+                    onRefreshPreview={() => void onRefreshPreview()}
+                    onConfirm={() => void onConfirmRemapImport()}
+                    onCancel={clearImportDraft}
+                  />
                 </div>
               ) : null}
 
