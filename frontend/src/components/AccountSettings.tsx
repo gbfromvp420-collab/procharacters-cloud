@@ -8,6 +8,8 @@ import {
   exportAccountSession,
   exportAllAccountSessions,
   fetchAccountMe,
+  fetchAccountSessionMarkdown,
+  fetchAllAccountSessionsMarkdown,
   importAccountSession,
   importFlashSummary,
   linkEmailToAccount,
@@ -328,6 +330,36 @@ export function AccountSettings() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export all failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCopySessionMd = async (sessionId: string) => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const md = await fetchAccountSessionMarkdown(account.token, sessionId);
+      const ok = await copyText(md);
+      flash(ok ? "Transcript copied (Markdown)" : "Copy failed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Copy failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCopyAllMd = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const md = await fetchAllAccountSessionsMarkdown(account.token);
+      const ok = await copyText(md);
+      flash(ok ? "All chats copied (Markdown)" : "Copy failed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Copy failed");
     } finally {
       setBusy(false);
     }
@@ -668,6 +700,15 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy}
+                        onClick={() => void onCopyAllMd()}
+                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                        title="Copy all chats as Markdown to clipboard"
+                      >
+                        Copy all MD
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
                         onClick={() => void onWipeSessions()}
                         className="text-xs text-red-300 hover:underline disabled:opacity-50"
                       >
@@ -723,6 +764,15 @@ export function AccountSettings() {
                         title="Download this chat as Markdown"
                       >
                         MD
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onCopySessionMd(s.sessionId)}
+                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                        title="Copy Markdown transcript to clipboard"
+                      >
+                        Copy MD
                       </button>
                       {s.resumeCode && (
                         <button

@@ -12,6 +12,7 @@ import {
   createSession,
   deleteCustomCharacter,
   exportLiveSession,
+  fetchLiveSessionMarkdown,
   importFlashSummary,
   importSessionDocument,
   listAccountSessions,
@@ -703,6 +704,49 @@ export function ChatApp() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export failed");
+    }
+  };
+
+  const copyChatMarkdown = async () => {
+    try {
+      let markdown: string;
+      if (sessionId && wsToken) {
+        markdown = await fetchLiveSessionMarkdown(sessionId, wsToken);
+      } else if (messages.length > 0) {
+        const { buildLocalTranscriptMarkdown } = await import("@/lib/transcript-md");
+        markdown = buildLocalTranscriptMarkdown({
+          characterName: characterName ?? character,
+          characterId: activeCharacterId ?? character,
+          sessionId,
+          resumeCode,
+          messages: messages.map((m) => ({ role: m.role, content: m.content })),
+        });
+      } else {
+        setError("Nothing to copy yet — start chatting first");
+        return;
+      }
+      const ok = await copyText(markdown);
+      flashCopy(ok ? "Transcript copied (Markdown)" : "Copy failed");
+    } catch (err) {
+      // Fallback: build from local messages if server export fails mid-stream
+      if (messages.length > 0) {
+        try {
+          const { buildLocalTranscriptMarkdown } = await import("@/lib/transcript-md");
+          const markdown = buildLocalTranscriptMarkdown({
+            characterName: characterName ?? character,
+            characterId: activeCharacterId ?? character,
+            sessionId,
+            resumeCode,
+            messages: messages.map((m) => ({ role: m.role, content: m.content })),
+          });
+          const ok = await copyText(markdown);
+          flashCopy(ok ? "Transcript copied (local Markdown)" : "Copy failed");
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
+      setError(err instanceof Error ? err.message : "Copy transcript failed");
     }
   };
 
@@ -1536,6 +1580,15 @@ export function ChatApp() {
                     title="Download chat history as Markdown"
                   >
                     MD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void copyChatMarkdown()}
+                    disabled={messages.length === 0 && !(sessionId && wsToken)}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    title="Copy Markdown transcript to clipboard"
+                  >
+                    Copy MD
                   </button>
                 </>
               )}

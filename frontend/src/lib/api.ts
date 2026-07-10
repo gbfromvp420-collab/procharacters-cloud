@@ -504,12 +504,14 @@ export interface AccountSessionsExportDoc {
 
 export type SessionExportFormat = "json" | "md";
 
-/** Fetch + download one account-owned session as JSON or Markdown. */
+/** Fetch one account-owned session export (optionally download). */
 export async function exportAccountSession(
   accountToken: string,
   sessionId: string,
   format: SessionExportFormat = "json",
+  options?: { download?: boolean },
 ): Promise<{ filename: string; doc?: SessionExportDoc; markdown?: string }> {
+  const download = options?.download !== false;
   const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
   const qs = format === "md" ? "?format=md" : "";
   const res = await fetch(
@@ -525,21 +527,23 @@ export async function exportAccountSession(
     const markdown = await res.text();
     const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.md`;
     const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
-    downloadMarkdown(filename, markdown);
+    if (download) downloadMarkdown(filename, markdown);
     return { filename, markdown };
   }
   const doc = (await res.json()) as SessionExportDoc;
   const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.json`;
   const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
-  downloadJson(filename, doc);
+  if (download) downloadJson(filename, doc);
   return { filename, doc };
 }
 
-/** Fetch + download all account chats as JSON or one Markdown archive. */
+/** Fetch all account chats export (optionally download). */
 export async function exportAllAccountSessions(
   accountToken: string,
   format: SessionExportFormat = "json",
+  options?: { download?: boolean },
 ): Promise<{ filename: string; doc?: AccountSessionsExportDoc; markdown?: string }> {
+  const download = options?.download !== false;
   const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
   const qs = format === "md" ? "?format=md" : "";
   const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/export${qs}`, {
@@ -554,14 +558,32 @@ export async function exportAllAccountSessions(
     const markdown = await res.text();
     const fallback = `procharacters-all-chats-${day}.md`;
     const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
-    downloadMarkdown(filename, markdown);
+    if (download) downloadMarkdown(filename, markdown);
     return { filename, markdown };
   }
   const doc = (await res.json()) as AccountSessionsExportDoc;
   const fallback = `procharacters-all-chats-${day}.json`;
   const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
-  downloadJson(filename, doc);
+  if (download) downloadJson(filename, doc);
   return { filename, doc };
+}
+
+/** Fetch markdown only (no file download) — for clipboard. */
+export async function fetchAccountSessionMarkdown(
+  accountToken: string,
+  sessionId: string,
+): Promise<string> {
+  const { markdown } = await exportAccountSession(accountToken, sessionId, "md", {
+    download: false,
+  });
+  if (!markdown?.trim()) throw new Error("Empty transcript");
+  return markdown;
+}
+
+export async function fetchAllAccountSessionsMarkdown(accountToken: string): Promise<string> {
+  const { markdown } = await exportAllAccountSessions(accountToken, "md", { download: false });
+  if (!markdown?.trim()) throw new Error("Empty archive");
+  return markdown;
 }
 
 export interface ImportSessionResult extends CreateSessionResponse {
@@ -705,7 +727,9 @@ export async function exportLiveSession(
   sessionId: string,
   wsToken: string,
   format: SessionExportFormat = "json",
+  options?: { download?: boolean },
 ): Promise<{ filename: string; doc?: SessionExportDoc; markdown?: string }> {
+  const download = options?.download !== false;
   const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
   const res = await fetch(
     `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/export`,
@@ -724,14 +748,24 @@ export async function exportLiveSession(
     const markdown = await res.text();
     const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.md`;
     const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
-    downloadMarkdown(filename, markdown);
+    if (download) downloadMarkdown(filename, markdown);
     return { filename, markdown };
   }
   const doc = (await res.json()) as SessionExportDoc;
   const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.json`;
   const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
-  downloadJson(filename, doc);
+  if (download) downloadJson(filename, doc);
   return { filename, doc };
+}
+
+/** Fetch live session markdown only (no download) — for clipboard. */
+export async function fetchLiveSessionMarkdown(
+  sessionId: string,
+  wsToken: string,
+): Promise<string> {
+  const { markdown } = await exportLiveSession(sessionId, wsToken, "md", { download: false });
+  if (!markdown?.trim()) throw new Error("Empty transcript");
+  return markdown;
 }
 
 export async function deleteAccountSession(
