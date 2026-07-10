@@ -1,1 +1,1 @@
-PLACEHOLDER
+@/home/naughtysyntaxai/procharacters-cloud/frontend/src/components/GalleryView.tsx
