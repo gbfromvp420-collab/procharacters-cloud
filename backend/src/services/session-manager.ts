@@ -333,20 +333,85 @@ export class SessionManager {
     }>
   > {
     const records = await listSessionRecords({ accountId, limit: 40 });
-    // Hydrate memory map for hot sessions too
+    const out: Array<{
+      sessionId: string;
+      characterId: string;
+      characterName: string;
+      status: SessionRecord["status"];
+      messageCount: number;
+      resumeCode?: string;
+      updatedAt: string;
+      createdAt: string;
+    }> = [];
+
+    // Ensure every account-owned session has a durable resume code (mint + re-index).
     for (const record of records) {
-      this.sessions.set(record.id, record);
+      let resumeCode = record.resumeCode;
+      if (!resumeCode) {
+        resumeCode = await registerResumeCode(record.id, accountId);
+        const updated: SessionRecord = {
+          ...record,
+          resumeCode,
+          accountId,
+          updatedAt: new Date().toISOString(),
+        };
+        this.sessions.set(record.id, updated);
+        await this.persist(updated);
+        out.push({
+          sessionId: updated.id,
+          characterId: updated.characterId,
+          characterName: updated.promptSnapshot?.characterName ?? updated.characterId,
+          status: updated.status,
+          messageCount: updated.memory?.messages?.length ?? 0,
+          resumeCode,
+          updatedAt: updated.updatedAt,
+          createdAt: updated.createdAt,
+        });
+      } else {
+        // Re-bind mapping so multi-device resolve stays valid after restarts
+        await registerResumeCode(record.id, accountId, resumeCode);
+        this.sessions.set(record.id, record);
+        out.push({
+          sessionId: record.id,
+          characterId: record.characterId,
+          characterName: record.promptSnapshot?.characterName ?? record.characterId,
+          status: record.status,
+          messageCount: record.memory?.messages?.length ?? 0,
+          resumeCode,
+          updatedAt: record.updatedAt,
+          createdAt: record.createdAt,
+        });
+      }
     }
-    return records.map((r) => ({
-      sessionId: r.id,
-      characterId: r.characterId,
-      characterName: r.promptSnapshot?.characterName ?? r.characterId,
-      status: r.status,
-      messageCount: r.memory?.messages?.length ?? 0,
-      resumeCode: r.resumeCode,
-      updatedAt: r.updatedAt,
-      createdAt: r.createdAt,
-    }));
+
+    return out;
+  }
+
+  /** Latest account session for a character (with resume code guaranteed when possible). */
+  async latestAccountSessionForCharacter(
+    accountId: string,
+    characterId: string,
+  ): Promise<{
+    sessionId: string;
+    characterId: string;
+    characterName: string;
+    resumeCode?: string;
+    messageCount: number;
+    status: SessionRecord["status"];
+    updatedAt: string;
+  } | null> {
+    const list = await this.listAccountSessions(accountId);
+    const match = list.find((s) => s.characterId === characterId);
+    if (!match) return null;
+    return {
+      sessionId: match.sessionId,
+      characterId: match.characterId,
+      characterName: match.characterName,
+      resumeCode: match.resumeCode,
+      messageCount: match.messageCount,
+      status: match.status,
+      updatedAt: match.updatedAt,
+    };
   }
 
   getSession(sessionId: string): SessionRecord {

@@ -193,7 +193,62 @@ export async function listAccountSessions(
     throw new Error(`List sessions failed (${res.status}): ${text}`);
   }
   const data = (await res.json()) as { sessions: AccountSessionSummary[] };
-  return data.sessions ?? [];
+  const sessions = data.sessions ?? [];
+  // Keep local resume cache warm for card share / multi-device
+  try {
+    const { syncResumeCacheFromAccountSessions } = await import("./resume-cache");
+    syncResumeCacheFromAccountSessions(sessions);
+  } catch {
+    /* ignore */
+  }
+  return sessions;
+}
+
+/** Latest account-owned chat for a character (includes resume code). */
+export async function fetchLatestAccountSessionForCharacter(
+  accountToken: string,
+  characterId: string,
+): Promise<{
+  sessionId: string;
+  characterId: string;
+  characterName: string;
+  resumeCode?: string;
+  messageCount: number;
+  status: string;
+  updatedAt: string;
+} | null> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/characters/${encodeURIComponent(characterId)}/latest`,
+    { headers: authHeaders(accountToken) },
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Latest session failed (${res.status}): ${text}`);
+  }
+  const data = (await res.json()) as {
+    sessionId: string;
+    characterId: string;
+    characterName: string;
+    resumeCode?: string;
+    messageCount: number;
+    status: string;
+    updatedAt: string;
+  };
+  if (data.resumeCode) {
+    try {
+      const { rememberLocalResume } = await import("./resume-cache");
+      rememberLocalResume({
+        characterId: data.characterId,
+        characterName: data.characterName,
+        sessionId: data.sessionId,
+        resumeCode: data.resumeCode,
+      });
+    } catch {
+      /* ignore */
+    }
+  }
+  return data;
 }
 
 export async function claimSession(

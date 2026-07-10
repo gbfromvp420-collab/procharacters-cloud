@@ -258,6 +258,12 @@ export function AccountSettings() {
       }
     }
     clearStoredAccount();
+    try {
+      const { clearResumeCache } = await import("@/lib/resume-cache");
+      clearResumeCache();
+    } catch {
+      /* ignore */
+    }
     setAccount(null);
     setEmail(null);
     setSessions([]);

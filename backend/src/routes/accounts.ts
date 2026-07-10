@@ -376,6 +376,29 @@ export const createAccountRoutes = (
       return { sessions };
     });
 
+    /**
+     * Latest saved chat for a character on this account (cross-device resume).
+     * Resume codes are minted if missing so every device can share/open the same link.
+     */
+    app.get("/accounts/me/characters/:characterId/latest", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { characterId } = request.params as { characterId: string };
+      if (!characterId?.trim()) {
+        return reply.code(400).send({ error: "characterId required" });
+      }
+      const latest = await sessionManager.latestAccountSessionForCharacter(
+        account.id,
+        characterId.trim(),
+      );
+      if (!latest) {
+        return reply.code(404).send({ error: "No saved chat for this character" });
+      }
+      return latest;
+    });
+
     /** Download all account chats as JSON or Markdown (?format=md). */
     app.get("/accounts/me/sessions/export", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));

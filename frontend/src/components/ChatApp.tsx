@@ -272,6 +272,16 @@ export function ChatApp() {
       };
       saveStoredSession(stored);
       setSavedSession(stored);
+      if (info.resumeCode) {
+        void import("@/lib/resume-cache").then(({ rememberLocalResume }) => {
+          rememberLocalResume({
+            characterId: info.characterId,
+            characterName: info.characterName,
+            sessionId: info.sessionId,
+            resumeCode: info.resumeCode!,
+          });
+        });
+      }
     },
     [],
   );
@@ -990,7 +1000,18 @@ export function ChatApp() {
     if (sessionId) {
       try {
         const claimed = await claimSession(stored.token, sessionId);
-        if (claimed.resumeCode) setResumeCode(claimed.resumeCode);
+        if (claimed.resumeCode) {
+          setResumeCode(claimed.resumeCode);
+          rememberSession({
+            sessionId,
+            wsToken: wsToken ?? "",
+            characterId: activeCharacterId ?? character,
+            characterName,
+            resumeCode: claimed.resumeCode,
+          });
+        }
+        // Refresh so list + resume cache pick up the claimed session
+        await refreshAccountSessions(stored.token);
       } catch {
         /* optional claim */
       }

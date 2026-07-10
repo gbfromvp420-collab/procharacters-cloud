@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
-import { loadStoredSession } from "@/lib/session-storage";
+import { loadStoredAccount } from "@/lib/account-storage";
+import { fetchLatestAccountSessionForCharacter } from "@/lib/api";
+import { getResumeForCharacter } from "@/lib/resume-cache";
 import {
   buildCharacterShareUrl,
   buildResumeCodeShareUrl,
@@ -20,7 +22,8 @@ interface CharacterCardViewProps {
 export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const [muted, setMuted] = useState(true);
-  const [localResume, setLocalResume] = useState<string | null>(null);
+  const [resumeCode, setResumeCode] = useState<string | null>(null);
+  const [resumeSource, setResumeSource] = useState<"account" | "local" | null>(null);
 
   const shareUrl = useMemo(() => `${siteOrigin}${card.cardPath}`, [siteOrigin, card.cardPath]);
   const autostartUrl = useMemo(
@@ -29,10 +32,10 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   );
   const resumeUrl = useMemo(
     () =>
-      localResume
-        ? buildResumeCodeShareUrl(localResume, { origin: siteOrigin, characterId: card.id })
+      resumeCode
+        ? buildResumeCodeShareUrl(resumeCode, { origin: siteOrigin, characterId: card.id })
         : null,
-    [localResume, siteOrigin, card.id],
+    [resumeCode, siteOrigin, card.id],
   );
 
   const poster = card.posterClip.startsWith("http")
@@ -42,12 +45,35 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
       : `/${card.posterClip}`;
 
   useEffect(() => {
-    const stored = loadStoredSession();
-    if (stored?.characterId === card.id && stored.resumeCode) {
-      setLocalResume(stored.resumeCode);
+    let cancelled = false;
+
+    // Instant local/cache hit
+    const cached = getResumeForCharacter(card.id);
+    if (cached?.resumeCode) {
+      setResumeCode(cached.resumeCode);
+      setResumeSource(cached.source);
     } else {
-      setLocalResume(null);
+      setResumeCode(null);
+      setResumeSource(null);
     }
+
+    // Prefer account-backed latest (works across devices when signed in)
+    const account = loadStoredAccount();
+    if (!account) return;
+
+    void fetchLatestAccountSessionForCharacter(account.token, card.id)
+      .then((latest) => {
+        if (cancelled || !latest?.resumeCode) return;
+        setResumeCode(latest.resumeCode);
+        setResumeSource("account");
+      })
+      .catch(() => {
+        /* keep cache/local */
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [card.id]);
 
   const flash = (label: string | null) => {
@@ -77,13 +103,13 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   };
 
   const onShareResume = async () => {
-    if (!resumeUrl || !localResume) return;
+    if (!resumeUrl || !resumeCode) return;
     const result = await shareOrCopyUrl({
       url: resumeUrl,
       title: `Resume chat with ${card.displayName}`,
-      text: `Continue your chat with ${card.displayName} (code ${localResume})`,
+      text: `Continue your chat with ${card.displayName} (code ${resumeCode})`,
     });
-    flash(shareUrlResultLabel(result, `Resume ${localResume}`));
+    flash(shareUrlResultLabel(result, `Resume ${resumeCode}`));
   };
 
   const shareLabel = canNativeShare() ? "Share" : "Copy";
@@ -193,15 +219,15 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               >
                 {shareLabel} start
               </button>
-              {localResume && (
+              {resumeCode && (
                 <button
                   type="button"
                   onClick={() => void onShareResume()}
                   className="btn-ghost border-amber-500/40 px-6 text-amber-200"
                   title={
-                    canNativeShare()
-                      ? "Share resume code for your last chat"
-                      : "Copy resume link for your last chat"
+                    resumeSource === "account"
+                      ? "Share resume from your account (works on any device when signed in)"
+                      : "Share resume from this device"
                   }
                 >
                   {shareLabel} resume
@@ -230,11 +256,20 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 <p className="font-medium text-brand-text">Start chat (autostart)</p>
                 <p className="mt-1 break-all font-mono text-[11px]">{autostartUrl}</p>
               </div>
-              {resumeUrl && (
+              {resumeUrl && resumeCode ? (
                 <div>
-                  <p className="font-medium text-amber-200">Resume last chat ({localResume})</p>
+                  <p className="font-medium text-amber-200">
+                    Resume ({resumeCode})
+                    <span className="ml-1 font-normal text-brand-muted">
+                      · {resumeSource === "account" ? "account / multi-device" : "this device"}
+                    </span>
+                  </p>
                   <p className="mt-1 break-all font-mono text-[11px]">{resumeUrl}</p>
                 </div>
+              ) : (
+                <p className="text-[11px] text-brand-muted">
+                  Resume share appears after you chat while signed in (synced via account sessions).
+                </p>
               )}
             </div>
           </div>
@@ -245,7 +280,6 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
         </footer>
       </div>
 
-      {/* Mobile sticky CTA */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
         <div className="mx-auto flex max-w-lg flex-wrap gap-2">
           <Link href={card.ctaPath} className="btn-primary min-w-[5rem] flex-1">
@@ -265,7 +299,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
           >
             {shareLabel} start
           </button>
-          {localResume && (
+          {resumeCode && (
             <button
               type="button"
               onClick={() => void onShareResume()}
