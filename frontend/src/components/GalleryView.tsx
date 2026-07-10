@@ -165,6 +165,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [resumes, setResumes] = useState<Record<string, ResumeCacheEntry>>({});
   const [signedInHandle, setSignedInHandle] = useState<string | null>(null);
 
+  // Signed-in visitors default to Last chat once (don't fight later manual sort changes)
+  useEffect(() => {
+    if (loadStoredAccount()) {
+      setSort("recent");
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -325,7 +332,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   };
 
   const showFeaturedStrip =
-    filter === "all" && !query.trim() && featuredRow.length > 0;
+    filter === "all" &&
+    !query.trim() &&
+    featuredRow.length > 0 &&
+    sort !== "recent";
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -363,8 +373,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             Live character gallery
           </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
-            Featured models up top — then the full catalog. Search, sort, share a card, or jump into
-            uncensored live chat.
+            {sort === "recent" || signedInHandle
+              ? "Your last chats first — then the rest of the catalog. Search, sort, share a card, or jump back in."
+              : "Featured models up top — then the full catalog. Search, sort, share a card, or jump into uncensored live chat."}
             {resumeCount > 0
               ? " Amber codes on tiles are your saved chats — Resume or share them."
               : signedInHandle
