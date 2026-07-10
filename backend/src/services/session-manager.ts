@@ -1,5 +1,11 @@
 import { randomUUID } from "node:crypto";
-import { registerResumeCode, resolveResumeCode } from "../lib/accounts/account-store.js";
+import {
+  getResumeCodeForSession,
+  pruneExpiredResumeCodes,
+  registerResumeCode,
+  resolveResumeCode,
+  rotateResumeCode,
+} from "../lib/accounts/account-store.js";
 import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
 import { assertLiveCharacter } from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
@@ -328,10 +334,12 @@ export class SessionManager {
       status: SessionRecord["status"];
       messageCount: number;
       resumeCode?: string;
+      resumeExpiresAt?: string;
       updatedAt: string;
       createdAt: string;
     }>
   > {
+    await pruneExpiredResumeCodes();
     const records = await listSessionRecords({ accountId, limit: 40 });
     const out: Array<{
       sessionId: string;
@@ -340,15 +348,23 @@ export class SessionManager {
       status: SessionRecord["status"];
       messageCount: number;
       resumeCode?: string;
+      resumeExpiresAt?: string;
       updatedAt: string;
       createdAt: string;
     }> = [];
 
-    // Ensure every account-owned session has a durable resume code (mint + re-index).
+    // Ensure every account-owned session has a non-expired resume code.
     for (const record of records) {
       let resumeCode = record.resumeCode;
-      if (!resumeCode) {
-        resumeCode = await registerResumeCode(record.id, accountId);
+      const existing = await getResumeCodeForSession(record.id);
+      // Missing map entry or expired → mint a *new* public code (old links stay dead)
+      const needsNewCode = !existing;
+
+      if (needsNewCode) {
+        resumeCode = await registerResumeCode(record.id, accountId, undefined, {
+          forceNew: true,
+        });
+        const mapping = await getResumeCodeForSession(record.id);
         const updated: SessionRecord = {
           ...record,
           resumeCode,
@@ -364,13 +380,23 @@ export class SessionManager {
           status: updated.status,
           messageCount: updated.memory?.messages?.length ?? 0,
           resumeCode,
+          resumeExpiresAt: mapping?.expiresAt,
           updatedAt: updated.updatedAt,
           createdAt: updated.createdAt,
         });
       } else {
-        // Re-bind mapping so multi-device resolve stays valid after restarts
-        await registerResumeCode(record.id, accountId, resumeCode);
-        this.sessions.set(record.id, record);
+        // Valid code — re-bind + soft-extend TTL on list (keeps active chats usable)
+        resumeCode = await registerResumeCode(record.id, accountId, resumeCode, {
+          extendOnly: true,
+        });
+        const mapping = await getResumeCodeForSession(record.id);
+        if (resumeCode !== record.resumeCode) {
+          const updated: SessionRecord = { ...record, resumeCode, accountId };
+          this.sessions.set(record.id, updated);
+          await this.persist(updated);
+        } else {
+          this.sessions.set(record.id, record);
+        }
         out.push({
           sessionId: record.id,
           characterId: record.characterId,
@@ -378,6 +404,7 @@ export class SessionManager {
           status: record.status,
           messageCount: record.memory?.messages?.length ?? 0,
           resumeCode,
+          resumeExpiresAt: mapping?.expiresAt,
           updatedAt: record.updatedAt,
           createdAt: record.createdAt,
         });
@@ -385,6 +412,53 @@ export class SessionManager {
     }
 
     return out;
+  }
+
+  /** Force-rotate one session's resume code (invalidates prior share links). */
+  async refreshSessionResumeCode(
+    accountId: string,
+    sessionId: string,
+  ): Promise<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }> {
+    const session = await this.loadSession(sessionId);
+    if (session.accountId !== accountId) {
+      throw new SessionAuthError("Session does not belong to this account");
+    }
+    const { code, expiresAt } = await rotateResumeCode(sessionId, accountId);
+    const updated: SessionRecord = {
+      ...session,
+      resumeCode: code,
+      updatedAt: new Date().toISOString(),
+    };
+    this.sessions.set(sessionId, updated);
+    await this.persist(updated);
+    return { sessionId, resumeCode: code, resumeExpiresAt: expiresAt };
+  }
+
+  /** Rotate resume codes for every account session. */
+  async refreshAllAccountResumeCodes(accountId: string): Promise<{
+    refreshed: number;
+    sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }>;
+  }> {
+    const records = await listSessionRecords({ accountId, limit: 100 });
+    const sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }> =
+      [];
+    for (const record of records) {
+      const { code, expiresAt } = await rotateResumeCode(record.id, accountId);
+      const updated: SessionRecord = {
+        ...record,
+        resumeCode: code,
+        accountId,
+        updatedAt: new Date().toISOString(),
+      };
+      this.sessions.set(record.id, updated);
+      await this.persist(updated);
+      sessions.push({
+        sessionId: record.id,
+        resumeCode: code,
+        resumeExpiresAt: expiresAt,
+      });
+    }
+    return { refreshed: sessions.length, sessions };
   }
 
   /** Latest account session for a character (with resume code guaranteed when possible). */

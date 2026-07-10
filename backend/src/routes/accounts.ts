@@ -376,6 +376,43 @@ export const createAccountRoutes = (
       return { sessions };
     });
 
+    /** Mint a new resume code for one saved chat (old code stops working). */
+    app.post(
+      "/accounts/me/sessions/:sessionId/refresh-resume",
+      async (request, reply) => {
+        const account = await resolveAccountToken(bearerToken(request));
+        if (!account) {
+          return reply.code(401).send({ error: "Not signed in" });
+        }
+        const { sessionId } = request.params as { sessionId: string };
+        try {
+          const result = await sessionManager.refreshSessionResumeCode(
+            account.id,
+            sessionId,
+          );
+          return { ok: true, ...result };
+        } catch (error) {
+          if (error instanceof SessionNotFoundError) {
+            return reply.code(404).send({ error: "Session not found" });
+          }
+          if (error instanceof SessionAuthError) {
+            return reply.code(403).send({ error: error.message });
+          }
+          throw error;
+        }
+      },
+    );
+
+    /** Rotate resume codes for every saved chat on this account. */
+    app.post("/accounts/me/sessions/refresh-resumes", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const result = await sessionManager.refreshAllAccountResumeCodes(account.id);
+      return { ok: true, ...result };
+    });
+
     /**
      * Latest saved chat for a character on this account (cross-device resume).
      * Resume codes are minted if missing so every device can share/open the same link.

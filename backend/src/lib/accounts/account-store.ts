@@ -25,6 +25,27 @@ export interface ResumeCodeRecord {
   sessionId: string;
   accountId?: string;
   createdAt: string;
+  /** ISO expiry — after this, resolve fails until a new code is minted. */
+  expiresAt?: string;
+}
+
+/** Default resume-code lifetime (days). Override with RESUME_CODE_TTL_DAYS. */
+export const RESUME_CODE_TTL_DAYS = Number(process.env.RESUME_CODE_TTL_DAYS ?? 14);
+
+export function resumeCodeExpiresAt(from = new Date()): string {
+  return new Date(from.getTime() + RESUME_CODE_TTL_DAYS * 24 * 60 * 60 * 1000).toISOString();
+}
+
+export function isResumeCodeExpired(record: ResumeCodeRecord, now = Date.now()): boolean {
+  if (!record.expiresAt) {
+    // Legacy codes without expiry: treat as expired after TTL from createdAt
+    const created = Date.parse(record.createdAt);
+    if (Number.isNaN(created)) return false;
+    return created + RESUME_CODE_TTL_DAYS * 24 * 60 * 60 * 1000 < now;
+  }
+  const exp = Date.parse(record.expiresAt);
+  if (Number.isNaN(exp)) return false;
+  return exp < now;
 }
 
 export interface MagicLinkRecord {
@@ -534,15 +555,35 @@ export async function registerResumeCode(
   sessionId: string,
   accountId?: string,
   preferred?: string,
+  options?: { forceNew?: boolean; extendOnly?: boolean },
 ): Promise<string> {
   await ensureLoaded();
+
+  // If rebinding the same preferred code and it's still valid, optionally extend TTL
+  if (preferred && !options?.forceNew) {
+    const existing = resumeCodes.get(preferred.toUpperCase());
+    if (existing && existing.sessionId === sessionId && !isResumeCodeExpired(existing)) {
+      if (options?.extendOnly !== false) {
+        const next: ResumeCodeRecord = {
+          ...existing,
+          accountId: accountId ?? existing.accountId,
+          expiresAt: resumeCodeExpiresAt(),
+        };
+        resumeCodes.set(existing.code, next);
+        await persist();
+        return existing.code;
+      }
+      return existing.code;
+    }
+  }
+
   // Drop previous codes for this session
   for (const [key, value] of resumeCodes) {
     if (value.sessionId === sessionId) resumeCodes.delete(key);
   }
 
   let code = preferred?.toUpperCase().replace(/[^A-Z0-9]/g, "") ?? "";
-  if (code.length < 6) {
+  if (options?.forceNew || code.length < 6) {
     do {
       code = generateResumeCode();
     } while (resumeCodes.has(code));
@@ -550,20 +591,70 @@ export async function registerResumeCode(
     throw new AccountError("Resume code already in use", "CONFLICT");
   }
 
+  const now = new Date();
   resumeCodes.set(code, {
     code,
     sessionId,
     accountId,
-    createdAt: new Date().toISOString(),
+    createdAt: now.toISOString(),
+    expiresAt: resumeCodeExpiresAt(now),
   });
   await persist();
   return code;
 }
 
+/** Mint a brand-new code for a session (invalidates prior codes). */
+export async function rotateResumeCode(
+  sessionId: string,
+  accountId?: string,
+): Promise<{ code: string; expiresAt: string }> {
+  const code = await registerResumeCode(sessionId, accountId, undefined, { forceNew: true });
+  const record = resumeCodes.get(code)!;
+  return { code, expiresAt: record.expiresAt ?? resumeCodeExpiresAt() };
+}
+
 export async function resolveResumeCode(codeRaw: string): Promise<ResumeCodeRecord | null> {
   await ensureLoaded();
   const code = codeRaw.trim().toUpperCase();
-  return resumeCodes.get(code) ?? null;
+  const record = resumeCodes.get(code);
+  if (!record) return null;
+  if (isResumeCodeExpired(record)) {
+    resumeCodes.delete(code);
+    await persist();
+    return null;
+  }
+  return record;
+}
+
+export async function getResumeCodeForSession(
+  sessionId: string,
+): Promise<ResumeCodeRecord | null> {
+  await ensureLoaded();
+  for (const record of resumeCodes.values()) {
+    if (record.sessionId === sessionId) {
+      if (isResumeCodeExpired(record)) {
+        resumeCodes.delete(record.code);
+        await persist();
+        return null;
+      }
+      return record;
+    }
+  }
+  return null;
+}
+
+/** Remove expired resume codes from the store. */
+export async function pruneExpiredResumeCodes(): Promise<number> {
+  await ensureLoaded();
+  let n = 0;
+  for (const [code, record] of resumeCodes) {
+    if (isResumeCodeExpired(record)) {
+      resumeCodes.delete(code);
+      n += 1;
+    }
+  }
+  if (n > 0) await persist();
+  return n;
 }
 
 export async function listResumeCodesForAccount(accountId: string): Promise<ResumeCodeRecord[]> {

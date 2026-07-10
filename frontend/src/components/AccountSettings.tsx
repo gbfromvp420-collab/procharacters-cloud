@@ -16,6 +16,8 @@ import {
   listAccountSessions,
   listLiveCharacters,
   previewImportDocument,
+  refreshAccountSessionResume,
+  refreshAllAccountResumes,
   type ImportPreview,
   loginAccount,
   logoutAccount,
@@ -320,6 +322,64 @@ export function AccountSettings() {
     });
     const label = shareUrlResultLabel(result, `Resume ${code}`);
     if (label) flash(label);
+  };
+
+  const onRefreshAllResumes = async () => {
+    if (!account) return;
+    if (
+      !window.confirm(
+        "Mint new resume codes for ALL saved chats? Old shared links will stop working.",
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await refreshAllAccountResumes(account.token);
+      await refresh(account.token);
+      flash(`Refreshed ${result.refreshed} resume code(s) — old links invalidated`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh codes");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRefreshOneResume = async (sessionId: string, characterName: string) => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await refreshAccountSessionResume(account.token, sessionId);
+      setSessions((prev) =>
+        prev.map((s) =>
+          s.sessionId === sessionId
+            ? {
+                ...s,
+                resumeCode: result.resumeCode,
+                resumeExpiresAt: result.resumeExpiresAt,
+              }
+            : s,
+        ),
+      );
+      flash(`New code for ${characterName}: ${result.resumeCode}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh code");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const formatExpiry = (iso?: string) => {
+    if (!iso) return null;
+    const t = Date.parse(iso);
+    if (Number.isNaN(t)) return null;
+    const days = Math.ceil((t - Date.now()) / (24 * 60 * 60 * 1000));
+    if (days < 0) return "expired";
+    if (days === 0) return "expires today";
+    if (days === 1) return "expires tomorrow";
+    return `expires in ${days}d`;
   };
 
   /** Bundle every resume link into one share/copy payload. */
@@ -990,6 +1050,15 @@ export function AccountSettings() {
                       </button>
                       <button
                         type="button"
+                        disabled={busy || sessions.length === 0}
+                        onClick={() => void onRefreshAllResumes()}
+                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                        title="Mint new resume codes for every chat (invalidates old links)"
+                      >
+                        Refresh all codes
+                      </button>
+                      <button
+                        type="button"
                         disabled={busy}
                         onClick={() => void onWipeSessions()}
                         className="text-xs text-red-300 hover:underline disabled:opacity-50"
@@ -1046,7 +1115,18 @@ export function AccountSettings() {
                         <p className="font-medium text-brand-text">{s.characterName}</p>
                         <p className="text-brand-muted">
                           {s.messageCount} msgs · {s.status}
-                          {s.resumeCode ? ` · ${s.resumeCode}` : ""}
+                          {s.resumeCode ? (
+                            <>
+                              {" · "}
+                              <span className="font-mono text-amber-200/90">{s.resumeCode}</span>
+                              {s.resumeExpiresAt ? (
+                                <span className="text-brand-soft">
+                                  {" "}
+                                  ({formatExpiry(s.resumeExpiresAt)})
+                                </span>
+                              ) : null}
+                            </>
+                          ) : null}
                         </p>
                       </div>
                       <button
@@ -1081,13 +1161,26 @@ export function AccountSettings() {
                         {canNativeShare() ? "Share MD" : "Copy MD"}
                       </button>
                       {s.resumeCode && (
-                        <button
-                          type="button"
-                          onClick={() => void copyResume(s.resumeCode!, s.characterName)}
-                          className="text-brand-muted hover:text-brand-accent"
-                        >
-                          Copy
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => void copyResume(s.resumeCode!, s.characterName)}
+                            className="text-brand-muted hover:text-brand-accent"
+                          >
+                            {canNativeShare() ? "Share code" : "Copy code"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() =>
+                              void onRefreshOneResume(s.sessionId, s.characterName)
+                            }
+                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                            title="Mint a new resume code (old link stops working)"
+                          >
+                            New code
+                          </button>
+                        </>
                       )}
                       <button
                         type="button"

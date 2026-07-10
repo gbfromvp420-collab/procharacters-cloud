@@ -178,6 +178,8 @@ export interface AccountSessionSummary {
   status: string;
   messageCount: number;
   resumeCode?: string;
+  /** When the current resume code expires (server may auto-mint after). */
+  resumeExpiresAt?: string;
   updatedAt: string;
   createdAt: string;
 }
@@ -202,6 +204,58 @@ export async function listAccountSessions(
     /* ignore */
   }
   return sessions;
+}
+
+/** Force-mint a new resume code for one session (invalidates the old link). */
+export async function refreshAccountSessionResume(
+  accountToken: string,
+  sessionId: string,
+): Promise<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}/refresh-resume`,
+    { method: "POST", headers: authHeaders(accountToken) },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Refresh resume failed (${res.status}): ${text}`);
+  }
+  const data = (await res.json()) as {
+    sessionId: string;
+    resumeCode: string;
+    resumeExpiresAt: string;
+  };
+  try {
+    const { rememberLocalResume } = await import("./resume-cache");
+    rememberLocalResume({
+      characterId: "", // filled by caller if known
+      sessionId: data.sessionId,
+      resumeCode: data.resumeCode,
+    });
+  } catch {
+    /* ignore */
+  }
+  return data;
+}
+
+/** Rotate every resume code on the account. */
+export async function refreshAllAccountResumes(
+  accountToken: string,
+): Promise<{
+  refreshed: number;
+  sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }>;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/refresh-resumes`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Refresh all resumes failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    refreshed: number;
+    sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }>;
+  }>;
 }
 
 /** Latest account-owned chat for a character (includes resume code). */
