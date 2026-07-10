@@ -49,15 +49,39 @@ export async function notifyAccountResumeExpiry(
     "https://procharacters-web-production-7288.up.railway.app"
   ).replace(/\/$/, "");
 
-  const names = soon
+  // Soonest-to-expire first — deep-link into that chat when possible
+  const soonSorted = [...soon].sort((a, b) => {
+    const ea = Date.parse(a.resumeExpiresAt || "") || Number.POSITIVE_INFINITY;
+    const eb = Date.parse(b.resumeExpiresAt || "") || Number.POSITIVE_INFINITY;
+    return ea - eb;
+  });
+  const primary = soonSorted[0];
+  const names = soonSorted
     .slice(0, 3)
     .map((s) => s.characterName)
     .join(", ");
-  const more = soon.length > 3 ? ` +${soon.length - 3} more` : "";
+  const more = soonSorted.length > 3 ? ` +${soonSorted.length - 3} more` : "";
+
+  // Prefer last-chat deep link so one tap continues the sticky loop
+  let deepUrl = `${siteBase}/account`;
+  if (primary?.resumeCode) {
+    const q = new URLSearchParams({
+      resume: primary.resumeCode.toUpperCase(),
+    });
+    if (primary.characterId) q.set("character", primary.characterId);
+    deepUrl = `${siteBase}/chat?${q.toString()}`;
+  }
+
+  const primaryName = primary?.characterName?.trim();
+  const body =
+    soonSorted.length === 1 && primaryName
+      ? `Resume with ${primaryName} before the code expires (within ${WARN_DAYS} days). Tap to continue.`
+      : `${soonSorted.length} code(s) expire within ${WARN_DAYS} days: ${names}${more}. Tap to jump back in.`;
+
   const payload = {
-    title: "Procharacters resume codes expiring",
-    body: `${soon.length} code(s) expire within ${WARN_DAYS} days: ${names}${more}`,
-    url: `${siteBase}/account`,
+    title: "Procharacters — continue before codes expire",
+    body,
+    url: deepUrl,
     tag: "procharacters-resume-expiry",
   };
 

@@ -153,6 +153,75 @@ export function getResumeForCharacter(characterId: string): ResumeCacheEntry | n
   return null;
 }
 
+/** All cached resumes (account + local), newest first. */
+export function listResumeCacheEntries(): ResumeCacheEntry[] {
+  const file = readCache();
+  const byId = { ...file.byCharacter };
+
+  // Fold in last local session if not already represented
+  const local = loadStoredSession();
+  if (local?.resumeCode && local.characterId) {
+    const existing = byId[local.characterId];
+    if (!existing) {
+      byId[local.characterId] = {
+        characterId: local.characterId,
+        characterName: local.characterName,
+        sessionId: local.sessionId,
+        resumeCode: local.resumeCode,
+        updatedAt: local.savedAt,
+        source: "local",
+      };
+    } else if (
+      existing.source !== "account" &&
+      local.savedAt &&
+      (!existing.updatedAt || local.savedAt.localeCompare(existing.updatedAt) > 0)
+    ) {
+      byId[local.characterId] = {
+        characterId: local.characterId,
+        characterName: local.characterName ?? existing.characterName,
+        sessionId: local.sessionId,
+        resumeCode: local.resumeCode,
+        updatedAt: local.savedAt,
+        source: "local",
+      };
+    }
+  }
+
+  return Object.values(byId)
+    .filter((e) => !!e.resumeCode)
+    .sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""));
+}
+
+/**
+ * Most recently updated resume for the "Continue where you left off" strip.
+ * Prefers account/local cache; falls back to last local session.
+ */
+export function getMostRecentResume(): ResumeCacheEntry | null {
+  const list = listResumeCacheEntries();
+  if (list.length > 0) return list[0] ?? null;
+
+  const local = loadStoredSession();
+  if (local?.resumeCode && local.characterId) {
+    return {
+      characterId: local.characterId,
+      characterName: local.characterName,
+      sessionId: local.sessionId,
+      resumeCode: local.resumeCode,
+      updatedAt: local.savedAt,
+      source: "local",
+    };
+  }
+  return null;
+}
+
+/** Chat deep-link for a resume entry. */
+export function buildResumeChatPath(entry: Pick<ResumeCacheEntry, "resumeCode" | "characterId">): string {
+  const code = entry.resumeCode.trim().toUpperCase();
+  const params = new URLSearchParams({ resume: code });
+  if (entry.characterId) params.set("character", entry.characterId);
+  return `/chat?${params.toString()}`;
+}
+
 export function clearResumeCache(): void {
   if (typeof window === "undefined") return;
   try {
