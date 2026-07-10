@@ -382,63 +382,98 @@ export function AccountSettings() {
     return `expires in ${days}d`;
   };
 
-  /** Bundle every resume link into one share/copy payload. */
-  const onShareAllResumeLinks = async () => {
-    if (!account) return;
+  /** Build Markdown document of every resume link (refreshes session list first). */
+  const buildResumeLinksMarkdown = async (): Promise<{
+    text: string;
+    filename: string;
+    count: number;
+  } | null> => {
+    if (!account) return null;
     const withCodes = sessions.filter((s) => s.resumeCode);
     if (withCodes.length === 0) {
       setError("No resume codes on saved chats yet — open or refresh chats first");
-      return;
+      return null;
     }
+    let list = withCodes;
+    try {
+      list = (await listAccountSessions(account.token)).filter((s) => s.resumeCode);
+    } catch {
+      /* use current state */
+    }
+    if (list.length === 0) {
+      setError("No resume codes available");
+      return null;
+    }
+
+    const day = new Date().toISOString().slice(0, 10);
+    const lines = [
+      `# Procharacters resume links`,
+      ``,
+      `Account: @${account.handle}`,
+      `Exported: ${day}`,
+      `Chats: ${list.length}`,
+      ``,
+      `---`,
+      ``,
+    ];
+    for (const s of list) {
+      const code = s.resumeCode!;
+      const url = buildResumeCodeShareUrl(code, { characterId: s.characterId });
+      lines.push(`## ${s.characterName}`);
+      lines.push(`- Code: \`${code}\``);
+      lines.push(`- Messages: ${s.messageCount}`);
+      lines.push(`- Status: ${s.status}`);
+      if (s.resumeExpiresAt) {
+        lines.push(`- Expires: ${s.resumeExpiresAt}`);
+      }
+      lines.push(`- Link: ${url}`);
+      lines.push(``);
+    }
+    lines.push(`_Open a link on any device to continue that chat._`);
+    lines.push(``);
+
+    return {
+      text: lines.join("\n"),
+      filename: `procharacters-resume-links-${account.handle}-${day}.md`,
+      count: list.length,
+    };
+  };
+
+  /** Bundle every resume link into one share/copy payload. */
+  const onShareAllResumeLinks = async () => {
+    if (!account) return;
     setBusy(true);
     setError(null);
     try {
-      // Prefer freshest list so codes are minted/rebound
-      let list = withCodes;
-      try {
-        list = (await listAccountSessions(account.token)).filter((s) => s.resumeCode);
-      } catch {
-        /* use current state */
-      }
-      if (list.length === 0) {
-        setError("No resume codes available");
-        return;
-      }
-
-      const day = new Date().toISOString().slice(0, 10);
-      const lines = [
-        `# Procharacters resume links`,
-        ``,
-        `Account: @${account.handle}`,
-        `Exported: ${day}`,
-        `Chats: ${list.length}`,
-        ``,
-        `---`,
-        ``,
-      ];
-      for (const s of list) {
-        const code = s.resumeCode!;
-        const url = buildResumeCodeShareUrl(code, { characterId: s.characterId });
-        lines.push(`## ${s.characterName}`);
-        lines.push(`- Code: \`${code}\``);
-        lines.push(`- Messages: ${s.messageCount}`);
-        lines.push(`- Status: ${s.status}`);
-        lines.push(`- Link: ${url}`);
-        lines.push(``);
-      }
-      lines.push(`_Open a link on any device to continue that chat._`);
-      lines.push(``);
-
-      const text = lines.join("\n");
+      const doc = await buildResumeLinksMarkdown();
+      if (!doc) return;
       const result = await shareOrCopyText({
         title: `Resume links · @${account.handle}`,
-        text,
-        filename: `procharacters-resume-links-${account.handle}-${day}.md`,
+        text: doc.text,
+        filename: doc.filename,
       });
-      const label = shareResultLabel(result, `${list.length} resume links`);
+      const label = shareResultLabel(result, `${doc.count} resume links`);
       if (label) flash(label);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not export resume links");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /** Always download resume links as a .md file (desktop-friendly). */
+  const onDownloadResumeLinksMd = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const doc = await buildResumeLinksMarkdown();
+      if (!doc) return;
+      const { downloadMarkdown } = await import("@/lib/download-json");
+      downloadMarkdown(doc.filename, doc.text);
+      flash(`Downloaded ${doc.count} resume link(s) → ${doc.filename}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not download resume links");
     } finally {
       setBusy(false);
     }
@@ -1047,6 +1082,15 @@ export function AccountSettings() {
                         }
                       >
                         {canNativeShare() ? "Share all resumes" : "Copy all resumes"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || !sessions.some((s) => s.resumeCode)}
+                        onClick={() => void onDownloadResumeLinksMd()}
+                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
+                        title="Download all resume links as a .md file"
+                      >
+                        Download resumes.md
                       </button>
                       <button
                         type="button"
