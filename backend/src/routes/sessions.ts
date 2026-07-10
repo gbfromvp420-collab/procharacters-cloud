@@ -15,11 +15,19 @@ import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { listManifestCharacters } from "../lib/prompts/manifest.js";
 import type { MediaWorker } from "../services/media-worker.js";
-import type { SessionManager } from "../services/session-manager.js";
+import {
+  SessionAuthError,
+  SessionNotFoundError,
+  type SessionManager,
+} from "../services/session-manager.js";
 
 const createSessionSchema = z.object({
   characterId: z.string().optional(),
   promptVersion: z.string().optional(),
+});
+
+const resumeSessionSchema = z.object({
+  token: z.string().min(8),
 });
 
 const createCustomCharacterSchema = z.object({
@@ -143,7 +151,7 @@ export const createSessionRoutes = (
 
       try {
         const session = await sessionManager.createSession(body, wsBaseUrl);
-        const record = sessionManager.getSession(session.sessionId);
+        const record = await sessionManager.getSessionAsync(session.sessionId);
         const avatarState = media.enrich(record.characterId, record.avatarState);
 
         sessionManager.updateSession(session.sessionId, { avatarState });
@@ -158,11 +166,48 @@ export const createSessionRoutes = (
         return reply.code(201).send({
           ...session,
           avatarState,
+          messages: [],
           livekit: livekitJoin,
         });
       } catch (error) {
         if (error instanceof CharacterNotFoundError || error instanceof LiveCharacterError) {
           return reply.code(404).send({ error: error.message });
+        }
+        throw error;
+      }
+    });
+
+    app.post("/sessions/:sessionId/resume", async (request, reply) => {
+      const { sessionId } = request.params as { sessionId: string };
+      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+
+      try {
+        const body = resumeSessionSchema.parse(request.body ?? {});
+        const session = await sessionManager.resumeSession(sessionId, body.token, wsBaseUrl);
+        const avatarState = media.enrich(session.characterId, session.avatarState);
+        sessionManager.updateSession(session.sessionId, { avatarState });
+
+        let livekitJoin;
+        if (livekit.isConfigured) {
+          const identity = `user-${session.sessionId.slice(0, 8)}`;
+          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
+          await media.publish(session.sessionId, session.characterId, avatarState);
+        }
+
+        return {
+          ...session,
+          avatarState,
+          livekit: livekitJoin,
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof SessionNotFoundError) {
+          return reply.code(404).send({ error: error.message });
+        }
+        if (error instanceof SessionAuthError || error instanceof LiveCharacterError) {
+          return reply.code(403).send({ error: error.message });
         }
         throw error;
       }
@@ -176,7 +221,7 @@ export const createSessionRoutes = (
       }
 
       try {
-        sessionManager.getSession(sessionId);
+        await sessionManager.getSessionAsync(sessionId);
         const identity = `user-${sessionId.slice(0, 8)}`;
         return await livekit.buildJoinInfo(sessionId, identity);
       } catch {
@@ -188,7 +233,7 @@ export const createSessionRoutes = (
       const { sessionId } = request.params as { sessionId: string };
 
       try {
-        const session = sessionManager.getSession(sessionId);
+        const session = await sessionManager.getSessionAsync(sessionId);
         const memory = SessionMemory.fromData(session.memory);
 
         return {
@@ -209,16 +254,29 @@ export const createSessionRoutes = (
 
     app.get("/sessions/:sessionId/memory", async (request, reply) => {
       const { sessionId } = request.params as { sessionId: string };
+      const token =
+        typeof request.query === "object" && request.query && "token" in request.query
+          ? String((request.query as { token?: string }).token ?? "")
+          : "";
 
       try {
-        const session = sessionManager.getSession(sessionId);
+        if (token) {
+          await sessionManager.authenticateAsync(sessionId, token, { requireActive: false });
+        }
+        const session = await sessionManager.getSessionAsync(sessionId);
         const context = SessionMemory.fromData(session.memory).getRecentContext();
 
         return {
           messageCount: context.messageCount,
           recentMessages: context.messages,
+          characterId: session.characterId,
+          characterName: session.promptSnapshot.characterName,
+          status: session.status,
         };
-      } catch {
+      } catch (error) {
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
+        }
         return reply.code(404).send({ error: "Session not found" });
       }
     });
@@ -227,7 +285,7 @@ export const createSessionRoutes = (
       const { sessionId } = request.params as { sessionId: string };
 
       try {
-        const session = sessionManager.getSession(sessionId);
+        const session = await sessionManager.getSessionAsync(sessionId);
         const context = SessionMemory.fromData(session.memory).getRecentContext();
         const injection = injector.injectTurn(session.promptSnapshot, { context });
 
@@ -248,8 +306,15 @@ export const createSessionRoutes = (
       const { sessionId } = request.params as { sessionId: string };
 
       try {
+        // Ensure hydrated from disk before ending
+        await sessionManager.getSessionAsync(sessionId);
         const session = sessionManager.endSession(sessionId);
-        return { id: session.id, status: session.status };
+        return {
+          id: session.id,
+          status: session.status,
+          messageCount: session.memory.messages?.length ?? 0,
+          resumable: true,
+        };
       } catch {
         return reply.code(404).send({ error: "Session not found" });
       }

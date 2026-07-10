@@ -10,7 +10,14 @@ import {
   createSession,
   deleteCustomCharacter,
   listLiveCharacters,
+  resumeSession,
 } from "@/lib/api";
+import {
+  clearStoredSession,
+  loadStoredSession,
+  saveStoredSession,
+  type StoredSession,
+} from "@/lib/session-storage";
 import type {
   AvatarState,
   CharacterId,
@@ -18,6 +25,7 @@ import type {
   ConnectionStatus,
   LiveCharacterOption,
   LiveKitJoinInfo,
+  MemoryMessage,
 } from "@/lib/types";
 
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
@@ -74,6 +82,8 @@ export function ChatApp() {
   const [customEnergy, setCustomEnergy] = useState("");
   const [customClothing, setCustomClothing] = useState("");
   const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
+  const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
+  const [wsToken, setWsToken] = useState<string | null>(null);
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
@@ -83,6 +93,7 @@ export function ChatApp() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const streamingIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pendingHistoryRef = useRef<ChatMessage[] | null>(null);
 
   const closeSocket = useCallback((sendEnd = true) => {
     const ws = wsRef.current;
@@ -97,6 +108,7 @@ export function ChatApp() {
 
   const clearSessionState = useCallback(() => {
     setSessionId(null);
+    setWsToken(null);
     setCharacterName(null);
     setActiveCharacterId(null);
     setMessages([]);
@@ -105,15 +117,54 @@ export function ChatApp() {
     setSending(false);
     setIsTyping(false);
     streamingIdRef.current = null;
+    pendingHistoryRef.current = null;
   }, []);
 
+  const rememberSession = useCallback(
+    (info: {
+      sessionId: string;
+      wsToken: string;
+      characterId: string;
+      characterName?: string | null;
+    }) => {
+      const stored: StoredSession = {
+        sessionId: info.sessionId,
+        wsToken: info.wsToken,
+        characterId: info.characterId,
+        characterName: info.characterName ?? undefined,
+        savedAt: new Date().toISOString(),
+      };
+      saveStoredSession(stored);
+      setSavedSession(stored);
+    },
+    [],
+  );
+
   const endSession = useCallback(() => {
+    // End on server but keep local resume credentials (memory is persisted server-side).
     closeSocket(true);
+    if (sessionId && wsToken && (activeCharacterId || character)) {
+      rememberSession({
+        sessionId,
+        wsToken,
+        characterId: activeCharacterId ?? character,
+        characterName,
+      });
+    }
     clearSessionState();
     setStatus("idle");
     setError(null);
     setRestarting(false);
-  }, [clearSessionState, closeSocket]);
+  }, [
+    activeCharacterId,
+    character,
+    characterName,
+    clearSessionState,
+    closeSocket,
+    rememberSession,
+    sessionId,
+    wsToken,
+  ]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -141,10 +192,18 @@ export function ChatApp() {
     };
   }, []);
 
+  useEffect(() => {
+    setSavedSession(loadStoredSession());
+  }, []);
+
   const bindWebSocket = useCallback(
-    (ws: WebSocket, session: { sessionId: string; characterId: string }) => {
+    (
+      ws: WebSocket,
+      session: { sessionId: string; characterId: string; wsToken: string },
+    ) => {
       ws.onopen = () => {
         setSessionId(session.sessionId);
+        setWsToken(session.wsToken);
         setActiveCharacterId(session.characterId);
       };
 
@@ -157,15 +216,37 @@ export function ChatApp() {
         }
 
         switch (data.type) {
-          case "session_ready":
+          case "session_ready": {
             setStatus("ready");
-            setCharacterName((data.characterName as string) ?? null);
+            const name = (data.characterName as string) ?? null;
+            setCharacterName(name);
             if (data.avatarState) {
               setAvatarState(data.avatarState as AvatarState);
             }
+            const historyFromServer = Array.isArray(data.messages)
+              ? (data.messages as MemoryMessage[]).map((m) => ({
+                  id: m.id,
+                  role: m.role as ChatMessage["role"],
+                  content: m.content,
+                }))
+              : null;
+            const history = historyFromServer?.length
+              ? historyFromServer
+              : pendingHistoryRef.current;
+            if (history?.length) {
+              setMessages(history);
+            }
+            pendingHistoryRef.current = null;
+            rememberSession({
+              sessionId: session.sessionId,
+              wsToken: session.wsToken,
+              characterId: session.characterId,
+              characterName: name,
+            });
             setRestarting(false);
             inputRef.current?.focus();
             break;
+          }
 
           case "assistant_stream": {
             const messageId = data.messageId as string;
@@ -252,20 +333,54 @@ export function ChatApp() {
         setRestarting(false);
       };
     },
-    [closeSocket],
+    [closeSocket, rememberSession],
   );
 
   const connectSession = useCallback(
     async (characterId: CharacterId) => {
       setError(null);
       setStatus("connecting");
+      pendingHistoryRef.current = null;
 
       const session = await createSession(characterId);
       setAvatarState(session.avatarState);
       setLivekit(session.livekit ?? null);
+      setWsToken(session.wsToken);
       const ws = new WebSocket(session.wsUrl);
       wsRef.current = ws;
-      bindWebSocket(ws, session);
+      bindWebSocket(ws, {
+        sessionId: session.sessionId,
+        characterId: session.characterId,
+        wsToken: session.wsToken,
+      });
+    },
+    [bindWebSocket],
+  );
+
+  const connectResumedSession = useCallback(
+    async (stored: StoredSession) => {
+      setError(null);
+      setStatus("connecting");
+
+      const session = await resumeSession(stored.sessionId, stored.wsToken);
+      const history = (session.messages ?? []).map((m) => ({
+        id: m.id,
+        role: m.role as ChatMessage["role"],
+        content: m.content,
+      }));
+      pendingHistoryRef.current = history;
+      setMessages(history);
+      setCharacter(session.characterId);
+      setAvatarState(session.avatarState);
+      setLivekit(session.livekit ?? null);
+      setWsToken(session.wsToken);
+      const ws = new WebSocket(session.wsUrl);
+      wsRef.current = ws;
+      bindWebSocket(ws, {
+        sessionId: session.sessionId,
+        characterId: session.characterId,
+        wsToken: session.wsToken,
+      });
     },
     [bindWebSocket],
   );
@@ -278,6 +393,27 @@ export function ChatApp() {
       setError(err instanceof Error ? err.message : "Failed to start session");
       setStatus("error");
       setRestarting(false);
+    }
+  };
+
+  const resumeLastSession = async () => {
+    const stored = savedSession ?? loadStoredSession();
+    if (!stored) {
+      setError("No saved session on this device");
+      return;
+    }
+    clearSessionState();
+    try {
+      await connectResumedSession(stored);
+    } catch (err) {
+      clearStoredSession();
+      setSavedSession(null);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not resume — start a new session",
+      );
+      setStatus("error");
     }
   };
 
@@ -438,6 +574,16 @@ export function ChatApp() {
                   >
                     Start Session
                   </button>
+                  {savedSession && (
+                    <button
+                      type="button"
+                      onClick={resumeLastSession}
+                      className="rounded-lg border border-brand-accent/60 bg-brand-accent/10 px-4 py-2 text-sm font-medium text-brand-text transition hover:border-brand-accent"
+                      title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
+                    >
+                      Resume last chat
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setShowCreate((v) => !v)}
@@ -545,10 +691,12 @@ export function ChatApp() {
               {messages.length === 0 && !isTyping && (
                 <p className="py-20 text-center text-sm text-brand-muted sm:py-24">
                   {status === "ready"
-                    ? "Session live — say hello and watch avatar state update with each reply."
+                    ? "Session live — memory is saved. Come back later and hit Resume last chat."
                     : status === "connecting" || restarting
                       ? "Opening live session…"
-                      : "Pick a character and start a session to begin chatting."}
+                      : savedSession
+                        ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
+                        : "Pick a character and start a session to begin chatting."}
                 </p>
               )}
 

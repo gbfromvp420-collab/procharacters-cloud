@@ -37,6 +37,7 @@ frontend/out/
 
 # Runtime custom character store (local + volume-backed on Railway)
 data/custom-characters.json
+data/sessions/
 data/*.json
 !data/.gitkeep
 

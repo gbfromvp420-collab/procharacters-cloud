@@ -42,6 +42,8 @@ export interface SessionReadyEvent extends ServerEventBase {
   characterId: string;
   characterName: string;
   avatarState: AvatarState;
+  /** Prior transcript when resuming or reconnecting. */
+  messages?: Array<{ id: string; role: "user" | "assistant"; content: string }>;
 }
 
 export interface AssistantStreamEvent extends ServerEventBase {

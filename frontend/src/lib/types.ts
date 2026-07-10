@@ -16,6 +16,13 @@ export interface LiveKitJoinInfo {
   roomName: string;
 }
 
+export interface MemoryMessage {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  createdAt?: string;
+}
+
 export interface CreateSessionResponse {
   sessionId: string;
   wsToken: string;
@@ -23,6 +30,7 @@ export interface CreateSessionResponse {
   promptVersion: string;
   wsUrl: string;
   avatarState: AvatarState;
+  messages?: MemoryMessage[];
   livekit?: LiveKitJoinInfo;
 }
 

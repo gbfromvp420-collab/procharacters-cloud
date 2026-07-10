@@ -29,6 +29,8 @@ const envSchema = z.object({
     }),
   /** JSON file for runtime custom characters (use a Railway volume path in prod). */
   CUSTOM_CHARACTERS_PATH: z.string().optional(),
+  /** Directory for persisted session transcripts (Railway volume recommended). */
+  SESSIONS_PATH: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

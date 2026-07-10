@@ -3,6 +3,7 @@ import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
 import { initCustomCharacters } from "./lib/live/index.js";
+import { initSessionStore, pruneOldSessions } from "./lib/memory/session-store.js";
 import { LiveKitService } from "./lib/livekit/service.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createSessionRoutes } from "./routes/sessions.js";
@@ -27,6 +28,15 @@ export async function buildApp() {
   app.log.info(
     { path: customStore.path, count: customStore.count },
     "Custom characters store ready",
+  );
+
+  const sessionStore = await initSessionStore(
+    env.SESSIONS_PATH?.trim() || undefined,
+  );
+  const pruned = await pruneOldSessions(14);
+  app.log.info(
+    { path: sessionStore.path, pruned },
+    "Session memory store ready",
   );
 
   const avatarMemory = new MemoryManager();

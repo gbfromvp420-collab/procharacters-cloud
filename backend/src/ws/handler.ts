@@ -40,7 +40,7 @@ export function createWebSocketHandler(
 
     let session;
     try {
-      session = sessionManager.authenticate(sessionId, token);
+      session = await sessionManager.authenticateAsync(sessionId, token);
     } catch (error) {
       const message =
         error instanceof SessionNotFoundError || error instanceof SessionAuthError
@@ -52,6 +52,7 @@ export function createWebSocketHandler(
     }
 
     const initialAvatar = media.enrich(session.characterId, session.avatarState);
+    const recentMessages = session.memory?.messages ?? [];
 
     send(socket, {
       type: "session_ready",
@@ -59,6 +60,12 @@ export function createWebSocketHandler(
       characterId: session.characterId,
       characterName: session.promptSnapshot.characterName,
       avatarState: initialAvatar,
+      // Transcript for resume / reconnect clients
+      messages: recentMessages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+      })),
     });
 
     socket.on("message", async (raw) => {

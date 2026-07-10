@@ -4,6 +4,7 @@ import type {
   CreateCustomCharacterResponse,
   CreateSessionResponse,
   LiveCharacterOption,
+  MemoryMessage,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
@@ -21,6 +22,24 @@ export async function createSession(characterId: CharacterId): Promise<CreateSes
   }
 
   return res.json() as Promise<CreateSessionResponse>;
+}
+
+export async function resumeSession(
+  sessionId: string,
+  token: string,
+): Promise<CreateSessionResponse & { messages: MemoryMessage[] }> {
+  const res = await fetch(`${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/resume`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to resume session (${res.status}): ${text}`);
+  }
+
+  return res.json() as Promise<CreateSessionResponse & { messages: MemoryMessage[] }>;
 }
 
 export async function listLiveCharacters(): Promise<LiveCharacterOption[]> {

@@ -19,8 +19,9 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV REPO_ROOT=/app
 ENV HOST=0.0.0.0
-# Persist custom characters across restarts (mount a Railway volume at /data).
+# Persist custom characters + session memory (mount a Railway volume at /data).
 ENV CUSTOM_CHARACTERS_PATH=/data/custom-characters.json
+ENV SESSIONS_PATH=/data/sessions
 
 COPY --from=build /app/backend/package.json /app/backend/package-lock.json ./
 COPY --from=build /app/backend/node_modules ./node_modules
