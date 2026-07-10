@@ -475,6 +475,101 @@ export async function wipeAccountSessions(
   return res.json() as Promise<{ ok: boolean; deleted: number }>;
 }
 
+export interface SessionExportDoc {
+  schema: string;
+  exportedAt: string;
+  session: {
+    sessionId: string;
+    characterId: string;
+    characterName: string;
+    promptVersion: string;
+    status: string;
+    resumeCode?: string;
+    messageCount: number;
+    messages: MemoryMessage[];
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export interface AccountSessionsExportDoc {
+  schema: string;
+  exportedAt: string;
+  accountId: string;
+  handle?: string;
+  sessionCount: number;
+  totalMessages: number;
+  sessions: SessionExportDoc["session"][];
+}
+
+/** Fetch + download one account-owned session as JSON. */
+export async function exportAccountSession(
+  accountToken: string,
+  sessionId: string,
+): Promise<{ filename: string; doc: SessionExportDoc }> {
+  const { dispositionFilename, downloadJson } = await import("./download-json");
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}/export`,
+    { headers: authHeaders(accountToken) },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Export failed (${res.status}): ${text}`);
+  }
+  const doc = (await res.json()) as SessionExportDoc;
+  const day = new Date().toISOString().slice(0, 10);
+  const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.json`;
+  const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
+  downloadJson(filename, doc);
+  return { filename, doc };
+}
+
+/** Fetch + download all account chats as one JSON file. */
+export async function exportAllAccountSessions(
+  accountToken: string,
+): Promise<{ filename: string; doc: AccountSessionsExportDoc }> {
+  const { dispositionFilename, downloadJson } = await import("./download-json");
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/export`, {
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Export all failed (${res.status}): ${text}`);
+  }
+  const doc = (await res.json()) as AccountSessionsExportDoc;
+  const day = new Date().toISOString().slice(0, 10);
+  const fallback = `procharacters-all-chats-${day}.json`;
+  const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
+  downloadJson(filename, doc);
+  return { filename, doc };
+}
+
+/** Export active/guest chat via session token (no account required). */
+export async function exportLiveSession(
+  sessionId: string,
+  wsToken: string,
+): Promise<{ filename: string; doc: SessionExportDoc }> {
+  const { dispositionFilename, downloadJson } = await import("./download-json");
+  const res = await fetch(
+    `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/export`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token: wsToken }),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Export failed (${res.status}): ${text}`);
+  }
+  const doc = (await res.json()) as SessionExportDoc;
+  const day = new Date().toISOString().slice(0, 10);
+  const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.json`;
+  const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
+  downloadJson(filename, doc);
+  return { filename, doc };
+}
+
 export async function deleteAccountSession(
   accountToken: string,
   sessionId: string,

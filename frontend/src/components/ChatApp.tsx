@@ -11,6 +11,7 @@ import {
   createCustomCharacter,
   createSession,
   deleteCustomCharacter,
+  exportLiveSession,
   listAccountSessions,
   listLiveCharacters,
   fetchAccountMe,
@@ -630,6 +631,19 @@ export function ChatApp() {
     });
     const ok = await copyText(url);
     flashCopy(ok ? `Resume link copied (${resumeCode})` : "Copy failed");
+  };
+
+  const exportChatJson = async () => {
+    if (!sessionId || !wsToken) {
+      setError("Start a session before exporting");
+      return;
+    }
+    try {
+      const { filename, doc } = await exportLiveSession(sessionId, wsToken);
+      flashCopy(`Exported ${doc.session.messageCount} msgs → ${filename}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    }
   };
 
   const applyAccountAuth = async (result: {
@@ -1340,6 +1354,15 @@ export function ChatApp() {
                     title="Copy ?resume=CODE link — short code, no raw ws token"
                   >
                     {resumeCode ? `Copy resume (${resumeCode})` : "Copy resume"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void exportChatJson()}
+                    disabled={!sessionId || !wsToken || messages.length === 0}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
+                    title="Download chat history as JSON (no secrets)"
+                  >
+                    Export JSON
                   </button>
                 </>
               )}

@@ -5,6 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import {
   deleteAccount,
   deleteAccountSession,
+  exportAccountSession,
+  exportAllAccountSessions,
   fetchAccountMe,
   linkEmailToAccount,
   listAccountSessions,
@@ -291,6 +293,34 @@ export function AccountSettings() {
     }
   };
 
+  const onExportSession = async (sessionId: string) => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { filename, doc } = await exportAccountSession(account.token, sessionId);
+      flash(`Exported ${doc.session.messageCount} msgs → ${filename}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onExportAllSessions = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const { filename, doc } = await exportAllAccountSessions(account.token);
+      flash(`Exported ${doc.sessionCount} chats (${doc.totalMessages} msgs) → ${filename}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export all failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onWipeSessions = async () => {
     if (!account) return;
     if (!window.confirm("Wipe ALL saved chats on this account? This cannot be undone.")) return;
@@ -557,16 +587,27 @@ export function AccountSettings() {
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap items-center gap-3">
                   {sessions.length > 0 && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void onWipeSessions()}
-                      className="text-xs text-red-300 hover:underline disabled:opacity-50"
-                    >
-                      Wipe all
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onExportAllSessions()}
+                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                        title="Download all chats as one JSON file"
+                      >
+                        Export all JSON
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onWipeSessions()}
+                        className="text-xs text-red-300 hover:underline disabled:opacity-50"
+                      >
+                        Wipe all
+                      </button>
+                    </>
                   )}
                   <button
                     type="button"
@@ -595,6 +636,15 @@ export function AccountSettings() {
                           {s.resumeCode ? ` · ${s.resumeCode}` : ""}
                         </p>
                       </div>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onExportSession(s.sessionId)}
+                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                        title="Download this chat as JSON"
+                      >
+                        Export
+                      </button>
                       {s.resumeCode && (
                         <button
                           type="button"

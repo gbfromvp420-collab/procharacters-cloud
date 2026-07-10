@@ -39,6 +39,11 @@ const resumeCodeSchema = z.object({
   code: z.string().min(6).max(16),
 });
 
+const exportSessionSchema = z.object({
+  /** Current ws session token (guest or signed-in live chat). */
+  token: z.string().min(8),
+});
+
 const mediaOverridesSchema = z
   .object({
     idle: z.string().min(1).max(500).optional(),
@@ -424,6 +429,45 @@ export const createSessionRoutes = (
           return reply.code(404).send({ error: "Unknown resume code" });
         }
         if (error instanceof SessionAuthError || error instanceof LiveCharacterError) {
+          return reply.code(403).send({ error: error.message });
+        }
+        throw error;
+      }
+    });
+
+    /**
+     * Export transcript as JSON without secrets.
+     * Auth with body.token (wsToken) so guests can download mid-chat.
+     */
+    app.post("/sessions/:sessionId/export", async (request, reply) => {
+      const { sessionId } = request.params as { sessionId: string };
+      try {
+        const body = exportSessionSchema.parse(request.body ?? {});
+        const doc = await sessionManager.exportSession({
+          sessionId,
+          token: body.token,
+        });
+        const safeName = doc.session.characterName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 40);
+        const short = sessionId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
+        const day = new Date().toISOString().slice(0, 10);
+        reply.header(
+          "Content-Disposition",
+          `attachment; filename="procharacters-${safeName || "chat"}-${short}-${day}.json"`,
+        );
+        reply.header("Content-Type", "application/json; charset=utf-8");
+        return doc;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof SessionNotFoundError) {
+          return reply.code(404).send({ error: error.message });
+        }
+        if (error instanceof SessionAuthError) {
           return reply.code(403).send({ error: error.message });
         }
         throw error;

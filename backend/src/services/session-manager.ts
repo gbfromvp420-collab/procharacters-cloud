@@ -5,6 +5,12 @@ import { assertLiveCharacter } from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
+  buildAccountSessionsExport,
+  buildSessionExport,
+  type AccountSessionsExport,
+  type SessionExport,
+} from "../lib/memory/session-export.js";
+import {
   deleteSessionRecord,
   listSessionRecords,
   loadSessionRecord,
@@ -266,6 +272,44 @@ export class SessionManager {
     }
     await clearAccountResumeCodes(accountId);
     return deleted;
+  }
+
+  /**
+   * Export one session transcript (no wsToken / system prompts).
+   * Auth via owning account or current ws token.
+   */
+  async exportSession(options: {
+    sessionId: string;
+    accountId?: string;
+    token?: string;
+  }): Promise<SessionExport> {
+    const session = await this.loadSession(options.sessionId);
+
+    if (options.accountId) {
+      if (session.accountId !== options.accountId) {
+        throw new SessionAuthError("Session does not belong to this account");
+      }
+    } else if (options.token) {
+      if (session.wsToken !== options.token) {
+        throw new SessionAuthError("Invalid session token");
+      }
+    } else {
+      throw new SessionAuthError("Account or session token required to export");
+    }
+
+    // Ended / soft-expired archives are still exportable.
+    return buildSessionExport(session);
+  }
+
+  async exportAccountSessions(
+    accountId: string,
+    handle?: string,
+  ): Promise<AccountSessionsExport> {
+    const records = await listSessionRecords({ accountId, limit: 100 });
+    for (const record of records) {
+      this.sessions.set(record.id, record);
+    }
+    return buildAccountSessionsExport({ accountId, handle, records });
   }
 
   private async reactivate(

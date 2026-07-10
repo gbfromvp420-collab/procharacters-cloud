@@ -369,6 +369,54 @@ export const createAccountRoutes = (
       return { sessions };
     });
 
+    /** Download all account chats as one JSON document (no secrets). */
+    app.get("/accounts/me/sessions/export", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const doc = await sessionManager.exportAccountSessions(account.id, account.handle);
+      const day = new Date().toISOString().slice(0, 10);
+      const filename = `procharacters-all-chats-${account.handle}-${day}.json`;
+      reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+      reply.header("Content-Type", "application/json; charset=utf-8");
+      return doc;
+    });
+
+    /** Download one saved chat as JSON (account-owned only). */
+    app.get("/accounts/me/sessions/:sessionId/export", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { sessionId } = request.params as { sessionId: string };
+      try {
+        const doc = await sessionManager.exportSession({
+          sessionId,
+          accountId: account.id,
+        });
+        const safeName = doc.session.characterName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "")
+          .slice(0, 40);
+        const short = sessionId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
+        const day = new Date().toISOString().slice(0, 10);
+        const filename = `procharacters-${safeName || "chat"}-${short}-${day}.json`;
+        reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+        reply.header("Content-Type", "application/json; charset=utf-8");
+        return doc;
+      } catch (error) {
+        if (error instanceof SessionNotFoundError) {
+          return reply.code(404).send({ error: "Session not found" });
+        }
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
+        }
+        throw error;
+      }
+    });
+
     app.delete("/accounts/me/sessions", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));
       if (!account) {
