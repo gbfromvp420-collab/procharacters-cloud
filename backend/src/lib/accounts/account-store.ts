@@ -475,6 +475,51 @@ export function accountHasPassphrase(accountId: string): boolean {
   return !!(account?.passphraseHash && account.salt);
 }
 
+/** Permanently remove account, tokens, magic links, and resume-code bindings. */
+export async function deleteAccount(accountId: string): Promise<boolean> {
+  await ensureLoaded();
+  const account = accounts.get(accountId);
+  if (!account) return false;
+
+  accounts.delete(accountId);
+  handleIndex.delete(account.handle);
+  if (account.email) {
+    emailIndex.delete(normalizeEmail(account.email));
+  }
+
+  for (const [hash, token] of tokens) {
+    if (token.accountId === accountId) tokens.delete(hash);
+  }
+  for (const [hash, magic] of magicLinks) {
+    if (magic.linkAccountId === accountId || (account.email && magic.email === normalizeEmail(account.email))) {
+      magicLinks.delete(hash);
+    }
+  }
+  for (const [code, record] of resumeCodes) {
+    if (record.accountId === accountId) {
+      // Keep code → session mapping but drop account ownership
+      resumeCodes.set(code, { ...record, accountId: undefined });
+    }
+  }
+
+  await persist();
+  return true;
+}
+
+/** Drop account ownership from all resume codes (sessions deleted separately). */
+export async function clearAccountResumeCodes(accountId: string): Promise<number> {
+  await ensureLoaded();
+  let n = 0;
+  for (const [code, record] of resumeCodes) {
+    if (record.accountId === accountId) {
+      resumeCodes.delete(code);
+      n += 1;
+    }
+  }
+  if (n > 0) await persist();
+  return n;
+}
+
 const RESUME_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export function generateResumeCode(): string {

@@ -20,6 +20,7 @@ What works today:
 - **Gallery homepage**: `/` with **Featured** row, search/sort/filter; chat at `/chat`; cards at `/character/<id>`
 - **Private resume**: `?resume=CODE` (no raw tokens)
 - **Accounts**: full **settings page** at `/account` (magic link, passphrase, sessions, email link)
+- **Delete / wipe**: delete one chat, wipe all chats, or delete account (`confirm: "DELETE"`)
 - **Rate limits**: magic links, auth, and clip uploads (429 + Retry-After)
 - **Custom avatar clips**: single + **batch upload**, URL overrides, live previews in the editor
 - Model switch in UI (pick another character → **Switch / New**)

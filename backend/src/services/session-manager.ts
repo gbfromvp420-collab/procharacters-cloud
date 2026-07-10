@@ -5,10 +5,12 @@ import { assertLiveCharacter } from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
+  deleteSessionRecord,
   listSessionRecords,
   loadSessionRecord,
   saveSessionRecord,
 } from "../lib/memory/session-store.js";
+import { clearAccountResumeCodes } from "../lib/accounts/account-store.js";
 import type {
   CreateSessionInput,
   CreateSessionResult,
@@ -242,6 +244,28 @@ export class SessionManager {
 
   listSessions(): SessionRecord[] {
     return [...this.sessions.values()];
+  }
+
+  async deleteSessionForAccount(accountId: string, sessionId: string): Promise<boolean> {
+    const session = await this.loadSession(sessionId);
+    if (session.accountId !== accountId) {
+      throw new SessionAuthError("Session does not belong to this account");
+    }
+    this.sessions.delete(sessionId);
+    await deleteSessionRecord(sessionId);
+    return true;
+  }
+
+  async wipeAccountSessions(accountId: string): Promise<number> {
+    const records = await listSessionRecords({ accountId, limit: 500 });
+    let deleted = 0;
+    for (const record of records) {
+      this.sessions.delete(record.id);
+      await deleteSessionRecord(record.id);
+      deleted += 1;
+    }
+    await clearAccountResumeCodes(accountId);
+    return deleted;
   }
 
   private async reactivate(

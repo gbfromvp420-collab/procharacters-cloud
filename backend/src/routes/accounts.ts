@@ -5,6 +5,7 @@ import {
   AccountError,
   accountHasPassphrase,
   createAccount,
+  deleteAccount,
   loginAccount,
   logoutAccountToken,
   requestMagicLink,
@@ -55,6 +56,11 @@ const magicVerifySchema = z.object({
 const passphraseSchema = z.object({
   newPassphrase: z.string().min(6).max(200),
   currentPassphrase: z.string().min(6).max(200).optional(),
+});
+
+const deleteAccountSchema = z.object({
+  /** Type DELETE to confirm permanent account removal. */
+  confirm: z.literal("DELETE"),
 });
 
 export function bearerToken(request: FastifyRequest): string | undefined {
@@ -361,6 +367,64 @@ export const createAccountRoutes = (
       }
       const sessions = await sessionManager.listAccountSessions(account.id);
       return { sessions };
+    });
+
+    app.delete("/accounts/me/sessions", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const deleted = await sessionManager.wipeAccountSessions(account.id);
+      return { ok: true, deleted };
+    });
+
+    app.delete("/accounts/me/sessions/:sessionId", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { sessionId } = request.params as { sessionId: string };
+      try {
+        await sessionManager.deleteSessionForAccount(account.id, sessionId);
+        return { ok: true, sessionId };
+      } catch (error) {
+        if (error instanceof SessionNotFoundError) {
+          return reply.code(404).send({ error: "Session not found" });
+        }
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
+        }
+        throw error;
+      }
+    });
+
+    app.delete("/accounts/me", async (request, reply) => {
+      const token = bearerToken(request);
+      const account = await resolveAccountToken(token);
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      try {
+        deleteAccountSchema.parse(request.body ?? {});
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({
+            error: 'Send JSON body { "confirm": "DELETE" } to permanently delete this account',
+          });
+        }
+        throw error;
+      }
+
+      const wiped = await sessionManager.wipeAccountSessions(account.id);
+      await deleteAccount(account.id);
+      if (token) await logoutAccountToken(token);
+
+      return {
+        ok: true,
+        deleted: true,
+        sessionsWiped: wiped,
+        message: "Account and saved chats permanently deleted",
+      };
     });
 
     app.post("/accounts/me/sessions/:sessionId/claim", async (request, reply) => {

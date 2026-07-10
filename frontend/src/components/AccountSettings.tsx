@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import {
+  deleteAccount,
+  deleteAccountSession,
   fetchAccountMe,
   linkEmailToAccount,
   listAccountSessions,
@@ -14,6 +16,7 @@ import {
   resumeByCode,
   setAccountPassphrase,
   verifyMagicLink,
+  wipeAccountSessions,
   type AccountSessionSummary,
 } from "@/lib/api";
 import {
@@ -44,6 +47,7 @@ export function AccountSettings() {
   const [currentPass, setCurrentPass] = useState("");
   const [newPass, setNewPass] = useState("");
   const [resumeCode, setResumeCode] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState("");
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -269,6 +273,63 @@ export function AccountSettings() {
     const url = buildResumeCodeShareUrl(code);
     const ok = await copyText(url);
     flash(ok ? `Copied resume ${code}` : "Copy failed");
+  };
+
+  const onDeleteSession = async (sessionId: string) => {
+    if (!account) return;
+    if (!window.confirm("Delete this saved chat permanently?")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await deleteAccountSession(account.token, sessionId);
+      setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
+      flash("Chat deleted");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onWipeSessions = async () => {
+    if (!account) return;
+    if (!window.confirm("Wipe ALL saved chats on this account? This cannot be undone.")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await wipeAccountSessions(account.token);
+      setSessions([]);
+      flash(`Wiped ${result.deleted} chat(s)`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Wipe failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onDeleteAccount = async () => {
+    if (!account) return;
+    if (deleteConfirm !== "DELETE") {
+      setError('Type DELETE in the confirm box to permanently remove your account');
+      return;
+    }
+    if (!window.confirm("Permanently delete your account and all saved chats?")) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await deleteAccount(account.token);
+      clearStoredAccount();
+      setAccount(null);
+      setEmail(null);
+      setSessions([]);
+      setHasPassphrase(false);
+      setDeleteConfirm("");
+      flash(`Account deleted (${result.sessionsWiped} chats wiped)`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Account delete failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -497,15 +558,27 @@ export function AccountSettings() {
             </section>
 
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
-              <div className="mb-3 flex items-center justify-between gap-2">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
-                <button
-                  type="button"
-                  onClick={() => account && void refresh(account.token)}
-                  className="text-xs text-brand-accent hover:underline"
-                >
-                  Refresh
-                </button>
+                <div className="flex gap-3">
+                  {sessions.length > 0 && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onWipeSessions()}
+                      className="text-xs text-red-300 hover:underline disabled:opacity-50"
+                    >
+                      Wipe all
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => account && void refresh(account.token)}
+                    className="text-xs text-brand-accent hover:underline"
+                  >
+                    Refresh
+                  </button>
+                </div>
               </div>
               {sessions.length === 0 ? (
                 <p className="text-xs text-brand-muted">
@@ -536,6 +609,13 @@ export function AccountSettings() {
                       )}
                       <button
                         type="button"
+                        onClick={() => void onDeleteSession(s.sessionId)}
+                        className="text-red-300/80 hover:text-red-200"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => void onResumeSession(s.sessionId)}
                         className="rounded-lg bg-brand-accent px-3 py-1.5 font-medium text-white"
                       >
@@ -545,6 +625,30 @@ export function AccountSettings() {
                   ))}
                 </ul>
               )}
+            </section>
+
+            <section className="rounded-2xl border border-red-500/30 bg-red-500/5 p-5">
+              <h2 className="text-sm font-semibold text-red-200">Danger zone</h2>
+              <p className="mt-1 text-xs text-brand-muted">
+                Permanently delete your account, auth tokens, and all saved chats. Type{" "}
+                <span className="font-mono text-red-200">DELETE</span> to confirm.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <input
+                  value={deleteConfirm}
+                  onChange={(e) => setDeleteConfirm(e.target.value)}
+                  placeholder="Type DELETE"
+                  className="rounded-lg border border-red-500/30 bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
+                />
+                <button
+                  type="button"
+                  disabled={busy || deleteConfirm !== "DELETE"}
+                  onClick={() => void onDeleteAccount()}
+                  className="rounded-lg border border-red-500/50 bg-red-500/20 px-4 py-2 text-sm font-medium text-red-100 disabled:opacity-40"
+                >
+                  Delete account forever
+                </button>
+              </div>
             </section>
 
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">

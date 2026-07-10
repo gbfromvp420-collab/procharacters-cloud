@@ -406,6 +406,49 @@ export async function setAccountPassphrase(
   return res.json() as Promise<{ ok: boolean; hasPassphrase: boolean }>;
 }
 
+export async function wipeAccountSessions(
+  accountToken: string,
+): Promise<{ ok: boolean; deleted: number }> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions`, {
+    method: "DELETE",
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Wipe sessions failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ ok: boolean; deleted: number }>;
+}
+
+export async function deleteAccountSession(
+  accountToken: string,
+  sessionId: string,
+): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}`,
+    { method: "DELETE", headers: authHeaders(accountToken) },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Delete session failed (${res.status}): ${text}`);
+  }
+}
+
+export async function deleteAccount(
+  accountToken: string,
+): Promise<{ ok: boolean; sessionsWiped: number }> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me`, {
+    method: "DELETE",
+    headers: authHeaders(accountToken),
+    body: JSON.stringify({ confirm: "DELETE" }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Delete account failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ ok: boolean; sessionsWiped: number }>;
+}
+
 export function getApiBase(): string {
   return API_BASE;
 }
