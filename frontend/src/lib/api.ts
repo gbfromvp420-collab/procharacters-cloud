@@ -319,6 +319,67 @@ export async function uploadCharacterClip(
   }>;
 }
 
+export async function uploadCharacterClipsBatch(
+  characterId: string,
+  files: File[],
+): Promise<{
+  uploaded: Array<{ emotion: MediaClipKey; url: string; bytes: number; filename: string }>;
+  skipped: Array<{ filename: string; reason: string }>;
+  clips: Record<MediaClipKey, string>;
+  mediaOverrides?: MediaOverrides;
+}> {
+  const body = new FormData();
+  for (const file of files) {
+    const name = file.name || "clip.mp4";
+    // Prefer emotion from filename; also set fieldname when we can detect it
+    const base = name.toLowerCase().replace(/\.(mp4|webm)$/i, "");
+    const emotions: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
+    const emotion =
+      emotions.find(
+        (e) =>
+          base === e ||
+          base.endsWith(`-${e}`) ||
+          base.endsWith(`_${e}`) ||
+          base.startsWith(`${e}-`) ||
+          base.startsWith(`${e}_`) ||
+          base.includes(e),
+      ) ?? "file";
+    body.append(emotion, file, name);
+  }
+  const res = await fetch(
+    `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}/clips`,
+    { method: "POST", body },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Batch upload failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    uploaded: Array<{ emotion: MediaClipKey; url: string; bytes: number; filename: string }>;
+    skipped: Array<{ filename: string; reason: string }>;
+    clips: Record<MediaClipKey, string>;
+    mediaOverrides?: MediaOverrides;
+  }>;
+}
+
+export async function fetchAccountMe(
+  accountToken: string,
+): Promise<{ accountId: string; handle: string; email?: string; createdAt: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me`, {
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Account me failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    accountId: string;
+    handle: string;
+    email?: string;
+    createdAt: string;
+  }>;
+}
+
 export function getApiBase(): string {
   return API_BASE;
 }

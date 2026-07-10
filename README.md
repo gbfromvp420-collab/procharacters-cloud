@@ -20,7 +20,7 @@ What works today:
 - **Gallery homepage**: `/` browse models (search/sort/filter); live chat at `/chat`; cards at `/character/<id>`
 - **Private resume**: `?resume=CODE` (no raw tokens)
 - **Accounts**: email **magic link**, handle/passphrase, **link email** to existing handle accounts
-- **Custom avatar clips**: uploads + URL overrides + **live clip previews** in the editor
+- **Custom avatar clips**: single + **batch upload**, URL overrides, live previews in the editor
 - Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,
   `assistant_stream`, `assistant_complete`, `avatar_update`, `session_ended`, `error`

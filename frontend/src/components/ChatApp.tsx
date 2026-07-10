@@ -13,6 +13,7 @@ import {
   deleteCustomCharacter,
   listAccountSessions,
   listLiveCharacters,
+  fetchAccountMe,
   linkEmailToAccount,
   loginAccount,
   logoutAccount,
@@ -23,6 +24,7 @@ import {
   resumeSession,
   updateCustomCharacter,
   uploadCharacterClip,
+  uploadCharacterClipsBatch,
   verifyMagicLink,
   type AccountSessionSummary,
 } from "@/lib/api";
@@ -128,6 +130,7 @@ export function ChatApp() {
   const [magicDevLink, setMagicDevLink] = useState<string | null>(null);
   const [accountBusy, setAccountBusy] = useState(false);
   const [accountSessions, setAccountSessions] = useState<AccountSessionSummary[]>([]);
+  const [accountEmailLinked, setAccountEmailLinked] = useState<string | null>(null);
   const [resumeCodeInput, setResumeCodeInput] = useState("");
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
@@ -169,8 +172,12 @@ export function ChatApp() {
 
   const refreshAccountSessions = useCallback(async (token: string) => {
     try {
-      const sessions = await listAccountSessions(token);
+      const [sessions, me] = await Promise.all([
+        listAccountSessions(token),
+        fetchAccountMe(token).catch(() => null),
+      ]);
       setAccountSessions(sessions);
+      setAccountEmailLinked(me?.email ?? null);
     } catch {
       setAccountSessions([]);
     }
@@ -868,6 +875,28 @@ export function ChatApp() {
     }
   };
 
+  const applyClipResult = (
+    selectedId: string,
+    mediaOverrides?: { idle?: string; teasing?: string; playful?: string; aroused?: string },
+    clips?: LiveCharacterOption["clips"],
+  ) => {
+    if (mediaOverrides?.idle) setClipIdle(mediaOverrides.idle);
+    if (mediaOverrides?.teasing) setClipTeasing(mediaOverrides.teasing);
+    if (mediaOverrides?.playful) setClipPlayful(mediaOverrides.playful);
+    if (mediaOverrides?.aroused) setClipAroused(mediaOverrides.aroused);
+    setCharacters((prev) =>
+      prev.map((c) =>
+        c.id === selectedId
+          ? {
+              ...c,
+              mediaOverrides: mediaOverrides ?? c.mediaOverrides,
+              clips: clips ?? c.clips,
+            }
+          : c,
+      ),
+    );
+  };
+
   const handleUploadClip = async (emotion: MediaClipKey, file: File | null) => {
     if (!file) return;
     const selected = characters.find((c) => c.id === character);
@@ -879,27 +908,42 @@ export function ChatApp() {
     setError(null);
     try {
       const result = await uploadCharacterClip(selected.id, emotion, file);
-      const setUrl = {
-        idle: setClipIdle,
-        teasing: setClipTeasing,
-        playful: setClipPlayful,
-        aroused: setClipAroused,
-      }[emotion];
-      setUrl(result.url);
-      setCharacters((prev) =>
-        prev.map((c) =>
-          c.id === selected.id
-            ? {
-                ...c,
-                mediaOverrides: result.mediaOverrides,
-                clips: result.clips,
-              }
-            : c,
-        ),
-      );
+      applyClipResult(selected.id, result.mediaOverrides, result.clips);
       flashCopy(`Uploaded ${emotion} clip`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleBatchUpload = async (fileList: FileList | null) => {
+    if (!fileList?.length) return;
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character before uploading clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const files = Array.from(fileList);
+      const result = await uploadCharacterClipsBatch(selected.id, files);
+      applyClipResult(selected.id, result.mediaOverrides, result.clips);
+      const n = result.uploaded.length;
+      const skip = result.skipped.length;
+      flashCopy(
+        skip > 0
+          ? `Uploaded ${n} clip(s), skipped ${skip}`
+          : `Uploaded ${n} clip(s)`,
+      );
+      if (skip > 0) {
+        setError(
+          result.skipped.map((s) => `${s.filename}: ${s.reason}`).join(" · "),
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Batch upload failed");
     } finally {
       setCreating(false);
     }
@@ -987,6 +1031,9 @@ export function ChatApp() {
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="text-brand-text">
                     Signed in as <strong>@{account.handle}</strong>
+                    {accountEmailLinked && (
+                      <span className="ml-2 text-xs text-brand-muted">· {accountEmailLinked}</span>
+                    )}
                   </span>
                   <button
                     type="button"
@@ -1008,7 +1055,11 @@ export function ChatApp() {
                     type="email"
                     value={accountEmail}
                     onChange={(e) => setAccountEmail(e.target.value)}
-                    placeholder="Link email for magic sign-in"
+                    placeholder={
+                      accountEmailLinked
+                        ? "Change linked email"
+                        : "Link email for magic sign-in"
+                    }
                     className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
                   />
                   <button
@@ -1017,7 +1068,7 @@ export function ChatApp() {
                     onClick={() => void handleLinkEmail()}
                     className="rounded-lg border border-brand-accent/50 px-3 py-2 text-sm text-brand-text hover:border-brand-accent disabled:opacity-50"
                   >
-                    Link email
+                    {accountEmailLinked ? "Update email" : "Link email"}
                   </button>
                 </div>
                 {magicDevLink && (
@@ -1425,6 +1476,26 @@ export function ChatApp() {
                         placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
                         className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                       />
+                      <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand-accent/40 bg-brand-accent/5 px-3 py-3 text-center text-xs text-brand-muted transition hover:border-brand-accent hover:text-brand-text">
+                        <span className="font-medium text-brand-text">
+                          {creating ? "Uploading…" : "Batch upload clips"}
+                        </span>
+                        <span>
+                          Select multiple files named idle / teasing / playful / aroused
+                        </span>
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm"
+                          multiple
+                          className="hidden"
+                          disabled={creating}
+                          onChange={(e) => {
+                            const list = e.target.files;
+                            e.target.value = "";
+                            void handleBatchUpload(list);
+                          }}
+                        />
+                      </label>
                       <div className="grid gap-3 sm:grid-cols-2">
                         {(
                           [
