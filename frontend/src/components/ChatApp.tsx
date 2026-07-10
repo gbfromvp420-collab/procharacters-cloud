@@ -18,6 +18,13 @@ import {
   saveStoredSession,
   type StoredSession,
 } from "@/lib/session-storage";
+import {
+  buildCharacterShareUrl,
+  buildResumeShareUrl,
+  copyText,
+  parseShareQuery,
+  replaceCharacterInUrl,
+} from "@/lib/share-links";
 import type {
   AvatarState,
   CharacterId,
@@ -84,6 +91,7 @@ export function ChatApp() {
   const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
   const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
   const [wsToken, setWsToken] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
@@ -94,6 +102,7 @@ export function ChatApp() {
   const streamingIdRef = useRef<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pendingHistoryRef = useRef<ChatMessage[] | null>(null);
+  const deepLinkHandledRef = useRef(false);
 
   const closeSocket = useCallback((sendEnd = true) => {
     const ws = wsRef.current;
@@ -180,9 +189,13 @@ export function ChatApp() {
       .then((list) => {
         if (cancelled || list.length === 0) return;
         setCharacters(list);
-        setCharacter((current) =>
-          list.some((c) => c.id === current) ? current : list[0]!.id,
-        );
+        const query = parseShareQuery(window.location.search);
+        setCharacter((current) => {
+          if (query.characterId && list.some((c) => c.id === query.characterId)) {
+            return query.characterId!;
+          }
+          return list.some((c) => c.id === current) ? current : list[0]!.id;
+        });
       })
       .catch(() => {
         /* keep fallback list */
@@ -195,6 +208,13 @@ export function ChatApp() {
   useEffect(() => {
     setSavedSession(loadStoredSession());
   }, []);
+
+  // Keep address bar shareable without private tokens after boot.
+  useEffect(() => {
+    if (status === "idle" || status === "ended" || status === "error") {
+      replaceCharacterInUrl(character);
+    }
+  }, [character, status]);
 
   const bindWebSocket = useCallback(
     (
@@ -385,10 +405,12 @@ export function ChatApp() {
     [bindWebSocket],
   );
 
-  const startSession = async () => {
+  const startSession = async (characterId: CharacterId = character) => {
     clearSessionState();
+    setCharacter(characterId);
+    replaceCharacterInUrl(characterId);
     try {
-      await connectSession(character);
+      await connectSession(characterId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start session");
       setStatus("error");
@@ -396,8 +418,8 @@ export function ChatApp() {
     }
   };
 
-  const resumeLastSession = async () => {
-    const stored = savedSession ?? loadStoredSession();
+  const resumeLastSession = async (storedOverride?: StoredSession) => {
+    const stored = storedOverride ?? savedSession ?? loadStoredSession();
     if (!stored) {
       setError("No saved session on this device");
       return;
@@ -406,8 +428,10 @@ export function ChatApp() {
     try {
       await connectResumedSession(stored);
     } catch (err) {
-      clearStoredSession();
-      setSavedSession(null);
+      if (!storedOverride) {
+        clearStoredSession();
+        setSavedSession(null);
+      }
       setError(
         err instanceof Error
           ? err.message
@@ -415,6 +439,67 @@ export function ChatApp() {
       );
       setStatus("error");
     }
+  };
+
+  // Deep-links: ?character=…&autostart=1  or  ?session=…&token=… (private resume)
+  useEffect(() => {
+    if (deepLinkHandledRef.current) return;
+    if (typeof window === "undefined") return;
+    if (characters.length === 0) return;
+
+    const query = parseShareQuery(window.location.search);
+    if (!query.characterId && !(query.sessionId && query.token)) return;
+
+    deepLinkHandledRef.current = true;
+
+    if (query.sessionId && query.token) {
+      const stored: StoredSession = {
+        sessionId: query.sessionId,
+        wsToken: query.token,
+        characterId: query.characterId ?? "twink-default",
+        savedAt: new Date().toISOString(),
+      };
+      void resumeLastSession(stored);
+      return;
+    }
+
+    if (query.characterId) {
+      const exists = characters.some((c) => c.id === query.characterId);
+      if (!exists) {
+        setError(
+          `Unknown character “${query.characterId}” — it may be a custom model not on this server.`,
+        );
+        return;
+      }
+      setCharacter(query.characterId);
+      if (query.autostart) {
+        void startSession(query.characterId);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- boot once when catalog ready
+  }, [characters]);
+
+  const flashCopy = (label: string) => {
+    setCopyNotice(label);
+    window.setTimeout(() => setCopyNotice(null), 2200);
+  };
+
+  const shareCharacterLink = async (autostart = false) => {
+    const url = buildCharacterShareUrl(character, { autostart });
+    const ok = await copyText(url);
+    flashCopy(ok ? (autostart ? "Autostart link copied" : "Character link copied") : "Copy failed");
+  };
+
+  const sharePrivateResumeLink = async () => {
+    if (!sessionId || !wsToken) {
+      setError("Start or resume a session before copying a private resume link");
+      return;
+    }
+    const url = buildResumeShareUrl(sessionId, wsToken, {
+      characterId: activeCharacterId ?? character,
+    });
+    const ok = await copyText(url);
+    flashCopy(ok ? "Private resume link copied (keep secret)" : "Copy failed");
   };
 
   const startNewSession = async () => {
@@ -456,11 +541,13 @@ export function ChatApp() {
         return [...prev, option];
       });
       setCharacter(created.id);
+      replaceCharacterInUrl(created.id);
       setShowCreate(false);
       setCustomName("");
       setCustomAppearance("");
       setCustomEnergy("");
       setCustomClothing("");
+      flashCopy("Custom ready — use Share to copy link");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create custom character");
     } finally {
@@ -528,7 +615,12 @@ export function ChatApp() {
         <h1 className="bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
           Procharacters.cloud
         </h1>
-        <p className="mt-1 text-sm text-brand-muted">Naughty Syntax — v2.1 Live Chat</p>
+        <p className="mt-1 text-sm text-brand-muted">
+          Naughty Syntax — v2.1 Live Chat
+          {copyNotice && (
+            <span className="ml-2 text-brand-accent">· {copyNotice}</span>
+          )}
+        </p>
       </header>
 
       <div className="mb-4 flex flex-col gap-4 lg:flex-row">
@@ -552,7 +644,11 @@ export function ChatApp() {
               <select
                 id="character"
                 value={character}
-                onChange={(e) => setCharacter(e.target.value as CharacterId)}
+                onChange={(e) => {
+                  const next = e.target.value as CharacterId;
+                  setCharacter(next);
+                  replaceCharacterInUrl(next);
+                }}
                 disabled={status === "connecting" || restarting}
                 className="min-w-[12rem] flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text disabled:opacity-50 sm:flex-none"
               >
@@ -569,7 +665,7 @@ export function ChatApp() {
                 <>
                   <button
                     type="button"
-                    onClick={startSession}
+                    onClick={() => void startSession()}
                     className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim"
                   >
                     Start Session
@@ -577,7 +673,7 @@ export function ChatApp() {
                   {savedSession && (
                     <button
                       type="button"
-                      onClick={resumeLastSession}
+                      onClick={() => void resumeLastSession()}
                       className="rounded-lg border border-brand-accent/60 bg-brand-accent/10 px-4 py-2 text-sm font-medium text-brand-text transition hover:border-brand-accent"
                       title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
                     >
@@ -600,6 +696,22 @@ export function ChatApp() {
                       Delete
                     </button>
                   )}
+                  <button
+                    type="button"
+                    onClick={() => shareCharacterLink(false)}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
+                    title="Copy public character link"
+                  >
+                    Share
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => shareCharacterLink(true)}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent"
+                    title="Copy link that auto-starts this character"
+                  >
+                    Share ▶
+                  </button>
                 </>
               ) : (
                 <>
@@ -619,6 +731,24 @@ export function ChatApp() {
                   >
                     End
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => shareCharacterLink(true)}
+                    disabled={status === "connecting" || restarting}
+                    className="rounded-lg border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent disabled:opacity-50"
+                    title="Copy public character autostart link"
+                  >
+                    Share character
+                  </button>
+                  <button
+                    type="button"
+                    onClick={sharePrivateResumeLink}
+                    disabled={status !== "ready" || !sessionId || !wsToken}
+                    className="rounded-lg border border-amber-500/40 px-4 py-2 text-sm text-amber-200 transition hover:border-amber-400 disabled:opacity-50"
+                    title="Private multi-device resume — anyone with the link can rejoin this transcript"
+                  >
+                    Copy private resume
+                  </button>
                 </>
               )}
             </div>
@@ -626,7 +756,8 @@ export function ChatApp() {
             {showCreate && !sessionActive && (
               <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
                 <p className="text-xs text-brand-muted">
-                  v2.1 custom character — lives for this server run. Uses a default clip pack for video.
+                  Custom characters persist on the server volume. Share links work after create.
+                  Video uses a default clip pack until custom footage is added.
                 </p>
                 <input
                   value={customName}
