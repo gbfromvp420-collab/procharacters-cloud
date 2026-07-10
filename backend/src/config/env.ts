@@ -31,6 +31,8 @@ const envSchema = z.object({
   CUSTOM_CHARACTERS_PATH: z.string().optional(),
   /** Directory for persisted session transcripts (Railway volume recommended). */
   SESSIONS_PATH: z.string().optional(),
+  /** Accounts + resume-code index JSON (Railway volume recommended). */
+  ACCOUNTS_PATH: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

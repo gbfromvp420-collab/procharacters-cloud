@@ -24,11 +24,16 @@ export interface SessionRecord {
   createdAt: string;
   updatedAt: string;
   expiresAt: string;
+  /** Owning account (multi-device resume). */
+  accountId?: string;
+  /** Short public resume code — no raw ws token in share links. */
+  resumeCode?: string;
 }
 
 export interface CreateSessionInput {
   characterId?: string;
   promptVersion?: string;
+  accountId?: string;
 }
 
 export interface LiveKitJoinInfo {
@@ -45,4 +50,6 @@ export interface CreateSessionResult {
   wsUrl: string;
   livekit?: LiveKitJoinInfo;
   avatarState: AvatarState;
+  resumeCode?: string;
+  accountId?: string;
 }

@@ -3,7 +3,9 @@
 export interface ShareQuery {
   characterId?: string;
   autostart?: boolean;
-  /** Private resume credentials (treat like a password). */
+  /** Preferred: short resume code (no raw token). */
+  resumeCode?: string;
+  /** Legacy private resume credentials. */
   sessionId?: string;
   token?: string;
 }
@@ -11,6 +13,7 @@ export interface ShareQuery {
 export function parseShareQuery(search: string): ShareQuery {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const characterId = params.get("character")?.trim() || undefined;
+  const resumeCode = params.get("resume")?.trim() || undefined;
   const sessionId = params.get("session")?.trim() || undefined;
   const token = params.get("token")?.trim() || undefined;
   const autostartRaw = params.get("autostart")?.trim().toLowerCase();
@@ -18,10 +21,10 @@ export function parseShareQuery(search: string): ShareQuery {
     autostartRaw === "1" ||
     autostartRaw === "true" ||
     autostartRaw === "yes" ||
-    // session+token implies resume autostart
+    !!resumeCode ||
     (!!sessionId && !!token);
 
-  return { characterId, autostart, sessionId, token };
+  return { characterId, autostart, resumeCode, sessionId, token };
 }
 
 export function buildCharacterShareUrl(
@@ -39,7 +42,25 @@ export function buildCharacterShareUrl(
   return url.toString();
 }
 
-/** Private multi-device resume link — anyone with this can rejoin the transcript. */
+/** Preferred private resume link — short code only (no raw ws token). */
+export function buildResumeCodeShareUrl(
+  resumeCode: string,
+  options: { origin?: string; characterId?: string } = {},
+): string {
+  const origin =
+    options.origin ??
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "https://procharacters-web-production-7288.up.railway.app");
+  const url = new URL(origin);
+  url.searchParams.set("resume", resumeCode.toUpperCase());
+  if (options.characterId) {
+    url.searchParams.set("character", options.characterId);
+  }
+  return url.toString();
+}
+
+/** @deprecated Prefer buildResumeCodeShareUrl — keeps raw tokens out of URLs. */
 export function buildResumeShareUrl(
   sessionId: string,
   token: string,
@@ -66,9 +87,10 @@ export function replaceCharacterInUrl(characterId: string | null): void {
   } else {
     url.searchParams.delete("character");
   }
-  // Never leave private tokens in the bar after load
+  // Never leave private tokens / resume codes in the bar after boot
   url.searchParams.delete("session");
   url.searchParams.delete("token");
+  url.searchParams.delete("resume");
   url.searchParams.delete("autostart");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }

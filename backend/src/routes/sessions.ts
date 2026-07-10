@@ -18,11 +18,13 @@ import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { listManifestCharacters } from "../lib/prompts/manifest.js";
 import type { MediaWorker } from "../services/media-worker.js";
+import { resolveAccountToken } from "../lib/accounts/account-store.js";
 import {
   SessionAuthError,
   SessionNotFoundError,
   type SessionManager,
 } from "../services/session-manager.js";
+import { bearerToken } from "./accounts.js";
 
 const createSessionSchema = z.object({
   characterId: z.string().optional(),
@@ -31,6 +33,10 @@ const createSessionSchema = z.object({
 
 const resumeSessionSchema = z.object({
   token: z.string().min(8),
+});
+
+const resumeCodeSchema = z.object({
+  code: z.string().min(6).max(16),
 });
 
 const mediaOverridesSchema = z
@@ -236,9 +242,13 @@ export const createSessionRoutes = (
     app.post("/sessions", async (request, reply) => {
       const body = createSessionSchema.parse(request.body ?? {});
       const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const account = await resolveAccountToken(bearerToken(request));
 
       try {
-        const session = await sessionManager.createSession(body, wsBaseUrl);
+        const session = await sessionManager.createSession(
+          { ...body, accountId: account?.id },
+          wsBaseUrl,
+        );
         const record = await sessionManager.getSessionAsync(session.sessionId);
         const avatarState = media.enrich(record.characterId, record.avatarState);
 
@@ -260,6 +270,36 @@ export const createSessionRoutes = (
       } catch (error) {
         if (error instanceof CharacterNotFoundError || error instanceof LiveCharacterError) {
           return reply.code(404).send({ error: error.message });
+        }
+        throw error;
+      }
+    });
+
+    app.post("/sessions/resume-code", async (request, reply) => {
+      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      try {
+        const body = resumeCodeSchema.parse(request.body ?? {});
+        const session = await sessionManager.resumeByCode(body.code, wsBaseUrl);
+        const avatarState = media.enrich(session.characterId, session.avatarState);
+        sessionManager.updateSession(session.sessionId, { avatarState });
+
+        let livekitJoin;
+        if (livekit.isConfigured) {
+          const identity = `user-${session.sessionId.slice(0, 8)}`;
+          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
+          await media.publish(session.sessionId, session.characterId, avatarState);
+        }
+
+        return { ...session, avatarState, livekit: livekitJoin };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof SessionNotFoundError) {
+          return reply.code(404).send({ error: "Unknown resume code" });
+        }
+        if (error instanceof SessionAuthError || error instanceof LiveCharacterError) {
+          return reply.code(403).send({ error: error.message });
         }
         throw error;
       }

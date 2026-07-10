@@ -39,6 +39,8 @@ export interface CreateSessionResponse {
   avatarState: AvatarState;
   messages?: MemoryMessage[];
   livekit?: LiveKitJoinInfo;
+  resumeCode?: string;
+  accountId?: string;
 }
 
 export interface CreateCustomCharacterInput {

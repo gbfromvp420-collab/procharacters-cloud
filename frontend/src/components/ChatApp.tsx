@@ -6,13 +6,27 @@ import { AvatarVideo } from "@/components/AvatarVideo";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import {
+  claimSession,
   createCustomCharacter,
   createSession,
   deleteCustomCharacter,
+  listAccountSessions,
   listLiveCharacters,
+  loginAccount,
+  logoutAccount,
+  registerAccount,
+  resumeAccountSession,
+  resumeByCode,
   resumeSession,
   updateCustomCharacter,
+  type AccountSessionSummary,
 } from "@/lib/api";
+import {
+  clearStoredAccount,
+  loadStoredAccount,
+  saveStoredAccount,
+  type StoredAccount,
+} from "@/lib/account-storage";
 import {
   clearStoredSession,
   loadStoredSession,
@@ -21,7 +35,7 @@ import {
 } from "@/lib/session-storage";
 import {
   buildCharacterShareUrl,
-  buildResumeShareUrl,
+  buildResumeCodeShareUrl,
   copyText,
   parseShareQuery,
   replaceCharacterInUrl,
@@ -98,7 +112,15 @@ export function ChatApp() {
   const [showMediaAdvanced, setShowMediaAdvanced] = useState(false);
   const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
   const [wsToken, setWsToken] = useState<string | null>(null);
+  const [resumeCode, setResumeCode] = useState<string | null>(null);
   const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const [account, setAccount] = useState<StoredAccount | null>(null);
+  const [showAccount, setShowAccount] = useState(false);
+  const [accountHandle, setAccountHandle] = useState("");
+  const [accountPass, setAccountPass] = useState("");
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [accountSessions, setAccountSessions] = useState<AccountSessionSummary[]>([]);
+  const [resumeCodeInput, setResumeCodeInput] = useState("");
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState(avatar);
@@ -125,6 +147,7 @@ export function ChatApp() {
   const clearSessionState = useCallback(() => {
     setSessionId(null);
     setWsToken(null);
+    setResumeCode(null);
     setCharacterName(null);
     setActiveCharacterId(null);
     setMessages([]);
@@ -134,6 +157,15 @@ export function ChatApp() {
     setIsTyping(false);
     streamingIdRef.current = null;
     pendingHistoryRef.current = null;
+  }, []);
+
+  const refreshAccountSessions = useCallback(async (token: string) => {
+    try {
+      const sessions = await listAccountSessions(token);
+      setAccountSessions(sessions);
+    } catch {
+      setAccountSessions([]);
+    }
   }, []);
 
   const rememberSession = useCallback(
@@ -214,7 +246,12 @@ export function ChatApp() {
 
   useEffect(() => {
     setSavedSession(loadStoredSession());
-  }, []);
+    const storedAccount = loadStoredAccount();
+    setAccount(storedAccount);
+    if (storedAccount) {
+      void refreshAccountSessions(storedAccount.token);
+    }
+  }, [refreshAccountSessions]);
 
   // Prefill clip editors when a custom character is selected.
   useEffect(() => {
@@ -374,16 +411,31 @@ export function ChatApp() {
     [closeSocket, rememberSession],
   );
 
-  const connectSession = useCallback(
-    async (characterId: CharacterId) => {
-      setError(null);
-      setStatus("connecting");
-      pendingHistoryRef.current = null;
-
-      const session = await createSession(characterId);
+  const openLiveSession = useCallback(
+    async (
+      session: {
+        sessionId: string;
+        characterId: string;
+        wsToken: string;
+        wsUrl: string;
+        avatarState: AvatarState;
+        livekit?: LiveKitJoinInfo;
+        messages?: MemoryMessage[];
+        resumeCode?: string;
+      },
+    ) => {
+      const history = (session.messages ?? []).map((m) => ({
+        id: m.id,
+        role: m.role as ChatMessage["role"],
+        content: m.content,
+      }));
+      pendingHistoryRef.current = history.length ? history : null;
+      if (history.length) setMessages(history);
+      setCharacter(session.characterId);
       setAvatarState(session.avatarState);
       setLivekit(session.livekit ?? null);
       setWsToken(session.wsToken);
+      setResumeCode(session.resumeCode ?? null);
       const ws = new WebSocket(session.wsUrl);
       wsRef.current = ws;
       bindWebSocket(ws, {
@@ -395,32 +447,26 @@ export function ChatApp() {
     [bindWebSocket],
   );
 
+  const connectSession = useCallback(
+    async (characterId: CharacterId) => {
+      setError(null);
+      setStatus("connecting");
+      pendingHistoryRef.current = null;
+
+      const session = await createSession(characterId, account?.token);
+      await openLiveSession(session);
+    },
+    [account?.token, openLiveSession],
+  );
+
   const connectResumedSession = useCallback(
     async (stored: StoredSession) => {
       setError(null);
       setStatus("connecting");
-
       const session = await resumeSession(stored.sessionId, stored.wsToken);
-      const history = (session.messages ?? []).map((m) => ({
-        id: m.id,
-        role: m.role as ChatMessage["role"],
-        content: m.content,
-      }));
-      pendingHistoryRef.current = history;
-      setMessages(history);
-      setCharacter(session.characterId);
-      setAvatarState(session.avatarState);
-      setLivekit(session.livekit ?? null);
-      setWsToken(session.wsToken);
-      const ws = new WebSocket(session.wsUrl);
-      wsRef.current = ws;
-      bindWebSocket(ws, {
-        sessionId: session.sessionId,
-        characterId: session.characterId,
-        wsToken: session.wsToken,
-      });
+      await openLiveSession(session);
     },
-    [bindWebSocket],
+    [openLiveSession],
   );
 
   const startSession = async (characterId: CharacterId = character) => {
@@ -459,16 +505,30 @@ export function ChatApp() {
     }
   };
 
-  // Deep-links: ?character=…&autostart=1  or  ?session=…&token=… (private resume)
+  // Deep-links: ?character=…&autostart=1  or  ?resume=CODE  or legacy ?session=&token=
   useEffect(() => {
     if (deepLinkHandledRef.current) return;
     if (typeof window === "undefined") return;
     if (characters.length === 0) return;
 
     const query = parseShareQuery(window.location.search);
-    if (!query.characterId && !(query.sessionId && query.token)) return;
+    if (!query.characterId && !query.resumeCode && !(query.sessionId && query.token)) return;
 
     deepLinkHandledRef.current = true;
+
+    if (query.resumeCode) {
+      void (async () => {
+        try {
+          setStatus("connecting");
+          const session = await resumeByCode(query.resumeCode!);
+          await openLiveSession(session);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Invalid resume code");
+          setStatus("error");
+        }
+      })();
+      return;
+    }
 
     if (query.sessionId && query.token) {
       const stored: StoredSession = {
@@ -509,15 +569,95 @@ export function ChatApp() {
   };
 
   const sharePrivateResumeLink = async () => {
-    if (!sessionId || !wsToken) {
-      setError("Start or resume a session before copying a private resume link");
+    if (!resumeCode) {
+      setError("Start or resume a session first — resume code not ready yet");
       return;
     }
-    const url = buildResumeShareUrl(sessionId, wsToken, {
+    const url = buildResumeCodeShareUrl(resumeCode, {
       characterId: activeCharacterId ?? character,
     });
     const ok = await copyText(url);
-    flashCopy(ok ? "Private resume link copied (keep secret)" : "Copy failed");
+    flashCopy(ok ? `Resume link copied (${resumeCode})` : "Copy failed");
+  };
+
+  const handleAccountAuth = async (mode: "login" | "register") => {
+    setAccountBusy(true);
+    setError(null);
+    try {
+      const result =
+        mode === "register"
+          ? await registerAccount(accountHandle.trim(), accountPass)
+          : await loginAccount(accountHandle.trim(), accountPass);
+      const stored: StoredAccount = {
+        accountId: result.accountId,
+        handle: result.handle,
+        token: result.token,
+        expiresAt: result.expiresAt,
+        savedAt: new Date().toISOString(),
+      };
+      saveStoredAccount(stored);
+      setAccount(stored);
+      setAccountPass("");
+      await refreshAccountSessions(stored.token);
+      if (sessionId) {
+        try {
+          const claimed = await claimSession(stored.token, sessionId);
+          if (claimed.resumeCode) setResumeCode(claimed.resumeCode);
+        } catch {
+          /* optional claim */
+        }
+      }
+      flashCopy(mode === "register" ? "Account created" : `Signed in as ${result.handle}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Account auth failed");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleAccountLogout = async () => {
+    if (account) {
+      try {
+        await logoutAccount(account.token);
+      } catch {
+        /* ignore */
+      }
+    }
+    clearStoredAccount();
+    setAccount(null);
+    setAccountSessions([]);
+    flashCopy("Signed out");
+  };
+
+  const handleResumeCodeSubmit = async () => {
+    const code = resumeCodeInput.trim();
+    if (code.length < 6) {
+      setError("Enter a valid resume code");
+      return;
+    }
+    clearSessionState();
+    try {
+      setStatus("connecting");
+      const session = await resumeByCode(code);
+      await openLiveSession(session);
+      setResumeCodeInput("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Resume code failed");
+      setStatus("error");
+    }
+  };
+
+  const handleAccountSessionResume = async (sessionIdToResume: string) => {
+    if (!account) return;
+    clearSessionState();
+    try {
+      setStatus("connecting");
+      const session = await resumeAccountSession(account.token, sessionIdToResume);
+      await openLiveSession(session);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not resume account session");
+      setStatus("error");
+    }
   };
 
   const startNewSession = async () => {
@@ -691,12 +831,121 @@ export function ChatApp() {
         <h1 className="bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-2xl font-semibold tracking-tight text-transparent">
           Procharacters.cloud
         </h1>
-        <p className="mt-1 text-sm text-brand-muted">
-          Naughty Syntax — v2.1 Live Chat
-          {copyNotice && (
-            <span className="ml-2 text-brand-accent">· {copyNotice}</span>
-          )}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-brand-muted">
+          <span>Naughty Syntax — v2.1 Live Chat</span>
+          {copyNotice && <span className="text-brand-accent">· {copyNotice}</span>}
+          <button
+            type="button"
+            onClick={() => setShowAccount((v) => !v)}
+            className="ml-auto text-xs text-brand-accent hover:underline"
+          >
+            {account ? `@${account.handle}` : "Account"}
+          </button>
+        </div>
+
+        {showAccount && (
+          <div className="mt-3 rounded-xl border border-brand-border bg-brand-panel p-3">
+            {account ? (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-brand-text">Signed in as <strong>@{account.handle}</strong></span>
+                  <button
+                    type="button"
+                    onClick={handleAccountLogout}
+                    className="rounded-lg border border-brand-border px-3 py-1 text-xs hover:border-brand-accent"
+                  >
+                    Sign out
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => account && void refreshAccountSessions(account.token)}
+                    className="rounded-lg border border-brand-border px-3 py-1 text-xs hover:border-brand-accent"
+                  >
+                    Refresh chats
+                  </button>
+                </div>
+                {accountSessions.length === 0 ? (
+                  <p className="text-xs text-brand-muted">
+                    No saved chats on this account yet. Start a session while signed in.
+                  </p>
+                ) : (
+                  <ul className="max-h-40 space-y-1 overflow-y-auto text-xs">
+                    {accountSessions.map((s) => (
+                      <li
+                        key={s.sessionId}
+                        className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-border/60 bg-brand-bg px-2 py-1.5"
+                      >
+                        <span className="text-brand-text">
+                          {s.characterName} · {s.messageCount} msgs · {s.status}
+                        </span>
+                        {s.resumeCode && (
+                          <span className="font-mono text-brand-muted">{s.resumeCode}</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void handleAccountSessionResume(s.sessionId)}
+                          className="ml-auto text-brand-accent hover:underline"
+                        >
+                          Resume
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+                <input
+                  value={accountHandle}
+                  onChange={(e) => setAccountHandle(e.target.value)}
+                  placeholder="Handle"
+                  className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                />
+                <input
+                  type="password"
+                  value={accountPass}
+                  onChange={(e) => setAccountPass(e.target.value)}
+                  placeholder="Passphrase (6+)"
+                  className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                />
+                <button
+                  type="button"
+                  disabled={accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6}
+                  onClick={() => void handleAccountAuth("login")}
+                  className="rounded-lg bg-brand-accent px-3 py-2 text-sm text-white disabled:opacity-50"
+                >
+                  Sign in
+                </button>
+                <button
+                  type="button"
+                  disabled={accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6}
+                  onClick={() => void handleAccountAuth("register")}
+                  className="rounded-lg border border-brand-border px-3 py-2 text-sm disabled:opacity-50"
+                >
+                  Register
+                </button>
+              </div>
+            )}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                value={resumeCodeInput}
+                onChange={(e) => setResumeCodeInput(e.target.value.toUpperCase())}
+                placeholder="Resume code (e.g. AB3K9MPQ)"
+                className="min-w-[12rem] flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
+              />
+              <button
+                type="button"
+                onClick={() => void handleResumeCodeSubmit()}
+                className="rounded-lg border border-brand-accent/50 px-3 py-2 text-sm text-brand-text hover:border-brand-accent"
+              >
+                Open code
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] text-brand-muted">
+              Multi-device: sign in on any device, or share a resume code link — no raw tokens in URLs.
+            </p>
+          </div>
+        )}
       </header>
 
       <div className="mb-4 flex flex-col gap-4 lg:flex-row">
@@ -819,11 +1068,11 @@ export function ChatApp() {
                   <button
                     type="button"
                     onClick={sharePrivateResumeLink}
-                    disabled={status !== "ready" || !sessionId || !wsToken}
+                    disabled={status !== "ready" || !resumeCode}
                     className="rounded-lg border border-amber-500/40 px-4 py-2 text-sm text-amber-200 transition hover:border-amber-400 disabled:opacity-50"
-                    title="Private multi-device resume — anyone with the link can rejoin this transcript"
+                    title="Copy ?resume=CODE link — short code, no raw ws token"
                   >
-                    Copy private resume
+                    {resumeCode ? `Copy resume (${resumeCode})` : "Copy resume"}
                   </button>
                 </>
               )}

@@ -2,9 +2,11 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
+import { initAccountStore } from "./lib/accounts/account-store.js";
 import { initCustomCharacters } from "./lib/live/index.js";
 import { initSessionStore, pruneOldSessions } from "./lib/memory/session-store.js";
 import { LiveKitService } from "./lib/livekit/service.js";
+import { createAccountRoutes } from "./routes/accounts.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { ChatOrchestrator } from "./services/chat-orchestrator.js";
@@ -37,6 +39,12 @@ export async function buildApp() {
   app.log.info(
     { path: sessionStore.path, pruned },
     "Session memory store ready",
+  );
+
+  const accountStore = await initAccountStore(env.ACCOUNTS_PATH?.trim() || undefined);
+  app.log.info(
+    { path: accountStore.path, accounts: accountStore.accounts },
+    "Account store ready",
   );
 
   const avatarMemory = new MemoryManager();
@@ -80,6 +88,9 @@ export async function buildApp() {
 
   await app.register(createHealthRoutes(livekit));
   await app.register(createSessionRoutes(sessionManager, media, livekit), {
+    prefix: "/api/v1",
+  });
+  await app.register(createAccountRoutes(sessionManager, media, livekit), {
     prefix: "/api/v1",
   });
 

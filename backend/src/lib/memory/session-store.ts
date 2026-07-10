@@ -74,6 +74,36 @@ export async function deleteSessionRecord(sessionId: string): Promise<void> {
   }
 }
 
+export async function listSessionRecords(options?: {
+  accountId?: string;
+  limit?: number;
+}): Promise<SessionRecord[]> {
+  if (!sessionsDir) {
+    await initSessionStore();
+  }
+  const limit = options?.limit ?? 50;
+  const out: SessionRecord[] = [];
+  try {
+    const files = await readdir(sessionsDir!);
+    for (const name of files) {
+      if (!name.endsWith(".json")) continue;
+      try {
+        const raw = await readFile(join(sessionsDir!, name), "utf8");
+        const record = JSON.parse(raw) as SessionRecord;
+        if (options?.accountId && record.accountId !== options.accountId) continue;
+        out.push(record);
+      } catch {
+        /* skip bad files */
+      }
+    }
+  } catch {
+    return [];
+  }
+
+  out.sort((a, b) => (b.updatedAt || b.createdAt).localeCompare(a.updatedAt || a.createdAt));
+  return out.slice(0, limit);
+}
+
 /** Best-effort cleanup of very old ended sessions (days). */
 export async function pruneOldSessions(maxAgeDays = 14): Promise<number> {
   if (!sessionsDir) return 0;

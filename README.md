@@ -17,7 +17,8 @@ What works today:
 - Custom characters **persist** to disk (`CUSTOM_CHARACTERS_PATH`, Railway volume `/data`)
 - `DELETE /api/v1/characters/custom/:id` + UI delete
 - **Cross-visit memory**: transcripts saved under `SESSIONS_PATH`; UI **Resume last chat**
-- **Shareable links**: `?character=<id>&autostart=1` public; private `?session=&token=` resume
+- **Shareable links**: `?character=<id>&autostart=1` public; private `?resume=CODE` (no raw tokens)
+- **Accounts**: handle + passphrase → multi-device session list + claim/resume
 - **Custom avatar clips**: `mediaBase` folder + per-emotion URL overrides (`PATCH` custom chars)
 - Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,

@@ -11,10 +11,19 @@ import type {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-export async function createSession(characterId: CharacterId): Promise<CreateSessionResponse> {
+function authHeaders(accountToken?: string | null): HeadersInit {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (accountToken) headers.Authorization = `Bearer ${accountToken}`;
+  return headers;
+}
+
+export async function createSession(
+  characterId: CharacterId,
+  accountToken?: string | null,
+): Promise<CreateSessionResponse> {
   const res = await fetch(`${API_BASE}/api/v1/sessions`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(accountToken),
     body: JSON.stringify({ characterId }),
   });
 
@@ -41,6 +50,122 @@ export async function resumeSession(
     throw new Error(`Failed to resume session (${res.status}): ${text}`);
   }
 
+  return res.json() as Promise<CreateSessionResponse & { messages: MemoryMessage[] }>;
+}
+
+export async function resumeByCode(
+  code: string,
+): Promise<CreateSessionResponse & { messages: MemoryMessage[] }> {
+  const res = await fetch(`${API_BASE}/api/v1/sessions/resume-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to resume code (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<CreateSessionResponse & { messages: MemoryMessage[] }>;
+}
+
+export interface AccountAuthResponse {
+  accountId: string;
+  handle: string;
+  token: string;
+  expiresAt: string;
+}
+
+export async function registerAccount(
+  handle: string,
+  passphrase: string,
+): Promise<AccountAuthResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ handle, passphrase }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Register failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<AccountAuthResponse>;
+}
+
+export async function loginAccount(
+  handle: string,
+  passphrase: string,
+): Promise<AccountAuthResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ handle, passphrase }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Login failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<AccountAuthResponse>;
+}
+
+export async function logoutAccount(accountToken: string): Promise<void> {
+  await fetch(`${API_BASE}/api/v1/accounts/logout`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+  });
+}
+
+export interface AccountSessionSummary {
+  sessionId: string;
+  characterId: string;
+  characterName: string;
+  status: string;
+  messageCount: number;
+  resumeCode?: string;
+  updatedAt: string;
+  createdAt: string;
+}
+
+export async function listAccountSessions(
+  accountToken: string,
+): Promise<AccountSessionSummary[]> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions`, {
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`List sessions failed (${res.status}): ${text}`);
+  }
+  const data = (await res.json()) as { sessions: AccountSessionSummary[] };
+  return data.sessions ?? [];
+}
+
+export async function claimSession(
+  accountToken: string,
+  sessionId: string,
+): Promise<{ resumeCode?: string }> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}/claim`,
+    { method: "POST", headers: authHeaders(accountToken) },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Claim failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ resumeCode?: string }>;
+}
+
+export async function resumeAccountSession(
+  accountToken: string,
+  sessionId: string,
+): Promise<CreateSessionResponse & { messages: MemoryMessage[] }> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}/resume`,
+    { method: "POST", headers: authHeaders(accountToken) },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Account resume failed (${res.status}): ${text}`);
+  }
   return res.json() as Promise<CreateSessionResponse & { messages: MemoryMessage[] }>;
 }
 
