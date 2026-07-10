@@ -20,6 +20,11 @@ import { listManifestCharacters } from "../lib/prompts/manifest.js";
 import type { MediaWorker } from "../services/media-worker.js";
 import { resolveAccountToken } from "../lib/accounts/account-store.js";
 import {
+  buildSessionMarkdown,
+  exportFilename,
+  parseExportFormat,
+} from "../lib/memory/session-export.js";
+import {
   RATE_LIMITS,
   clientIp,
   enforceRateLimits,
@@ -48,6 +53,8 @@ const resumeCodeSchema = z.object({
 const exportSessionSchema = z.object({
   /** Current ws session token (guest or signed-in live chat). */
   token: z.string().min(8),
+  /** json (default) or md */
+  format: z.enum(["json", "md", "markdown"]).optional(),
 });
 
 const importSessionSchema = z.object({
@@ -528,28 +535,30 @@ export const createSessionRoutes = (
     });
 
     /**
-     * Export transcript as JSON without secrets.
+     * Export transcript as JSON or Markdown (body.format=md) without secrets.
      * Auth with body.token (wsToken) so guests can download mid-chat.
      */
     app.post("/sessions/:sessionId/export", async (request, reply) => {
       const { sessionId } = request.params as { sessionId: string };
       try {
         const body = exportSessionSchema.parse(request.body ?? {});
+        const format = parseExportFormat(body.format);
         const doc = await sessionManager.exportSession({
           sessionId,
           token: body.token,
         });
-        const safeName = doc.session.characterName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .slice(0, 40);
-        const short = sessionId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
-        const day = new Date().toISOString().slice(0, 10);
-        reply.header(
-          "Content-Disposition",
-          `attachment; filename="procharacters-${safeName || "chat"}-${short}-${day}.json"`,
+        const filename = exportFilename(
+          doc.session.characterName,
+          sessionId,
+          format === "md" ? "md" : "json",
         );
+        reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+        if (format === "md") {
+          reply.header("Content-Type", "text/markdown; charset=utf-8");
+          return reply.send(
+            buildSessionMarkdown(doc.session, { exportedAt: doc.exportedAt }),
+          );
+        }
         reply.header("Content-Type", "application/json; charset=utf-8");
         return doc;
       } catch (error) {

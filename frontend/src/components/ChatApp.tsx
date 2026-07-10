@@ -663,14 +663,18 @@ export function ChatApp() {
     flashCopy(ok ? `Resume link copied (${resumeCode})` : "Copy failed");
   };
 
-  const exportChatJson = async () => {
+  const exportChat = async (format: "json" | "md" = "json") => {
     if (!sessionId || !wsToken) {
       setError("Start a session before exporting");
       return;
     }
     try {
-      const { filename, doc } = await exportLiveSession(sessionId, wsToken);
-      flashCopy(`Exported ${doc.session.messageCount} msgs → ${filename}`);
+      const result = await exportLiveSession(sessionId, wsToken, format);
+      if (format === "md") {
+        flashCopy(`Markdown → ${result.filename}`);
+      } else {
+        flashCopy(`Exported ${result.doc?.session.messageCount ?? "?"} msgs → ${result.filename}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export failed");
     }
@@ -1441,12 +1445,21 @@ export function ChatApp() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => void exportChatJson()}
+                    onClick={() => void exportChat("json")}
                     disabled={!sessionId || !wsToken || messages.length === 0}
                     className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
                     title="Download chat history as JSON (no secrets)"
                   >
-                    Export
+                    JSON
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void exportChat("md")}
+                    disabled={!sessionId || !wsToken || messages.length === 0}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    title="Download chat history as Markdown"
+                  >
+                    MD
                   </button>
                 </>
               )}

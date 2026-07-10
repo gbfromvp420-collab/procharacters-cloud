@@ -294,13 +294,17 @@ export function AccountSettings() {
     }
   };
 
-  const onExportSession = async (sessionId: string) => {
+  const onExportSession = async (sessionId: string, format: "json" | "md" = "json") => {
     if (!account) return;
     setBusy(true);
     setError(null);
     try {
-      const { filename, doc } = await exportAccountSession(account.token, sessionId);
-      flash(`Exported ${doc.session.messageCount} msgs → ${filename}`);
+      const result = await exportAccountSession(account.token, sessionId, format);
+      if (format === "md") {
+        flash(`Markdown → ${result.filename}`);
+      } else {
+        flash(`Exported ${result.doc?.session.messageCount ?? "?"} msgs → ${result.filename}`);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export failed");
     } finally {
@@ -308,13 +312,19 @@ export function AccountSettings() {
     }
   };
 
-  const onExportAllSessions = async () => {
+  const onExportAllSessions = async (format: "json" | "md" = "json") => {
     if (!account) return;
     setBusy(true);
     setError(null);
     try {
-      const { filename, doc } = await exportAllAccountSessions(account.token);
-      flash(`Exported ${doc.sessionCount} chats (${doc.totalMessages} msgs) → ${filename}`);
+      const result = await exportAllAccountSessions(account.token, format);
+      if (format === "md") {
+        flash(`All chats Markdown → ${result.filename}`);
+      } else {
+        flash(
+          `Exported ${result.doc?.sessionCount ?? "?"} chats (${result.doc?.totalMessages ?? "?"} msgs) → ${result.filename}`,
+        );
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Export all failed");
     } finally {
@@ -632,11 +642,20 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => void onExportAllSessions()}
+                        onClick={() => void onExportAllSessions("json")}
                         className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
                         title="Download all chats as one JSON file"
                       >
                         Export all JSON
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onExportAllSessions("md")}
+                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                        title="Download all chats as one Markdown file"
+                      >
+                        Export all MD
                       </button>
                       <button
                         type="button"
@@ -682,11 +701,20 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId)}
+                        onClick={() => void onExportSession(s.sessionId, "json")}
                         className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
                         title="Download this chat as JSON"
                       >
-                        Export
+                        JSON
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void onExportSession(s.sessionId, "md")}
+                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                        title="Download this chat as Markdown"
+                      >
+                        MD
                       </button>
                       {s.resumeCode && (
                         <button

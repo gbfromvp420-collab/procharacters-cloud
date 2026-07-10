@@ -20,6 +20,12 @@ import {
   enforceRateLimits,
 } from "../lib/rate-limit.js";
 import {
+  buildAccountSessionsMarkdown,
+  buildSessionMarkdown,
+  exportFilename,
+  parseExportFormat,
+} from "../lib/memory/session-export.js";
+import {
   SessionAuthError,
   SessionImportError,
   SessionNotFoundError,
@@ -370,14 +376,23 @@ export const createAccountRoutes = (
       return { sessions };
     });
 
-    /** Download all account chats as one JSON document (no secrets). */
+    /** Download all account chats as JSON or Markdown (?format=md). */
     app.get("/accounts/me/sessions/export", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));
       if (!account) {
         return reply.code(401).send({ error: "Not signed in" });
       }
+      const q = request.query as { format?: string };
+      const format = parseExportFormat(q.format);
       const doc = await sessionManager.exportAccountSessions(account.id, account.handle);
       const day = new Date().toISOString().slice(0, 10);
+      if (format === "md") {
+        const md = buildAccountSessionsMarkdown(doc);
+        const filename = `procharacters-all-chats-${account.handle}-${day}.md`;
+        reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+        reply.header("Content-Type", "text/markdown; charset=utf-8");
+        return reply.send(md);
+      }
       const filename = `procharacters-all-chats-${account.handle}-${day}.json`;
       reply.header("Content-Disposition", `attachment; filename="${filename}"`);
       reply.header("Content-Type", "application/json; charset=utf-8");
@@ -450,27 +465,32 @@ export const createAccountRoutes = (
       }
     });
 
-    /** Download one saved chat as JSON (account-owned only). */
+    /** Download one saved chat as JSON or Markdown (?format=md). */
     app.get("/accounts/me/sessions/:sessionId/export", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));
       if (!account) {
         return reply.code(401).send({ error: "Not signed in" });
       }
       const { sessionId } = request.params as { sessionId: string };
+      const q = request.query as { format?: string };
+      const format = parseExportFormat(q.format);
       try {
         const doc = await sessionManager.exportSession({
           sessionId,
           accountId: account.id,
         });
-        const safeName = doc.session.characterName
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-|-$/g, "")
-          .slice(0, 40);
-        const short = sessionId.replace(/[^a-zA-Z0-9]/g, "").slice(0, 8);
-        const day = new Date().toISOString().slice(0, 10);
-        const filename = `procharacters-${safeName || "chat"}-${short}-${day}.json`;
+        const filename = exportFilename(
+          doc.session.characterName,
+          sessionId,
+          format === "md" ? "md" : "json",
+        );
         reply.header("Content-Disposition", `attachment; filename="${filename}"`);
+        if (format === "md") {
+          reply.header("Content-Type", "text/markdown; charset=utf-8");
+          return reply.send(
+            buildSessionMarkdown(doc.session, { exportedAt: doc.exportedAt }),
+          );
+        }
         reply.header("Content-Type", "application/json; charset=utf-8");
         return doc;
       } catch (error) {

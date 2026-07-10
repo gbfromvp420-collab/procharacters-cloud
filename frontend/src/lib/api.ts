@@ -502,42 +502,62 @@ export interface AccountSessionsExportDoc {
   sessions: SessionExportDoc["session"][];
 }
 
-/** Fetch + download one account-owned session as JSON. */
+export type SessionExportFormat = "json" | "md";
+
+/** Fetch + download one account-owned session as JSON or Markdown. */
 export async function exportAccountSession(
   accountToken: string,
   sessionId: string,
-): Promise<{ filename: string; doc: SessionExportDoc }> {
-  const { dispositionFilename, downloadJson } = await import("./download-json");
+  format: SessionExportFormat = "json",
+): Promise<{ filename: string; doc?: SessionExportDoc; markdown?: string }> {
+  const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
+  const qs = format === "md" ? "?format=md" : "";
   const res = await fetch(
-    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}/export`,
+    `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}/export${qs}`,
     { headers: authHeaders(accountToken) },
   );
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Export failed (${res.status}): ${text}`);
   }
-  const doc = (await res.json()) as SessionExportDoc;
   const day = new Date().toISOString().slice(0, 10);
+  if (format === "md") {
+    const markdown = await res.text();
+    const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.md`;
+    const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
+    downloadMarkdown(filename, markdown);
+    return { filename, markdown };
+  }
+  const doc = (await res.json()) as SessionExportDoc;
   const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.json`;
   const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
   downloadJson(filename, doc);
   return { filename, doc };
 }
 
-/** Fetch + download all account chats as one JSON file. */
+/** Fetch + download all account chats as JSON or one Markdown archive. */
 export async function exportAllAccountSessions(
   accountToken: string,
-): Promise<{ filename: string; doc: AccountSessionsExportDoc }> {
-  const { dispositionFilename, downloadJson } = await import("./download-json");
-  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/export`, {
+  format: SessionExportFormat = "json",
+): Promise<{ filename: string; doc?: AccountSessionsExportDoc; markdown?: string }> {
+  const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
+  const qs = format === "md" ? "?format=md" : "";
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/export${qs}`, {
     headers: authHeaders(accountToken),
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Export all failed (${res.status}): ${text}`);
   }
-  const doc = (await res.json()) as AccountSessionsExportDoc;
   const day = new Date().toISOString().slice(0, 10);
+  if (format === "md") {
+    const markdown = await res.text();
+    const fallback = `procharacters-all-chats-${day}.md`;
+    const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
+    downloadMarkdown(filename, markdown);
+    return { filename, markdown };
+  }
+  const doc = (await res.json()) as AccountSessionsExportDoc;
   const fallback = `procharacters-all-chats-${day}.json`;
   const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
   downloadJson(filename, doc);
@@ -642,22 +662,30 @@ export async function importAccountSession(
 export async function exportLiveSession(
   sessionId: string,
   wsToken: string,
-): Promise<{ filename: string; doc: SessionExportDoc }> {
-  const { dispositionFilename, downloadJson } = await import("./download-json");
+  format: SessionExportFormat = "json",
+): Promise<{ filename: string; doc?: SessionExportDoc; markdown?: string }> {
+  const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
   const res = await fetch(
     `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/export`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: wsToken }),
+      body: JSON.stringify({ token: wsToken, format }),
     },
   );
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Export failed (${res.status}): ${text}`);
   }
-  const doc = (await res.json()) as SessionExportDoc;
   const day = new Date().toISOString().slice(0, 10);
+  if (format === "md") {
+    const markdown = await res.text();
+    const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.md`;
+    const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
+    downloadMarkdown(filename, markdown);
+    return { filename, markdown };
+  }
+  const doc = (await res.json()) as SessionExportDoc;
   const fallback = `procharacters-chat-${sessionId.slice(0, 8)}-${day}.json`;
   const filename = dispositionFilename(res.headers.get("Content-Disposition"), fallback);
   downloadJson(filename, doc);
