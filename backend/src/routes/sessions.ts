@@ -20,7 +20,13 @@ import { listManifestCharacters } from "../lib/prompts/manifest.js";
 import type { MediaWorker } from "../services/media-worker.js";
 import { resolveAccountToken } from "../lib/accounts/account-store.js";
 import {
+  RATE_LIMITS,
+  clientIp,
+  enforceRateLimits,
+} from "../lib/rate-limit.js";
+import {
   SessionAuthError,
+  SessionImportError,
   SessionNotFoundError,
   type SessionManager,
 } from "../services/session-manager.js";
@@ -42,6 +48,15 @@ const resumeCodeSchema = z.object({
 const exportSessionSchema = z.object({
   /** Current ws session token (guest or signed-in live chat). */
   token: z.string().min(8),
+});
+
+const importSessionSchema = z.object({
+  /** Full export document, bulk export, or bare session object. */
+  document: z.unknown().optional(),
+  /** Optional character override when original id is gone. */
+  characterId: z.string().min(2).max(80).optional(),
+  /** Which session in a bulk export (default 0). */
+  sessionIndex: z.number().int().min(0).max(99).optional(),
 });
 
 const mediaOverridesSchema = z
@@ -400,6 +415,83 @@ export const createSessionRoutes = (
       } catch (error) {
         if (error instanceof CharacterNotFoundError || error instanceof LiveCharacterError) {
           return reply.code(404).send({ error: error.message });
+        }
+        throw error;
+      }
+    });
+
+    /**
+     * Restore a chat from export JSON into a new live session.
+     * Body may be the export itself, or { document, characterId?, sessionIndex? }.
+     * Optional Bearer account token attaches the new session to the account.
+     */
+    app.post("/sessions/import", async (request, reply) => {
+      const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+      const denied = enforceRateLimits([
+        {
+          key: `import:ip:${ip}`,
+          limit: RATE_LIMITS.importPerIp.limit,
+          windowMs: RATE_LIMITS.importPerIp.windowMs,
+        },
+      ]);
+      if (denied) {
+        reply.header("Retry-After", String(denied.retryAfterSec));
+        return reply.code(429).send({
+          error: "Import rate limit exceeded — try again later",
+          code: "RATE_LIMITED",
+          retryAfterSec: denied.retryAfterSec,
+        });
+      }
+
+      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const account = await resolveAccountToken(bearerToken(request));
+      const raw = request.body;
+
+      let document: unknown = raw;
+      let characterId: string | undefined;
+      let sessionIndex: number | undefined;
+
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        const parsedWrap = importSessionSchema.safeParse(raw);
+        if (parsedWrap.success && (parsedWrap.data.document !== undefined || "schema" in raw)) {
+          if (parsedWrap.data.document !== undefined) {
+            document = parsedWrap.data.document;
+          }
+          characterId = parsedWrap.data.characterId;
+          sessionIndex = parsedWrap.data.sessionIndex;
+        }
+      }
+
+      try {
+        const session = await sessionManager.importSession(document, wsBaseUrl, {
+          accountId: account?.id,
+          characterId,
+          sessionIndex,
+        });
+        const avatarState = media.enrich(session.characterId, session.avatarState);
+        sessionManager.updateSession(session.sessionId, { avatarState });
+
+        let livekitJoin;
+        if (livekit.isConfigured) {
+          const identity = `user-${session.sessionId.slice(0, 8)}`;
+          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
+          await media.publish(session.sessionId, session.characterId, avatarState);
+        }
+
+        return reply.code(201).send({
+          ...session,
+          avatarState,
+          livekit: livekitJoin,
+        });
+      } catch (error) {
+        if (error instanceof SessionImportError) {
+          return reply.code(400).send({ error: error.message, code: error.code });
+        }
+        if (error instanceof CharacterNotFoundError || error instanceof LiveCharacterError) {
+          return reply.code(404).send({ error: error.message });
+        }
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
         }
         throw error;
       }

@@ -544,6 +544,100 @@ export async function exportAllAccountSessions(
   return { filename, doc };
 }
 
+export interface ImportSessionResult extends CreateSessionResponse {
+  messages: MemoryMessage[];
+  imported: {
+    messageCount: number;
+    originalSessionId?: string;
+    originalCharacterId: string;
+    characterId: string;
+    truncated?: boolean;
+    dropped?: number;
+    bulkIndex?: number;
+    bulkTotal?: number;
+  };
+}
+
+/** Restore export JSON as a new live session (optional account via token). */
+export async function importSessionDocument(
+  document: unknown,
+  options?: {
+    accountToken?: string | null;
+    characterId?: string;
+    sessionIndex?: number;
+  },
+): Promise<ImportSessionResult> {
+  const body: Record<string, unknown> = { document };
+  if (options?.characterId) body.characterId = options.characterId;
+  if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
+
+  // Also accept posting the export root itself (no wrapper) for convenience
+  const payload =
+    document &&
+    typeof document === "object" &&
+    !Array.isArray(document) &&
+    ("schema" in (document as object) || "session" in (document as object) || "sessions" in (document as object))
+      ? options?.characterId || typeof options?.sessionIndex === "number"
+        ? body
+        : document
+      : body;
+
+  const res = await fetch(`${API_BASE}/api/v1/sessions/import`, {
+    method: "POST",
+    headers: authHeaders(options?.accountToken),
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: string; code?: string };
+      if (j.error) detail = j.code ? `${j.error} (${j.code})` : j.error;
+    } catch {
+      /* keep raw */
+    }
+    throw new Error(`Import failed (${res.status}): ${detail}`);
+  }
+  return res.json() as Promise<ImportSessionResult>;
+}
+
+/** Account-owned import (always attaches to signed-in account). */
+export async function importAccountSession(
+  accountToken: string,
+  document: unknown,
+  options?: { characterId?: string; sessionIndex?: number },
+): Promise<ImportSessionResult> {
+  const body: Record<string, unknown> = { document };
+  if (options?.characterId) body.characterId = options.characterId;
+  if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
+
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/import`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+    body: JSON.stringify(
+      document &&
+        typeof document === "object" &&
+        !options?.characterId &&
+        typeof options?.sessionIndex !== "number" &&
+        ("schema" in (document as object) || "session" in (document as object))
+        ? document
+        : body,
+    ),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let detail = text;
+    try {
+      const j = JSON.parse(text) as { error?: string; code?: string };
+      if (j.error) detail = j.code ? `${j.error} (${j.code})` : j.error;
+    } catch {
+      /* keep raw */
+    }
+    throw new Error(`Import failed (${res.status}): ${detail}`);
+  }
+  return res.json() as Promise<ImportSessionResult>;
+}
+
 /** Export active/guest chat via session token (no account required). */
 export async function exportLiveSession(
   sessionId: string,

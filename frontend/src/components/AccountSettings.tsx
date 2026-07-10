@@ -8,6 +8,7 @@ import {
   exportAccountSession,
   exportAllAccountSessions,
   fetchAccountMe,
+  importAccountSession,
   linkEmailToAccount,
   listAccountSessions,
   loginAccount,
@@ -321,6 +322,30 @@ export function AccountSettings() {
     }
   };
 
+  const onImportFile = async (file: File | null) => {
+    if (!account || !file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const text = await file.text();
+      let document: unknown;
+      try {
+        document = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
+      }
+      const result = await importAccountSession(account.token, document);
+      await refresh(account.token);
+      flash(
+        `Imported ${result.imported.messageCount} msgs as new chat (${result.sessionId.slice(0, 8)}…)`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onWipeSessions = async () => {
     if (!account) return;
     if (!window.confirm("Wipe ALL saved chats on this account? This cannot be undone.")) return;
@@ -588,6 +613,20 @@ export function AccountSettings() {
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
                 <div className="flex flex-wrap items-center gap-3">
+                  <label className="cursor-pointer text-xs text-brand-text hover:text-brand-accent">
+                    <span className={busy ? "opacity-50" : ""}>Import JSON</span>
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      disabled={busy}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        e.target.value = "";
+                        void onImportFile(f);
+                      }}
+                    />
+                  </label>
                   {sessions.length > 0 && (
                     <>
                       <button
@@ -618,9 +657,13 @@ export function AccountSettings() {
                   </button>
                 </div>
               </div>
+              <p className="mb-3 text-[11px] text-brand-muted">
+                Import a previously exported chat JSON to restore the transcript as a new saved
+                session (new id — old secrets never reused).
+              </p>
               {sessions.length === 0 ? (
                 <p className="text-xs text-brand-muted">
-                  No chats yet. Start one in live chat while signed in.
+                  No chats yet. Start one in live chat while signed in, or import a JSON export.
                 </p>
               ) : (
                 <ul className="space-y-2">

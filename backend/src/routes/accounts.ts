@@ -21,6 +21,7 @@ import {
 } from "../lib/rate-limit.js";
 import {
   SessionAuthError,
+  SessionImportError,
   SessionNotFoundError,
   type SessionManager,
 } from "../services/session-manager.js";
@@ -381,6 +382,72 @@ export const createAccountRoutes = (
       reply.header("Content-Disposition", `attachment; filename="${filename}"`);
       reply.header("Content-Type", "application/json; charset=utf-8");
       return doc;
+    });
+
+    /** Restore export JSON onto this account as a new saved chat (then auto-resumable). */
+    app.post("/accounts/me/sessions/import", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+      const denied = enforceRateLimits([
+        {
+          key: `import:ip:${ip}`,
+          limit: RATE_LIMITS.importPerIp.limit,
+          windowMs: RATE_LIMITS.importPerIp.windowMs,
+        },
+        {
+          key: `import:acct:${account.id}`,
+          limit: RATE_LIMITS.importPerIp.limit,
+          windowMs: RATE_LIMITS.importPerIp.windowMs,
+        },
+      ]);
+      if (denied) return rateLimited(reply, denied);
+
+      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const raw = request.body;
+      let document: unknown = raw;
+      let characterId: string | undefined;
+      let sessionIndex: number | undefined;
+
+      if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+        const body = raw as Record<string, unknown>;
+        if (body.document !== undefined) document = body.document;
+        if (typeof body.characterId === "string") characterId = body.characterId;
+        if (typeof body.sessionIndex === "number") sessionIndex = body.sessionIndex;
+      }
+
+      try {
+        const session = await sessionManager.importSession(document, wsBaseUrl, {
+          accountId: account.id,
+          characterId,
+          sessionIndex,
+        });
+        const avatarState = media.enrich(session.characterId, session.avatarState);
+        sessionManager.updateSession(session.sessionId, { avatarState });
+
+        let livekitJoin;
+        if (livekit.isConfigured) {
+          const identity = `user-${session.sessionId.slice(0, 8)}`;
+          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
+          await media.publish(session.sessionId, session.characterId, avatarState);
+        }
+
+        return reply.code(201).send({
+          ...session,
+          avatarState,
+          livekit: livekitJoin,
+        });
+      } catch (error) {
+        if (error instanceof SessionImportError) {
+          return reply.code(400).send({ error: error.message, code: error.code });
+        }
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
+        }
+        throw error;
+      }
     });
 
     /** Download one saved chat as JSON (account-owned only). */

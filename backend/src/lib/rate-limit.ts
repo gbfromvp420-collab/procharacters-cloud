@@ -93,6 +93,10 @@ export const RATE_LIMITS = {
     limit: Number(process.env.RATE_LIMIT_UPLOAD_CHAR ?? 20),
     windowMs: Number(process.env.RATE_LIMIT_UPLOAD_CHAR_WINDOW_MS ?? 60 * 60 * 1000),
   },
+  importPerIp: {
+    limit: Number(process.env.RATE_LIMIT_IMPORT_IP ?? 20),
+    windowMs: Number(process.env.RATE_LIMIT_IMPORT_IP_WINDOW_MS ?? 60 * 60 * 1000),
+  },
 };
 
 /** Apply multiple limiters; returns first denial or null if all pass. */

@@ -12,6 +12,7 @@ import {
   createSession,
   deleteCustomCharacter,
   exportLiveSession,
+  importSessionDocument,
   listAccountSessions,
   listLiveCharacters,
   fetchAccountMe,
@@ -493,6 +494,35 @@ export function ChatApp() {
       await connectSession(characterId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start session");
+      setStatus("error");
+      setRestarting(false);
+    }
+  };
+
+  const importChatFromFile = async (file: File | null) => {
+    if (!file) return;
+    clearSessionState();
+    setError(null);
+    setStatus("connecting");
+    try {
+      const text = await file.text();
+      let document: unknown;
+      try {
+        document = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
+      }
+      const session = await importSessionDocument(document, {
+        accountToken: account?.token,
+      });
+      await openLiveSession(session);
+      flashCopy(
+        `Imported ${session.imported.messageCount} messages${
+          session.imported.truncated ? " (trimmed)" : ""
+        }`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
       setStatus("error");
       setRestarting(false);
     }
@@ -1318,6 +1348,22 @@ export function ChatApp() {
                       Resume last
                     </button>
                   )}
+                  <label
+                    className="btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm"
+                    title="Restore a previously exported chat JSON"
+                  >
+                    Import
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        e.target.value = "";
+                        void importChatFromFile(f);
+                      }}
+                    />
+                  </label>
                   <button
                     type="button"
                     onClick={() => setShowCreate((v) => !v)}

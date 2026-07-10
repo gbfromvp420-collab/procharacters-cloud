@@ -125,3 +125,254 @@ export function exportFilename(characterName: string, sessionId: string): string
   const day = new Date().toISOString().slice(0, 10);
   return `procharacters-${safe || "chat"}-${short}-${day}.json`;
 }
+
+// ── Import / restore ────────────────────────────────────────────────────────
+
+const MAX_IMPORT_MESSAGES = Number(process.env.MAX_IMPORT_MESSAGES ?? 100);
+const MAX_MESSAGE_CHARS = Number(process.env.MAX_IMPORT_MESSAGE_CHARS ?? 8000);
+
+export type ImportSessionPayload = SessionExport["session"];
+
+export type ParseImportOk = {
+  ok: true;
+  session: ImportSessionPayload;
+  sourceSchema: string;
+  bulkIndex?: number;
+  bulkTotal?: number;
+};
+
+export type ParseImportErr = {
+  ok: false;
+  error: string;
+  code: "BAD_JSON" | "BAD_SCHEMA" | "EMPTY" | "BAD_MESSAGES" | "BAD_INDEX";
+};
+
+export type ParseImportResult = ParseImportOk | ParseImportErr;
+
+function isRole(v: unknown): v is MemoryMessage["role"] {
+  return v === "user" || v === "assistant";
+}
+
+function sanitizeMessages(raw: unknown): {
+  messages: ExportedMessage[];
+  truncated: boolean;
+  dropped: number;
+} {
+  if (!Array.isArray(raw)) {
+    return { messages: [], truncated: false, dropped: 0 };
+  }
+
+  const cleaned: ExportedMessage[] = [];
+  let dropped = 0;
+
+  for (const item of raw) {
+    if (!item || typeof item !== "object") {
+      dropped += 1;
+      continue;
+    }
+    const row = item as Record<string, unknown>;
+    if (!isRole(row.role)) {
+      dropped += 1;
+      continue;
+    }
+    const content = typeof row.content === "string" ? row.content.trim() : "";
+    if (!content) {
+      dropped += 1;
+      continue;
+    }
+    const id =
+      typeof row.id === "string" && /^[a-zA-Z0-9_-]{6,80}$/.test(row.id)
+        ? row.id
+        : `import-${cleaned.length + 1}`;
+    const createdAt =
+      typeof row.createdAt === "string" && !Number.isNaN(Date.parse(row.createdAt))
+        ? row.createdAt
+        : new Date().toISOString();
+    cleaned.push({
+      id,
+      role: row.role,
+      content: content.slice(0, MAX_MESSAGE_CHARS),
+      createdAt,
+    });
+  }
+
+  const truncated = cleaned.length > MAX_IMPORT_MESSAGES;
+  const messages = truncated ? cleaned.slice(-MAX_IMPORT_MESSAGES) : cleaned;
+  return { messages, truncated, dropped };
+}
+
+function coerceSessionShape(
+  raw: unknown,
+): { session: ImportSessionPayload; truncated: boolean; dropped: number } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const s = raw as Record<string, unknown>;
+  const characterId = typeof s.characterId === "string" ? s.characterId.trim() : "";
+  if (!characterId || characterId.length > 80) return null;
+
+  const { messages, truncated, dropped } = sanitizeMessages(s.messages);
+  const characterName =
+    typeof s.characterName === "string" && s.characterName.trim()
+      ? s.characterName.trim().slice(0, 80)
+      : characterId;
+  const promptVersion =
+    typeof s.promptVersion === "string" && s.promptVersion.trim()
+      ? s.promptVersion.trim().slice(0, 40)
+      : "v1";
+
+  let avatarState: ImportSessionPayload["avatarState"];
+  if (s.avatarState && typeof s.avatarState === "object") {
+    const a = s.avatarState as Record<string, unknown>;
+    avatarState = {
+      emotion: String(a.emotion ?? "idle").slice(0, 40),
+      pose: String(a.pose ?? "standing").slice(0, 40),
+      action: String(a.action ?? "none").slice(0, 40),
+      arousalLevel: Math.min(1, Math.max(0, Number(a.arousalLevel) || 0)),
+      clothingState: String(a.clothingState ?? "dressed").slice(0, 40),
+    };
+  }
+
+  const session: ImportSessionPayload = {
+    sessionId: typeof s.sessionId === "string" ? s.sessionId : "imported",
+    characterId,
+    characterName,
+    promptVersion,
+    status: s.status === "ended" ? "ended" : "active",
+    createdAt:
+      typeof s.createdAt === "string" && !Number.isNaN(Date.parse(s.createdAt))
+        ? s.createdAt
+        : new Date().toISOString(),
+    updatedAt:
+      typeof s.updatedAt === "string" && !Number.isNaN(Date.parse(s.updatedAt))
+        ? s.updatedAt
+        : new Date().toISOString(),
+    expiresAt:
+      typeof s.expiresAt === "string" && !Number.isNaN(Date.parse(s.expiresAt))
+        ? s.expiresAt
+        : new Date().toISOString(),
+    messageCount: messages.length,
+    messages,
+    ...(avatarState ? { avatarState } : {}),
+  };
+
+  return { session, truncated, dropped };
+}
+
+/**
+ * Accept single-session export, bulk account export (+ optional index),
+ * or a bare session object (from bulk.sessions[i]).
+ */
+export function parseImportDocument(
+  input: unknown,
+  options?: { sessionIndex?: number },
+): ParseImportResult & { truncated?: boolean; dropped?: number } {
+  if (input == null) {
+    return { ok: false, error: "Empty import body", code: "EMPTY" };
+  }
+
+  let doc: unknown = input;
+  // Allow { document: <export> } wrapper
+  if (
+    doc &&
+    typeof doc === "object" &&
+    "document" in doc &&
+    (doc as { document: unknown }).document != null
+  ) {
+    doc = (doc as { document: unknown }).document;
+  }
+
+  if (!doc || typeof doc !== "object") {
+    return { ok: false, error: "Import must be a JSON object", code: "BAD_JSON" };
+  }
+
+  const root = doc as Record<string, unknown>;
+  const schema = typeof root.schema === "string" ? root.schema : "";
+
+  // Single session export
+  if (schema === SESSION_EXPORT_SCHEMA || ("session" in root && root.session)) {
+    const coerced = coerceSessionShape(root.session);
+    if (!coerced) {
+      return {
+        ok: false,
+        error: "Invalid session object in export (need characterId + messages[])",
+        code: "BAD_MESSAGES",
+      };
+    }
+    if (coerced.session.messages.length === 0) {
+      return {
+        ok: false,
+        error: "Export has no valid chat messages to restore",
+        code: "EMPTY",
+      };
+    }
+    return {
+      ok: true,
+      session: coerced.session,
+      sourceSchema: schema || SESSION_EXPORT_SCHEMA,
+      truncated: coerced.truncated,
+      dropped: coerced.dropped,
+    };
+  }
+
+  // Bulk account export
+  if (schema === ACCOUNT_SESSIONS_EXPORT_SCHEMA || Array.isArray(root.sessions)) {
+    const list = Array.isArray(root.sessions) ? root.sessions : [];
+    if (list.length === 0) {
+      return { ok: false, error: "Bulk export has no sessions", code: "EMPTY" };
+    }
+    const idx =
+      typeof options?.sessionIndex === "number" && Number.isFinite(options.sessionIndex)
+        ? Math.floor(options.sessionIndex)
+        : typeof root.sessionIndex === "number"
+          ? Math.floor(root.sessionIndex)
+          : 0;
+    if (idx < 0 || idx >= list.length) {
+      return {
+        ok: false,
+        error: `sessionIndex ${idx} out of range (0–${list.length - 1})`,
+        code: "BAD_INDEX",
+      };
+    }
+    const coerced = coerceSessionShape(list[idx]);
+    if (!coerced || coerced.session.messages.length === 0) {
+      return {
+        ok: false,
+        error: `Session at index ${idx} has no valid messages`,
+        code: "BAD_MESSAGES",
+      };
+    }
+    return {
+      ok: true,
+      session: coerced.session,
+      sourceSchema: schema || ACCOUNT_SESSIONS_EXPORT_SCHEMA,
+      bulkIndex: idx,
+      bulkTotal: list.length,
+      truncated: coerced.truncated,
+      dropped: coerced.dropped,
+    };
+  }
+
+  // Bare session object
+  if (typeof root.characterId === "string" && Array.isArray(root.messages)) {
+    const coerced = coerceSessionShape(root);
+    if (!coerced || coerced.session.messages.length === 0) {
+      return {
+        ok: false,
+        error: "Bare session has no valid messages",
+        code: "BAD_MESSAGES",
+      };
+    }
+    return {
+      ok: true,
+      session: coerced.session,
+      sourceSchema: "bare-session",
+      truncated: coerced.truncated,
+      dropped: coerced.dropped,
+    };
+  }
+
+  return {
+    ok: false,
+    error: `Unsupported export schema. Expected ${SESSION_EXPORT_SCHEMA} or ${ACCOUNT_SESSIONS_EXPORT_SCHEMA}`,
+    code: "BAD_SCHEMA",
+  };
+}

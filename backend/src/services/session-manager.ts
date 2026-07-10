@@ -7,9 +7,12 @@ import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
   buildAccountSessionsExport,
   buildSessionExport,
+  parseImportDocument,
   type AccountSessionsExport,
+  type ImportSessionPayload,
   type SessionExport,
 } from "../lib/memory/session-export.js";
+import { LiveCharacterError } from "../lib/live/character-catalog.js";
 import {
   deleteSessionRecord,
   listSessionRecords,
@@ -35,6 +38,16 @@ export class SessionAuthError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "SessionAuthError";
+  }
+}
+
+export class SessionImportError extends Error {
+  constructor(
+    message: string,
+    public readonly code: string = "IMPORT_FAILED",
+  ) {
+    super(message);
+    this.name = "SessionImportError";
   }
 }
 
@@ -310,6 +323,129 @@ export class SessionManager {
       this.sessions.set(record.id, record);
     }
     return buildAccountSessionsExport({ accountId, handle, records });
+  }
+
+  /**
+   * Restore a transcript from export JSON into a brand-new session
+   * (new id + wsToken; never reuses old secrets).
+   */
+  async importSession(
+    document: unknown,
+    wsBaseUrl: string,
+    options: {
+      accountId?: string;
+      characterId?: string;
+      sessionIndex?: number;
+    } = {},
+  ): Promise<
+    CreateSessionResult & {
+      messages: SessionRecord["memory"]["messages"];
+      imported: {
+        messageCount: number;
+        originalSessionId?: string;
+        originalCharacterId: string;
+        characterId: string;
+        truncated?: boolean;
+        dropped?: number;
+        bulkIndex?: number;
+        bulkTotal?: number;
+      };
+    }
+  > {
+    const parsed = parseImportDocument(document, {
+      sessionIndex: options.sessionIndex,
+    });
+    if (!parsed.ok) {
+      throw new SessionImportError(parsed.error, parsed.code);
+    }
+
+    const payload: ImportSessionPayload = parsed.session;
+    const characterId = (options.characterId?.trim() || payload.characterId).trim();
+
+    try {
+      assertLiveCharacter(characterId);
+    } catch (error) {
+      if (error instanceof LiveCharacterError) {
+        throw new SessionImportError(
+          `Character '${characterId}' is not available to restore. Create it again or pass characterId override. ${error.message}`,
+          "CHARACTER_MISSING",
+        );
+      }
+      throw error;
+    }
+
+    const promptVersion = payload.promptVersion || DEFAULT_PROMPT_VERSION;
+    const promptSnapshot = await createPromptSnapshot(characterId, promptVersion);
+
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + this.sessionTtlMinutes * 60_000);
+    const sessionId = randomUUID();
+    const wsToken = randomUUID();
+    const resumeCode = await registerResumeCode(sessionId, options.accountId);
+
+    const messages = payload.messages.map((m) => ({
+      id: m.id,
+      role: m.role,
+      content: m.content,
+      createdAt: m.createdAt,
+    }));
+
+    // Keep within memory window for live LLM context
+    const windowed =
+      messages.length > this.maxMessageWindow
+        ? messages.slice(-this.maxMessageWindow)
+        : messages;
+
+    const defaultAvatar = this.memory.defaultAvatarState(promptSnapshot.characterId);
+    const avatarState = payload.avatarState
+      ? {
+          ...defaultAvatar,
+          emotion: payload.avatarState.emotion || defaultAvatar.emotion,
+          pose: payload.avatarState.pose || defaultAvatar.pose,
+          action: payload.avatarState.action || defaultAvatar.action,
+          arousalLevel:
+            typeof payload.avatarState.arousalLevel === "number"
+              ? payload.avatarState.arousalLevel
+              : defaultAvatar.arousalLevel,
+          clothingState:
+            payload.avatarState.clothingState || defaultAvatar.clothingState,
+        }
+      : defaultAvatar;
+
+    const record: SessionRecord = {
+      id: sessionId,
+      characterId: promptSnapshot.characterId,
+      promptVersion: promptSnapshot.promptVersion,
+      promptSnapshot,
+      wsToken,
+      status: "active",
+      memory: { messages: windowed },
+      avatarState,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+      resumeCode,
+      ...(options.accountId ? { accountId: options.accountId } : {}),
+    };
+
+    this.sessions.set(sessionId, record);
+    await this.persist(record);
+
+    return {
+      ...this.toCreateResult(record, wsBaseUrl),
+      messages: windowed,
+      imported: {
+        messageCount: windowed.length,
+        originalSessionId:
+          payload.sessionId !== "imported" ? payload.sessionId : undefined,
+        originalCharacterId: payload.characterId,
+        characterId: promptSnapshot.characterId,
+        truncated: parsed.truncated === true || messages.length > windowed.length,
+        dropped: parsed.dropped,
+        bulkIndex: parsed.bulkIndex,
+        bulkTotal: parsed.bulkTotal,
+      },
+    };
   }
 
   private async reactivate(
