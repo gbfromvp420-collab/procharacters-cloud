@@ -174,6 +174,12 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Link
+              href="/account"
+              className="rounded-xl border border-brand-border px-4 py-2.5 text-sm text-brand-text transition hover:border-brand-accent"
+            >
+              Account
+            </Link>
+            <Link
               href="/chat"
               className="rounded-xl bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-accent/25 transition hover:bg-brand-accentDim"
             >

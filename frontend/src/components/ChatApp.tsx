@@ -1015,6 +1015,12 @@ export function ChatApp() {
           <a href="/" className="text-xs text-brand-muted hover:text-brand-accent hover:underline">
             Gallery
           </a>
+          <a
+            href="/account"
+            className="text-xs text-brand-muted hover:text-brand-accent hover:underline"
+          >
+            Settings
+          </a>
           <button
             type="button"
             onClick={() => setShowAccount((v) => !v)}

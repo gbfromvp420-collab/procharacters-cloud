@@ -74,6 +74,8 @@ export interface AccountAuthResponse {
   handle: string;
   token: string;
   expiresAt: string;
+  email?: string;
+  linked?: boolean;
 }
 
 export async function registerAccount(
@@ -364,7 +366,13 @@ export async function uploadCharacterClipsBatch(
 
 export async function fetchAccountMe(
   accountToken: string,
-): Promise<{ accountId: string; handle: string; email?: string; createdAt: string }> {
+): Promise<{
+  accountId: string;
+  handle: string;
+  email?: string;
+  createdAt: string;
+  hasPassphrase?: boolean;
+}> {
   const res = await fetch(`${API_BASE}/api/v1/accounts/me`, {
     headers: authHeaders(accountToken),
   });
@@ -377,7 +385,25 @@ export async function fetchAccountMe(
     handle: string;
     email?: string;
     createdAt: string;
+    hasPassphrase?: boolean;
   }>;
+}
+
+export async function setAccountPassphrase(
+  accountToken: string,
+  newPassphrase: string,
+  currentPassphrase?: string,
+): Promise<{ ok: boolean; hasPassphrase: boolean }> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/passphrase`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+    body: JSON.stringify({ newPassphrase, currentPassphrase }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Passphrase update failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ ok: boolean; hasPassphrase: boolean }>;
 }
 
 export function getApiBase(): string {

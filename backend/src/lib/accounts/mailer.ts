@@ -65,8 +65,8 @@ export function buildMagicLinkUrl(token: string, siteBase?: string): string {
     process.env.MAGIC_LINK_BASE_URL?.replace(/\/$/, "") ||
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     "https://procharacters-web-production-7288.up.railway.app";
-  // Magic links open the chat app (account panel / session restore lives there).
-  const url = new URL(`${base}/chat`);
+  // Magic links open account settings (sign-in + email link confirm).
+  const url = new URL(`${base}/account`);
   url.searchParams.set("magic", token);
   return url.toString();
 }

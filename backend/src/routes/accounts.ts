@@ -3,11 +3,13 @@ import { z } from "zod";
 import { env } from "../config/env.js";
 import {
   AccountError,
+  accountHasPassphrase,
   createAccount,
   loginAccount,
   logoutAccountToken,
   requestMagicLink,
   resolveAccountToken,
+  setAccountPassphrase,
   verifyMagicLink,
 } from "../lib/accounts/account-store.js";
 import { buildMagicLinkUrl, sendMagicLinkEmail } from "../lib/accounts/mailer.js";
@@ -30,6 +32,11 @@ const magicRequestSchema = z.object({
 
 const magicVerifySchema = z.object({
   token: z.string().min(16).max(200),
+});
+
+const passphraseSchema = z.object({
+  newPassphrase: z.string().min(6).max(200),
+  currentPassphrase: z.string().min(6).max(200).optional(),
 });
 
 export function bearerToken(request: FastifyRequest): string | undefined {
@@ -233,7 +240,38 @@ export const createAccountRoutes = (
         handle: account.handle,
         email: account.email,
         createdAt: account.createdAt,
+        hasPassphrase: accountHasPassphrase(account.id),
       };
+    });
+
+    app.post("/accounts/me/passphrase", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      try {
+        const body = passphraseSchema.parse(request.body ?? {});
+        await setAccountPassphrase(account.id, {
+          newPassphrase: body.newPassphrase,
+          currentPassphrase: body.currentPassphrase,
+        });
+        return {
+          ok: true,
+          hasPassphrase: true,
+          message: accountHasPassphrase(account.id)
+            ? "Passphrase updated"
+            : "Passphrase set",
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof AccountError) {
+          const status = error.code === "AUTH" ? 401 : 400;
+          return reply.code(status).send({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
     });
 
     app.get("/accounts/me/sessions", async (request, reply) => {

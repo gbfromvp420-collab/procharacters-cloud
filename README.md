@@ -19,7 +19,7 @@ What works today:
 - **Cross-visit memory**: transcripts saved under `SESSIONS_PATH`; UI **Resume last chat**
 - **Gallery homepage**: `/` with **Featured** row, search/sort/filter; chat at `/chat`; cards at `/character/<id>`
 - **Private resume**: `?resume=CODE` (no raw tokens)
-- **Accounts**: email **magic link**, handle/passphrase, **link email** to existing handle accounts
+- **Accounts**: full **settings page** at `/account` (magic link, passphrase, sessions, email link)
 - **Custom avatar clips**: single + **batch upload**, URL overrides, live previews in the editor
 - Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,

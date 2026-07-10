@@ -434,6 +434,47 @@ export function getAccount(accountId: string): AccountRecord | null {
   return accounts.get(accountId) ?? null;
 }
 
+/** Set or change passphrase for a signed-in account. */
+export async function setAccountPassphrase(
+  accountId: string,
+  options: { newPassphrase: string; currentPassphrase?: string },
+): Promise<AccountRecord> {
+  await ensureLoaded();
+  const account = accounts.get(accountId);
+  if (!account) {
+    throw new AccountError("Account not found", "NOT_FOUND");
+  }
+  if (!options.newPassphrase || options.newPassphrase.length < 6) {
+    throw new AccountError("New passphrase must be at least 6 characters", "VALIDATION");
+  }
+
+  if (account.passphraseHash && account.salt) {
+    if (!options.currentPassphrase) {
+      throw new AccountError("Current passphrase is required", "VALIDATION");
+    }
+    const attempt = hashPassphrase(options.currentPassphrase, account.salt);
+    if (!safeEqualHex(attempt, account.passphraseHash)) {
+      throw new AccountError("Current passphrase is incorrect", "AUTH");
+    }
+  }
+
+  const salt = randomBytes(16).toString("hex");
+  const passphraseHash = hashPassphrase(options.newPassphrase, salt);
+  const next: AccountRecord = {
+    ...account,
+    salt,
+    passphraseHash,
+  };
+  accounts.set(accountId, next);
+  await persist();
+  return next;
+}
+
+export function accountHasPassphrase(accountId: string): boolean {
+  const account = accounts.get(accountId);
+  return !!(account?.passphraseHash && account.salt);
+}
+
 const RESUME_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 export function generateResumeCode(): string {
