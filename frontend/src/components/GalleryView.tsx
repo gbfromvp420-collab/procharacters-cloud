@@ -154,8 +154,10 @@ function CharacterTile({
   );
 }
 
+type GalleryFilter = "all" | "default" | "custom" | "featured" | "mine";
+
 export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
-  const [filter, setFilter] = useState<"all" | "default" | "custom" | "featured">("all");
+  const [filter, setFilter] = useState<GalleryFilter>("all");
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortMode>("featured");
   const [notice, setNotice] = useState<string | null>(null);
@@ -216,18 +218,20 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     };
   }, [characters]);
 
+  const resumeCount = useMemo(() => Object.keys(resumes).length, [resumes]);
+
   const counts = useMemo(() => {
     return {
       all: characters.length,
       featured: characters.filter((c) => c.featured).length,
       default: characters.filter((c) => c.kind === "default").length,
       custom: characters.filter((c) => c.kind === "custom").length,
+      mine: characters.filter((c) => !!resumes[c.id]).length,
     };
-  }, [characters]);
-
-  const resumeCount = useMemo(() => Object.keys(resumes).length, [resumes]);
+  }, [characters, resumes]);
 
   const featuredRow = useMemo(() => {
+    if (filter === "mine") return [];
     const q = query.trim().toLowerCase();
     return characters.filter((c) => {
       if (!c.featured) return false;
@@ -237,11 +241,12 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         .toLowerCase();
       return hay.includes(q);
     });
-  }, [characters, query]);
+  }, [characters, query, filter]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = characters.filter((c) => {
+      if (filter === "mine" && !resumes[c.id]) return false;
       if (filter === "featured" && !c.featured) return false;
       if (filter === "default" && c.kind !== "default") return false;
       if (filter === "custom" && c.kind !== "custom") return false;
@@ -268,8 +273,19 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       return a.displayName.localeCompare(b.displayName);
     });
 
+    // When browsing "My chats", prefer most-recently updated resume first
+    if (filter === "mine") {
+      list = [...list].sort((a, b) => {
+        const ra = resumes[a.id]?.updatedAt ?? "";
+        const rb = resumes[b.id]?.updatedAt ?? "";
+        if (ra !== rb) return rb.localeCompare(ra);
+        return a.displayName.localeCompare(b.displayName);
+      });
+      return list;
+    }
+
     return list;
-  }, [characters, filter, query, sort]);
+  }, [characters, filter, query, sort, resumes]);
 
   const flash = (label: string | null) => {
     if (!label) return;
@@ -302,7 +318,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     flash(shareUrlResultLabel(result, `Resume ${resume.resumeCode}`));
   };
 
-  const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0;
+  const showFeaturedStrip =
+    filter === "all" && !query.trim() && featuredRow.length > 0;
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -415,6 +432,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               {(
                 [
                   ["all", "All"],
+                  ["mine", "My chats"],
                   ["featured", "Featured"],
                   ["default", "Signature"],
                   ["custom", "Custom"],
@@ -424,7 +442,20 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                   key={key}
                   type="button"
                   onClick={() => setFilter(key)}
-                  className={`chip ${filter === key ? "chip-active" : "chip-idle"}`}
+                  className={`chip ${filter === key ? "chip-active" : "chip-idle"} ${
+                    key === "mine" && counts.mine > 0
+                      ? "border-amber-500/40 text-amber-100/90"
+                      : ""
+                  }`}
+                  title={
+                    key === "mine"
+                      ? counts.mine > 0
+                        ? "Characters you have a saved resume for"
+                        : signedInHandle
+                          ? "No saved chats yet — start one while signed in"
+                          : "Sign in and chat to see your saved characters here"
+                      : undefined
+                  }
                 >
                   {label}
                   <span className="ml-1 opacity-70">({counts[key]})</span>
@@ -442,9 +473,17 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-brand-border bg-brand-panel p-8 text-center sm:p-10">
-            <p className="text-brand-text">No characters match this search.</p>
+            <p className="text-brand-text">
+              {filter === "mine"
+                ? "No saved chats yet"
+                : "No characters match this search."}
+            </p>
             <p className="mt-2 text-sm text-brand-muted">
-              Try another filter, clear search, or create a custom model in chat.
+              {filter === "mine"
+                ? signedInHandle
+                  ? "Start a live chat while signed in — those characters show up here with resume codes."
+                  : "Sign in on Account, then chat — your resumes will appear under My chats."
+                : "Try another filter, clear search, or create a custom model in chat."}
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-3">
               <button
@@ -455,11 +494,16 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 }}
                 className="text-sm text-brand-accent hover:underline"
               >
-                Clear filters
+                {filter === "mine" ? "Browse all" : "Clear filters"}
               </button>
               <Link href="/chat" className="text-sm text-brand-accent hover:underline">
                 Go to chat →
               </Link>
+              {filter === "mine" && !signedInHandle && (
+                <Link href="/account" className="text-sm text-brand-accent hover:underline">
+                  Sign in →
+                </Link>
+              )}
             </div>
           </div>
         ) : (
