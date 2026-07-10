@@ -14,12 +14,30 @@ import {
 } from "../lib/accounts/account-store.js";
 import { buildMagicLinkUrl, sendMagicLinkEmail } from "../lib/accounts/mailer.js";
 import {
+  RATE_LIMITS,
+  clientIp,
+  enforceRateLimits,
+} from "../lib/rate-limit.js";
+import {
   SessionAuthError,
   SessionNotFoundError,
   type SessionManager,
 } from "../services/session-manager.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import type { MediaWorker } from "../services/media-worker.js";
+
+function rateLimited(
+  reply: import("fastify").FastifyReply,
+  result: { retryAfterSec: number; limit: number },
+) {
+  reply.header("Retry-After", String(result.retryAfterSec));
+  reply.header("X-RateLimit-Limit", String(result.limit));
+  return reply.code(429).send({
+    error: "Too many requests — try again later",
+    code: "RATE_LIMITED",
+    retryAfterSec: result.retryAfterSec,
+  });
+}
 
 const credentialsSchema = z.object({
   handle: z.string().min(3).max(40),
@@ -70,6 +88,16 @@ export const createAccountRoutes = (
 ): FastifyPluginAsync => {
   return async (app) => {
     app.post("/accounts/register", async (request, reply) => {
+      const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+      const denied = enforceRateLimits([
+        {
+          key: `auth:ip:${ip}`,
+          limit: RATE_LIMITS.authPerIp.limit,
+          windowMs: RATE_LIMITS.authPerIp.windowMs,
+        },
+      ]);
+      if (denied) return rateLimited(reply, denied);
+
       try {
         const body = credentialsSchema.parse(request.body ?? {});
         const account = await createAccount(body.handle, body.passphrase);
@@ -92,6 +120,16 @@ export const createAccountRoutes = (
     });
 
     app.post("/accounts/login", async (request, reply) => {
+      const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+      const denied = enforceRateLimits([
+        {
+          key: `auth:ip:${ip}`,
+          limit: RATE_LIMITS.authPerIp.limit,
+          windowMs: RATE_LIMITS.authPerIp.windowMs,
+        },
+      ]);
+      if (denied) return rateLimited(reply, denied);
+
       try {
         const body = credentialsSchema.parse(request.body ?? {});
         const account = await loginAccount(body.handle, body.passphrase);
@@ -121,6 +159,22 @@ export const createAccountRoutes = (
     app.post("/accounts/magic/request", async (request, reply) => {
       try {
         const body = magicRequestSchema.parse(request.body ?? {});
+        const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+        const emailKey = body.email.trim().toLowerCase();
+        const denied = enforceRateLimits([
+          {
+            key: `magic:ip:${ip}`,
+            limit: RATE_LIMITS.magicPerIp.limit,
+            windowMs: RATE_LIMITS.magicPerIp.windowMs,
+          },
+          {
+            key: `magic:email:${emailKey}`,
+            limit: RATE_LIMITS.magicPerEmail.limit,
+            windowMs: RATE_LIMITS.magicPerEmail.windowMs,
+          },
+        ]);
+        if (denied) return rateLimited(reply, denied);
+
         const magic = await requestMagicLink(body.email);
         const siteBase =
           env.MAGIC_LINK_BASE_URL ||
@@ -168,6 +222,22 @@ export const createAccountRoutes = (
       }
       try {
         const body = magicRequestSchema.parse(request.body ?? {});
+        const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+        const emailKey = body.email.trim().toLowerCase();
+        const denied = enforceRateLimits([
+          {
+            key: `magic:ip:${ip}`,
+            limit: RATE_LIMITS.magicPerIp.limit,
+            windowMs: RATE_LIMITS.magicPerIp.windowMs,
+          },
+          {
+            key: `magic:email:${emailKey}`,
+            limit: RATE_LIMITS.magicPerEmail.limit,
+            windowMs: RATE_LIMITS.magicPerEmail.windowMs,
+          },
+        ]);
+        if (denied) return rateLimited(reply, denied);
+
         const magic = await requestMagicLink(body.email, { linkAccountId: account.id });
         const siteBase =
           env.MAGIC_LINK_BASE_URL ||
@@ -206,6 +276,16 @@ export const createAccountRoutes = (
     });
 
     app.post("/accounts/magic/verify", async (request, reply) => {
+      const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+      const denied = enforceRateLimits([
+        {
+          key: `auth:ip:${ip}`,
+          limit: RATE_LIMITS.authPerIp.limit,
+          windowMs: RATE_LIMITS.authPerIp.windowMs,
+        },
+      ]);
+      if (denied) return rateLimited(reply, denied);
+
       try {
         const body = magicVerifySchema.parse(request.body ?? {});
         const account = await verifyMagicLink(body.token);

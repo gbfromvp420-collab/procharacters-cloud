@@ -1,5 +1,5 @@
 import multipart from "@fastify/multipart";
-import type { FastifyPluginAsync, FastifyRequest } from "fastify";
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from "fastify";
 import { env } from "../config/env.js";
 import type { MediaClipKey, MediaOverrides } from "../lib/live/custom-characters.js";
 import { getCustomCharacter, updateCustomCharacter } from "../lib/live/index.js";
@@ -9,6 +9,43 @@ import {
   saveCharacterClip,
   toPublicMediaUrl,
 } from "../lib/media/upload-store.js";
+import {
+  RATE_LIMITS,
+  clientIp,
+  enforceRateLimits,
+} from "../lib/rate-limit.js";
+
+function rateLimited(
+  reply: FastifyReply,
+  result: { retryAfterSec: number; limit: number },
+) {
+  reply.header("Retry-After", String(result.retryAfterSec));
+  reply.header("X-RateLimit-Limit", String(result.limit));
+  return reply.code(429).send({
+    error: "Upload rate limit exceeded — try again later",
+    code: "RATE_LIMITED",
+    retryAfterSec: result.retryAfterSec,
+  });
+}
+
+function checkUploadLimits(
+  request: FastifyRequest,
+  characterId: string,
+): ReturnType<typeof enforceRateLimits> {
+  const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+  return enforceRateLimits([
+    {
+      key: `upload:ip:${ip}`,
+      limit: RATE_LIMITS.uploadPerIp.limit,
+      windowMs: RATE_LIMITS.uploadPerIp.windowMs,
+    },
+    {
+      key: `upload:char:${characterId}`,
+      limit: RATE_LIMITS.uploadPerCharacter.limit,
+      windowMs: RATE_LIMITS.uploadPerCharacter.windowMs,
+    },
+  ]);
+}
 
 const CLIP_KEYS: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
 
@@ -74,6 +111,9 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
         return reply.code(404).send({ error: "Custom character not found" });
       }
 
+      const denied = checkUploadLimits(request, characterId);
+      if (denied) return rateLimited(reply, denied);
+
       const file = await request.file();
       if (!file) {
         return reply.code(400).send({ error: "Expected multipart file field" });
@@ -130,6 +170,9 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
       if (!getCustomCharacter(characterId)) {
         return reply.code(404).send({ error: "Custom character not found" });
       }
+
+      const denied = checkUploadLimits(request, characterId);
+      if (denied) return rateLimited(reply, denied);
 
       const parts = request.files();
       const uploaded: Array<{ emotion: MediaClipKey; url: string; bytes: number; filename: string }> =
