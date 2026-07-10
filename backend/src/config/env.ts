@@ -27,6 +27,8 @@ const envSchema = z.object({
     .refine((v) => !v || /^https?:\/\//.test(v), {
       message: "PUBLIC_API_URL must start with http:// or https://",
     }),
+  /** JSON file for runtime custom characters (use a Railway volume path in prod). */
+  CUSTOM_CHARACTERS_PATH: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

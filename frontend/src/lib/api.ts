@@ -49,6 +49,17 @@ export async function createCustomCharacter(
   return res.json() as Promise<CreateCustomCharacterResponse>;
 }
 
+export async function deleteCustomCharacter(characterId: string): Promise<void> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}`,
+    { method: "DELETE" },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Failed to delete character (${res.status}): ${text}`);
+  }
+}
+
 export function getApiBase(): string {
   return API_BASE;
 }

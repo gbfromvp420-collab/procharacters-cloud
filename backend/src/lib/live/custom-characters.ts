@@ -1,4 +1,7 @@
 import { randomUUID } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import { repoPath } from "../paths.js";
 import type { LiveCharacterProfile } from "./character-catalog.js";
 
 export type CustomAvatarBase = "twink-default" | "female-default";
@@ -29,7 +32,22 @@ export interface CustomCharacterRecord extends LiveCharacterProfile {
   createdAt: string;
 }
 
+interface CustomCharacterFile {
+  version: 1;
+  updatedAt: string;
+  characters: CustomCharacterRecord[];
+}
+
 const store = new Map<string, CustomCharacterRecord>();
+let loaded = false;
+let persistPath: string | null = null;
+
+function resolvePersistPath(): string {
+  if (process.env.CUSTOM_CHARACTERS_PATH?.trim()) {
+    return process.env.CUSTOM_CHARACTERS_PATH.trim();
+  }
+  return repoPath("data", "custom-characters.json");
+}
 
 function slugify(value: string): string {
   return value
@@ -92,6 +110,68 @@ function buildTraits(input: {
   ].filter(Boolean);
 }
 
+function isRecord(value: unknown): value is CustomCharacterRecord {
+  if (!value || typeof value !== "object") return false;
+  const r = value as CustomCharacterRecord;
+  return (
+    r.kind === "custom" &&
+    typeof r.id === "string" &&
+    typeof r.displayName === "string" &&
+    typeof r.characterPrompt === "string" &&
+    typeof r.appearance === "string"
+  );
+}
+
+async function persist(): Promise<void> {
+  if (!persistPath) return;
+
+  const payload: CustomCharacterFile = {
+    version: 1,
+    updatedAt: new Date().toISOString(),
+    characters: listCustomCharacters(),
+  };
+
+  await mkdir(dirname(persistPath), { recursive: true });
+  await writeFile(persistPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
+}
+
+/**
+ * Load custom characters from disk. Safe to call multiple times.
+ * Missing file = empty store (not an error).
+ */
+export async function initCustomCharacters(path?: string): Promise<{
+  path: string;
+  count: number;
+}> {
+  const resolved = path?.trim() || resolvePersistPath();
+  persistPath = resolved;
+  store.clear();
+
+  try {
+    const raw = await readFile(resolved, "utf8");
+    const parsed = JSON.parse(raw) as CustomCharacterFile | CustomCharacterRecord[];
+    const list = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(parsed.characters)
+        ? parsed.characters
+        : [];
+
+    for (const entry of list) {
+      if (isRecord(entry)) {
+        store.set(entry.id, entry);
+      }
+    }
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException)?.code;
+    if (code !== "ENOENT") {
+      console.error(`[custom-characters] failed to load ${resolved}:`, error);
+    }
+  }
+
+  loaded = true;
+  return { path: resolved, count: store.size };
+}
+
 export function listCustomCharacters(): CustomCharacterRecord[] {
   return [...store.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
@@ -100,7 +180,13 @@ export function getCustomCharacter(id: string): CustomCharacterRecord | null {
   return store.get(id) ?? null;
 }
 
-export function createCustomCharacter(raw: CustomCharacterInput): CustomCharacterRecord {
+export async function createCustomCharacter(
+  raw: CustomCharacterInput,
+): Promise<CustomCharacterRecord> {
+  if (!loaded) {
+    await initCustomCharacters();
+  }
+
   const name = raw.name?.trim();
   const appearance = raw.appearance?.trim();
   if (!name || name.length < 2) {
@@ -118,7 +204,8 @@ export function createCustomCharacter(raw: CustomCharacterInput): CustomCharacte
     (raw.avatarBase === "female-default"
       ? "crotchless undies, visible arousal"
       : "sheer thong / g-string, visible arousal");
-  const avatarBase: CustomAvatarBase = raw.avatarBase === "female-default" ? "female-default" : "twink-default";
+  const avatarBase: CustomAvatarBase =
+    raw.avatarBase === "female-default" ? "female-default" : "twink-default";
   const audience = raw.audience ?? (avatarBase === "female-default" ? "straight" : "gay");
 
   const slug = slugify(name) || "custom";
@@ -139,7 +226,8 @@ export function createCustomCharacter(raw: CustomCharacterInput): CustomCharacte
     displayName: name,
     defaultVersion: "custom-v1",
     consistencyTraits: buildTraits({ appearance, clothing, energy }),
-    signatureClothing: clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit",
+    signatureClothing:
+      clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit",
     energyLabel: energy.slice(0, 80),
     avatarBase,
     appearance,
@@ -152,5 +240,20 @@ export function createCustomCharacter(raw: CustomCharacterInput): CustomCharacte
   };
 
   store.set(id, record);
+  await persist();
   return record;
+}
+
+export async function deleteCustomCharacter(id: string): Promise<boolean> {
+  if (!loaded) {
+    await initCustomCharacters();
+  }
+  if (!store.has(id)) return false;
+  store.delete(id);
+  await persist();
+  return true;
+}
+
+export function getCustomCharactersPersistPath(): string | null {
+  return persistPath;
 }

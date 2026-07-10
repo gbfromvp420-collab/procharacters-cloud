@@ -5,7 +5,12 @@ import { AvatarPanel } from "@/components/AvatarPanel";
 import { AvatarVideo } from "@/components/AvatarVideo";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
 import { TypingIndicator } from "@/components/TypingIndicator";
-import { createCustomCharacter, createSession, listLiveCharacters } from "@/lib/api";
+import {
+  createCustomCharacter,
+  createSession,
+  deleteCustomCharacter,
+  listLiveCharacters,
+} from "@/lib/api";
 import type {
   AvatarState,
   CharacterId,
@@ -327,6 +332,21 @@ export function ChatApp() {
     }
   };
 
+  const handleDeleteCustom = async () => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") return;
+    if (!window.confirm(`Delete custom character “${selected.displayName}”?`)) return;
+
+    setError(null);
+    try {
+      await deleteCustomCharacter(selected.id);
+      setCharacters((prev) => prev.filter((c) => c.id !== selected.id));
+      setCharacter("twink-default");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete character");
+    }
+  };
+
   const sendMessage = () => {
     const ws = wsRef.current;
     const text = input.trim();
@@ -425,6 +445,15 @@ export function ChatApp() {
                   >
                     {showCreate ? "Close" : "Create Custom"}
                   </button>
+                  {characters.some((c) => c.id === character && c.kind === "custom") && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteCustom}
+                      className="rounded-lg border border-red-500/40 px-4 py-2 text-sm text-red-300 transition hover:border-red-400"
+                    >
+                      Delete
+                    </button>
+                  )}
                 </>
               ) : (
                 <>

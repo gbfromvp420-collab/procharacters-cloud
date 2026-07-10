@@ -8,7 +8,10 @@ export {
 } from "./character-catalog.js";
 export {
   createCustomCharacter,
+  deleteCustomCharacter,
   getCustomCharacter,
+  getCustomCharactersPersistPath,
+  initCustomCharacters,
   listCustomCharacters,
 } from "./custom-characters.js";
 export type {

@@ -8,6 +8,7 @@ import {
   LiveCharacterError,
   LivePromptInjector,
   createCustomCharacter,
+  deleteCustomCharacter,
   listCustomCharacters,
 } from "../lib/live/index.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
@@ -103,7 +104,7 @@ export const createSessionRoutes = (
     app.post("/characters/custom", async (request, reply) => {
       try {
         const body = createCustomCharacterSchema.parse(request.body ?? {});
-        const created = createCustomCharacter(body);
+        const created = await createCustomCharacter(body);
         return reply.code(201).send({
           id: created.id,
           displayName: created.displayName,
@@ -122,6 +123,18 @@ export const createSessionRoutes = (
         const message = error instanceof Error ? error.message : "Failed to create character";
         return reply.code(400).send({ error: message });
       }
+    });
+
+    app.delete("/characters/custom/:characterId", async (request, reply) => {
+      const { characterId } = request.params as { characterId: string };
+      if (!characterId.startsWith("custom-")) {
+        return reply.code(400).send({ error: "Only custom characters can be deleted" });
+      }
+      const removed = await deleteCustomCharacter(characterId);
+      if (!removed) {
+        return reply.code(404).send({ error: "Custom character not found" });
+      }
+      return { ok: true, id: characterId };
     });
 
     app.post("/sessions", async (request, reply) => {

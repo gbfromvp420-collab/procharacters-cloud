@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
 import { env } from "./config/env.js";
+import { initCustomCharacters } from "./lib/live/index.js";
 import { LiveKitService } from "./lib/livekit/service.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createSessionRoutes } from "./routes/sessions.js";
@@ -19,6 +20,14 @@ export async function buildApp() {
 
   await app.register(cors, { origin: true });
   await app.register(websocket);
+
+  const customStore = await initCustomCharacters(
+    env.CUSTOM_CHARACTERS_PATH?.trim() || undefined,
+  );
+  app.log.info(
+    { path: customStore.path, count: customStore.count },
+    "Custom characters store ready",
+  );
 
   const avatarMemory = new MemoryManager();
   const sessionManager = new SessionManager(

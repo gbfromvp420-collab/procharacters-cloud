@@ -47,6 +47,12 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 
 Do **not** set `PORT` — Railway injects it.
 
+Optional persistence for custom characters:
+- Mount a **volume** at `/data` on `procharacters-api`
+- Set `CUSTOM_CHARACTERS_PATH=/data/custom-characters.json` (already the Docker default)
+
+Without a volume, custom characters still save to `/data` inside the container but are lost on redeploy.
+
 4. Health: `GET /health` → `"status":"ok"`
 
 ### 2. Frontend service (`procharacters-web`)
