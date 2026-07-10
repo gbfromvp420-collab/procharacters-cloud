@@ -179,7 +179,8 @@ export class SessionManager {
   }
 
   endSession(sessionId: string, _reason = "user_ended"): SessionRecord {
-    const session = this.getSession(sessionId);
+    // Ensure session is loaded/active path validated, then soft-end.
+    this.getSession(sessionId);
     // Keep transcript for cross-visit resume — do not wipe memory.
     const updated = this.updateSession(sessionId, { status: "ended" });
     void this.persist(updated);
