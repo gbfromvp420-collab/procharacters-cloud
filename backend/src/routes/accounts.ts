@@ -6,8 +6,11 @@ import {
   createAccount,
   loginAccount,
   logoutAccountToken,
+  requestMagicLink,
   resolveAccountToken,
+  verifyMagicLink,
 } from "../lib/accounts/account-store.js";
+import { buildMagicLinkUrl, sendMagicLinkEmail } from "../lib/accounts/mailer.js";
 import {
   SessionAuthError,
   SessionNotFoundError,
@@ -19,6 +22,14 @@ import type { MediaWorker } from "../services/media-worker.js";
 const credentialsSchema = z.object({
   handle: z.string().min(3).max(40),
   passphrase: z.string().min(6).max(200),
+});
+
+const magicRequestSchema = z.object({
+  email: z.string().email().max(200),
+});
+
+const magicVerifySchema = z.object({
+  token: z.string().min(16).max(200),
 });
 
 export function bearerToken(request: FastifyRequest): string | undefined {
@@ -100,12 +111,79 @@ export const createAccountRoutes = (
       return { ok: true };
     });
 
+    app.post("/accounts/magic/request", async (request, reply) => {
+      try {
+        const body = magicRequestSchema.parse(request.body ?? {});
+        const magic = await requestMagicLink(body.email);
+        const siteBase =
+          env.MAGIC_LINK_BASE_URL ||
+          process.env.NEXT_PUBLIC_SITE_URL ||
+          "https://procharacters-web-production-7288.up.railway.app";
+        const magicUrl = buildMagicLinkUrl(magic.token, siteBase);
+        const send = await sendMagicLinkEmail({
+          to: magic.email,
+          magicUrl,
+          expiresAt: magic.expiresAt,
+        });
+
+        // Always safe: never leak token when email was actually delivered.
+        const includeLink = !send.delivered || env.isDev;
+
+        return {
+          ok: true,
+          email: magic.email,
+          expiresAt: magic.expiresAt,
+          delivered: send.delivered,
+          provider: send.provider,
+          isNewAccount: magic.isNewAccount,
+          // Dev / no-mailer fallback so Gary can still sign in without SMTP setup
+          ...(includeLink ? { magicUrl, devHint: "Open this link to sign in (email not sent)" } : {}),
+          ...(send.error ? { mailError: send.error } : {}),
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof AccountError) {
+          return reply.code(400).send({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
+    });
+
+    app.post("/accounts/magic/verify", async (request, reply) => {
+      try {
+        const body = magicVerifySchema.parse(request.body ?? {});
+        const account = await verifyMagicLink(body.token);
+        return {
+          accountId: account.id,
+          handle: account.handle,
+          email: account.email,
+          token: account.token,
+          expiresAt: account.expiresAt,
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        if (error instanceof AccountError) {
+          return reply.code(401).send({ error: error.message, code: error.code });
+        }
+        throw error;
+      }
+    });
+
     app.get("/accounts/me", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));
       if (!account) {
         return reply.code(401).send({ error: "Not signed in" });
       }
-      return { accountId: account.id, handle: account.handle, createdAt: account.createdAt };
+      return {
+        accountId: account.id,
+        handle: account.handle,
+        email: account.email,
+        createdAt: account.createdAt,
+      };
     });
 
     app.get("/accounts/me/sessions", async (request, reply) => {

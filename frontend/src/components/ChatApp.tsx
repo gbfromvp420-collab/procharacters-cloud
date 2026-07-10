@@ -15,11 +15,13 @@ import {
   loginAccount,
   logoutAccount,
   registerAccount,
+  requestMagicLink,
   resumeAccountSession,
   resumeByCode,
   resumeSession,
   updateCustomCharacter,
   uploadCharacterClip,
+  verifyMagicLink,
   type AccountSessionSummary,
 } from "@/lib/api";
 import {
@@ -120,6 +122,8 @@ export function ChatApp() {
   const [showAccount, setShowAccount] = useState(false);
   const [accountHandle, setAccountHandle] = useState("");
   const [accountPass, setAccountPass] = useState("");
+  const [accountEmail, setAccountEmail] = useState("");
+  const [magicDevLink, setMagicDevLink] = useState<string | null>(null);
   const [accountBusy, setAccountBusy] = useState(false);
   const [accountSessions, setAccountSessions] = useState<AccountSessionSummary[]>([]);
   const [resumeCodeInput, setResumeCodeInput] = useState("");
@@ -507,13 +511,44 @@ export function ChatApp() {
     }
   };
 
-  // Deep-links: ?character=…&autostart=1  or  ?resume=CODE  or legacy ?session=&token=
+  // Deep-links: ?magic=  ?character=  ?resume=  or legacy ?session=&token=
   useEffect(() => {
     if (deepLinkHandledRef.current) return;
     if (typeof window === "undefined") return;
-    if (characters.length === 0) return;
 
     const query = parseShareQuery(window.location.search);
+
+    if (query.magicToken) {
+      deepLinkHandledRef.current = true;
+      void (async () => {
+        setAccountBusy(true);
+        setError(null);
+        try {
+          const result = await verifyMagicLink(query.magicToken!);
+          const stored: StoredAccount = {
+            accountId: result.accountId,
+            handle: result.handle,
+            token: result.token,
+            expiresAt: result.expiresAt,
+            savedAt: new Date().toISOString(),
+          };
+          saveStoredAccount(stored);
+          setAccount(stored);
+          setShowAccount(true);
+          await refreshAccountSessions(stored.token);
+          flashCopy(`Signed in as @${result.handle}`);
+          replaceCharacterInUrl(null);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Magic link failed");
+          setShowAccount(true);
+        } finally {
+          setAccountBusy(false);
+        }
+      })();
+      return;
+    }
+
+    if (characters.length === 0) return;
     if (!query.characterId && !query.resumeCode && !(query.sessionId && query.token)) return;
 
     deepLinkHandledRef.current = true;
@@ -588,6 +623,35 @@ export function ChatApp() {
     flashCopy(ok ? `Resume link copied (${resumeCode})` : "Copy failed");
   };
 
+  const applyAccountAuth = async (result: {
+    accountId: string;
+    handle: string;
+    token: string;
+    expiresAt: string;
+  }, label: string) => {
+    const stored: StoredAccount = {
+      accountId: result.accountId,
+      handle: result.handle,
+      token: result.token,
+      expiresAt: result.expiresAt,
+      savedAt: new Date().toISOString(),
+    };
+    saveStoredAccount(stored);
+    setAccount(stored);
+    setAccountPass("");
+    setMagicDevLink(null);
+    await refreshAccountSessions(stored.token);
+    if (sessionId) {
+      try {
+        const claimed = await claimSession(stored.token, sessionId);
+        if (claimed.resumeCode) setResumeCode(claimed.resumeCode);
+      } catch {
+        /* optional claim */
+      }
+    }
+    flashCopy(label);
+  };
+
   const handleAccountAuth = async (mode: "login" | "register") => {
     setAccountBusy(true);
     setError(null);
@@ -596,28 +660,31 @@ export function ChatApp() {
         mode === "register"
           ? await registerAccount(accountHandle.trim(), accountPass)
           : await loginAccount(accountHandle.trim(), accountPass);
-      const stored: StoredAccount = {
-        accountId: result.accountId,
-        handle: result.handle,
-        token: result.token,
-        expiresAt: result.expiresAt,
-        savedAt: new Date().toISOString(),
-      };
-      saveStoredAccount(stored);
-      setAccount(stored);
-      setAccountPass("");
-      await refreshAccountSessions(stored.token);
-      if (sessionId) {
-        try {
-          const claimed = await claimSession(stored.token, sessionId);
-          if (claimed.resumeCode) setResumeCode(claimed.resumeCode);
-        } catch {
-          /* optional claim */
-        }
-      }
-      flashCopy(mode === "register" ? "Account created" : `Signed in as ${result.handle}`);
+      await applyAccountAuth(
+        result,
+        mode === "register" ? "Account created" : `Signed in as ${result.handle}`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Account auth failed");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleMagicRequest = async () => {
+    setAccountBusy(true);
+    setError(null);
+    setMagicDevLink(null);
+    try {
+      const result = await requestMagicLink(accountEmail.trim());
+      if (result.magicUrl) {
+        setMagicDevLink(result.magicUrl);
+        flashCopy(result.delivered ? "Email sent" : "Magic link ready (open below)");
+      } else {
+        flashCopy(result.delivered ? "Check your email" : "Request sent");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Magic link failed");
     } finally {
       setAccountBusy(false);
     }
@@ -939,36 +1006,72 @@ export function ChatApp() {
                 )}
               </div>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
-                <input
-                  value={accountHandle}
-                  onChange={(e) => setAccountHandle(e.target.value)}
-                  placeholder="Handle"
-                  className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
-                />
-                <input
-                  type="password"
-                  value={accountPass}
-                  onChange={(e) => setAccountPass(e.target.value)}
-                  placeholder="Passphrase (6+)"
-                  className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
-                />
-                <button
-                  type="button"
-                  disabled={accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6}
-                  onClick={() => void handleAccountAuth("login")}
-                  className="rounded-lg bg-brand-accent px-3 py-2 text-sm text-white disabled:opacity-50"
-                >
-                  Sign in
-                </button>
-                <button
-                  type="button"
-                  disabled={accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6}
-                  onClick={() => void handleAccountAuth("register")}
-                  className="rounded-lg border border-brand-border px-3 py-2 text-sm disabled:opacity-50"
-                >
-                  Register
-                </button>
+              <div className="space-y-3">
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    placeholder="Email for magic link"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <button
+                    type="button"
+                    disabled={accountBusy || !accountEmail.includes("@")}
+                    onClick={() => void handleMagicRequest()}
+                    className="rounded-lg bg-brand-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    {accountBusy ? "Sending…" : "Email magic link"}
+                  </button>
+                </div>
+                {magicDevLink && (
+                  <div className="rounded-lg border border-brand-accent/40 bg-brand-bg p-2 text-xs">
+                    <p className="text-brand-muted">
+                      Email provider not configured — open this link to sign in:
+                    </p>
+                    <a
+                      href={magicDevLink}
+                      className="mt-1 block break-all text-brand-accent hover:underline"
+                    >
+                      {magicDevLink}
+                    </a>
+                  </div>
+                )}
+                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+                  <input
+                    value={accountHandle}
+                    onChange={(e) => setAccountHandle(e.target.value)}
+                    placeholder="Handle (optional)"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <input
+                    type="password"
+                    value={accountPass}
+                    onChange={(e) => setAccountPass(e.target.value)}
+                    placeholder="Passphrase (6+)"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <button
+                    type="button"
+                    disabled={
+                      accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6
+                    }
+                    onClick={() => void handleAccountAuth("login")}
+                    className="rounded-lg border border-brand-border px-3 py-2 text-sm disabled:opacity-50"
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6
+                    }
+                    onClick={() => void handleAccountAuth("register")}
+                    className="rounded-lg border border-brand-border px-3 py-2 text-sm disabled:opacity-50"
+                  >
+                    Register
+                  </button>
+                </div>
               </div>
             )}
             <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -987,7 +1090,8 @@ export function ChatApp() {
               </button>
             </div>
             <p className="mt-2 text-[11px] text-brand-muted">
-              Multi-device: sign in on any device, or share a resume code link — no raw tokens in URLs.
+              Prefer email magic link for multi-device sign-in. Passphrase still works. Resume codes
+              share chats without raw tokens.
             </p>
           </div>
         )}

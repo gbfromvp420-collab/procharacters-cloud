@@ -19,7 +19,7 @@ What works today:
 - **Cross-visit memory**: transcripts saved under `SESSIONS_PATH`; UI **Resume last chat**
 - **Share cards**: `/character/<id>` pretty pages + OG metadata; `?character=` autostart still works
 - **Private resume**: `?resume=CODE` (no raw tokens)
-- **Accounts**: handle + passphrase → multi-device session list + claim/resume
+- **Accounts**: email **magic link** (Resend optional) + handle/passphrase fallback; multi-device sessions
 - **Custom avatar clips**: `mediaBase`, URL overrides, and **in-browser mp4/webm upload** to API volume
 - Model switch in UI (pick another character → **Switch / New**)
 - WS messages: `user_message`, `ping`, `end_session` → `session_ready`,

@@ -33,6 +33,11 @@ const envSchema = z.object({
   SESSIONS_PATH: z.string().optional(),
   /** Accounts + resume-code index JSON (Railway volume recommended). */
   ACCOUNTS_PATH: z.string().optional(),
+  /** Resend API key for magic-link emails (optional — without it, API returns the link). */
+  RESEND_API_KEY: z.string().optional(),
+  MAGIC_LINK_FROM: z.string().optional(),
+  /** Frontend origin used in magic links, e.g. https://procharacters-web-….up.railway.app */
+  MAGIC_LINK_BASE_URL: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

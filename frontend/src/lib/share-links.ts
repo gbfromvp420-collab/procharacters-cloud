@@ -5,6 +5,8 @@ export interface ShareQuery {
   autostart?: boolean;
   /** Preferred: short resume code (no raw token). */
   resumeCode?: string;
+  /** Email magic-link token from ?magic= */
+  magicToken?: string;
   /** Legacy private resume credentials. */
   sessionId?: string;
   token?: string;
@@ -14,6 +16,7 @@ export function parseShareQuery(search: string): ShareQuery {
   const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
   const characterId = params.get("character")?.trim() || undefined;
   const resumeCode = params.get("resume")?.trim() || undefined;
+  const magicToken = params.get("magic")?.trim() || undefined;
   const sessionId = params.get("session")?.trim() || undefined;
   const token = params.get("token")?.trim() || undefined;
   const autostartRaw = params.get("autostart")?.trim().toLowerCase();
@@ -24,7 +27,7 @@ export function parseShareQuery(search: string): ShareQuery {
     !!resumeCode ||
     (!!sessionId && !!token);
 
-  return { characterId, autostart, resumeCode, sessionId, token };
+  return { characterId, autostart, resumeCode, magicToken, sessionId, token };
 }
 
 /** Pretty public character card (preferred for sharing). */
@@ -110,6 +113,7 @@ export function replaceCharacterInUrl(characterId: string | null): void {
   url.searchParams.delete("session");
   url.searchParams.delete("token");
   url.searchParams.delete("resume");
+  url.searchParams.delete("magic");
   url.searchParams.delete("autostart");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }

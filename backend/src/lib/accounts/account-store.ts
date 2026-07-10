@@ -6,8 +6,10 @@ import { repoPath } from "../paths.js";
 export interface AccountRecord {
   id: string;
   handle: string;
-  passphraseHash: string;
-  salt: string;
+  /** Optional — magic-link accounts may have no passphrase. */
+  passphraseHash?: string;
+  salt?: string;
+  email?: string;
   createdAt: string;
 }
 
@@ -25,17 +27,28 @@ export interface ResumeCodeRecord {
   createdAt: string;
 }
 
+export interface MagicLinkRecord {
+  tokenHash: string;
+  email: string;
+  createdAt: string;
+  expiresAt: string;
+  consumedAt?: string;
+}
+
 interface AccountFile {
   version: 1;
   accounts: AccountRecord[];
   tokens: AccountTokenRecord[];
   resumeCodes: ResumeCodeRecord[];
+  magicLinks?: MagicLinkRecord[];
 }
 
 const accounts = new Map<string, AccountRecord>();
 const handleIndex = new Map<string, string>();
+const emailIndex = new Map<string, string>();
 const tokens = new Map<string, AccountTokenRecord>();
 const resumeCodes = new Map<string, ResumeCodeRecord>();
+const magicLinks = new Map<string, MagicLinkRecord>();
 
 let persistPath: string | null = null;
 let loaded = false;
@@ -71,6 +84,14 @@ function safeEqualHex(a: string, b: string): boolean {
   }
 }
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 async function persist(): Promise<void> {
   if (!persistPath) return;
   const payload: AccountFile = {
@@ -78,6 +99,7 @@ async function persist(): Promise<void> {
     accounts: [...accounts.values()],
     tokens: [...tokens.values()],
     resumeCodes: [...resumeCodes.values()],
+    magicLinks: [...magicLinks.values()],
   };
   await mkdir(dirname(persistPath), { recursive: true });
   await writeFile(persistPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
@@ -88,8 +110,10 @@ export async function initAccountStore(path?: string): Promise<{ path: string; a
   persistPath = resolved;
   accounts.clear();
   handleIndex.clear();
+  emailIndex.clear();
   tokens.clear();
   resumeCodes.clear();
+  magicLinks.clear();
 
   try {
     const raw = await readFile(resolved, "utf8");
@@ -97,6 +121,7 @@ export async function initAccountStore(path?: string): Promise<{ path: string; a
     for (const account of parsed.accounts ?? []) {
       accounts.set(account.id, account);
       handleIndex.set(account.handle, account.id);
+      if (account.email) emailIndex.set(normalizeEmail(account.email), account.id);
     }
     const now = Date.now();
     for (const token of parsed.tokens ?? []) {
@@ -106,6 +131,11 @@ export async function initAccountStore(path?: string): Promise<{ path: string; a
     }
     for (const code of parsed.resumeCodes ?? []) {
       resumeCodes.set(code.code.toUpperCase(), code);
+    }
+    for (const magic of parsed.magicLinks ?? []) {
+      if (!magic.consumedAt && new Date(magic.expiresAt).getTime() > now) {
+        magicLinks.set(magic.tokenHash, magic);
+      }
     }
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
@@ -135,6 +165,7 @@ export class AccountError extends Error {
 export async function createAccount(handleRaw: string, passphrase: string): Promise<{
   id: string;
   handle: string;
+  email?: string;
   token: string;
   expiresAt: string;
 }> {
@@ -171,6 +202,7 @@ export async function createAccount(handleRaw: string, passphrase: string): Prom
 export async function loginAccount(handleRaw: string, passphrase: string): Promise<{
   id: string;
   handle: string;
+  email?: string;
   token: string;
   expiresAt: string;
 }> {
@@ -181,13 +213,134 @@ export async function loginAccount(handleRaw: string, passphrase: string): Promi
     throw new AccountError("Invalid handle or passphrase", "AUTH");
   }
   const account = accounts.get(accountId)!;
+  if (!account.passphraseHash || !account.salt) {
+    throw new AccountError("This account uses email magic link sign-in", "AUTH");
+  }
   const attempt = hashPassphrase(passphrase, account.salt);
   if (!safeEqualHex(attempt, account.passphraseHash)) {
     throw new AccountError("Invalid handle or passphrase", "AUTH");
   }
   const issued = await issueToken(account.id);
   await persist();
-  return { id: account.id, handle: account.handle, ...issued };
+  return { id: account.id, handle: account.handle, email: account.email, ...issued };
+}
+
+function handleFromEmail(email: string): string {
+  const local = email.split("@")[0] ?? "user";
+  let base = normalizeHandle(local);
+  if (base.length < 3) base = `user${base}`.slice(0, 32);
+  let candidate = base;
+  let i = 0;
+  while (handleIndex.has(candidate)) {
+    i += 1;
+    candidate = `${base.slice(0, 24)}${i}`;
+  }
+  return candidate;
+}
+
+async function getOrCreateAccountByEmail(emailRaw: string): Promise<AccountRecord> {
+  const email = normalizeEmail(emailRaw);
+  if (!isValidEmail(email)) {
+    throw new AccountError("Enter a valid email address", "VALIDATION");
+  }
+
+  const existingId = emailIndex.get(email);
+  if (existingId) {
+    return accounts.get(existingId)!;
+  }
+
+  const id = randomBytes(16).toString("hex");
+  const handle = handleFromEmail(email);
+  const account: AccountRecord = {
+    id,
+    handle,
+    email,
+    createdAt: new Date().toISOString(),
+  };
+  accounts.set(id, account);
+  handleIndex.set(handle, id);
+  emailIndex.set(email, id);
+  return account;
+}
+
+/**
+ * Create a one-time magic login token for an email (creates account if needed).
+ * Returns the raw token for building the verify URL / sending email.
+ */
+export async function requestMagicLink(emailRaw: string): Promise<{
+  email: string;
+  token: string;
+  expiresAt: string;
+  accountId: string;
+  handle: string;
+  isNewAccount: boolean;
+}> {
+  await ensureLoaded();
+  const email = normalizeEmail(emailRaw);
+  const existed = emailIndex.has(email);
+  const account = await getOrCreateAccountByEmail(email);
+
+  // Invalidate previous unconsumed magic links for this email
+  for (const [hash, record] of magicLinks) {
+    if (record.email === email) magicLinks.delete(hash);
+  }
+
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  magicLinks.set(tokenHash, {
+    tokenHash,
+    email,
+    createdAt: new Date().toISOString(),
+    expiresAt,
+  });
+  await persist();
+
+  return {
+    email,
+    token,
+    expiresAt,
+    accountId: account.id,
+    handle: account.handle,
+    isNewAccount: !existed,
+  };
+}
+
+export async function verifyMagicLink(tokenRaw: string): Promise<{
+  id: string;
+  handle: string;
+  email?: string;
+  token: string;
+  expiresAt: string;
+}> {
+  await ensureLoaded();
+  const token = tokenRaw.trim();
+  if (!token) {
+    throw new AccountError("Missing magic link token", "VALIDATION");
+  }
+  const tokenHash = hashToken(token);
+  const magic = magicLinks.get(tokenHash);
+  if (!magic || magic.consumedAt) {
+    throw new AccountError("Magic link is invalid or already used", "AUTH");
+  }
+  if (new Date(magic.expiresAt).getTime() < Date.now()) {
+    magicLinks.delete(tokenHash);
+    await persist();
+    throw new AccountError("Magic link expired — request a new one", "AUTH");
+  }
+
+  magic.consumedAt = new Date().toISOString();
+  magicLinks.delete(tokenHash);
+
+  const account = await getOrCreateAccountByEmail(magic.email);
+  const issued = await issueToken(account.id);
+  await persist();
+  return {
+    id: account.id,
+    handle: account.handle,
+    email: account.email,
+    ...issued,
+  };
 }
 
 async function issueToken(accountId: string): Promise<{ token: string; expiresAt: string }> {

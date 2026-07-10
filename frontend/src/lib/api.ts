@@ -108,6 +108,44 @@ export async function loginAccount(
   return res.json() as Promise<AccountAuthResponse>;
 }
 
+export interface MagicRequestResponse {
+  ok: boolean;
+  email: string;
+  expiresAt: string;
+  delivered: boolean;
+  provider: string;
+  isNewAccount?: boolean;
+  magicUrl?: string;
+  devHint?: string;
+  mailError?: string;
+}
+
+export async function requestMagicLink(email: string): Promise<MagicRequestResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/magic/request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Magic link request failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<MagicRequestResponse>;
+}
+
+export async function verifyMagicLink(token: string): Promise<AccountAuthResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/magic/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Magic link verify failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<AccountAuthResponse>;
+}
+
 export async function logoutAccount(accountToken: string): Promise<void> {
   await fetch(`${API_BASE}/api/v1/accounts/logout`, {
     method: "POST",
