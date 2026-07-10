@@ -14,7 +14,10 @@ import {
   type ImportSessionPayload,
   type SessionExport,
 } from "../lib/memory/session-export.js";
-import { LiveCharacterError } from "../lib/live/character-catalog.js";
+import {
+  getLiveCharacterProfile,
+  LiveCharacterError,
+} from "../lib/live/character-catalog.js";
 import {
   deleteSessionRecord,
   listSessionRecords,
@@ -60,6 +63,8 @@ type SessionImportResult = CreateSessionResult & {
     originalSessionId?: string;
     originalCharacterId: string;
     characterId: string;
+    /** Set when original character was missing and remapped. */
+    remappedFrom?: string;
     truncated?: boolean;
     dropped?: number;
     bulkIndex?: number;
@@ -75,7 +80,83 @@ type BulkImportItemOk = {
   characterName: string;
   messageCount: number;
   resumeCode?: string;
+  remappedFrom?: string;
 };
+
+export type ImportCharacterResolveOptions = {
+  /** Force every session onto this character (legacy single override). */
+  characterId?: string;
+  /**
+   * Map export characterId → live characterId for missing customs.
+   * e.g. { "custom-abc": "twink-default" }
+   */
+  characterMap?: Record<string, string>;
+  /**
+   * When original is missing and not in map, use this live id.
+   * e.g. "twink-default"
+   */
+  fallbackCharacterId?: string;
+};
+
+/**
+ * Resolve which live character to use for an imported transcript.
+ * Order: global override → map → original if live → fallback → error.
+ */
+export function resolveImportCharacterId(
+  sourceCharacterId: string,
+  options: ImportCharacterResolveOptions = {},
+): { characterId: string; remappedFrom?: string } {
+  const source = sourceCharacterId.trim();
+  if (!source) {
+    throw new SessionImportError("Missing characterId in export", "CHARACTER_MISSING");
+  }
+
+  const global = options.characterId?.trim();
+  if (global) {
+    if (!getLiveCharacterProfile(global)) {
+      throw new SessionImportError(
+        `Override character '${global}' is not available`,
+        "CHARACTER_MISSING",
+      );
+    }
+    return global === source
+      ? { characterId: global }
+      : { characterId: global, remappedFrom: source };
+  }
+
+  const mapped = options.characterMap?.[source]?.trim();
+  if (mapped) {
+    if (!getLiveCharacterProfile(mapped)) {
+      throw new SessionImportError(
+        `Mapped character '${mapped}' (from '${source}') is not available`,
+        "CHARACTER_MISSING",
+      );
+    }
+    return mapped === source
+      ? { characterId: mapped }
+      : { characterId: mapped, remappedFrom: source };
+  }
+
+  if (getLiveCharacterProfile(source)) {
+    return { characterId: source };
+  }
+
+  const fallback = options.fallbackCharacterId?.trim();
+  if (fallback) {
+    if (!getLiveCharacterProfile(fallback)) {
+      throw new SessionImportError(
+        `Fallback character '${fallback}' is not available`,
+        "CHARACTER_MISSING",
+      );
+    }
+    return { characterId: fallback, remappedFrom: source };
+  }
+
+  throw new SessionImportError(
+    `Character '${source}' is not available to restore. Map it with characterMap or set fallbackCharacterId (e.g. twink-default).`,
+    "CHARACTER_MISSING",
+  );
+}
 
 type BulkImportItemFail = {
   ok: false;
@@ -383,10 +464,9 @@ export class SessionManager {
     wsBaseUrl: string,
     options: {
       accountId?: string;
-      characterId?: string;
       sessionIndex?: number;
       importAll?: boolean;
-    } = {},
+    } & ImportCharacterResolveOptions = {},
   ): Promise<SessionImportResult & { bulk?: BulkImportSummary }> {
     const wantAll =
       options.importAll === true ||
@@ -398,6 +478,8 @@ export class SessionManager {
       return this.importSessionsBulk(document, wsBaseUrl, {
         accountId: options.accountId,
         characterId: options.characterId,
+        characterMap: options.characterMap,
+        fallbackCharacterId: options.fallbackCharacterId,
       });
     }
 
@@ -411,6 +493,8 @@ export class SessionManager {
     return this.materializeImport(parsed.session, wsBaseUrl, {
       accountId: options.accountId,
       characterId: options.characterId,
+      characterMap: options.characterMap,
+      fallbackCharacterId: options.fallbackCharacterId,
       truncated: parsed.truncated,
       dropped: parsed.dropped,
       bulkIndex: parsed.bulkIndex,
@@ -424,8 +508,7 @@ export class SessionManager {
     wsBaseUrl: string,
     options: {
       accountId?: string;
-      characterId?: string;
-    } = {},
+    } & ImportCharacterResolveOptions = {},
   ): Promise<SessionImportResult & { bulk: BulkImportSummary }> {
     const parsed = parseImportDocumentAll(document);
     if (!parsed.ok) {
@@ -440,9 +523,9 @@ export class SessionManager {
       try {
         const created = await this.materializeImport(entry.session, wsBaseUrl, {
           accountId: options.accountId,
-          // characterId override applies only when a single override was requested
-          // for bulk we only override if explicitly set (same for all)
           characterId: options.characterId,
+          characterMap: options.characterMap,
+          fallbackCharacterId: options.fallbackCharacterId,
           truncated: entry.truncated,
           dropped: entry.dropped,
           bulkIndex: entry.index,
@@ -457,6 +540,7 @@ export class SessionManager {
           characterName: entry.session.characterName,
           messageCount: created.imported.messageCount,
           resumeCode: created.resumeCode,
+          remappedFrom: created.imported.remappedFrom,
         });
         if (!primary) primary = created;
       } catch (error) {
@@ -505,27 +589,29 @@ export class SessionManager {
     wsBaseUrl: string,
     options: {
       accountId?: string;
-      characterId?: string;
       truncated?: boolean;
       dropped?: number;
       bulkIndex?: number;
       bulkTotal?: number;
-    },
+    } & ImportCharacterResolveOptions,
   ): Promise<SessionImportResult> {
-    const characterId = (options.characterId?.trim() || payload.characterId).trim();
-
+    let resolved: { characterId: string; remappedFrom?: string };
     try {
-      assertLiveCharacter(characterId);
+      resolved = resolveImportCharacterId(payload.characterId, {
+        characterId: options.characterId,
+        characterMap: options.characterMap,
+        fallbackCharacterId: options.fallbackCharacterId,
+      });
+      assertLiveCharacter(resolved.characterId);
     } catch (error) {
+      if (error instanceof SessionImportError) throw error;
       if (error instanceof LiveCharacterError) {
-        throw new SessionImportError(
-          `Character '${characterId}' is not available to restore. Create it again or pass characterId override. ${error.message}`,
-          "CHARACTER_MISSING",
-        );
+        throw new SessionImportError(error.message, "CHARACTER_MISSING");
       }
       throw error;
     }
 
+    const characterId = resolved.characterId;
     const promptVersion = payload.promptVersion || DEFAULT_PROMPT_VERSION;
     const promptSnapshot = await createPromptSnapshot(characterId, promptVersion);
 
@@ -591,6 +677,7 @@ export class SessionManager {
           payload.sessionId !== "imported" ? payload.sessionId : undefined,
         originalCharacterId: payload.characterId,
         characterId: promptSnapshot.characterId,
+        ...(resolved.remappedFrom ? { remappedFrom: resolved.remappedFrom } : {}),
         truncated: options.truncated === true || messages.length > windowed.length,
         dropped: options.dropped,
         bulkIndex: options.bulkIndex,

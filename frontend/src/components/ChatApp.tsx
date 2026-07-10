@@ -534,18 +534,24 @@ export function ChatApp() {
       } catch {
         throw new Error("File is not valid JSON");
       }
+      // Auto-remap missing customs onto built-ins so bulk restore still works in chat
       const session = await importSessionDocument(document, {
         accountToken: account?.token,
-        // Bulk exports: restore every chat; open the first live
         importAll: true,
+        fallbackCharacterId: "twink-default",
       });
       await openLiveSession(session);
+      const remapped =
+        !!session.imported.remappedFrom ||
+        !!session.bulk?.results.some((r) => r.ok && r.remappedFrom);
       flashCopy(
-        `${importFlashSummary(session)}${session.imported.truncated ? " (trimmed)" : ""}`,
+        `${importFlashSummary(session)}${session.imported.truncated ? " (trimmed)" : ""}${
+          remapped ? " · remapped missing customs" : ""
+        }`,
       );
       if (session.bulk && session.bulk.failed > 0) {
         setError(
-          `${session.bulk.failed} chat(s) could not be restored (missing character or empty)`,
+          `${session.bulk.failed} chat(s) could not be restored (empty or unmapped)`,
         );
       }
     } catch (err) {

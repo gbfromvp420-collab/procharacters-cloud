@@ -60,8 +60,12 @@ const exportSessionSchema = z.object({
 const importSessionSchema = z.object({
   /** Full export document, bulk export, or bare session object. */
   document: z.unknown().optional(),
-  /** Optional character override when original id is gone. */
+  /** Force all sessions onto this live character. */
   characterId: z.string().min(2).max(80).optional(),
+  /** Per-export-id remap: { "custom-old": "twink-default" }. */
+  characterMap: z.record(z.string().min(2).max(80), z.string().min(2).max(80)).optional(),
+  /** When original is missing and unmapped, use this live character. */
+  fallbackCharacterId: z.string().min(2).max(80).optional(),
   /** Which session in a bulk export (forces single when set). */
   sessionIndex: z.number().int().min(0).max(99).optional(),
   /**
@@ -461,6 +465,8 @@ export const createSessionRoutes = (
 
       let document: unknown = raw;
       let characterId: string | undefined;
+      let characterMap: Record<string, string> | undefined;
+      let fallbackCharacterId: string | undefined;
       let sessionIndex: number | undefined;
       let importAll: boolean | undefined;
 
@@ -471,6 +477,8 @@ export const createSessionRoutes = (
             document = parsedWrap.data.document;
           }
           characterId = parsedWrap.data.characterId;
+          characterMap = parsedWrap.data.characterMap;
+          fallbackCharacterId = parsedWrap.data.fallbackCharacterId;
           sessionIndex = parsedWrap.data.sessionIndex;
           importAll = parsedWrap.data.importAll;
         }
@@ -480,6 +488,8 @@ export const createSessionRoutes = (
         const session = await sessionManager.importSession(document, wsBaseUrl, {
           accountId: account?.id,
           characterId,
+          characterMap,
+          fallbackCharacterId,
           sessionIndex,
           importAll,
         });

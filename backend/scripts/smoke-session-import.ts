@@ -9,6 +9,7 @@ import {
   parseImportDocumentAll,
   SESSION_EXPORT_SCHEMA,
 } from "../src/lib/memory/session-export.js";
+import { resolveImportCharacterId } from "../src/services/session-manager.js";
 
 function assert(cond: unknown, msg: string) {
   if (!cond) throw new Error(msg);
@@ -112,5 +113,30 @@ assert(all.ok && all.entries[1]?.session.messages[0]?.content === "second chat",
 
 const allSingle = parseImportDocumentAll(single);
 assert(allSingle.ok && allSingle.entries.length === 1, "all of single");
+
+// Character remap resolution
+const live = resolveImportCharacterId("twink-default");
+assert(live.characterId === "twink-default" && !live.remappedFrom, "live pass-through");
+
+const mapped = resolveImportCharacterId("custom-gone", {
+  characterMap: { "custom-gone": "female-default" },
+});
+assert(mapped.characterId === "female-default" && mapped.remappedFrom === "custom-gone", "map");
+
+const fallback = resolveImportCharacterId("custom-missing", {
+  fallbackCharacterId: "twink-default",
+});
+assert(
+  fallback.characterId === "twink-default" && fallback.remappedFrom === "custom-missing",
+  "fallback",
+);
+
+let threw = false;
+try {
+  resolveImportCharacterId("custom-orphan");
+} catch {
+  threw = true;
+}
+assert(threw, "missing without map/fallback throws");
 
 console.log("smoke-session-import: all checks passed");

@@ -14,6 +14,7 @@ import {
   importFlashSummary,
   linkEmailToAccount,
   listAccountSessions,
+  listLiveCharacters,
   loginAccount,
   logoutAccount,
   registerAccount,
@@ -31,7 +32,14 @@ import {
   saveStoredAccount,
   type StoredAccount,
 } from "@/lib/account-storage";
+import {
+  collectExportCharacters,
+  partitionCharacters,
+  suggestFallbackId,
+  type ExportCharacterRef,
+} from "@/lib/import-characters";
 import { buildResumeCodeShareUrl, copyText } from "@/lib/share-links";
+import type { LiveCharacterOption } from "@/lib/types";
 
 export function AccountSettings() {
   const [account, setAccount] = useState<StoredAccount | null>(null);
@@ -53,6 +61,13 @@ export function AccountSettings() {
   const [currentPass, setCurrentPass] = useState("");
   const [newPass, setNewPass] = useState("");
   const [resumeCode, setResumeCode] = useState("");
+
+  // Import remap draft
+  const [importDoc, setImportDoc] = useState<unknown | null>(null);
+  const [importMissing, setImportMissing] = useState<ExportCharacterRef[]>([]);
+  const [characterMapDraft, setCharacterMapDraft] = useState<Record<string, string>>({});
+  const [liveCharacters, setLiveCharacters] = useState<LiveCharacterOption[]>([]);
+  const [fallbackId, setFallbackId] = useState("twink-default");
   const [deleteConfirm, setDeleteConfirm] = useState("");
 
   const flash = (msg: string) => {
@@ -365,19 +380,26 @@ export function AccountSettings() {
     }
   };
 
-  const onImportFile = async (file: File | null) => {
-    if (!account || !file) return;
+  const clearImportDraft = () => {
+    setImportDoc(null);
+    setImportMissing([]);
+    setCharacterMapDraft({});
+  };
+
+  const runImport = async (
+    document: unknown,
+    options?: { characterMap?: Record<string, string>; fallbackCharacterId?: string },
+  ) => {
+    if (!account) return;
     setBusy(true);
     setError(null);
     try {
-      const text = await file.text();
-      let document: unknown;
-      try {
-        document = JSON.parse(text);
-      } catch {
-        throw new Error("File is not valid JSON");
-      }
-      const result = await importAccountSession(account.token, document);
+      const result = await importAccountSession(account.token, document, {
+        importAll: true,
+        characterMap: options?.characterMap,
+        fallbackCharacterId: options?.fallbackCharacterId,
+      });
+      clearImportDraft();
       await refresh(account.token);
       const summary = importFlashSummary(result);
       flash(`${summary} · primary ${result.sessionId.slice(0, 8)}…`);
@@ -394,6 +416,71 @@ export function AccountSettings() {
     } finally {
       setBusy(false);
     }
+  };
+
+  const onImportFile = async (file: File | null) => {
+    if (!account || !file) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const text = await file.text();
+      let document: unknown;
+      try {
+        document = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
+      }
+
+      let live = liveCharacters;
+      if (live.length === 0) {
+        live = await listLiveCharacters();
+        setLiveCharacters(live);
+      }
+      const liveIds = new Set(live.map((c) => c.id));
+      // Built-ins always available even if list is empty
+      liveIds.add("twink-default");
+      liveIds.add("female-default");
+
+      const refs = collectExportCharacters(document);
+      const { missing } = partitionCharacters(refs, liveIds);
+
+      if (missing.length === 0) {
+        await runImport(document);
+        return;
+      }
+
+      // Stage remap UI
+      const draft: Record<string, string> = {};
+      for (const m of missing) {
+        draft[m.id] = suggestFallbackId(m.name, liveIds);
+      }
+      setImportDoc(document);
+      setImportMissing(missing);
+      setCharacterMapDraft(draft);
+      setFallbackId(liveIds.has("twink-default") ? "twink-default" : [...liveIds][0] ?? "twink-default");
+      flash(
+        `${missing.length} character(s) missing — map them below, then confirm import`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onConfirmRemapImport = async () => {
+    if (!importDoc) return;
+    // Ensure every missing id is mapped
+    for (const m of importMissing) {
+      if (!characterMapDraft[m.id]?.trim()) {
+        setError(`Map a live character for “${m.name}”`);
+        return;
+      }
+    }
+    await runImport(importDoc, {
+      characterMap: characterMapDraft,
+      fallbackCharacterId: fallbackId,
+    });
   };
 
   const onWipeSessions = async () => {
@@ -727,8 +814,97 @@ export function AccountSettings() {
               </div>
               <p className="mb-3 text-[11px] text-brand-muted">
                 Import JSON to restore chats as new sessions (new ids — secrets never reused).
-                Account bulk exports restore <strong>all</strong> chats (up to 25).
+                Account bulk exports restore <strong>all</strong> chats (up to 25). Missing customs
+                can be remapped to a live model.
               </p>
+
+              {importDoc != null && importMissing.length > 0 ? (
+                <div className="mb-4 space-y-3 rounded-xl border border-amber-500/40 bg-amber-500/5 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-amber-100">Remap missing characters</p>
+                    <p className="mt-1 text-[11px] text-brand-muted">
+                      These ids are not on this server (deleted customs, etc.). Pick a live
+                      character for each, then import.
+                    </p>
+                  </div>
+                  <ul className="space-y-2">
+                    {importMissing.map((m) => (
+                      <li
+                        key={m.id}
+                        className="flex flex-col gap-1 rounded-lg border border-brand-border/70 bg-brand-bg px-3 py-2 sm:flex-row sm:items-center sm:gap-3"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium text-brand-text">{m.name}</p>
+                          <p className="truncate font-mono text-[10px] text-brand-muted">
+                            {m.id} · {m.sessionCount} chat(s)
+                          </p>
+                        </div>
+                        <select
+                          value={characterMapDraft[m.id] ?? fallbackId}
+                          onChange={(e) =>
+                            setCharacterMapDraft((prev) => ({
+                              ...prev,
+                              [m.id]: e.target.value,
+                            }))
+                          }
+                          className="field min-h-0 py-1.5 text-xs sm:max-w-[14rem]"
+                        >
+                          {(liveCharacters.length
+                            ? liveCharacters
+                            : [
+                                { id: "twink-default", displayName: "Twink Default" },
+                                { id: "female-default", displayName: "Female Default" },
+                              ]
+                          ).map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.displayName}
+                            </option>
+                          ))}
+                        </select>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-2 text-[11px] text-brand-muted">
+                      Fallback for any other miss
+                      <select
+                        value={fallbackId}
+                        onChange={(e) => setFallbackId(e.target.value)}
+                        className="field min-h-0 py-1 text-xs"
+                      >
+                        <option value="twink-default">Twink Default</option>
+                        <option value="female-default">Female Default</option>
+                        {liveCharacters
+                          .filter(
+                            (c) => c.id !== "twink-default" && c.id !== "female-default",
+                          )
+                          .map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.displayName}
+                            </option>
+                          ))}
+                      </select>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onConfirmRemapImport()}
+                      className="btn-primary min-h-0 px-3 py-1.5 text-xs"
+                    >
+                      Import with remap
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={clearImportDraft}
+                      className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
               {sessions.length === 0 ? (
                 <p className="text-xs text-brand-muted">
                   No chats yet. Start one in live chat while signed in, or import a JSON export.

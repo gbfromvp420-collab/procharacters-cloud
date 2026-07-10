@@ -593,6 +593,7 @@ export interface ImportSessionResult extends CreateSessionResponse {
     originalSessionId?: string;
     originalCharacterId: string;
     characterId: string;
+    remappedFrom?: string;
     truncated?: boolean;
     dropped?: number;
     bulkIndex?: number;
@@ -614,6 +615,7 @@ export interface ImportSessionResult extends CreateSessionResponse {
           characterName: string;
           messageCount: number;
           resumeCode?: string;
+          remappedFrom?: string;
         }
       | {
           ok: false;
@@ -629,10 +631,15 @@ export interface ImportSessionResult extends CreateSessionResponse {
 
 function importFlashSummary(result: ImportSessionResult): string {
   if (result.bulk && result.bulk.succeeded + result.bulk.failed > 1) {
-    const { succeeded, failed, totalMessages, capped } = result.bulk;
+    const { succeeded, failed, totalMessages, capped, results } = result.bulk;
+    const remapped = results.filter((r) => r.ok && r.remappedFrom).length;
     const failPart = failed > 0 ? `, ${failed} failed` : "";
+    const remapPart = remapped > 0 ? `, ${remapped} remapped` : "";
     const capPart = capped ? " (capped)" : "";
-    return `Imported ${succeeded} chat(s), ${totalMessages} msgs${failPart}${capPart}`;
+    return `Imported ${succeeded} chat(s), ${totalMessages} msgs${remapPart}${failPart}${capPart}`;
+  }
+  if (result.imported.remappedFrom) {
+    return `Imported ${result.imported.messageCount} msgs (remapped ${result.imported.remappedFrom} → ${result.imported.characterId})`;
   }
   return `Imported ${result.imported.messageCount} msgs`;
 }
@@ -640,24 +647,35 @@ function importFlashSummary(result: ImportSessionResult): string {
 export { importFlashSummary };
 
 /** Restore export JSON as a new live session (optional account via token). */
+export type ImportCharacterOptions = {
+  characterId?: string;
+  characterMap?: Record<string, string>;
+  fallbackCharacterId?: string;
+  sessionIndex?: number;
+  /** Default true for bulk account exports when sessionIndex omitted. */
+  importAll?: boolean;
+};
+
 export async function importSessionDocument(
   document: unknown,
   options?: {
     accountToken?: string | null;
-    characterId?: string;
-    sessionIndex?: number;
-    /** Default true for bulk account exports when sessionIndex omitted. */
-    importAll?: boolean;
-  },
+  } & ImportCharacterOptions,
 ): Promise<ImportSessionResult> {
   const body: Record<string, unknown> = { document };
   if (options?.characterId) body.characterId = options.characterId;
+  if (options?.characterMap && Object.keys(options.characterMap).length > 0) {
+    body.characterMap = options.characterMap;
+  }
+  if (options?.fallbackCharacterId) body.fallbackCharacterId = options.fallbackCharacterId;
   if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
   if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
 
   // Prefer wrapper when we need flags; raw export only when no options
   const needsWrapper =
     !!options?.characterId ||
+    !!options?.fallbackCharacterId ||
+    !!(options?.characterMap && Object.keys(options.characterMap).length > 0) ||
     typeof options?.sessionIndex === "number" ||
     typeof options?.importAll === "boolean";
 
@@ -695,10 +713,14 @@ export async function importSessionDocument(
 export async function importAccountSession(
   accountToken: string,
   document: unknown,
-  options?: { characterId?: string; sessionIndex?: number; importAll?: boolean },
+  options?: ImportCharacterOptions,
 ): Promise<ImportSessionResult> {
   const body: Record<string, unknown> = { document };
   if (options?.characterId) body.characterId = options.characterId;
+  if (options?.characterMap && Object.keys(options.characterMap).length > 0) {
+    body.characterMap = options.characterMap;
+  }
+  if (options?.fallbackCharacterId) body.fallbackCharacterId = options.fallbackCharacterId;
   if (typeof options?.sessionIndex === "number") body.sessionIndex = options.sessionIndex;
   if (typeof options?.importAll === "boolean") body.importAll = options.importAll;
   else if (typeof options?.sessionIndex !== "number") body.importAll = true;
