@@ -425,6 +425,32 @@ export function AccountSettings() {
     }
   };
 
+  /** Only mint new codes for expired / soon-to-expire (keeps healthy links intact). */
+  const onRefreshExpiringResumes = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await refreshAllAccountResumes(account.token, {
+        onlyExpiring: true,
+        withinDays: EXPIRY_WARN_DAYS,
+      });
+      await refresh(account.token);
+      if (result.refreshed === 0) {
+        flash("No codes need a refresh right now");
+      } else {
+        flash(
+          `Refreshed ${result.refreshed} expiring code(s)` +
+            (result.skipped ? ` · ${result.skipped} healthy left alone` : ""),
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not refresh expiring codes");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onRefreshOneResume = async (sessionId: string, characterName: string) => {
     if (!account) return;
     setBusy(true);
@@ -1290,6 +1316,15 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy || sessions.length === 0}
+                        onClick={() => void onRefreshExpiringResumes()}
+                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                        title="Mint new codes only for expired / soon-to-expire chats"
+                      >
+                        Refresh expiring
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || sessions.length === 0}
                         onClick={() => void onRefreshAllResumes()}
                         className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
                         title="Mint new resume codes for every chat (invalidates old links)"
@@ -1332,10 +1367,18 @@ export function AccountSettings() {
                     <button
                       type="button"
                       disabled={busy}
-                      onClick={() => void onRefreshAllResumes()}
+                      onClick={() => void onRefreshExpiringResumes()}
                       className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
                     >
-                      Refresh all codes now
+                      Refresh expiring codes
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onRefreshAllResumes()}
+                      className="text-xs text-amber-100/70 underline hover:text-white disabled:opacity-50"
+                    >
+                      Refresh all
                     </button>
                     {pushSupported && !pushEnabled && (
                       <button

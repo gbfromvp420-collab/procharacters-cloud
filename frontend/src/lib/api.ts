@@ -237,16 +237,26 @@ export async function refreshAccountSessionResume(
   return data;
 }
 
-/** Rotate every resume code on the account. */
+/** Rotate resume codes on the account (all, or only expiring/expired). */
 export async function refreshAllAccountResumes(
   accountToken: string,
+  options?: { onlyExpiring?: boolean; withinDays?: number },
 ): Promise<{
   refreshed: number;
+  skipped?: number;
+  onlyExpiring?: boolean;
   sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }>;
 }> {
   const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions/refresh-resumes`, {
     method: "POST",
-    headers: authHeaders(accountToken),
+    headers: {
+      ...authHeaders(accountToken),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      onlyExpiring: options?.onlyExpiring === true,
+      withinDays: options?.withinDays,
+    }),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -254,6 +264,8 @@ export async function refreshAllAccountResumes(
   }
   return res.json() as Promise<{
     refreshed: number;
+    skipped?: number;
+    onlyExpiring?: boolean;
     sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }>;
   }>;
 }

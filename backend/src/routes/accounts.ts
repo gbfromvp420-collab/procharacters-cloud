@@ -408,14 +408,33 @@ export const createAccountRoutes = (
       },
     );
 
-    /** Rotate resume codes for every saved chat on this account. */
+    /** Rotate resume codes — all, or only expiring/expired within N days. */
     app.post("/accounts/me/sessions/refresh-resumes", async (request, reply) => {
       const account = await resolveAccountToken(bearerToken(request));
       if (!account) {
         return reply.code(401).send({ error: "Not signed in" });
       }
-      const result = await sessionManager.refreshAllAccountResumeCodes(account.id);
-      return { ok: true, ...result };
+      const bodySchema = z.object({
+        onlyExpiring: z.boolean().optional(),
+        withinDays: z.number().int().min(1).max(30).optional(),
+      });
+      let onlyExpiring = false;
+      let withinDays: number | undefined;
+      try {
+        const body = bodySchema.parse(request.body ?? {});
+        onlyExpiring = body.onlyExpiring === true;
+        withinDays = body.withinDays;
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        throw error;
+      }
+      const result = await sessionManager.refreshAllAccountResumeCodes(account.id, {
+        onlyExpiring,
+        withinDays,
+      });
+      return { ok: true, onlyExpiring, ...result };
     });
 
     /**

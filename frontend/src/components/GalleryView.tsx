@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { listAccountSessions } from "@/lib/api";
@@ -165,7 +165,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [resumes, setResumes] = useState<Record<string, ResumeCacheEntry>>({});
   const [signedInHandle, setSignedInHandle] = useState<string | null>(null);
 
-  // Signed-in visitors default to Last chat once (don't fight later manual sort changes)
+  const appliedSignedInDefaults = useRef(false);
+
+  // Signed-in: Last chat sort once; My chats filter once when any resumes exist
   useEffect(() => {
     if (loadStoredAccount()) {
       setSort("recent");
@@ -189,6 +191,12 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       return;
     }
     setSignedInHandle(account.handle);
+
+    // Local resumes already? Jump to My chats immediately
+    if (!appliedSignedInDefaults.current && Object.keys(seed).length > 0) {
+      setFilter("mine");
+      appliedSignedInDefaults.current = true;
+    }
 
     void listAccountSessions(account.token)
       .then((sessions) => {
@@ -215,6 +223,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           if (r) next[c.id] = r;
         }
         setResumes(next);
+        if (!appliedSignedInDefaults.current && Object.keys(next).length > 0) {
+          setFilter("mine");
+          appliedSignedInDefaults.current = true;
+        }
       })
       .catch(() => {
         /* keep local seeds */

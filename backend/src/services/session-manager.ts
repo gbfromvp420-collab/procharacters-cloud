@@ -434,31 +434,65 @@ export class SessionManager {
     return { sessionId, resumeCode: code, resumeExpiresAt: expiresAt };
   }
 
-  /** Rotate resume codes for every account session. */
-  async refreshAllAccountResumeCodes(accountId: string): Promise<{
+  /**
+   * Rotate resume codes for account sessions.
+   * When onlyExpiring is true, only codes already expired or expiring within
+   * withinDays (default 3) are rotated — others keep their links.
+   */
+  async refreshAllAccountResumeCodes(
+    accountId: string,
+    options?: { onlyExpiring?: boolean; withinDays?: number },
+  ): Promise<{
     refreshed: number;
+    skipped: number;
     sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }>;
   }> {
-    const records = await listSessionRecords({ accountId, limit: 100 });
+    const listed = await this.listAccountSessions(accountId);
+    const withinDays = options?.withinDays ?? 3;
+    const horizonMs = withinDays * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+
+    const targets = options?.onlyExpiring
+      ? listed.filter((s) => {
+          if (!s.resumeCode) return true;
+          if (!s.resumeExpiresAt) return true;
+          const exp = Date.parse(s.resumeExpiresAt);
+          if (Number.isNaN(exp)) return true;
+          // Expired or within warning window
+          return exp - now <= horizonMs;
+        })
+      : listed;
+
     const sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }> =
       [];
-    for (const record of records) {
-      const { code, expiresAt } = await rotateResumeCode(record.id, accountId);
+    for (const summary of targets) {
+      const { code, expiresAt } = await rotateResumeCode(summary.sessionId, accountId);
+      // loadSession may miss disk-only; fall back to list record shape via persist path
+      let record: SessionRecord;
+      try {
+        record = await this.loadSession(summary.sessionId);
+      } catch {
+        continue;
+      }
       const updated: SessionRecord = {
         ...record,
         resumeCode: code,
         accountId,
         updatedAt: new Date().toISOString(),
       };
-      this.sessions.set(record.id, updated);
+      this.sessions.set(summary.sessionId, updated);
       await this.persist(updated);
       sessions.push({
-        sessionId: record.id,
+        sessionId: summary.sessionId,
         resumeCode: code,
         resumeExpiresAt: expiresAt,
       });
     }
-    return { refreshed: sessions.length, sessions };
+    return {
+      refreshed: sessions.length,
+      skipped: Math.max(0, listed.length - sessions.length),
+      sessions,
+    };
   }
 
   /** Latest account session for a character (with resume code guaranteed when possible). */
