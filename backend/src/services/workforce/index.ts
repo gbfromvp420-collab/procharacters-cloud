@@ -15,6 +15,7 @@ export {
   CrownService,
   CrownAgent,
   CROWN_LANE_HOOKS,
+  RUNPOD_A5000_CONFIG,
 } from "./crown.js";
 export type {
   CrownAchievement,
@@ -24,5 +25,6 @@ export type {
   CrownAgentConfig,
   CrownWorkflowResult,
   CrownValues,
+  RunPodA5000Config,
 } from "./crown.js";
 export { default as crownDefault } from "./crown.js";

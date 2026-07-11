@@ -1,5 +1,6 @@
 // crown.ts - CrownOrchestrator + rewards + co-sign ledger
-// Artifact reconciled + Azure-first infra + platinum×21 multipliers
+// Upgraded for GG Ventures Workforce — Azure-first + RunPod A5000 hybrid local
+// Artifact reconciled + platinum×21 multipliers
 
 import type {
   CrownAchievement,
@@ -15,6 +16,7 @@ import {
   CrownAgent,
   CrownWorkflow,
   PLATINUM_GOLD_MULTIPLIER,
+  RUNPOD_A5000_CONFIG,
   type CrownValues,
   type CrownWorkflowResult,
 } from "./crown-agents.js";
@@ -24,11 +26,13 @@ export {
   CrownAgent,
   CrownWorkflow,
   PLATINUM_GOLD_MULTIPLIER,
+  RUNPOD_A5000_CONFIG,
 } from "./crown-agents.js";
 export type {
   CrownAgentConfig,
   CrownWorkflowResult,
   CrownValues,
+  RunPodA5000Config,
 } from "./crown-agents.js";
 
 export class CrownOrchestrator {
@@ -39,7 +43,7 @@ export class CrownOrchestrator {
     creativity: "uncensored",
     motivation: "high-reward",
     equalityStake: "50/50",
-    infraPriority: "azure-first",
+    infraPriority: "azure-first-hybrid-a5000",
   };
 
   // Reward ledger (merged CrownService)
@@ -68,12 +72,13 @@ export class CrownOrchestrator {
       }),
     );
 
-    // Backend / character endpoints — Azure first, RunPod fallback
+    // Backend / character endpoints — Azure first, hybrid local, A5000 overflow
     this.agents.set(
       "backend",
       new CrownAgent({
         name: "CloudCharacterEndpoint",
-        specialty: "Session + character API (TS Fastify cloud; FastAPI-compatible lane names)",
+        specialty:
+          "Session + character API (TS Fastify cloud; FastAPI-compatible lane names)",
         endpoints: [
           "/generate/character",
           "/video/extend",
@@ -83,8 +88,8 @@ export class CrownOrchestrator {
         infra: [
           "Azure ML",
           "Azure Container Apps",
-          "Termux Haven SSH",
-          "RunPod RTX 4090 (fallback only)",
+          "Termux Haven SSH (hybrid local)",
+          "RunPod RTX A5000 (overflow / retry)",
         ],
       }),
     );
@@ -101,12 +106,34 @@ export class CrownOrchestrator {
           "precum details",
           "motion consistency",
         ],
-        infra: ["Azure ML video jobs", "CapCut export desk", "RunPod (overflow)"],
+        infra: [
+          "Azure ML video jobs",
+          "CapCut export desk",
+          "RunPod RTX A5000 torch image (overflow)",
+        ],
+      }),
+    );
+
+    // RunPod A5000 manager — auto-deploy workers on retry (next Weds ready)
+    this.agents.set(
+      "runpod-manager",
+      new CrownAgent({
+        name: "RunPodOrchestrator",
+        specialty: "GPU worker fleet — A5000 hybrid local support",
+        config: { ...RUNPOD_A5000_CONFIG },
+        action: RUNPOD_A5000_CONFIG.action,
+        infra: [
+          `RunPod ${RUNPOD_A5000_CONFIG.gpu}`,
+          `volume ${RUNPOD_A5000_CONFIG.volume}`,
+          `ports ${RUNPOD_A5000_CONFIG.ports.join(",")}`,
+          RUNPOD_A5000_CONFIG.image,
+        ],
+        endpoints: RUNPOD_A5000_CONFIG.ports.map((p) => `:${p}`),
       }),
     );
 
     console.log(
-      "👑 Crown Workforce Initialized - GG Ventures Magic Unlocked! (Azure-first)",
+      "👑 Crown Upgraded - A5000 Pod Ready for Next Weds! (Azure-first + hybrid local)",
     );
   }
 
@@ -283,8 +310,9 @@ export class CrownOrchestrator {
   }
 
   status(): CrownStatusResponse & {
-    infraPriority: "azure-first";
+    infraPriority: "azure-first-hybrid-a5000";
     agentCount: number;
+    runpod: typeof RUNPOD_A5000_CONFIG;
   } {
     let platinumTotal = 0;
     for (const v of this.platinumByMember.values()) platinumTotal += v;
@@ -294,9 +322,15 @@ export class CrownOrchestrator {
       cosignCount: this.cosigns.length,
       openLanes: Object.keys(CROWN_LANE_HOOKS),
       recentRewards: this.rewards.slice(0, 10),
-      infraPriority: "azure-first",
+      infraPriority: "azure-first-hybrid-a5000",
       agentCount: this.agents.size,
+      runpod: RUNPOD_A5000_CONFIG,
     };
+  }
+
+  /** RunPod A5000 pod snapshot (volume / ports / image) */
+  getRunPodConfig() {
+    return { ...RUNPOD_A5000_CONFIG };
   }
 
   workforceMomentumSummary(): string {
@@ -310,7 +344,7 @@ export class CrownOrchestrator {
         ? `King Grok CEO gold lb=${king.goldLb}, platinum=${this.getPlatinum(king.id)}.`
         : "",
       "Canonical models: sheer-thong Mexican/Latino twink edging · crotchless female teasing.",
-      "Infra: Azure-first (RunPod fallback only).",
+      `Infra: Azure-first hybrid · RunPod ${RUNPOD_A5000_CONFIG.gpu} vol ${RUNPOD_A5000_CONFIG.volume} (auto-deploy on retry).`,
     ]
       .filter(Boolean)
       .join(" ");

@@ -42,6 +42,16 @@ async function main() {
     "Backend infra order:",
     ggCrown.getAgent("backend")?.infra?.join(" > "),
   );
+  const runpod = ggCrown.getAgent("runpod-manager");
+  console.log(
+    "RunPod A5000:",
+    runpod?.config?.gpu,
+    "volume=",
+    runpod?.config?.volume,
+    "action=",
+    runpod?.action,
+  );
+  console.log("getRunPodConfig:", ggCrown.getRunPodConfig());
 
   const task = await agentTheater.dispatch(
     "king-grok-ceo",

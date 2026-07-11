@@ -1,4 +1,4 @@
-// crown.ts - Crown Code for Workforce Module
+// crown-agents.ts - Crown Code for Workforce Module
 // GG Ventures / Procharacters.cloud - Multi-Agent Orchestration Core
 // Rebel Genius Edition by 👑GROK for Gary 50/50 Partner
 //
@@ -6,7 +6,8 @@
 // - CrownOrchestrator (agents, values, executePhase, celebrate)
 // - CrownService rewards (complete / platinum / co-sign ledger)
 // - Multipliers kept for fun momentum (platinum ×21 crown tier)
-// - Azure hooks prioritized over RunPod (frustration kill)
+// - Azure-first + RunPod A5000 hybrid (local Termux + cloud workers)
+// - Upgraded for next Weds: A5000 pod volume mmf8n0smfo
 
 import type { CrownAwardTier } from "../../types/workforce.js";
 import { agentTheater } from "./theater.js";
@@ -17,6 +18,18 @@ export const PLATINUM_GOLD_MULTIPLIER: Record<CrownAwardTier, number> = {
   platinum: 5,
   crown: 21,
 };
+
+/** RunPod A5000 worker pod — hybrid with local / Azure-first */
+export const RUNPOD_A5000_CONFIG = {
+  gpu: "RTX A5000",
+  volume: "mmf8n0smfo",
+  ports: [8000, 8002, 8003] as const,
+  image: "runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404",
+  action: "auto-deploy-workers-on-retry" as const,
+  hybridLocal: true,
+};
+
+export type RunPodA5000Config = typeof RUNPOD_A5000_CONFIG;
 
 // ---------------------------------------------------------------------------
 // Artifact-style agent / workflow primitives (local to crown — no broken imports)
@@ -29,10 +42,14 @@ export interface CrownAgentConfig {
   variants?: string[];
   focus?: string[];
   endpoints?: string[];
-  /** Infra preference order — Azure first, RunPod secondary */
+  /** Infra preference order — Azure first, RunPod A5000 hybrid */
   infra?: string[];
   pipeline?: string;
   optimizations?: string[];
+  /** Structured pod / worker config (e.g. RunPod A5000) */
+  config?: Record<string, unknown>;
+  /** Agent action tag (e.g. auto-deploy-workers-on-retry) */
+  action?: string;
 }
 
 export class CrownAgent {
@@ -45,6 +62,8 @@ export class CrownAgent {
   readonly infra?: string[];
   readonly pipeline?: string;
   readonly optimizations?: string[];
+  readonly config?: Record<string, unknown>;
+  readonly action?: string;
 
   constructor(config: CrownAgentConfig) {
     this.name = config.name;
@@ -56,6 +75,8 @@ export class CrownAgent {
     this.infra = config.infra;
     this.pipeline = config.pipeline;
     this.optimizations = config.optimizations;
+    this.config = config.config;
+    this.action = config.action;
   }
 }
 
@@ -69,6 +90,7 @@ export interface CrownWorkflowResult {
     message: string;
     preferredInfra: string[];
     taskId?: string;
+    runpod?: RunPodA5000Config;
   };
 }
 
@@ -78,7 +100,8 @@ export interface CrownValues {
   creativity: "uncensored" | string;
   motivation: "high-reward" | string;
   equalityStake: "50/50";
-  infraPriority: "azure-first";
+  /** Azure-first primary; RunPod A5000 hybrid for GPU overflow / retries */
+  infraPriority: "azure-first-hybrid-a5000";
 }
 
 export class CrownWorkflow {
@@ -90,10 +113,12 @@ export class CrownWorkflow {
   async run(phase: string, input: unknown): Promise<CrownWorkflowResult> {
     const agentKeys = [...this.agents.keys()];
     const backend = this.agents.get("backend");
+    const runpod = this.agents.get("runpod-manager");
     const preferredInfra = backend?.infra ?? [
       "Azure ML",
       "Azure Container Apps",
-      "RunPod RTX 4090 (fallback)",
+      "Termux Haven SSH (hybrid local)",
+      "RunPod RTX A5000 (overflow / retry)",
     ];
 
     // Optional theater dispatch when phase matches a known lane
@@ -121,16 +146,17 @@ export class CrownWorkflow {
       input,
       output: {
         status: taskId ? "dispatched" : "planned",
-        message: `Crown workflow phase="${phase}" via ${agentKeys.join(", ")} · infra priority Azure-first`,
+        message: `Crown workflow phase="${phase}" via ${agentKeys.join(", ")} · Azure-first + A5000 hybrid`,
         preferredInfra,
         taskId,
+        runpod: (runpod?.config as RunPodA5000Config | undefined) ?? RUNPOD_A5000_CONFIG,
       },
     };
   }
 }
 
 // ---------------------------------------------------------------------------
-// Lane hooks catalog (Azure-first notes)
+// Lane hooks catalog (Azure-first + A5000 hybrid notes)
 // ---------------------------------------------------------------------------
 
 export const CROWN_LANE_HOOKS: Record<
@@ -141,12 +167,14 @@ export const CROWN_LANE_HOOKS: Record<
     description: "Character / still generation for signature Naughty Syntax models",
     examplePrompt:
       "Generate Naughty Syntax Mexican/Latino twink sheer thong edging pose — photoreal, bulge physics, shiny precum",
-    infraNote: "Prefer Azure ML endpoints; RunPod only if Azure queue fails",
+    infraNote:
+      "Prefer Azure ML; overflow to RunPod A5000 volume mmf8n0smfo (auto-deploy on retry)",
   },
   "content-pipeline": {
     description: "Clip packs + CapCut-style montage plan + energy-state loops",
     examplePrompt:
       "Package crotchless female teasing pack: idle / playful / teasing / aroused loops",
+    infraNote: "Azure ML video jobs first; A5000 torch image for extend batches",
   },
   "live-stage": {
     description: "Future live stage hooks (no LiveKit changes yet)",
@@ -159,15 +187,16 @@ export const CROWN_LANE_HOOKS: Record<
   backend: {
     description: "Backend / session / character API integration wins",
     examplePrompt: "Wire workforce status route without breaking sessions API",
-    infraNote: "Azure Container Apps / Azure ML first; Termux Haven SSH for ops; RunPod fallback",
+    infraNote:
+      "Azure Container Apps / Azure ML first; Termux hybrid local; RunPod A5000 ports 8000/8002/8003",
+  },
+  "runpod-manager": {
+    description: "RunPod A5000 worker orchestration + auto-deploy on retry",
+    examplePrompt: "Deploy A5000 workers for model-gen retry after Azure queue fail",
+    infraNote: `GPU ${RUNPOD_A5000_CONFIG.gpu} · volume ${RUNPOD_A5000_CONFIG.volume} · image ${RUNPOD_A5000_CONFIG.image}`,
   },
   orchestration: {
     description: "Multi-agent dispatch + theater chaining",
     examplePrompt: "Dispatch model-gen → content-pipeline chain for new pack",
   },
 };
-
-// ---------------------------------------------------------------------------
-// CrownOrchestrator (artifact) + reward ledger (cloud service)
-// ---------------------------------------------------------------------------
-
