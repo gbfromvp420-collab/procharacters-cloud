@@ -16,6 +16,8 @@ export {
   CrownAgent,
   CROWN_LANE_HOOKS,
   RUNPOD_A5000_CONFIG,
+  deployRunPodWorkers,
+  runPodLiveReady,
 } from "./crown.js";
 export type {
   CrownAchievement,
@@ -26,5 +28,7 @@ export type {
   CrownWorkflowResult,
   CrownValues,
   RunPodA5000Config,
+  RunPodDeployOptions,
+  RunPodDeployResult,
 } from "./crown.js";
 export { default as crownDefault } from "./crown.js";

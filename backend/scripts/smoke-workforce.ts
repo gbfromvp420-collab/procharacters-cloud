@@ -52,6 +52,32 @@ async function main() {
     runpod?.action,
   );
   console.log("getRunPodConfig:", ggCrown.getRunPodConfig());
+  console.log("runPodLiveReady:", ggCrown.runPodLiveReady());
+
+  // Wire runpod-manager action → deploy script (stub until RUNPOD_LIVE=true)
+  const deploy = await ggCrown.deployRunPodWorkers({
+    reason: "smoke auto-deploy-workers-on-retry",
+    retryCount: 1,
+  });
+  console.log(
+    "deployRunPodWorkers:",
+    deploy.mode,
+    deploy.ok,
+    "autoRetry=",
+    deploy.autoRetry,
+    "steps=",
+    deploy.steps.length,
+  );
+
+  const phaseDeploy = await ggCrown.executePhase("runpod-manager", {
+    reason: "smoke phase runpod-manager",
+    retryCount: 1,
+  });
+  console.log(
+    "executePhase runpod-manager:",
+    phaseDeploy.phase,
+    phaseDeploy.output.status,
+  );
 
   const task = await agentTheater.dispatch(
     "king-grok-ceo",

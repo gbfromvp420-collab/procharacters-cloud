@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test:memory": "tsx scripts/smoke-test-memory.ts",
     "test:livekit": "tsx scripts/verify-livekit.ts",
+    "test:workforce": "tsx scripts/smoke-workforce.ts",
+    "deploy:runpod": "tsx scripts/deploy-runpod-a5000.ts",
     "generate:avatar-loops": "tsx scripts/generate-avatar-loops.ts"
   },
   "engines": {

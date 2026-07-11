@@ -20,6 +20,12 @@ import {
   type CrownValues,
   type CrownWorkflowResult,
 } from "./crown-agents.js";
+import {
+  deployRunPodWorkers,
+  runPodLiveReady,
+  type RunPodDeployOptions,
+  type RunPodDeployResult,
+} from "./runpod-deploy.js";
 
 export {
   CROWN_LANE_HOOKS,
@@ -28,6 +34,14 @@ export {
   PLATINUM_GOLD_MULTIPLIER,
   RUNPOD_A5000_CONFIG,
 } from "./crown-agents.js";
+export {
+  deployRunPodWorkers,
+  runPodLiveReady,
+} from "./runpod-deploy.js";
+export type {
+  RunPodDeployOptions,
+  RunPodDeployResult,
+} from "./runpod-deploy.js";
 export type {
   CrownAgentConfig,
   CrownWorkflowResult,
@@ -142,10 +156,52 @@ export class CrownOrchestrator {
     phase: string,
     input: unknown = {},
   ): Promise<CrownWorkflowResult> {
+    // runpod-manager phase → real deploy script (stub until RUNPOD_LIVE=true)
+    if (phase === "runpod-manager" || phase === "auto-deploy-workers-on-retry") {
+      const reason =
+        typeof input === "object" &&
+        input !== null &&
+        "reason" in input &&
+        typeof (input as { reason: unknown }).reason === "string"
+          ? (input as { reason: string }).reason
+          : `phase:${phase}`;
+      const retryCount =
+        typeof input === "object" &&
+        input !== null &&
+        "retryCount" in input &&
+        typeof (input as { retryCount: unknown }).retryCount === "number"
+          ? (input as { retryCount: number }).retryCount
+          : phase === "auto-deploy-workers-on-retry"
+            ? 1
+            : 0;
+      await this.deployRunPodWorkers({ reason, retryCount });
+    }
+
     const workflow = new CrownWorkflow(this.agents, this.values);
     const result = await workflow.run(phase, input);
     this.celebrate(`phase:${phase}`);
     return result;
+  }
+
+  /**
+   * Wire runpod-manager action → deploy script.
+   * Stub by default; full power when RUNPOD_LIVE=true next Weds.
+   */
+  public async deployRunPodWorkers(
+    opts: RunPodDeployOptions = {},
+  ): Promise<RunPodDeployResult> {
+    const result = await deployRunPodWorkers(opts);
+    if (result.ok) {
+      this.celebrate(
+        `runpod-deploy:${result.mode}:${result.pod.gpu}:${result.reason}`,
+      );
+    }
+    return result;
+  }
+
+  /** Env readiness for Wednesday live cutover */
+  public runPodLiveReady() {
+    return runPodLiveReady();
   }
 
   /** Artifact API — loud win signal */
