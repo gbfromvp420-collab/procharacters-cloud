@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { CharacterCard } from "@/lib/character-card";
+import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import type { ResumeCacheEntry } from "@/lib/resume-cache";
 import { canNativeShare } from "@/lib/share-links";
 
@@ -25,14 +26,29 @@ export function CharacterTile({
   compact?: boolean;
 }) {
   const poster = posterUrl(card);
+  const skin = resolvePresenceSkin(undefined, card.id);
+  const visual = presenceVisual(skin);
   return (
     <article
       className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
         compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
       }`}
     >
-      <div className="relative aspect-[3/4] overflow-hidden bg-black">
-        <video className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]" src={poster} autoPlay muted loop playsInline preload="metadata" />
+      <div className={`relative aspect-[3/4] overflow-hidden bg-black ${visual.glow}`}>
+        <video
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          style={{ filter: visual.filter }}
+          src={poster}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        />
+        <div
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${visual.wash}`}
+          aria-hidden
+        />
         {resume?.resumeCode && (
           <div className="absolute right-2 top-2 z-10">
             <span
@@ -43,7 +59,7 @@ export function CharacterTile({
             </span>
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
+        <div className="absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
               {card.kind === "custom" ? "Custom" : "Signature"}
@@ -53,6 +69,9 @@ export function CharacterTile({
                 Featured
               </span>
             )}
+            <span className="rounded-full border border-white/20 bg-black/45 px-2 py-0.5 text-[9px] font-medium text-white/85 backdrop-blur">
+              {visual.label}
+            </span>
             {(card.vibeTag || card.energyLabel) && (
               <span className="rounded-full border border-white/25 bg-black/50 px-2 py-0.5 text-[9px] font-medium text-white/90 backdrop-blur">
                 {(card.vibeTag || card.energyLabel).split(",")[0]?.trim()}

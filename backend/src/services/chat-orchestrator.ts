@@ -1,5 +1,6 @@
 import {
   LivePromptInjector,
+  blendAvatarFromBrain,
   buildConsistencyReminder,
   detectMissingTraits,
   getLiveCharacterProfile,
@@ -70,7 +71,8 @@ export class ChatOrchestrator {
 
   constructor(
     private readonly sessions: SessionManager,
-    private readonly avatarMemory: MemoryManager,
+    /** Kept for DI compatibility; avatar defaults now live in blendAvatarFromBrain. */
+    _avatarMemory: MemoryManager,
     private readonly config: ChatOrchestratorConfig,
   ) {
     this.xai = isRealXaiKey(config.xaiApiKey)
@@ -224,19 +226,8 @@ export class ChatOrchestrator {
     previous: AvatarState,
     fromGrok?: Partial<AvatarState>,
   ): AvatarState {
-    const base = this.avatarMemory.defaultAvatarState(characterId);
-
-    return {
-      emotion: fromGrok?.emotion ?? previous.emotion ?? base.emotion,
-      pose: fromGrok?.pose ?? previous.pose ?? base.pose,
-      action: fromGrok?.action ?? previous.action ?? base.action,
-      arousalLevel:
-        fromGrok?.arousalLevel ??
-        Math.min(previous.arousalLevel + 0.05, 1),
-      clothingState: fromGrok?.clothingState ?? signatureClothing ?? base.clothingState,
-      // Keep presence grade sticky for client atmosphere even when clips share a base pack
-      presenceSkin: previous.presenceSkin ?? base.presenceSkin,
-    };
+    // Brain (Grok + presence) drives body; clips only follow energy.
+    return blendAvatarFromBrain(characterId, signatureClothing, previous, fromGrok);
   }
 
   private buildErrorReply(error: unknown): string {

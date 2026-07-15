@@ -12,6 +12,7 @@ export {
   getPresenceProfile,
 } from "./presence-profiles.js";
 export type { PresenceProfile, PresenceSkin } from "./presence-profiles.js";
+export { blendAvatarFromBrain } from "./avatar-brain.js";
 export {
   canAccessCustom,
   countAccountCustoms,
