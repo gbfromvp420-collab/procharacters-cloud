@@ -54,3 +54,5 @@ frontend/tsconfig.tsbuildinfo
 railway.toml.deploytmp
 railway.toml
 
+
+/generated/prisma
