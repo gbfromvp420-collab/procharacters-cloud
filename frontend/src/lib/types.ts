@@ -141,6 +141,8 @@ export interface AvatarState {
   arousalLevel: number;
   clothingState: string;
   mediaUrl?: string;
+  /** Interim pack if dedicated /avatar/<id>/ clip 404s */
+  mediaFallbackUrl?: string;
 }
 
 export interface ServerWsEvent {

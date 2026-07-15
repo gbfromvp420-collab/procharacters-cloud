@@ -1,0 +1,79 @@
+{
+  "updatedAt": "2026-07-15T18:03:53.766Z",
+  "ready": [
+    "female-default",
+    "twink-default"
+  ],
+  "packs": {
+    "female-athletic-tease": {
+      "ready": false,
+      "missing": [
+        "idle",
+        "teasing",
+        "playful",
+        "aroused"
+      ],
+      "avatarBase": "female-default"
+    },
+    "female-default": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "female-playful-brat": {
+      "ready": false,
+      "missing": [
+        "idle",
+        "teasing",
+        "playful",
+        "aroused"
+      ],
+      "avatarBase": "female-default"
+    },
+    "female-soft-goth": {
+      "ready": false,
+      "missing": [
+        "idle",
+        "teasing",
+        "playful",
+        "aroused"
+      ],
+      "avatarBase": "female-default"
+    },
+    "twink-alt-punk": {
+      "ready": false,
+      "missing": [
+        "idle",
+        "teasing",
+        "playful",
+        "aroused"
+      ],
+      "avatarBase": "twink-default"
+    },
+    "twink-default": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "twink-gym": {
+      "ready": false,
+      "missing": [
+        "idle",
+        "teasing",
+        "playful",
+        "aroused"
+      ],
+      "avatarBase": "twink-default"
+    },
+    "twink-shy-boy": {
+      "ready": false,
+      "missing": [
+        "idle",
+        "teasing",
+        "playful",
+        "aroused"
+      ],
+      "avatarBase": "twink-default"
+    }
+  }
+}

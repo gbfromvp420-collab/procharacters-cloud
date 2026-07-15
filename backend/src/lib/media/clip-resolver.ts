@@ -1,6 +1,7 @@
 import { getCustomCharacter } from "../live/custom-characters.js";
 import { resolveAvatarBaseId } from "../live/character-catalog.js";
 import type { AvatarState } from "../../types/session.js";
+import { resolvePackMediaIds } from "./avatar-packs.js";
 
 /** Shipped loop slots (files on disk). */
 export const CLIP_KEYS = ["idle", "teasing", "playful", "aroused"] as const;
@@ -126,7 +127,8 @@ function joinMediaBase(base: string, clip: ClipKey): string {
  * Resolution order:
  * 1. Custom per-emotion mediaOverrides
  * 2. Custom mediaBase folder (e.g. /avatar/packs/diego)
- * 3. Built-in pack for avatarBase (twink-default / female-default)
+ * 3. Dedicated pack under /avatar/<characterId>/ when ready (Phase 4 drop-in)
+ * 4. Interim avatarBase pack (twink-default / female-default)
  */
 export function resolveClipPath(characterId: string, state: AvatarState): string {
   const clip = pickClipName(state);
@@ -141,14 +143,34 @@ export function resolveClipPath(characterId: string, state: AvatarState): string
     return joinMediaBase(custom.mediaBase.trim(), clip);
   }
 
-  const mediaId = custom?.avatarBase ?? resolveAvatarBaseId(characterId);
-  return `/avatar/${mediaId}/${clip}.mp4`;
+  if (custom) {
+    const mediaId = custom.avatarBase ?? resolveAvatarBaseId(characterId);
+    return `/avatar/${mediaId}/${clip}.mp4`;
+  }
+
+  const { primary } = resolvePackMediaIds(characterId);
+  return `/avatar/${primary}/${clip}.mp4`;
+}
+
+export function resolveClipFallbackPath(
+  characterId: string,
+  state: AvatarState,
+): string | undefined {
+  const custom = getCustomCharacter(characterId);
+  if (custom) return undefined;
+  const clip = pickClipName(state);
+  const { primary, fallback } = resolvePackMediaIds(characterId);
+  if (!fallback || fallback === primary) return undefined;
+  return `/avatar/${fallback}/${clip}.mp4`;
 }
 
 export function enrichAvatarWithMedia(characterId: string, state: AvatarState): AvatarState {
+  const mediaUrl = resolveClipPath(characterId, state);
+  const mediaFallbackUrl = resolveClipFallbackPath(characterId, state);
   return {
     ...state,
-    mediaUrl: resolveClipPath(characterId, state),
+    mediaUrl,
+    ...(mediaFallbackUrl ? { mediaFallbackUrl } : {}),
     energyBand: resolveEnergyBand(state),
   };
 }

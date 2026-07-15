@@ -1,6 +1,11 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { isStripeConfigured } from "../lib/billing/stripe-billing.js";
+import {
+  buildPackStatusFile,
+  listPackStatuses,
+  phase4PackIds,
+} from "../lib/media/avatar-packs.js";
 import { isErrorReportingConfigured } from "../lib/observability/error-reporter.js";
 import { getMetrics } from "../lib/observability/metrics.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
@@ -27,6 +32,10 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
       avatar: {
         clipSlots: ["idle", "teasing", "playful", "aroused"],
         energyBands: ["idle", "tease", "play", "edge"],
+        phase4Packs: phase4PackIds(),
+        dedicatedReady: listPackStatuses()
+          .filter((p) => phase4PackIds().includes(p.id) && p.ready)
+          .map((p) => p.id),
       },
       observability: {
         errorWebhook: isErrorReportingConfigured(),
@@ -43,6 +52,12 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
     app.get("/metrics", async () => ({
       service: "procharacters-backend",
       ...getMetrics(),
+    }));
+
+    /** Avatar pack readiness (Phase 4 drop-in). */
+    app.get("/avatar-packs", async () => ({
+      ...buildPackStatusFile(),
+      packs: listPackStatuses(),
     }));
   };
 };

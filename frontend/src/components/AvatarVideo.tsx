@@ -34,27 +34,36 @@ export function AvatarVideo({
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [showIncoming, setShowIncoming] = useState(false);
+  const [usedFallback, setUsedFallback] = useState(false);
 
   const mediaUrl = avatar?.mediaUrl ?? null;
-  const isVideo = mediaUrl?.endsWith(".mp4") || mediaUrl?.endsWith(".webm");
+  const fallbackUrl = avatar?.mediaFallbackUrl ?? null;
+  const effectivePrimary = mediaUrl;
+  const isVideo =
+    (activeSrc ?? mediaUrl)?.endsWith(".mp4") ||
+    (activeSrc ?? mediaUrl)?.endsWith(".webm");
   const band = energyBandFromAvatar(avatar);
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
 
+  // Reset when server sends a new primary URL
   useEffect(() => {
-    if (!mediaUrl) return;
+    if (!effectivePrimary) return;
+    setUsedFallback(false);
+    setActiveSrc(effectivePrimary);
+    setIncomingSrc(null);
+    setShowIncoming(false);
+  }, [effectivePrimary]);
 
-    if (!activeSrc) {
-      setActiveSrc(mediaUrl);
-      return;
-    }
-
+  useEffect(() => {
+    if (!mediaUrl || !activeSrc) return;
     if (mediaUrl === activeSrc) return;
+    // Crossfade only when not mid-fallback recovery
+    if (usedFallback) return;
 
     setIncomingSrc(mediaUrl);
     setShowIncoming(false);
 
     const frame = requestAnimationFrame(() => setShowIncoming(true));
-    // Slightly longer crossfade for premium feel
     const timer = setTimeout(() => {
       setActiveSrc(mediaUrl);
       setIncomingSrc(null);
@@ -65,7 +74,16 @@ export function AvatarVideo({
       cancelAnimationFrame(frame);
       clearTimeout(timer);
     };
-  }, [mediaUrl, activeSrc]);
+  }, [mediaUrl, activeSrc, usedFallback]);
+
+  const onMediaError = () => {
+    if (fallbackUrl && !usedFallback && activeSrc !== fallbackUrl) {
+      setUsedFallback(true);
+      setActiveSrc(fallbackUrl);
+      setIncomingSrc(null);
+      setShowIncoming(false);
+    }
+  };
 
   const frameClass = pip
     ? "aspect-[3/4] w-full rounded-2xl border-brand-accent/40 shadow-glow-sm"
@@ -99,9 +117,12 @@ export function AvatarVideo({
       {activeSrc && (
         <MediaLayer
           src={activeSrc}
-          isVideo={!!isVideo}
+          isVideo={
+            !!activeSrc.endsWith(".mp4") || !!activeSrc.endsWith(".webm") || !!isVideo
+          }
           visible={!showIncoming}
           label={pip ? undefined : avatar ? formatLabel(avatar.emotion) : undefined}
+          onError={onMediaError}
         />
       )}
 
@@ -111,10 +132,10 @@ export function AvatarVideo({
           isVideo={incomingSrc.endsWith(".mp4") || incomingSrc.endsWith(".webm")}
           visible={showIncoming}
           label={pip ? undefined : avatar ? formatLabel(avatar.emotion) : undefined}
+          onError={onMediaError}
         />
       )}
 
-      {/* Energy band chip */}
       {avatar && (
         <div
           className={`absolute left-2 top-2 z-10 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur-sm ${energyBandBadgeClass(band)} ${
@@ -161,11 +182,13 @@ function MediaLayer({
   isVideo,
   visible,
   label,
+  onError,
 }: {
   src: string;
   isVideo: boolean;
   visible: boolean;
   label?: string;
+  onError?: () => void;
 }) {
   const className = `absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out ${
     visible ? "opacity-100" : "opacity-0"
@@ -182,12 +205,19 @@ function MediaLayer({
         muted
         playsInline
         aria-label={label}
+        onError={() => onError?.()}
       />
     );
   }
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img key={src} src={src} alt={label ?? "Avatar state"} className={className} />
+    <img
+      key={src}
+      src={src}
+      alt={label ?? "Avatar state"}
+      className={className}
+      onError={() => onError?.()}
+    />
   );
 }

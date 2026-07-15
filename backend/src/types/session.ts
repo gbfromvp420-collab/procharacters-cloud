@@ -10,6 +10,8 @@ export interface AvatarState {
   arousalLevel: number;
   clothingState: string;
   mediaUrl?: string;
+  /** When dedicated pack 404s, client falls back here (interim base pack). */
+  mediaFallbackUrl?: string;
   /** Phase 7 energy band for UI: idle | tease | play | edge */
   energyBand?: string;
 }

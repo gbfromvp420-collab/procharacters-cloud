@@ -102,6 +102,24 @@ async function main() {
     fail("metrics", e instanceof Error ? e.message : String(e));
   }
 
+  // 2b) Avatar pack status endpoint
+  try {
+    const { status, body } = await json<{
+      ready?: string[];
+      packs?: unknown[];
+    }>("/avatar-packs");
+    if (status === 200 && Array.isArray(body.packs)) {
+      pass(
+        "avatar_packs",
+        `packs=${body.packs.length} dedicatedReady=${(body.ready ?? []).length}`,
+      );
+    } else {
+      fail("avatar_packs", `HTTP ${status}`);
+    }
+  } catch (e) {
+    fail("avatar_packs", e instanceof Error ? e.message : String(e));
+  }
+
   // 3) Characters / Phase 4 pack
   const need = [
     "twink-default",
