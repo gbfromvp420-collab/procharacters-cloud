@@ -523,6 +523,7 @@ export function ChatApp() {
         livekit?: LiveKitJoinInfo;
         messages?: MemoryMessage[];
         resumeCode?: string;
+        resumeExpiresAt?: string;
       },
     ) => {
       const history = (session.messages ?? []).map((m) => ({
@@ -537,6 +538,19 @@ export function ChatApp() {
       setLivekit(session.livekit ?? null);
       setWsToken(session.wsToken);
       setResumeCode(session.resumeCode ?? null);
+      // Sliding resume TTL: server extends on every open/resume
+      if (session.resumeCode && session.resumeExpiresAt && history.length > 0) {
+        const exp = Date.parse(session.resumeExpiresAt);
+        if (!Number.isNaN(exp)) {
+          const days = Math.ceil((exp - Date.now()) / (24 * 60 * 60 * 1000));
+          setCopyNotice(
+            days > 1
+              ? `Resume code extended · good for ~${days} more days`
+              : "Resume code extended · still active",
+          );
+          window.setTimeout(() => setCopyNotice(null), 2800);
+        }
+      }
       const ws = new WebSocket(session.wsUrl);
       wsRef.current = ws;
       bindWebSocket(ws, {

@@ -264,7 +264,7 @@ export class SessionManager {
     this.sessions.set(sessionId, record);
     await this.persist(record);
 
-    return this.toCreateResult(record, wsBaseUrl);
+    return this.withResumeExpiry(this.toCreateResult(record, wsBaseUrl), sessionId);
   }
 
   /**
@@ -1081,11 +1081,14 @@ export class SessionManager {
 
     assertLiveCharacter(session.characterId);
 
+    // Sliding resume TTL: every open/resume re-extends the code so active chats don't die quietly.
     let resumeCode = session.resumeCode;
     if (!resumeCode) {
       resumeCode = await registerResumeCode(session.id, session.accountId);
     } else {
-      await registerResumeCode(session.id, session.accountId, resumeCode);
+      resumeCode = await registerResumeCode(session.id, session.accountId, resumeCode, {
+        extendOnly: true,
+      });
     }
 
     const updated: SessionRecord = {
@@ -1101,7 +1104,7 @@ export class SessionManager {
     await this.persist(updated);
 
     return {
-      ...this.toCreateResult(updated, wsBaseUrl),
+      ...(await this.withResumeExpiry(this.toCreateResult(updated, wsBaseUrl), updated.id)),
       messages: updated.memory.messages ?? [],
     };
   }
@@ -1137,6 +1140,17 @@ export class SessionManager {
       resumeCode: record.resumeCode,
       accountId: record.accountId,
     };
+  }
+
+  /** Attach current resume expiry (after create/register/extend). */
+  private async withResumeExpiry(
+    result: CreateSessionResult,
+    sessionId: string,
+  ): Promise<CreateSessionResult> {
+    if (!result.resumeCode) return result;
+    const meta = await getResumeCodeForSession(sessionId);
+    if (!meta?.expiresAt) return result;
+    return { ...result, resumeExpiresAt: meta.expiresAt };
   }
 
   private assertNotExpired(session: SessionRecord): void {

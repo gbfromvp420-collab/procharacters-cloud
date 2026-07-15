@@ -41,6 +41,8 @@ export interface CreateSessionResponse {
   messages?: MemoryMessage[];
   livekit?: LiveKitJoinInfo;
   resumeCode?: string;
+  /** ISO expiry after create/resume (sliding TTL extended on open). */
+  resumeExpiresAt?: string;
   accountId?: string;
 }
 

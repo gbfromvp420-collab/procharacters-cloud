@@ -51,5 +51,7 @@ export interface CreateSessionResult {
   livekit?: LiveKitJoinInfo;
   avatarState: AvatarState;
   resumeCode?: string;
+  /** ISO expiry for resume code (sliding TTL extended on open/resume). */
+  resumeExpiresAt?: string;
   accountId?: string;
 }

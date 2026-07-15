@@ -40,6 +40,7 @@ import {
   type StoredAccount,
 } from "@/lib/account-storage";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
+import { ResumePrintCard } from "@/components/ResumePrintCard";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -98,6 +99,8 @@ export function AccountSettings() {
   const [deleteConfirm, setDeleteConfirm] = useState("");
   /** Banner for codes expiring soon (within EXPIRY_WARN_DAYS). */
   const [expiryWarning, setExpiryWarning] = useState<string | null>(null);
+  /** Print / QR card for a single resume. */
+  const [printCard, setPrintCard] = useState<AccountSessionSummary | null>(null);
 
   const EXPIRY_WARN_DAYS = 3;
 
@@ -1586,6 +1589,14 @@ export function AccountSettings() {
                           </button>
                           <button
                             type="button"
+                            onClick={() => setPrintCard(s)}
+                            className="text-amber-200/90 hover:text-amber-100"
+                            title="QR code + print-friendly resume card"
+                          >
+                            QR / Print
+                          </button>
+                          <button
+                            type="button"
                             disabled={busy}
                             onClick={() => void onDownloadOneResumeMd(s)}
                             className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
@@ -1671,6 +1682,17 @@ export function AccountSettings() {
           </div>
         )}
       </div>
+
+      {printCard?.resumeCode ? (
+        <ResumePrintCard
+          resumeCode={printCard.resumeCode}
+          characterId={printCard.characterId}
+          characterName={printCard.characterName}
+          resumeExpiresAt={printCard.resumeExpiresAt}
+          messageCount={printCard.messageCount}
+          onClose={() => setPrintCard(null)}
+        />
+      ) : null}
     </main>
   );
 }
