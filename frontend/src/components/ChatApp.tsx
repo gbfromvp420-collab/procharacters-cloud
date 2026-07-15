@@ -170,6 +170,8 @@ export function ChatApp() {
   const [avatarPip, setAvatarPip] = useState(true);
   /** Phase 6: compact "what we remember" blurb. */
   const [sessionNotes, setSessionNotes] = useState<string | null>(null);
+  /** Opt-in long-term dossier (across sessions). */
+  const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
   const [crossSessionOptIn, setCrossSessionOptIn] = useState(false);
   const [livekitRoomStatus, setLivekitRoomStatus] = useState<
@@ -262,6 +264,7 @@ export function ChatApp() {
     setSending(false);
     setIsTyping(false);
     setSessionNotes(null);
+    setPriorNotes(null);
     setModeState(null);
     streamingIdRef.current = null;
     pendingHistoryRef.current = null;
@@ -451,6 +454,12 @@ export function ChatApp() {
               setModeState(data.modeState as SessionModeUiState);
               setModeTick(0);
             }
+            if (typeof data.sessionNotes === "string" && data.sessionNotes.trim()) {
+              setSessionNotes(data.sessionNotes.trim());
+            }
+            if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
+              setPriorNotes(data.priorNotes.trim());
+            }
             const historyFromServer = Array.isArray(data.messages)
               ? (data.messages as MemoryMessage[]).map((m) => ({
                   id: m.id,
@@ -512,6 +521,9 @@ export function ChatApp() {
             }
             if (notes?.trim()) {
               setSessionNotes(notes.trim());
+            }
+            if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
+              setPriorNotes(data.priorNotes.trim());
             }
             if (data.modeState && typeof data.modeState === "object") {
               setModeState(data.modeState as SessionModeUiState);
@@ -632,6 +644,7 @@ export function ChatApp() {
       setStatus("connecting");
       pendingHistoryRef.current = null;
       setSessionNotes(null);
+      setPriorNotes(null);
       setModeState(null);
 
       const mode = options?.sessionMode ?? sessionMode;
@@ -2472,13 +2485,24 @@ export function ChatApp() {
                   </p>
                 </div>
               )}
+              {priorNotes && (status === "ready" || messages.length > 0) && (
+                <div
+                  className="rounded-xl border border-violet-400/30 bg-violet-500/5 px-3 py-2 text-[11px] leading-relaxed text-violet-100/90"
+                  role="status"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/85">
+                    Across sessions
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-brand-muted">{priorNotes}</p>
+                </div>
+              )}
               {sessionNotes && (status === "ready" || messages.length > 0) && (
                 <div
                   className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-100/90"
                   role="status"
                 >
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
-                    What we remember
+                    This session
                   </p>
                   <p className="mt-1 text-brand-muted">{sessionNotes}</p>
                 </div>

@@ -19,9 +19,10 @@ export function formatMemoryBlock(
   if (context.priorNotes?.trim()) {
     lines.push(
       "",
-      "### From earlier sessions (opt-in)",
+      "### From earlier sessions (opt-in dossier)",
       context.priorNotes.trim(),
-      "Use lightly — this chat is live; don't dump old notes as monologue.",
+      "Use lightly — reference their name/wants/heat if natural. Don't dump the whole dossier as monologue.",
+      "If they return, a soft recognition beat is good; never invent facts not in this block.",
     );
   }
 

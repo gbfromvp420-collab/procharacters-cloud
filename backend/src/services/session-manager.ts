@@ -14,6 +14,7 @@ import {
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { normalizeSessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
+import { returnGreetingHint } from "../lib/memory/cross-session-dossier.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
   buildAccountSessionsExport,
@@ -281,8 +282,12 @@ export class SessionManager {
     const opening = getOpeningMessage(promptSnapshot.characterId);
     if (opening) {
       let line = opening;
+      const returnHint = returnGreetingHint(priorNotes);
+      if (returnHint) {
+        line = `${opening}\n\n${returnHint}`;
+      }
       if (sessionMode === "edge_pace") {
-        line = `${opening}\n\n(soft mode: edge pace is on — i’ll hold you in slow cycles. no finish until you beg clear.)`;
+        line = `${line}\n\n(soft mode: edge pace is on — i’ll hold you in slow cycles. no finish until you beg clear.)`;
       }
       memory.addMessage("assistant", line);
     }

@@ -105,7 +105,8 @@ export async function saveCrossSessionNotes(
   if (!optIn) return null;
 
   const next: CrossSessionNote = {
-    notes: notes.slice(0, 1200),
+    // Dossier can be a bit longer than a single-session blurb
+    notes: notes.slice(0, 1600),
     updatedAt: new Date().toISOString(),
     optIn: true,
     messageCountHint: options?.messageCountHint ?? prev?.messageCountHint,

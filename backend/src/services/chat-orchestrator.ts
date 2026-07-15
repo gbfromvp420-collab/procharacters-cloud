@@ -15,6 +15,7 @@ import {
   type ModeRuntimeState,
 } from "../lib/live/session-mode.js";
 import { saveCrossSessionNotes } from "../lib/memory/cross-session-notes.js";
+import { buildCrossSessionDossier } from "../lib/memory/cross-session-dossier.js";
 import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { bump } from "../lib/observability/metrics.js";
@@ -31,6 +32,8 @@ export interface ChatTurnResult {
   usedLlm: boolean;
   /** Compact memory blurb for UI. */
   sessionNotes?: string;
+  /** Opt-in long-term dossier snippet for UI. */
+  priorNotes?: string;
   /** Phase 10 mode timer snapshot for UI. */
   modeState?: ReturnType<typeof formatModeForUi>;
 }
@@ -146,9 +149,17 @@ export class ChatOrchestrator {
     });
     memory.setSessionNotes(notes);
 
-    // Opt-in cross-session: refresh stored notes for this account+character
+    // Opt-in cross-session: merge durable dossier (who they are / wants / heat)
+    let priorNotesOut = memory.getRecentContext().priorNotes;
     if (session.accountId) {
-      void saveCrossSessionNotes(session.accountId, session.characterId, notes, {
+      const dossier = buildCrossSessionDossier({
+        priorDossier: memory.getRecentContext().priorNotes,
+        sessionNotes: notes,
+        messages: memory.getRecentContext().messages,
+        characterName: session.promptSnapshot.characterName,
+      });
+      priorNotesOut = dossier;
+      void saveCrossSessionNotes(session.accountId, session.characterId, dossier, {
         messageCountHint: memory.getRecentContext().messageCount,
       });
     }
@@ -178,6 +189,7 @@ export class ChatOrchestrator {
       promptHash: injection.hash,
       usedLlm,
       sessionNotes: notes,
+      ...(priorNotesOut ? { priorNotes: priorNotesOut } : {}),
       modeState: formatModeForUi(modeState),
     };
   }

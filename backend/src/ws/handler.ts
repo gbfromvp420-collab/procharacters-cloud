@@ -82,6 +82,10 @@ export function createWebSocketHandler(
       })),
       sessionMode: session.sessionMode ?? "normal",
       modeState,
+      ...(session.memory?.sessionNotes
+        ? { sessionNotes: session.memory.sessionNotes }
+        : {}),
+      ...(session.memory?.priorNotes ? { priorNotes: session.memory.priorNotes } : {}),
     });
 
     socket.on("message", async (raw) => {
@@ -133,6 +137,7 @@ export function createWebSocketHandler(
               content: result.content,
               avatarIntent: avatarState,
               ...(result.sessionNotes ? { sessionNotes: result.sessionNotes } : {}),
+              ...(result.priorNotes ? { priorNotes: result.priorNotes } : {}),
               ...(result.modeState ? { modeState: result.modeState } : {}),
             });
 
