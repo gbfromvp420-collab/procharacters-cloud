@@ -39,6 +39,10 @@ import {
 } from "../services/session-manager.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import type { MediaWorker } from "../services/media-worker.js";
+import {
+  getAccountByEmail,
+  upsertAccountByEmail,
+} from "../lib/accounts/account-repo-prisma.js";
 
 function rateLimited(
   reply: import("fastify").FastifyReply,
@@ -195,6 +199,12 @@ export const createAccountRoutes = (
         if (denied) return rateLimited(reply, denied);
 
         const magic = await requestMagicLink(body.email);
+// Best-effort Prisma sync (non-blocking)
+try {
+  await upsertAccountByEmail(magic.email.trim().toLowerCase());
+} catch (e) {
+  request.log.warn({ err: e }, "Prisma upsert failed in /accounts/magic/request");
+}
         const siteBase =
           env.MAGIC_LINK_BASE_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
@@ -258,6 +268,11 @@ export const createAccountRoutes = (
         if (denied) return rateLimited(reply, denied);
 
         const magic = await requestMagicLink(body.email, { linkAccountId: account.id });
+try {
+  await upsertAccountByEmail(magic.email.trim().toLowerCase());
+} catch (e) {
+  request.log.warn({ err: e }, "Prisma upsert failed in /accounts/me/link-email");
+}
         const siteBase =
           env.MAGIC_LINK_BASE_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
@@ -308,6 +323,13 @@ export const createAccountRoutes = (
       try {
         const body = magicVerifySchema.parse(request.body ?? {});
         const account = await verifyMagicLink(body.token);
+if (account.email?.trim()) {
+  try {
+    await upsertAccountByEmail(account.email.trim().toLowerCase());
+  } catch (e) {
+    request.log.warn({ err: e }, "Prisma upsert failed in /accounts/magic/verify");
+  }
+}
         return {
           accountId: account.id,
           handle: account.handle,
@@ -335,6 +357,15 @@ export const createAccountRoutes = (
         return reply.code(401).send({ error: "Not signed in" });
       }
       const plan = getAccountPlanSummary(account);
+let prismaUserId: string | null = null;
+if (account.email?.trim()) {
+  try {
+    const dbUser = await getAccountByEmail(account.email.trim().toLowerCase());
+    prismaUserId = dbUser?.id ?? null;
+  } catch (e) {
+    request.log.warn({ err: e }, "Prisma lookup failed in /accounts/me");
+  }
+}
       return {
         accountId: account.id,
         handle: account.handle,
@@ -345,6 +376,7 @@ export const createAccountRoutes = (
         activePremium: plan.activePremium,
         planExpiresAt: plan.planExpiresAt,
         customsLimit: plan.customsLimit,
+        prismaUserId,
       };
     });
 
@@ -923,3 +955,4 @@ export const createAccountRoutes = (
     });
   };
 };
+
