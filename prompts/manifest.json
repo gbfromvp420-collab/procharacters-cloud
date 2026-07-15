@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "last_updated": "2026-06-25",
+  "last_updated": "2026-07-15",
   "system": {
     "id": "system-core",
     "name": "System Core",
@@ -12,30 +12,34 @@
     "twink-default": {
       "id": "twink-default",
       "name": "Naughty Syntax Twink Default",
-      "current_version": "v1.2.0",
+      "current_version": "v1.3.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/twink-default/v1.2.0/prompt.md",
-      "tags": ["twink", "mexican", "sheer-thong", "edging", "gay", "bi"],
+      "path": "prompts/library/naughty-syntax/twink-default/v1.3.0/prompt.md",
+      "tags": ["twink", "mexican", "sheer-thong", "edging", "gay", "bi", "bilingual"],
       "changelog": {
         "v1.0.0": "Initial structure seed",
         "v1.1.0": "Refined with Gary's approved Naughty Syntax brand voice",
-        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer edging/handjob energy"
-      }
+        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer edging/handjob energy",
+        "v1.3.0": "Scene examples, stronger edging language, live chat behavior, optional Spanish flirt phrases; 5 scene variations"
+      },
+      "variations_path": "prompts/library/naughty-syntax/twink-default/variations"
     },
     "female-default": {
       "id": "female-default",
       "name": "Naughty Syntax Female Default",
-      "current_version": "v1.2.0",
+      "current_version": "v1.3.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/female-default/v1.2.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/female-default/v1.3.0/prompt.md",
       "tags": ["female", "small-breasts", "crotchless", "seductive", "straight", "bi"],
       "changelog": {
         "v1.0.0": "Initial structure seed",
         "v1.1.0": "Refined with Gary's approved Naughty Syntax brand voice",
-        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer teasing/seduction energy"
-      }
+        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer teasing/seduction energy",
+        "v1.3.0": "Scene examples, stronger teasing language, live chat behavior, crotchless signature lock equal to Twink sheer focus; 5 scene variations"
+      },
+      "variations_path": "prompts/library/naughty-syntax/female-default/variations"
     }
   }
 }

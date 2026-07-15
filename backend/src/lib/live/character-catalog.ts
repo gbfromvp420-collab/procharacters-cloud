@@ -12,12 +12,12 @@ export interface LiveCharacterProfile {
   kind?: "default" | "custom";
 }
 
-/** Built-in v2 live characters — both use v1.2.0 prompts from the library. */
+/** Built-in v2 live characters — both use v1.3.0 prompts from the library. */
 export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-default": {
     id: "twink-default",
     displayName: "Twink Default",
-    defaultVersion: "v1.2.0",
+    defaultVersion: "v1.3.0",
     kind: "default",
     avatarBase: "twink-default",
     consistencyTraits: [
@@ -34,7 +34,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "female-default": {
     id: "female-default",
     displayName: "Female Default",
-    defaultVersion: "v1.2.0",
+    defaultVersion: "v1.3.0",
     kind: "default",
     avatarBase: "female-default",
     consistencyTraits: [

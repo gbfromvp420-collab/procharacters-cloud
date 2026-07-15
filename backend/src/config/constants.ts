@@ -1,7 +1,7 @@
 export const SYSTEM_CORE_PROMPT_PATH =
   "prompts/library/naughty-syntax/system-core/v1.0.0/prompt.md";
 
-export const DEFAULT_PROMPT_VERSION = "v1.2.0";
+export const DEFAULT_PROMPT_VERSION = "v1.3.0";
 
 export const LIVE_RESPONSE_FORMAT = `
 ## Live session response format

@@ -81,13 +81,13 @@ const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   {
     id: "twink-default",
     displayName: "Twink Default",
-    defaultVersion: "v1.2.0",
+    defaultVersion: "v1.3.0",
     kind: "default",
   },
   {
     id: "female-default",
     displayName: "Female Default",
-    defaultVersion: "v1.2.0",
+    defaultVersion: "v1.3.0",
     kind: "default",
   },
 ];

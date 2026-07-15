@@ -137,7 +137,7 @@ export class ChatOrchestrator {
   }
 
   /**
-   * Calls Grok with the full injected prompt (v1.2.0 character + memory block).
+   * Calls Grok with the full injected prompt (v1.3.0 character + memory block).
    * Retries once if consistency traits appear missing from the reply.
    */
   private async callGrokWithConsistencyRetry(
@@ -222,7 +222,7 @@ export class ChatOrchestrator {
   private buildStubReply(characterId: string, userContent: string, promptHash: string): string {
     const pronoun = characterId === "female-default" ? "she" : "he";
     return [
-      `*[${characterId} v1.2.0 — set XAI_API_KEY in .env]*`,
+      `*[${characterId} v1.3.0 — set XAI_API_KEY in .env]*`,
       `Mmm, I hear you... "${userContent.slice(0, 80)}".`,
       `Stay with me — ${pronoun}'s keeping that slow, teasing energy going just for you.`,
       `(prompt hash: ${promptHash})`,

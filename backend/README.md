@@ -45,7 +45,7 @@ backend/src/
 ├── config/          # env + constants
 ├── lib/
 │   ├── characters/  # registry + model.json loading
-│   └── prompts/     # manifest, v1.2.0 prompts, assembler
+│   └── prompts/     # manifest, v1.3.0 prompts, assembler
 ├── routes/          # HTTP handlers
 ├── services/        # session, memory, chat orchestration
 ├── types/           # shared TypeScript types
@@ -54,21 +54,21 @@ backend/src/
 
 ## Live prompt injection (`src/lib/live/`)
 
-Loads v1.2.0 character prompts from the existing library and injects them into every live turn.
+Loads v1.3.0 character prompts from the existing library and injects them into every live turn.
 
 ### Supported characters
 
 | ID | Prompt version | Library path |
 |----|----------------|--------------|
-| `twink-default` | v1.2.0 | `prompts/library/naughty-syntax/twink-default/v1.2.0/prompt.md` |
-| `female-default` | v1.2.0 | `prompts/library/naughty-syntax/female-default/v1.2.0/prompt.md` |
+| `twink-default` | v1.3.0 | `prompts/library/naughty-syntax/twink-default/v1.3.0/prompt.md` |
+| `female-default` | v1.3.0 | `prompts/library/naughty-syntax/female-default/v1.3.0/prompt.md` |
 
 ### How injection works
 
 1. **Session start** — `createPromptSnapshot()` pins the character prompt + system-core at that version (immune to later manifest edits).
 2. **Each chat turn** — `LivePromptInjector.injectTurn()` builds:
    - **Platform** — `system-core` (rules, brand voice, live session rules)
-   - **Character** — pinned v1.2.0 prompt body
+   - **Character** — pinned v1.3.0 prompt body
    - **Consistency** — trait checklist + `model.json` appearance anchor
    - **Memory** — rolling session summary
    - **Live format** — `avatar_intent` JSON response instructions
