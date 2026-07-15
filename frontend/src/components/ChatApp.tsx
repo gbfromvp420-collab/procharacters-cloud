@@ -71,6 +71,7 @@ import {
   shareResultLabel,
   shareUrlResultLabel,
 } from "@/lib/share-links";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type {
   AvatarState,
   CharacterId,
@@ -2487,6 +2488,28 @@ export function ChatApp() {
               </button>
             </div>
             <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              {(() => {
+                const mind = mindFingerprint(activeCharacterId ?? character);
+                if (!mind) return null;
+                return (
+                  <div
+                    className="rounded-xl border border-brand-accent/25 bg-brand-accent/5 px-3 py-2 text-[11px] leading-relaxed"
+                    role="status"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                        Mind · {mind.tag}
+                      </p>
+                      {mind.bilingual && (
+                        <span className="rounded-full border border-brand-border/80 px-2 py-0.5 text-[9px] text-brand-muted">
+                          Soft ES spice
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-brand-muted">{mind.blurb}</p>
+                  </div>
+                );
+              })()}
               {modeState && modeState.mode === "edge_pace" && status === "ready" && (
                 <div
                   className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[11px] leading-relaxed text-rose-50"
