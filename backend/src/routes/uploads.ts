@@ -11,10 +11,15 @@ import {
   toPublicMediaUrl,
 } from "../lib/media/upload-store.js";
 import {
+  accountHasActivePremium,
+  resolveAccountToken,
+} from "../lib/accounts/account-store.js";
+import {
   RATE_LIMITS,
   clientIp,
   enforceRateLimits,
 } from "../lib/rate-limit.js";
+import { bearerToken } from "./accounts.js";
 
 function rateLimited(
   reply: FastifyReply,
@@ -29,20 +34,28 @@ function rateLimited(
   });
 }
 
-function checkUploadLimits(
+async function checkUploadLimits(
   request: FastifyRequest,
   characterId: string,
-): ReturnType<typeof enforceRateLimits> {
+): Promise<ReturnType<typeof enforceRateLimits>> {
   const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+  const account = await resolveAccountToken(bearerToken(request));
+  const premium = accountHasActivePremium(account);
+  const ipLimit = premium
+    ? Math.round(RATE_LIMITS.uploadPerIp.limit * 2.5)
+    : RATE_LIMITS.uploadPerIp.limit;
+  const charLimit = premium
+    ? Math.round(RATE_LIMITS.uploadPerCharacter.limit * 2.5)
+    : RATE_LIMITS.uploadPerCharacter.limit;
   return enforceRateLimits([
     {
       key: `upload:ip:${ip}`,
-      limit: RATE_LIMITS.uploadPerIp.limit,
+      limit: ipLimit,
       windowMs: RATE_LIMITS.uploadPerIp.windowMs,
     },
     {
       key: `upload:char:${characterId}`,
-      limit: RATE_LIMITS.uploadPerCharacter.limit,
+      limit: charLimit,
       windowMs: RATE_LIMITS.uploadPerCharacter.windowMs,
     },
   ]);
@@ -118,7 +131,7 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
         return reply.code(404).send({ error: "Custom character not found" });
       }
 
-      const denied = checkUploadLimits(request, characterId);
+      const denied = await checkUploadLimits(request, characterId);
       if (denied) return rateLimited(reply, denied);
 
       const file = await request.file();
@@ -186,7 +199,7 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
         return reply.code(404).send({ error: "Custom character not found" });
       }
 
-      const denied = checkUploadLimits(request, characterId);
+      const denied = await checkUploadLimits(request, characterId);
       if (denied) return rateLimited(reply, denied);
 
       const parts = request.files();

@@ -14,6 +14,7 @@ import { startResumeExpiryPushCron } from "./lib/push/expiry-notify.js";
 import { initPushStore } from "./lib/push/push-store.js";
 import { isWebPushConfigured } from "./lib/push/web-push-service.js";
 import { createAccountRoutes } from "./routes/accounts.js";
+import { createBillingRoutes } from "./routes/billing.js";
 import { createHealthRoutes } from "./routes/health.js";
 import { createPushRoutes } from "./routes/push.js";
 import { createSessionRoutes } from "./routes/sessions.js";
@@ -42,6 +43,21 @@ export async function buildApp() {
 
   const { registerObservability } = await import("./lib/observability/request-logs.js");
   registerObservability(app);
+
+  // Preserve raw body for Stripe webhooks (signature verification)
+  app.addContentTypeParser(
+    "application/json",
+    { parseAs: "buffer" },
+    (req, body, done) => {
+      try {
+        (req as { rawBody?: Buffer }).rawBody = body as Buffer;
+        const text = (body as Buffer).toString("utf8");
+        done(null, text ? JSON.parse(text) : {});
+      } catch (err) {
+        done(err as Error, undefined);
+      }
+    },
+  );
 
   await app.register(cors, { origin: true });
   await app.register(websocket);
@@ -128,6 +144,9 @@ export async function buildApp() {
     prefix: "/api/v1",
   });
   await app.register(createAccountRoutes(sessionManager, media, livekit), {
+    prefix: "/api/v1",
+  });
+  await app.register(createBillingRoutes(), {
     prefix: "/api/v1",
   });
   await app.register(createUploadRoutes(), {

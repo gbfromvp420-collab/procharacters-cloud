@@ -50,6 +50,12 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 | `PUSH_SUBSCRIPTIONS_PATH` | `/data/push-subscriptions.json` (with volume) |
 | `MAGIC_LINK_BASE_URL` | Frontend origin (magic links + push click-through) |
 | `RESEND_API_KEY` | (optional) magic-link + resume email |
+| `STRIPE_SECRET_KEY` | (optional) Phase 9 payments — Checkout |
+| `STRIPE_WEBHOOK_SECRET` | (optional) Stripe webhook signing secret |
+| `STRIPE_DAY_PASS_CENTS` | (optional) default `499` ($4.99) |
+| `STRIPE_SUPPORTER_CENTS` | (optional) default `999` ($9.99) |
+| `CUSTOM_CHARS_PER_ACCOUNT` | (optional) free My Character cap, default 10 |
+| `CUSTOM_CHARS_PER_ACCOUNT_PREMIUM` | (optional) premium cap, default 40 |
 
 Do **not** set `PORT` — Railway injects it.
 

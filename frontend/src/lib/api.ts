@@ -741,6 +741,10 @@ export async function fetchAccountMe(
   email?: string;
   createdAt: string;
   hasPassphrase?: boolean;
+  plan?: string;
+  activePremium?: boolean;
+  planExpiresAt?: string;
+  customsLimit?: number;
 }> {
   const res = await fetch(`${API_BASE}/api/v1/accounts/me`, {
     headers: authHeaders(accountToken),
@@ -755,7 +759,60 @@ export async function fetchAccountMe(
     email?: string;
     createdAt: string;
     hasPassphrase?: boolean;
+    plan?: string;
+    activePremium?: boolean;
+    planExpiresAt?: string;
+    customsLimit?: number;
   }>;
+}
+
+export async function fetchBillingStatus(accountToken: string): Promise<{
+  configured: boolean;
+  plan: string;
+  activePremium: boolean;
+  planExpiresAt?: string;
+  customsLimit: number;
+  freePath: boolean;
+  benefits: {
+    free: { customsLimit: number; label: string };
+    premium: { customsLimit: number; label: string };
+  };
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/billing/status`, {
+    headers: authHeaders(accountToken),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Billing status failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    configured: boolean;
+    plan: string;
+    activePremium: boolean;
+    planExpiresAt?: string;
+    customsLimit: number;
+    freePath: boolean;
+    benefits: {
+      free: { customsLimit: number; label: string };
+      premium: { customsLimit: number; label: string };
+    };
+  }>;
+}
+
+export async function startBillingCheckout(
+  accountToken: string,
+  product: "day_pass" | "supporter" = "day_pass",
+): Promise<{ url: string; sessionId: string }> {
+  const res = await fetch(`${API_BASE}/api/v1/billing/checkout`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+    body: JSON.stringify({ product }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Checkout failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ url: string; sessionId: string }>;
 }
 
 export async function setAccountPassphrase(

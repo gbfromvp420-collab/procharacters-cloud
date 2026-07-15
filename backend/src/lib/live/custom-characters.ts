@@ -1,6 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import {
+  accountHasActivePremium,
+  getAccount,
+} from "../accounts/account-store.js";
 import { repoPath } from "../paths.js";
 import { loadPromptBody } from "../prompts/loader.js";
 import {
@@ -83,9 +87,19 @@ const store = new Map<string, CustomCharacterRecord>();
 let loaded = false;
 let persistPath: string | null = null;
 
-const CUSTOMS_PER_ACCOUNT = Number(process.env.CUSTOM_CHARS_PER_ACCOUNT ?? 10);
+const CUSTOMS_PER_ACCOUNT_FREE = Number(process.env.CUSTOM_CHARS_PER_ACCOUNT ?? 10);
+const CUSTOMS_PER_ACCOUNT_PREMIUM = Number(
+  process.env.CUSTOM_CHARS_PER_ACCOUNT_PREMIUM ?? 40,
+);
 const MAX_SCENES = 5;
 const MAX_PHRASES = 6;
+
+function customsLimitForAccount(accountId?: string): number {
+  if (!accountId) return CUSTOMS_PER_ACCOUNT_FREE;
+  const acc = getAccount(accountId);
+  if (acc && accountHasActivePremium(acc)) return CUSTOMS_PER_ACCOUNT_PREMIUM;
+  return CUSTOMS_PER_ACCOUNT_FREE;
+}
 
 function resolvePersistPath(): string {
   if (process.env.CUSTOM_CHARACTERS_PATH?.trim()) {
@@ -443,12 +457,13 @@ export async function createCustomCharacter(
   const keyPhrases = sanitizePhrases(raw.keyPhrases);
   const scenes = sanitizeScenes(raw.scenes);
 
-  // My Character path: private + owner + soft cap
+  // My Character path: private + owner + soft cap (premium gets higher limit)
   const ownerAccountId = raw.ownerAccountId?.trim() || undefined;
   if (ownerAccountId) {
-    if (countAccountCustoms(ownerAccountId) >= CUSTOMS_PER_ACCOUNT) {
+    const limit = customsLimitForAccount(ownerAccountId);
+    if (countAccountCustoms(ownerAccountId) >= limit) {
       throw new Error(
-        `My Character limit reached (${CUSTOMS_PER_ACCOUNT}). Delete one to create another.`,
+        `My Character limit reached (${limit}). Delete one or upgrade with a Day Pass for more slots.`,
       );
     }
   }

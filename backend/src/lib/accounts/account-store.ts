@@ -3,6 +3,9 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { repoPath } from "../paths.js";
 
+/** Phase 9 billing — free always works; paid plans are optional entitlements. */
+export type AccountPlan = "free" | "day_pass" | "supporter";
+
 export interface AccountRecord {
   id: string;
   handle: string;
@@ -11,6 +14,12 @@ export interface AccountRecord {
   salt?: string;
   email?: string;
   createdAt: string;
+  /** Billing plan (default free). */
+  plan?: AccountPlan;
+  /** ISO expiry for time-boxed plans (day_pass). supporter may omit for open-ended. */
+  planExpiresAt?: string;
+  stripeCustomerId?: string;
+  lastCheckoutSessionId?: string;
 }
 
 export interface AccountTokenRecord {
@@ -453,6 +462,80 @@ export async function logoutAccountToken(token: string): Promise<void> {
 
 export function getAccount(accountId: string): AccountRecord | null {
   return accounts.get(accountId) ?? null;
+}
+
+/** True if account has an active paid plan (not expired). Free always false. */
+export function accountHasActivePremium(account: AccountRecord | null | undefined): boolean {
+  if (!account) return false;
+  const plan = account.plan ?? "free";
+  if (plan === "free") return false;
+  if (account.planExpiresAt) {
+    const exp = Date.parse(account.planExpiresAt);
+    if (!Number.isNaN(exp) && exp < Date.now()) return false;
+  }
+  return plan === "day_pass" || plan === "supporter";
+}
+
+export function getAccountPlanSummary(account: AccountRecord): {
+  plan: AccountPlan;
+  activePremium: boolean;
+  planExpiresAt?: string;
+  customsLimit: number;
+} {
+  const activePremium = accountHasActivePremium(account);
+  // Expired day_pass → treat as free for display
+  const plan: AccountPlan = activePremium ? (account.plan ?? "free") : "free";
+  return {
+    plan,
+    activePremium,
+    planExpiresAt: account.planExpiresAt,
+    customsLimit: activePremium
+      ? Number(process.env.CUSTOM_CHARS_PER_ACCOUNT_PREMIUM ?? 40)
+      : Number(process.env.CUSTOM_CHARS_PER_ACCOUNT ?? 10),
+  };
+}
+
+/** Grant or extend a paid plan after successful Stripe checkout. */
+export async function grantAccountPlan(
+  accountId: string,
+  plan: "day_pass" | "supporter",
+  options?: { stripeCustomerId?: string; checkoutSessionId?: string; days?: number },
+): Promise<AccountRecord> {
+  await ensureLoaded();
+  const account = accounts.get(accountId);
+  if (!account) {
+    throw new AccountError("Account not found", "NOT_FOUND");
+  }
+
+  const days =
+    options?.days ??
+    (plan === "day_pass"
+      ? Number(process.env.STRIPE_DAY_PASS_DAYS ?? 1)
+      : Number(process.env.STRIPE_SUPPORTER_DAYS ?? 30));
+
+  const now = Date.now();
+  let base = now;
+  // Stack day-pass time if still active
+  if (account.planExpiresAt) {
+    const prev = Date.parse(account.planExpiresAt);
+    if (!Number.isNaN(prev) && prev > now) base = prev;
+  }
+
+  const planExpiresAt = new Date(base + days * 24 * 60 * 60 * 1000).toISOString();
+  const next: AccountRecord = {
+    ...account,
+    plan,
+    planExpiresAt,
+    ...(options?.stripeCustomerId
+      ? { stripeCustomerId: options.stripeCustomerId }
+      : {}),
+    ...(options?.checkoutSessionId
+      ? { lastCheckoutSessionId: options.checkoutSessionId }
+      : {}),
+  };
+  accounts.set(accountId, next);
+  await persist();
+  return next;
 }
 
 /** Set or change passphrase for a signed-in account. */

@@ -1,5 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { LiveKitService } from "../lib/livekit/service.js";
+import { isStripeConfigured } from "../lib/billing/stripe-billing.js";
 import { isErrorReportingConfigured } from "../lib/observability/error-reporter.js";
 import { getMetrics } from "../lib/observability/metrics.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
@@ -31,6 +32,10 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
         errorWebhook: isErrorReportingConfigured(),
         webPush: isWebPushConfigured(),
         logLevel: process.env.LOG_LEVEL?.trim() || "info",
+      },
+      billing: {
+        stripe: isStripeConfigured(),
+        freePath: true,
       },
     }));
 

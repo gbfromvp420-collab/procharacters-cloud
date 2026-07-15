@@ -10,6 +10,8 @@ import {
   fetchAccountMe,
   fetchAccountSessionMarkdown,
   fetchAllAccountSessionsMarkdown,
+  fetchBillingStatus,
+  startBillingCheckout,
   importAccountSession,
   importFlashSummary,
   linkEmailToAccount,
@@ -101,6 +103,13 @@ export function AccountSettings() {
   const [expiryWarning, setExpiryWarning] = useState<string | null>(null);
   /** Print / QR card for a single resume. */
   const [printCard, setPrintCard] = useState<AccountSessionSummary | null>(null);
+  /** Phase 9 billing */
+  const [plan, setPlan] = useState("free");
+  const [activePremium, setActivePremium] = useState(false);
+  const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
+  const [customsLimit, setCustomsLimit] = useState(10);
+  const [billingConfigured, setBillingConfigured] = useState(false);
+  const [billingBusy, setBillingBusy] = useState(false);
 
   const EXPIRY_WARN_DAYS = 3;
 
@@ -170,10 +179,11 @@ export function AccountSettings() {
 
   const refresh = useCallback(
     async (token: string) => {
-      const [me, list, push] = await Promise.all([
+      const [me, list, push, billing] = await Promise.all([
         fetchAccountMe(token),
         listAccountSessions(token).catch(() => [] as AccountSessionSummary[]),
         fetchPushStatus(token).catch(() => null),
+        fetchBillingStatus(token).catch(() => null),
       ]);
       setEmail(me.email ?? null);
       setHasPassphrase(me.hasPassphrase === true);
@@ -188,10 +198,48 @@ export function AccountSettings() {
         setPushServerCount(push.subscriptionCount);
         setPushLastNotify(push.lastExpiryNotifyAt);
       }
+      if (billing) {
+        setPlan(billing.plan);
+        setActivePremium(billing.activePremium);
+        setPlanExpiresAt(billing.planExpiresAt ?? null);
+        setCustomsLimit(billing.customsLimit);
+        setBillingConfigured(billing.configured);
+      } else if (me.plan) {
+        setPlan(me.plan);
+        setActivePremium(me.activePremium === true);
+        setPlanExpiresAt(me.planExpiresAt ?? null);
+        setCustomsLimit(me.customsLimit ?? 10);
+      }
       checkResumeExpiryWarnings(list, { notify: true });
     },
     [checkResumeExpiryWarnings],
   );
+
+  const onCheckout = async (product: "day_pass" | "supporter") => {
+    if (!account) return;
+    setBillingBusy(true);
+    setError(null);
+    try {
+      const { url } = await startBillingCheckout(account.token, product);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed");
+      setBillingBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const billing = params.get("billing");
+    if (billing === "success") {
+      setNotice("Payment received — premium unlocks after Stripe confirms (refresh in a few seconds).");
+      const stored = loadStoredAccount();
+      if (stored) void refresh(stored.token).catch(() => null);
+    } else if (billing === "cancel") {
+      setNotice("Checkout canceled — free path still works.");
+    }
+  }, [refresh]);
 
   useEffect(() => {
     setPushSupported(isPushSupported());
@@ -1184,6 +1232,16 @@ export function AccountSettings() {
                   <p className="mt-1 text-xs text-brand-muted">
                     Passphrase: {hasPassphrase ? "set" : "not set (magic link only)"}
                   </p>
+                  <p className="mt-1 text-xs text-brand-muted">
+                    Plan:{" "}
+                    <span className={activePremium ? "text-amber-200" : "text-brand-text"}>
+                      {activePremium ? plan.replace("_", " ") : "free"}
+                    </span>
+                    {activePremium && planExpiresAt
+                      ? ` · until ${new Date(planExpiresAt).toLocaleDateString()}`
+                      : " · forever free chat"}
+                    {` · My Characters cap ${customsLimit}`}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -1193,6 +1251,40 @@ export function AccountSettings() {
                   Sign out
                 </button>
               </div>
+            </section>
+
+            <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
+              <h2 className="text-sm font-semibold text-brand-text">Support / Day Pass</h2>
+              <p className="mt-1 text-xs text-brand-muted">
+                Free path stays fully usable. Optional Day Pass / Supporter unlocks more My
+                Character slots and higher clip upload headroom.
+                {!billingConfigured
+                  ? " Payments not configured on this server yet — you can still use everything free."
+                  : ""}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={billingBusy || !billingConfigured}
+                  onClick={() => void onCheckout("day_pass")}
+                  className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {billingBusy ? "Redirecting…" : "Day Pass"}
+                </button>
+                <button
+                  type="button"
+                  disabled={billingBusy || !billingConfigured}
+                  onClick={() => void onCheckout("supporter")}
+                  className="rounded-lg border border-amber-500/40 px-4 py-2 text-sm text-amber-100 disabled:opacity-50"
+                >
+                  Supporter (30d)
+                </button>
+              </div>
+              {activePremium && (
+                <p className="mt-2 text-xs text-amber-100/90">
+                  Premium active — thank you. Stacking another pass extends your expiry.
+                </p>
+              )}
             </section>
 
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">

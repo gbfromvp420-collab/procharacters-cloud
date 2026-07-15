@@ -6,6 +6,7 @@ import {
   accountHasPassphrase,
   createAccount,
   deleteAccount,
+  getAccountPlanSummary,
   loginAccount,
   logoutAccountToken,
   requestMagicLink,
@@ -333,12 +334,17 @@ export const createAccountRoutes = (
       if (!account) {
         return reply.code(401).send({ error: "Not signed in" });
       }
+      const plan = getAccountPlanSummary(account);
       return {
         accountId: account.id,
         handle: account.handle,
         email: account.email,
         createdAt: account.createdAt,
         hasPassphrase: accountHasPassphrase(account.id),
+        plan: plan.plan,
+        activePremium: plan.activePremium,
+        planExpiresAt: plan.planExpiresAt,
+        customsLimit: plan.customsLimit,
       };
     });
 
