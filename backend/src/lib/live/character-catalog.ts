@@ -23,7 +23,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-default": {
     id: "twink-default",
     displayName: "Twink Default",
-    defaultVersion: "v1.3.0",
+    defaultVersion: "v1.3.1",
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
@@ -44,7 +44,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "female-default": {
     id: "female-default",
     displayName: "Female Default",
-    defaultVersion: "v1.3.0",
+    defaultVersion: "v1.3.1",
     kind: "default",
     avatarBase: "female-default",
     featured: true,

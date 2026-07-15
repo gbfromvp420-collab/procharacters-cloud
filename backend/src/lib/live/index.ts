@@ -51,6 +51,7 @@ export {
   normalizeSessionMode,
 } from "./session-mode.js";
 export type { EdgePhase, ModeRuntimeState, SessionMode } from "./session-mode.js";
+export { edgePaceCoachCue, edgePaceMindLine } from "./edge-pace-minds.js";
 export type {
   LiveInjectionResult,
   LlmMessage,

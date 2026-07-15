@@ -65,6 +65,8 @@ export function createWebSocketHandler(
       computeModeState(
         session.sessionMode ?? "normal",
         session.modeStartedAt ?? session.createdAt,
+        Date.now(),
+        session.characterId,
       ),
     );
 

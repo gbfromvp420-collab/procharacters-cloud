@@ -85,8 +85,8 @@ import type {
 } from "@/lib/types";
 
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
-  { id: "twink-default", displayName: "Twink Default", defaultVersion: "v1.3.0", kind: "default", featured: true },
-  { id: "female-default", displayName: "Female Default", defaultVersion: "v1.3.0", kind: "default", featured: true },
+  { id: "twink-default", displayName: "Twink Default", defaultVersion: "v1.3.1", kind: "default", featured: true },
+  { id: "female-default", displayName: "Female Default", defaultVersion: "v1.3.1", kind: "default", featured: true },
   { id: "twink-shy-boy", displayName: "Twink Shy Boy", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
   { id: "twink-gym", displayName: "Twink Gym", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default", featured: true },
   { id: "twink-alt-punk", displayName: "Twink Alt Punk", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },

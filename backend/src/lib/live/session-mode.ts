@@ -1,7 +1,10 @@
 /**
  * Phase 10 — Assistant modes (v3 preview)
  * Not a full real-time gooning product — session-level tone + soft timers.
+ * Edge Pace coach language fuses with signature minds (edge-pace-minds).
  */
+
+import { edgePaceCoachCue, edgePaceMindLine } from "./edge-pace-minds.js";
 
 export type SessionMode = "normal" | "edge_pace";
 
@@ -20,7 +23,7 @@ export interface ModeRuntimeState {
   phaseElapsedSec: number;
   /** Human label for UI. */
   label: string;
-  /** One-line coach cue for the model. */
+  /** One-line coach cue for the model (character-flavored when id known). */
   coachCue: string;
 }
 
@@ -42,6 +45,7 @@ export function computeModeState(
   mode: SessionMode,
   modeStartedAt: string,
   now = Date.now(),
+  characterId?: string,
 ): ModeRuntimeState {
   if (mode !== "edge_pace") {
     return {
@@ -77,22 +81,16 @@ export function computeModeState(
     intoRound -= step.seconds;
   }
 
-  const cues: Record<EdgePhase, string> = {
-    build:
-      "BUILD — warm them up slow. Light over-fabric tease, dirty talk, rising heat. Do not rush to the edge yet.",
-    hold: "HOLD / EDGE — keep them (and you) right on the edge. Slow strokes, freeze, deny finish. Count breaths.",
-    almost:
-      "ALMOST — intensify briefly (breath, wet detail, near-peak) then pull back. Still no climax unless they clearly demand release.",
-    breathe:
-      "BREATHE — soft cool-down 20–30s, keep arousal, reset for next round. Stay visual and in character.",
-  };
-
   const labels: Record<EdgePhase, string> = {
     build: "Build",
     hold: "Hold / Edge",
     almost: "Almost",
     breathe: "Breathe",
   };
+
+  const coachCue = characterId
+    ? edgePaceCoachCue(characterId, phase)
+    : edgePaceCoachCue("twink-default", phase);
 
   return {
     mode: "edge_pace",
@@ -102,46 +100,54 @@ export function computeModeState(
     phaseElapsedSec,
     phaseRemainingSec,
     label: `Edge Pace · R${round + 1} · ${labels[phase]}`,
-    coachCue: cues[phase],
+    coachCue,
   };
 }
 
 /** Prompt block injected each turn when mode is active. */
-export function buildSessionModeInstructions(state: ModeRuntimeState): string {
+export function buildSessionModeInstructions(
+  state: ModeRuntimeState,
+  characterId?: string,
+): string {
   if (state.mode === "normal") {
     return [
       "## Session mode: Normal",
       "Standard Naughty Syntax live chat. Tease-first pacing. No forced timer cycles.",
       "Still expert at edging when the user wants it — just not on a strict schedule.",
+      "Stay in THIS character’s mind lock — never generic porn-bot.",
     ].join("\n");
   }
 
   const avatarByPhase: Record<EdgePhase, string> = {
     build:
-      'avatar_intent bias: emotion teasing/seductive/playful, arousal ~0.35–0.55, action hover_touch or stroke_over_fabric',
-    hold:
-      'avatar_intent bias: emotion edging/intense, arousal ~0.70–0.85, action freeze_edge — body holds with the mind',
+      "avatar_intent bias: emotion teasing/seductive/playful, arousal ~0.35–0.55, action hover_touch or stroke_over_fabric",
+    hold: "avatar_intent bias: emotion edging/intense, arousal ~0.70–0.85, action freeze_edge — body holds with the mind",
     almost:
-      'avatar_intent bias: emotion breathless/aroused, arousal ~0.80–0.92, action stroke_over_fabric then freeze',
+      "avatar_intent bias: emotion breathless/aroused, arousal ~0.80–0.92, action stroke_over_fabric then freeze",
     breathe:
-      'avatar_intent bias: emotion soft/calm, arousal ease to ~0.45–0.60, action subtle_movement — charged cool-down',
+      "avatar_intent bias: emotion soft/calm, arousal ease to ~0.45–0.60, action subtle_movement — charged cool-down",
   };
+
+  const mindLine = characterId
+    ? edgePaceMindLine(characterId, state.phase)
+    : `Signature mind for this phase: ${state.coachCue}`;
 
   return [
     "## Session mode: Edge Pace (v3 preview)",
-    "You are co-piloting a paced edging session. Stay fully in character.",
+    "You are co-piloting a paced edging session. Stay fully in THIS character’s mind.",
     `Current: ${state.label}`,
     `Phase remaining: ~${state.phaseRemainingSec}s`,
     `Coach cue: ${state.coachCue}`,
+    mindLine,
     `Body (avatar_intent): ${avatarByPhase[state.phase]}`,
     "",
     "Rules:",
-    "- Weave the phase into dirty talk naturally (do not dump the whole timer block every line).",
+    "- Weave the phase into dirty talk in THIS model’s voice (not a generic coach script).",
     "- Prefer denial / edge unless the user clearly asks to finish.",
     "- Keep signature clothing and photorealistic detail.",
     "- Match avatar_intent to the phase so the video body follows your words.",
     "- This is NOT a separate AI product — you are still the same character model.",
-    "- Optional soft Spanish (twink) still sparingly if on-brand.",
+    "- Optional soft Spanish only if this character’s prompt allows it (sparingly).",
   ].join("\n");
 }
 

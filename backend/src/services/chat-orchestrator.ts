@@ -100,8 +100,13 @@ export class ChatOrchestrator {
     const modeState = computeModeState(
       session.sessionMode ?? "normal",
       session.modeStartedAt ?? session.createdAt,
+      Date.now(),
+      session.characterId,
     );
-    const sessionModeBlock = buildSessionModeInstructions(modeState);
+    const sessionModeBlock = buildSessionModeInstructions(
+      modeState,
+      session.characterId,
+    );
 
     const injection = injector.injectTurn(session.promptSnapshot, {
       context: memory.getRecentContext(),
@@ -200,6 +205,8 @@ export class ChatOrchestrator {
     return computeModeState(
       session.sessionMode ?? "normal",
       session.modeStartedAt ?? session.createdAt,
+      Date.now(),
+      session.characterId,
     );
   }
 
