@@ -134,27 +134,20 @@ export const createSessionRoutes = (
 ): FastifyPluginAsync => {
   return async (app) => {
     app.get("/characters/gallery", async () => {
-      const brandTeasers: Record<string, string> = {
-        "twink-default":
-          "Skinny Latino twink energy — sheer thong, slow edging, photorealistic tease.",
-        "female-default":
-          "Fit athletic tease — crotchless undies, wet anticipation, uncensored heat.",
-      };
-
       const defaults = Object.values(LIVE_CHARACTER_CATALOG).map((profile) => {
-        const clips = listClipUrls(profile.id);
+        const clips = listClipUrls(profile.avatarBase ?? profile.id);
         return {
           id: profile.id,
           displayName: profile.displayName,
           kind: "default" as const,
           brand: "Naughty Syntax",
           energyLabel: profile.energyLabel,
-          teaser: brandTeasers[profile.id] ?? profile.energyLabel,
+          teaser: profile.teaser ?? profile.energyLabel,
           tags: profile.consistencyTraits.slice(0, 4),
           avatarBase: profile.avatarBase ?? profile.id,
           posterClip: clips.teasing || clips.idle,
           clips,
-          featured: true,
+          featured: profile.featured === true,
           ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
           cardPath: `/character/${encodeURIComponent(profile.id)}`,
         };
@@ -223,8 +216,8 @@ export const createSessionRoutes = (
             kind: "default" as const,
             avatarBase: profile.avatarBase ?? profile.id,
             energyLabel: profile.energyLabel,
-            featured: true,
-            clips: listClipUrls(profile.id),
+            featured: profile.featured === true,
+            clips: listClipUrls(profile.avatarBase ?? profile.id),
           })),
           ...custom,
         ],
@@ -321,15 +314,16 @@ export const createSessionRoutes = (
       if (!isDefault && !isCustom) {
         return reply.code(404).send({ error: "Character not found" });
       }
+      const avatarBase =
+        getCustomCharacter(characterId)?.avatarBase ??
+        LIVE_CHARACTER_CATALOG[characterId]?.avatarBase ??
+        characterId;
       return {
         characterId,
-        clips: listClipUrls(characterId),
+        clips: listClipUrls(avatarBase),
         mediaBase: getCustomCharacter(characterId)?.mediaBase,
         mediaOverrides: getCustomCharacter(characterId)?.mediaOverrides,
-        avatarBase:
-          getCustomCharacter(characterId)?.avatarBase ??
-          LIVE_CHARACTER_CATALOG[characterId]?.avatarBase ??
-          characterId,
+        avatarBase,
       };
     });
 
@@ -343,13 +337,9 @@ export const createSessionRoutes = (
         return reply.code(404).send({ error: "Character not found" });
       }
 
-      const clips = listClipUrls(characterId);
-      const brandTeasers: Record<string, string> = {
-        "twink-default":
-          "Skinny Latino twink energy — sheer thong, slow edging, photorealistic tease.",
-        "female-default":
-          "Fit athletic tease — crotchless undies, wet anticipation, uncensored heat.",
-      };
+      const avatarBase =
+        custom?.avatarBase ?? builtIn?.avatarBase ?? characterId;
+      const clips = listClipUrls(avatarBase);
 
       if (custom) {
         const teaser =
@@ -379,12 +369,12 @@ export const createSessionRoutes = (
         kind: "default" as const,
         brand: "Naughty Syntax",
         energyLabel: builtIn!.energyLabel,
-        teaser: brandTeasers[builtIn!.id] ?? builtIn!.energyLabel,
+        teaser: builtIn!.teaser ?? builtIn!.energyLabel,
         tags: builtIn!.consistencyTraits.slice(0, 4),
         avatarBase: builtIn!.avatarBase ?? builtIn!.id,
         posterClip: clips.teasing || clips.idle,
         clips,
-        featured: true,
+        featured: builtIn!.featured === true,
         ctaPath: `/chat?character=${encodeURIComponent(builtIn!.id)}&autostart=1`,
         cardPath: `/character/${encodeURIComponent(builtIn!.id)}`,
       };

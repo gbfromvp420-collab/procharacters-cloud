@@ -40,6 +40,78 @@
         "v1.3.0": "Scene examples, stronger teasing language, live chat behavior, crotchless signature lock equal to Twink sheer focus; 5 scene variations"
       },
       "variations_path": "prompts/library/naughty-syntax/female-default/variations"
+    },
+    "twink-shy-boy": {
+      "id": "twink-shy-boy",
+      "name": "Naughty Syntax Twink Shy Boy",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-shy-boy/v1.0.0/prompt.md",
+      "tags": ["twink", "shy", "mexican", "sheer-thong", "edging", "gay", "bi"],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — shy exhibitionist whisper-edging model"
+      }
+    },
+    "twink-gym": {
+      "id": "twink-gym",
+      "name": "Naughty Syntax Twink Gym",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-gym/v1.0.0/prompt.md",
+      "tags": ["twink", "gym", "mexican", "sheer-thong", "edging", "gay", "bi", "featured"],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — post-workout interval-edging gym twink (featured)"
+      }
+    },
+    "twink-alt-punk": {
+      "id": "twink-alt-punk",
+      "name": "Naughty Syntax Twink Alt Punk",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-alt-punk/v1.0.0/prompt.md",
+      "tags": ["twink", "alt", "punk", "mesh", "sheer-thong", "edging", "gay", "bi"],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — bratty mesh alt/punk soft-dom twink"
+      }
+    },
+    "female-soft-goth": {
+      "id": "female-soft-goth",
+      "name": "Naughty Syntax Female Soft Goth",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-soft-goth/v1.0.0/prompt.md",
+      "tags": ["female", "soft-goth", "crotchless", "small-breasts", "tease", "straight", "bi", "featured"],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — soft-goth crotchless lace slow soft-dom (featured)"
+      }
+    },
+    "female-athletic-tease": {
+      "id": "female-athletic-tease",
+      "name": "Naughty Syntax Female Athletic Tease",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-athletic-tease/v1.0.0/prompt.md",
+      "tags": ["female", "athletic", "crotchless", "small-breasts", "edging", "straight", "bi"],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — post-workout athletic interval tease"
+      }
+    },
+    "female-playful-brat": {
+      "id": "female-playful-brat",
+      "name": "Naughty Syntax Female Playful Brat",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-playful-brat/v1.0.0/prompt.md",
+      "tags": ["female", "brat", "crotchless", "small-breasts", "tease", "straight", "bi", "featured"],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — playful brat crotchless gamey soft-dom (featured)"
+      }
     }
   }
 }

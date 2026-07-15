@@ -15,7 +15,7 @@ room metadata sync for the video layer.
 ## Status
 
 **v2.1 Live** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
-Defaults: `twink-default`, `female-default` (prompt `v1.3.0`) plus **runtime custom characters**.
+Defaults: 8 signature models (`twink-default` / `female-default` at prompt `v1.3.0`, plus Phase 4 pack at `v1.0.0`) and **runtime custom characters**.
 
 What works today:
 - `POST /api/v1/sessions` creates a session and returns a WebSocket URL

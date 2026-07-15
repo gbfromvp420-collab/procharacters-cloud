@@ -78,18 +78,14 @@ import type {
 } from "@/lib/types";
 
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
-  {
-    id: "twink-default",
-    displayName: "Twink Default",
-    defaultVersion: "v1.3.0",
-    kind: "default",
-  },
-  {
-    id: "female-default",
-    displayName: "Female Default",
-    defaultVersion: "v1.3.0",
-    kind: "default",
-  },
+  { id: "twink-default", displayName: "Twink Default", defaultVersion: "v1.3.0", kind: "default", featured: true },
+  { id: "female-default", displayName: "Female Default", defaultVersion: "v1.3.0", kind: "default", featured: true },
+  { id: "twink-shy-boy", displayName: "Twink Shy Boy", defaultVersion: "v1.0.0", kind: "default", avatarBase: "twink-default" },
+  { id: "twink-gym", displayName: "Twink Gym", defaultVersion: "v1.0.0", kind: "default", avatarBase: "twink-default", featured: true },
+  { id: "twink-alt-punk", displayName: "Twink Alt Punk", defaultVersion: "v1.0.0", kind: "default", avatarBase: "twink-default" },
+  { id: "female-soft-goth", displayName: "Female Soft Goth", defaultVersion: "v1.0.0", kind: "default", avatarBase: "female-default", featured: true },
+  { id: "female-athletic-tease", displayName: "Female Athletic Tease", defaultVersion: "v1.0.0", kind: "default", avatarBase: "female-default" },
+  { id: "female-playful-brat", displayName: "Female Playful Brat", defaultVersion: "v1.0.0", kind: "default", avatarBase: "female-default", featured: true },
 ];
 
 function makeId(): string {
