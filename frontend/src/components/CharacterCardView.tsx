@@ -6,6 +6,7 @@ import type { CharacterCard } from "@/lib/character-card";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { fetchLatestAccountSessionForCharacter } from "@/lib/api";
 import { getResumeForCharacter } from "@/lib/resume-cache";
+import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import {
   buildCharacterShareUrl,
   buildResumeCodeShareUrl,
@@ -26,6 +27,10 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   const [resumeSource, setResumeSource] = useState<"account" | "local" | null>(null);
 
   const shareUrl = useMemo(() => `${siteOrigin}${card.cardPath}`, [siteOrigin, card.cardPath]);
+  const presence = useMemo(() => {
+    const skin = resolvePresenceSkin(undefined, card.id);
+    return presenceVisual(skin);
+  }, [card.id]);
   const autostartUrl = useMemo(
     () => buildCharacterShareUrl(card.id, { origin: siteOrigin, autostart: true, card: false }),
     [card.id, siteOrigin],
@@ -147,11 +152,14 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
       <div className="relative mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl flex-col px-4 py-6 sm:py-12">
         <section className="grid flex-1 items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <div className="relative mx-auto w-full max-w-md">
-            <div className="avatar-ring relative overflow-hidden rounded-[1.75rem] border border-brand-border bg-brand-panel shadow-card shadow-glow-sm">
+            <div
+              className={`avatar-ring relative overflow-hidden rounded-[1.75rem] border border-brand-border bg-brand-panel shadow-card shadow-glow-sm ${presence.glow}`}
+            >
               <div className="aspect-[3/4] w-full bg-black">
                 <video
                   key={poster}
                   className="h-full w-full object-cover"
+                  style={{ filter: presence.filter }}
                   src={poster}
                   autoPlay
                   loop
@@ -159,9 +167,15 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                   playsInline
                   poster={poster.endsWith(".svg") ? poster : undefined}
                 />
+                <div
+                  className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${presence.wash}`}
+                  aria-hidden
+                />
               </div>
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 pt-16">
-                <p className="text-xs uppercase tracking-[0.25em] text-brand-accent">Live model</p>
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 pt-16">
+                <p className="text-xs uppercase tracking-[0.25em] text-brand-accent">
+                  Live model · {presence.label}
+                </p>
                 <h1 className="mt-1 text-3xl font-semibold text-white sm:text-4xl">
                   {card.displayName}
                 </h1>

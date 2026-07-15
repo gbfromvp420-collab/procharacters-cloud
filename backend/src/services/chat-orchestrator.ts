@@ -140,6 +140,9 @@ export class ChatOrchestrator {
 
     const notes = buildSessionNotes(memory.getRecentContext().messages, {
       characterName: session.promptSnapshot.characterName,
+      characterId: session.characterId,
+      sessionMode: modeState.mode,
+      edgePhase: modeState.mode === "edge_pace" ? modeState.phase : undefined,
     });
     memory.setSessionNotes(notes);
 
@@ -155,6 +158,10 @@ export class ChatOrchestrator {
       session.promptSnapshot.signatureClothing,
       session.avatarState,
       parsedAvatar,
+      {
+        sessionMode: modeState.mode,
+        edgePhase: modeState.mode === "edge_pace" ? modeState.phase : undefined,
+      },
     );
 
     this.sessions.updateSession(sessionId, {
@@ -225,9 +232,10 @@ export class ChatOrchestrator {
     signatureClothing: string,
     previous: AvatarState,
     fromGrok?: Partial<AvatarState>,
+    ctx?: { sessionMode?: "normal" | "edge_pace"; edgePhase?: ModeRuntimeState["phase"] },
   ): AvatarState {
-    // Brain (Grok + presence) drives body; clips only follow energy.
-    return blendAvatarFromBrain(characterId, signatureClothing, previous, fromGrok);
+    // Brain (Grok + presence + Edge Pace) drives body; clips only follow energy.
+    return blendAvatarFromBrain(characterId, signatureClothing, previous, fromGrok, ctx);
   }
 
   private buildErrorReply(error: unknown): string {
@@ -259,11 +267,17 @@ export class ChatOrchestrator {
   }
 
   private buildStubReply(characterId: string, userContent: string, promptHash: string): string {
-    const pronoun = characterId === "female-default" ? "she" : "he";
+    const profile = getLiveCharacterProfile(characterId);
+    const name = profile?.displayName ?? characterId;
+    const energy = profile?.energyLabel ?? "slow tease";
+    const snippet = userContent.replace(/\s+/g, " ").trim().slice(0, 72);
+    const opening = profile?.openingMessage?.slice(0, 120);
     return [
-      `*[${characterId} v1.3.0 — set XAI_API_KEY in .env]*`,
-      `Mmm, I hear you... "${userContent.slice(0, 80)}".`,
-      `Stay with me — ${pronoun}'s keeping that slow, teasing energy going just for you.`,
+      `*[${name} — set XAI_API_KEY in .env for full live brain]*`,
+      opening
+        ? `…still here in that ${energy} headspace. you said “${snippet || "hey"}” —`
+        : `Mmm, I hear you… “${snippet || "hey"}”.`,
+      `Keep watching — ${name} stays in character (${energy}) even offline. Wire the key and the full mind comes online.`,
       `(prompt hash: ${promptHash})`,
     ].join(" ");
   }

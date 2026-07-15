@@ -116,17 +116,30 @@ export function buildSessionModeInstructions(state: ModeRuntimeState): string {
     ].join("\n");
   }
 
+  const avatarByPhase: Record<EdgePhase, string> = {
+    build:
+      'avatar_intent bias: emotion teasing/seductive/playful, arousal ~0.35–0.55, action hover_touch or stroke_over_fabric',
+    hold:
+      'avatar_intent bias: emotion edging/intense, arousal ~0.70–0.85, action freeze_edge — body holds with the mind',
+    almost:
+      'avatar_intent bias: emotion breathless/aroused, arousal ~0.80–0.92, action stroke_over_fabric then freeze',
+    breathe:
+      'avatar_intent bias: emotion soft/calm, arousal ease to ~0.45–0.60, action subtle_movement — charged cool-down',
+  };
+
   return [
     "## Session mode: Edge Pace (v3 preview)",
     "You are co-piloting a paced edging session. Stay fully in character.",
     `Current: ${state.label}`,
     `Phase remaining: ~${state.phaseRemainingSec}s`,
     `Coach cue: ${state.coachCue}`,
+    `Body (avatar_intent): ${avatarByPhase[state.phase]}`,
     "",
     "Rules:",
     "- Weave the phase into dirty talk naturally (do not dump the whole timer block every line).",
     "- Prefer denial / edge unless the user clearly asks to finish.",
     "- Keep signature clothing and photorealistic detail.",
+    "- Match avatar_intent to the phase so the video body follows your words.",
     "- This is NOT a separate AI product — you are still the same character model.",
     "- Optional soft Spanish (twink) still sparingly if on-brand.",
   ].join("\n");

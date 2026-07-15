@@ -1,18 +1,40 @@
+import { getLiveCharacterProfile } from "../live/character-catalog.js";
+import { getPresenceProfile } from "../live/presence-profiles.js";
+import type { EdgePhase, SessionMode } from "../live/session-mode.js";
 import type { MemoryMessage } from "./types.js";
 
 /**
  * Build a short "what we remember" blurb for prompt injection + UI.
  * Heuristic only (no extra LLM call) — fast and cheap for live turns.
+ * Presence-aware: seeds the character’s signature vibe into the blurb.
  */
 export function buildSessionNotes(
   messages: MemoryMessage[],
-  options?: { characterName?: string; maxUserSnippets?: number },
+  options?: {
+    characterName?: string;
+    characterId?: string;
+    sessionMode?: SessionMode;
+    edgePhase?: EdgePhase;
+    maxUserSnippets?: number;
+  },
 ): string {
   const characterName = options?.characterName?.trim() || "the character";
+  const characterId = options?.characterId;
   const maxSnippets = options?.maxUserSnippets ?? 3;
 
+  const presenceSeed = characterId
+    ? getPresenceProfile(characterId).defaults.emotion
+    : undefined;
+  const energyLabel = characterId
+    ? getLiveCharacterProfile(characterId)?.energyLabel
+    : undefined;
+
   if (messages.length === 0) {
-    return `Just starting with ${characterName}. No prior beats yet — open slow and stay in character.`;
+    const seed =
+      energyLabel || presenceSeed
+        ? ` Signature vibe: ${energyLabel ?? presenceSeed}.`
+        : "";
+    return `Just starting with ${characterName}.${seed} No prior beats yet — open slow and stay in character.`;
   }
 
   const userMsgs = messages.filter((m) => m.role === "user");
@@ -30,6 +52,18 @@ export function buildSessionNotes(
     .join(" ");
 
   const beats: string[] = [];
+
+  // Character presence first — brain identity
+  if (energyLabel) {
+    beats.push(energyLabel.split(",")[0]?.trim() || energyLabel);
+  } else if (presenceSeed) {
+    beats.push(`${presenceSeed} presence`);
+  }
+
+  if (options?.sessionMode === "edge_pace" && options.edgePhase) {
+    beats.push(`edge pace · ${options.edgePhase}`);
+  }
+
   if (/edge|edging|deny|denial|not yet|hold it|don't cum|dont cum/.test(corpus)) {
     beats.push("edging / denial pacing");
   }
@@ -48,20 +82,28 @@ export function buildSessionNotes(
   if (/brat|beg|please|good boy|good girl/.test(corpus)) {
     beats.push("brat / soft-dom game energy");
   }
+  if (/goth|lace|candle|ritual/.test(corpus)) {
+    beats.push("soft-goth ritual heat");
+  }
   if (beats.length === 0) {
     beats.push("slow tease / live cam rapport");
   }
 
+  // Dedupe while preserving order
+  const uniqueBeats = [...new Set(beats)].slice(0, 4);
+
   const lines = [
     `Session with ${characterName}: ~${turns} turn(s), ${messages.length} message(s).`,
-    `Ongoing vibe: ${beats.slice(0, 3).join("; ")}.`,
+    `Ongoing vibe: ${uniqueBeats.join("; ")}.`,
   ];
 
   if (snippets.length) {
     lines.push(`Recent user beats: ${snippets.map((s) => `“${s}”`).join(" · ")}`);
   }
 
-  lines.push("Stay consistent with these beats; do not reset the scene without a reason.");
+  lines.push(
+    "Stay consistent with these beats and this character’s presence; do not reset the scene without a reason.",
+  );
   return lines.join(" ");
 }
 
