@@ -53,6 +53,11 @@ export function CharacterTile({
                 Featured
               </span>
             )}
+            {(card.vibeTag || card.energyLabel) && (
+              <span className="rounded-full border border-white/25 bg-black/50 px-2 py-0.5 text-[9px] font-medium text-white/90 backdrop-blur">
+                {(card.vibeTag || card.energyLabel).split(",")[0]?.trim()}
+              </span>
+            )}
           </div>
           <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">{card.displayName}</h2>
         </div>

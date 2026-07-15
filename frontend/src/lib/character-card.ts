@@ -16,6 +16,8 @@ export interface CharacterCard {
   ctaPath: string;
   cardPath: string;
   featured?: boolean;
+  /** Short vibe chip from API (e.g. "gym interval edging") */
+  vibeTag?: string;
 }
 
 export async function fetchCharacterCard(characterId: string): Promise<CharacterCard | null> {

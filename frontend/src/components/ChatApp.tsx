@@ -2463,15 +2463,23 @@ export function ChatApp() {
                 </div>
               )}
               {messages.length === 0 && !isTyping && (
-                <p className="px-2 py-12 text-center text-sm text-brand-muted sm:py-20">
-                  {status === "ready"
-                    ? "Session live — memory is saved. Come back later and hit Resume last chat."
-                    : status === "connecting" || restarting
-                      ? "Opening live session…"
-                      : savedSession
-                        ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
-                        : "Pick a character and start a session to begin chatting."}
-                </p>
+                <div className="px-2 py-12 text-center sm:py-16">
+                  <p className="text-sm text-brand-muted">
+                    {status === "ready"
+                      ? "Session live — they should greet you first. Memory saves as you go."
+                      : status === "connecting" || restarting
+                        ? "Opening live session…"
+                        : savedSession
+                          ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
+                          : "Pick a character, choose Normal or Edge Pace, then Start."}
+                  </p>
+                  {status !== "ready" && status !== "connecting" && !restarting && (
+                    <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
+                      Signature models open with a brand line. Edge Pace adds soft build → hold →
+                      almost → breathe cycles. Free path always works.
+                    </p>
+                  )}
+                </div>
               )}
 
               {messages.map((msg) => (

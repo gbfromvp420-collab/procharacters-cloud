@@ -7,7 +7,10 @@ import {
   rotateResumeCode,
 } from "../lib/accounts/account-store.js";
 import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
-import { assertLiveCharacter } from "../lib/live/character-catalog.js";
+import {
+  assertLiveCharacter,
+  getOpeningMessage,
+} from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { normalizeSessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
@@ -273,6 +276,16 @@ export class SessionManager {
 
     const sessionMode = normalizeSessionMode(input.sessionMode);
     const modeStartedAt = now.toISOString();
+
+    // Signature opening line — seeds live chat so the room never feels empty
+    const opening = getOpeningMessage(promptSnapshot.characterId);
+    if (opening) {
+      let line = opening;
+      if (sessionMode === "edge_pace") {
+        line = `${opening}\n\n(soft mode: edge pace is on — i’ll hold you in slow cycles. no finish until you beg clear.)`;
+      }
+      memory.addMessage("assistant", line);
+    }
 
     const record: SessionRecord = {
       id: sessionId,

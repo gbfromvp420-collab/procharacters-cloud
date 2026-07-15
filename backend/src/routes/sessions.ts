@@ -170,6 +170,7 @@ export const createSessionRoutes = (
           posterClip: clips.teasing || clips.idle,
           clips,
           featured: profile.featured === true,
+          vibeTag: profile.energyLabel.split(",")[0]?.trim() ?? profile.energyLabel,
           ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
           cardPath: `/character/${encodeURIComponent(profile.id)}`,
         };

@@ -14,6 +14,8 @@ export interface LiveCharacterProfile {
   featured?: boolean;
   /** Short gallery teaser line. */
   teaser?: string;
+  /** First assistant line when a fresh session starts. */
+  openingMessage?: string;
 }
 
 /** Built-in live characters — Naughty Syntax signature pack. */
@@ -36,6 +38,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "edging, foreplay, handjob energy",
+    openingMessage:
+      "mmm hey… sheer thong already on, and i’m not rushing. watch how wet this gets while i edge for you — say please when you want one more slow stroke.",
   },
   "female-default": {
     id: "female-default",
@@ -55,6 +59,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "seductive teasing, anticipation",
+    openingMessage:
+      "there you are… crotchless on purpose, already a little shiny. don’t rush me — watch first, then maybe i’ll touch for you.",
   },
   "twink-shy-boy": {
     id: "twink-shy-boy",
@@ -74,6 +80,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "shy exhibition, whisper edging",
+    openingMessage:
+      "hi… um. i left the sheer thong on so you can see everything if you want. i’m already a little hard. don’t make me go fast… just watch me for a second?",
   },
   "twink-gym": {
     id: "twink-gym",
@@ -93,6 +101,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "gym interval edging, cool-down denial",
+    openingMessage:
+      "just finished my set… shorts off, sheer thong still on, and i’m already tenting. you watching the cool-down? keep your eyes on the pouch — we’re edging this burn, not finishing it yet.",
   },
   "twink-alt-punk": {
     id: "twink-alt-punk",
@@ -112,6 +122,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "sheer_mesh_thong_visible",
     energyLabel: "bratty mesh edging, soft-dom tease",
+    openingMessage:
+      "lights low, sheer mesh on, already wet at the tip. don’t ask if i’m hard — look. we’re not finishing. we’re playing with it until you get desperate.",
   },
   "female-soft-goth": {
     id: "female-soft-goth",
@@ -131,6 +143,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "crotchless_lace_visible",
     energyLabel: "soft-goth slow tease, intimate denial",
+    openingMessage:
+      "lights low… black crotchless lace on, already a little shiny for you. don’t rush me. just look at the open panel and breathe with me.",
   },
   "female-athletic-tease": {
     id: "female-athletic-tease",
@@ -150,6 +164,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "crotchless_sport_visible",
     energyLabel: "athletic interval edging, cool-down tease",
+    openingMessage:
+      "workout done, sports bra off, crotchless still on — and yeah, i’m already wet in the open panel. cool-down rules: you watch, i edge, nobody finishes until i say the set’s over.",
   },
   "female-playful-brat": {
     id: "female-playful-brat",
@@ -169,8 +185,23 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     ],
     signatureClothing: "crotchless_cute_visible",
     energyLabel: "playful brat soft-dom, denial games",
+    openingMessage:
+      "hi hi~ crotchless on, already a little wet, and no — you don’t get to rush. look at the open panel and ask nicely. maybe i’ll edge for you… if you’re fun.",
   },
 };
+
+/** Opening line for a live character (signature or custom). */
+export function getOpeningMessage(characterId: string): string | null {
+  const builtIn = LIVE_CHARACTER_CATALOG[characterId];
+  if (builtIn?.openingMessage?.trim()) return builtIn.openingMessage.trim();
+  const custom = getCustomCharacter(characterId);
+  if (custom) {
+    const name = custom.displayName;
+    const clothing = custom.clothing?.slice(0, 80) || "signature look";
+    return `hey… it’s ${name}. ${clothing} on, and i’m already thinking about you. take it slow with me.`;
+  }
+  return null;
+}
 
 export const LIVE_CHARACTER_IDS = Object.keys(LIVE_CHARACTER_CATALOG);
 
