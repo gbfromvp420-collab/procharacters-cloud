@@ -234,6 +234,8 @@ export class ChatOrchestrator {
         fromGrok?.arousalLevel ??
         Math.min(previous.arousalLevel + 0.05, 1),
       clothingState: fromGrok?.clothingState ?? signatureClothing ?? base.clothingState,
+      // Keep presence grade sticky for client atmosphere even when clips share a base pack
+      presenceSkin: previous.presenceSkin ?? base.presenceSkin,
     };
   }
 

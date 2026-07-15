@@ -1,5 +1,6 @@
 import { getCustomCharacter } from "../live/custom-characters.js";
 import { resolveAvatarBaseId } from "../live/character-catalog.js";
+import { getPresenceProfile } from "../live/presence-profiles.js";
 import type { AvatarState } from "../../types/session.js";
 import { resolvePackMediaIds } from "./avatar-packs.js";
 
@@ -47,6 +48,7 @@ const EMOTION_TO_CLIP: Record<string, ClipKey> = {
   gamey: "playful",
   gym_pulse: "playful",
   showing_off: "playful",
+  show_off: "playful",
 
   // edge / high heat → aroused
   aroused: "aroused",
@@ -167,11 +169,14 @@ export function resolveClipFallbackPath(
 export function enrichAvatarWithMedia(characterId: string, state: AvatarState): AvatarState {
   const mediaUrl = resolveClipPath(characterId, state);
   const mediaFallbackUrl = resolveClipFallbackPath(characterId, state);
+  const presenceSkin =
+    state.presenceSkin ?? getPresenceProfile(characterId).presenceSkin;
   return {
     ...state,
     mediaUrl,
     ...(mediaFallbackUrl ? { mediaFallbackUrl } : {}),
     energyBand: resolveEnergyBand(state),
+    presenceSkin,
   };
 }
 

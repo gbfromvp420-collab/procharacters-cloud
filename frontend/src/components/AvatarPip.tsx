@@ -108,11 +108,18 @@ function saveCorner(c: Corner) {
 interface AvatarPipProps {
   avatar: AvatarState | null;
   characterName: string | null;
+  characterId?: string | null;
   onExpand: () => void;
   onHide: () => void;
 }
 
-export function AvatarPip({ avatar, characterName, onExpand, onHide }: AvatarPipProps) {
+export function AvatarPip({
+  avatar,
+  characterName,
+  characterId = null,
+  onExpand,
+  onHide,
+}: AvatarPipProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState<Pos>(() => cornerPos("br"));
   const [dragging, setDragging] = useState(false);
@@ -345,7 +352,12 @@ export function AvatarPip({ avatar, characterName, onExpand, onHide }: AvatarPip
           onPointerCancel={(e) => endDrag(e, true)}
           title="Drag · release snaps to corner · double-tap cycles · tap expands"
         >
-          <AvatarVideo avatar={avatar} characterName={characterName} pip />
+          <AvatarVideo
+            avatar={avatar}
+            characterName={characterName}
+            characterId={characterId}
+            pip
+          />
         </div>
       </div>
     </div>

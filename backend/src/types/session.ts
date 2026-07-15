@@ -14,6 +14,11 @@ export interface AvatarState {
   mediaFallbackUrl?: string;
   /** Phase 7 energy band for UI: idle | tease | play | edge */
   energyBand?: string;
+  /**
+   * Presence grade key for client color/atmosphere (even when clips share a base pack).
+   * e.g. twink_gym | female_goth | twink_shy
+   */
+  presenceSkin?: string;
 }
 
 export type SessionMode = "normal" | "edge_pace";

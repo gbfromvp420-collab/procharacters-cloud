@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { formatMemoryBlock, toLlmMessages } from "../memory/prompt-formatter.js";
 import { getLiveCharacterProfile } from "./character-catalog.js";
+import { buildPresenceAvatarHint } from "./presence-profiles.js";
 import { buildConsistencyBlock, buildLiveFormatInstructions } from "./system-instructions.js";
 import type { LiveInjectionResult, PromptSnapshot, SessionMemoryInput } from "./types.js";
 
@@ -14,6 +15,7 @@ export class LivePromptInjector {
   injectTurn(snapshot: PromptSnapshot, memory: SessionMemoryInput): LiveInjectionResult {
     const profile = getLiveCharacterProfile(snapshot.characterId);
     const energyLabel = profile?.energyLabel ?? "teasing, foreplay-first";
+    const presenceHint = buildPresenceAvatarHint(snapshot.characterId);
     const formatOptions = { pendingUserMessage: memory.pendingUserMessage };
 
     const platform = snapshot.systemCorePrompt;
@@ -23,7 +25,7 @@ export class LivePromptInjector {
       snapshot.appearanceAnchor,
     );
     const memoryBlock = formatMemoryBlock(memory.context, formatOptions);
-    const liveFormat = buildLiveFormatInstructions(energyLabel);
+    const liveFormat = buildLiveFormatInstructions(energyLabel, presenceHint);
     const sessionMode = memory.sessionModeBlock?.trim() || "";
 
     const systemPrompt = [

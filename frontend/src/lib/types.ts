@@ -143,6 +143,8 @@ export interface AvatarState {
   mediaUrl?: string;
   /** Interim pack if dedicated /avatar/<id>/ clip 404s */
   mediaFallbackUrl?: string;
+  /** Presence grade for client atmosphere (twink_gym, female_goth, …) */
+  presenceSkin?: string;
 }
 
 export interface ServerWsEvent {

@@ -1843,7 +1843,12 @@ export function ChatApp() {
               </div>
               <div className="flex flex-row gap-2 sm:gap-3 lg:flex-col">
                 <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
-                  <AvatarVideo avatar={avatarState} characterName={characterName} compact />
+                  <AvatarVideo
+                    avatar={avatarState}
+                    characterName={characterName}
+                    characterId={activeCharacterId ?? character}
+                    compact
+                  />
                 </div>
                 <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
                   <AvatarPanel
@@ -2588,6 +2593,7 @@ export function ChatApp() {
         <AvatarPip
           avatar={avatarState}
           characterName={characterName}
+          characterId={activeCharacterId ?? character}
           onExpand={() => setAvatarCollapsedPersist(false)}
           onHide={() => setAvatarPipPersist(false)}
         />

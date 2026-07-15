@@ -8,6 +8,11 @@ export {
   resolveAvatarBaseId,
 } from "./character-catalog.js";
 export {
+  buildPresenceAvatarHint,
+  getPresenceProfile,
+} from "./presence-profiles.js";
+export type { PresenceProfile, PresenceSkin } from "./presence-profiles.js";
+export {
   canAccessCustom,
   countAccountCustoms,
   createCustomCharacter,
