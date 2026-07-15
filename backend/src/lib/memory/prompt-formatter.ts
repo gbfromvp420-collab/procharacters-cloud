@@ -14,20 +14,38 @@ export function formatMemoryBlock(
   context: RecentContext,
   options: FormatMemoryOptions = {},
 ): string {
-  if (context.messageCount === 0 && !options.pendingUserMessage) {
-    return [
-      "## Session memory",
-      "This is the start of the session. No prior messages yet.",
-      "Build rapport slowly and stay in character.",
-    ].join("\n");
+  const lines: string[] = ["## Session memory"];
+
+  if (context.priorNotes?.trim()) {
+    lines.push(
+      "",
+      "### From earlier sessions (opt-in)",
+      context.priorNotes.trim(),
+      "Use lightly — this chat is live; don't dump old notes as monologue.",
+    );
   }
 
-  const lines: string[] = [
-    "## Session memory",
+  if (context.sessionNotes?.trim()) {
+    lines.push("", "### What we remember (this session)", context.sessionNotes.trim());
+  }
+
+  if (context.messageCount === 0 && !options.pendingUserMessage) {
+    lines.push(
+      "",
+      context.sessionNotes || context.priorNotes
+        ? "Continue from the notes above; open in character."
+        : "This is the start of the session. No prior messages yet.",
+      "Build rapport slowly and stay in character.",
+    );
+    return lines.join("\n");
+  }
+
+  lines.push(
+    "",
     `${context.messageCount} message(s) in this session.`,
     "",
     "### Recent conversation",
-  ];
+  );
 
   for (const message of context.messages) {
     lines.push(`[${message.role}] ${message.content}`);
@@ -39,7 +57,7 @@ export function formatMemoryBlock(
 
   lines.push(
     "",
-    "Stay consistent with the conversation above. Do not contradict prior messages.",
+    "Stay consistent with the conversation and notes above. Do not contradict prior messages.",
   );
 
   return lines.join("\n");

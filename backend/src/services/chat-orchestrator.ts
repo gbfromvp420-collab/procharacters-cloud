@@ -7,6 +7,8 @@ import {
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
 import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
+import { saveCrossSessionNotes } from "../lib/memory/cross-session-notes.js";
+import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import type { AvatarState } from "../types/session.js";
 import { MemoryManager } from "./memory-manager.js";
@@ -19,6 +21,8 @@ export interface ChatTurnResult {
   promptHash: string;
   consistencyDrift?: string[];
   usedLlm: boolean;
+  /** Compact memory blurb for UI. */
+  sessionNotes?: string;
 }
 
 export interface ChatOrchestratorConfig {
@@ -113,6 +117,18 @@ export class ChatOrchestrator {
 
     memory.addTurn(content, assistantContent);
 
+    const notes = buildSessionNotes(memory.getRecentContext().messages, {
+      characterName: session.promptSnapshot.characterName,
+    });
+    memory.setSessionNotes(notes);
+
+    // Opt-in cross-session: refresh stored notes for this account+character
+    if (session.accountId) {
+      void saveCrossSessionNotes(session.accountId, session.characterId, notes, {
+        messageCountHint: memory.getRecentContext().messageCount,
+      });
+    }
+
     const avatarIntent = this.buildAvatarState(
       session.characterId,
       session.promptSnapshot.signatureClothing,
@@ -133,6 +149,7 @@ export class ChatOrchestrator {
       avatarIntent,
       promptHash: injection.hash,
       usedLlm,
+      sessionNotes: notes,
     };
   }
 

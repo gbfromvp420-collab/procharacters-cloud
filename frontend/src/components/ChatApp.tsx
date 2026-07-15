@@ -16,10 +16,12 @@ import {
   exportLiveSession,
   fetchBaseModelPrefill,
   fetchLiveSessionMarkdown,
+  getCrossSessionMemoryOptIn,
   importFlashSummary,
   importSessionDocument,
   listAccountSessions,
   listLiveCharacters,
+  setCrossSessionMemoryOptIn,
   fetchAccountMe,
   linkEmailToAccount,
   loginAccount,
@@ -163,6 +165,10 @@ export function ChatApp() {
   const [avatarCollapsed, setAvatarCollapsed] = useState(false);
   /** Floating mini player while collapsed (picture-in-picture style). */
   const [avatarPip, setAvatarPip] = useState(true);
+  /** Phase 6: compact "what we remember" blurb. */
+  const [sessionNotes, setSessionNotes] = useState<string | null>(null);
+  const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
+  const [crossSessionOptIn, setCrossSessionOptIn] = useState(false);
 
   // Import JSON dry-run (same panel as account settings)
   const [importDoc, setImportDoc] = useState<unknown | null>(null);
@@ -245,6 +251,7 @@ export function ChatApp() {
     setLivekit(null);
     setSending(false);
     setIsTyping(false);
+    setSessionNotes(null);
     streamingIdRef.current = null;
     pendingHistoryRef.current = null;
   }, []);
@@ -477,12 +484,16 @@ export function ChatApp() {
             const messageId = data.messageId as string;
             const content = data.content as string;
             const avatarIntent = data.avatarIntent as AvatarState | undefined;
+            const notes = data.sessionNotes as string | undefined;
             streamingIdRef.current = null;
             setSending(false);
             setIsTyping(false);
 
             if (avatarIntent) {
               setAvatarState(avatarIntent);
+            }
+            if (notes?.trim()) {
+              setSessionNotes(notes.trim());
             }
 
             setMessages((prev) => {
@@ -595,12 +606,35 @@ export function ChatApp() {
       setError(null);
       setStatus("connecting");
       pendingHistoryRef.current = null;
+      setSessionNotes(null);
 
-      const session = await createSession(characterId, account?.token);
+      const session = await createSession(characterId, account?.token, {
+        messageWindow,
+        useCrossSessionMemory: !!account?.token && crossSessionOptIn,
+      });
       await openLiveSession(session);
     },
-    [account?.token, openLiveSession],
+    [account?.token, openLiveSession, messageWindow, crossSessionOptIn],
   );
+
+  // Load cross-session opt-in when signed in + character changes
+  useEffect(() => {
+    if (!account?.token) {
+      setCrossSessionOptIn(false);
+      return;
+    }
+    let cancelled = false;
+    void getCrossSessionMemoryOptIn(account.token, character)
+      .then((r) => {
+        if (!cancelled) setCrossSessionOptIn(r.optIn === true);
+      })
+      .catch(() => {
+        if (!cancelled) setCrossSessionOptIn(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [account?.token, character]);
 
   const connectResumedSession = useCallback(
     async (stored: StoredSession) => {
@@ -1796,6 +1830,44 @@ export function ChatApp() {
               </select>
               </div>
 
+              {!sessionActive && (
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
+                  <label className="flex items-center gap-1.5">
+                    Memory window
+                    <select
+                      value={messageWindow}
+                      onChange={(e) =>
+                        setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
+                      }
+                      className="field min-h-0 py-1 text-xs"
+                    >
+                      <option value={20}>20 msgs</option>
+                      <option value={30}>30 msgs</option>
+                      <option value={50}>50 msgs</option>
+                      <option value={80}>80 msgs</option>
+                    </select>
+                  </label>
+                  {account && (
+                    <label className="flex cursor-pointer items-center gap-1.5">
+                      <input
+                        type="checkbox"
+                        checked={crossSessionOptIn}
+                        onChange={(e) => {
+                          const next = e.target.checked;
+                          setCrossSessionOptIn(next);
+                          void setCrossSessionMemoryOptIn(account.token, character, next).catch(
+                            () => {
+                              /* ignore */
+                            },
+                          );
+                        }}
+                      />
+                      Remember across sessions
+                    </label>
+                  )}
+                </div>
+              )}
+
               <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
               {!sessionActive ? (
                 <>
@@ -2309,6 +2381,17 @@ export function ChatApp() {
               </button>
             </div>
             <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              {sessionNotes && (status === "ready" || messages.length > 0) && (
+                <div
+                  className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-100/90"
+                  role="status"
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
+                    What we remember
+                  </p>
+                  <p className="mt-1 text-brand-muted">{sessionNotes}</p>
+                </div>
+              )}
               {messages.length === 0 && !isTyping && (
                 <p className="px-2 py-12 text-center text-sm text-brand-muted sm:py-20">
                   {status === "ready"

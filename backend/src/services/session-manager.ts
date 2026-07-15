@@ -9,6 +9,7 @@ import {
 import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
 import { assertLiveCharacter } from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
+import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
   buildAccountSessionsExport,
@@ -241,11 +242,33 @@ export class SessionManager {
       accountId: input.accountId,
     });
 
+    const messageWindow = clampMessageWindow(
+      input.messageWindow ?? this.maxMessageWindow,
+      this.maxMessageWindow,
+    );
+
+    let priorNotes: string | undefined;
+    if (input.accountId && input.useCrossSessionMemory) {
+      const prior = await getCrossSessionNote(input.accountId, characterId);
+      if (prior?.optIn && prior.notes?.trim()) {
+        priorNotes = prior.notes.trim();
+      }
+    }
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.sessionTtlMinutes * 60_000);
     const sessionId = randomUUID();
     const wsToken = randomUUID();
     const resumeCode = await registerResumeCode(sessionId, input.accountId);
+
+    const memory = SessionMemory.empty(messageWindow, {
+      ...(priorNotes ? { priorNotes } : {}),
+      ...(priorNotes
+        ? {
+            sessionNotes: `Continuing with ${promptSnapshot.characterName}. Prior vibe: ${priorNotes.slice(0, 280)}`,
+          }
+        : {}),
+    });
 
     const record: SessionRecord = {
       id: sessionId,
@@ -254,7 +277,7 @@ export class SessionManager {
       promptSnapshot,
       wsToken,
       status: "active",
-      memory: SessionMemory.empty(this.maxMessageWindow).toData(),
+      memory: memory.toData(),
       avatarState: this.memory.defaultAvatarState(promptSnapshot.characterId),
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),
@@ -1167,4 +1190,13 @@ export class SessionManager {
       // active-path callers check status separately.
     }
   }
+}
+
+/** Allowed windows: prefer client choice, clamp to safe range. */
+export function clampMessageWindow(requested: number, serverDefault: number): number {
+  const allowed = [20, 30, 50, 80];
+  if (allowed.includes(requested)) return requested;
+  const n = Number(requested);
+  if (!Number.isFinite(n)) return serverDefault;
+  return Math.min(80, Math.max(10, Math.round(n)));
 }

@@ -15,10 +15,18 @@ export interface MemoryMessage {
  */
 export interface SessionMemoryData {
   messages: MemoryMessage[];
+  /** Compact "what we remember" blurb for prompts + UI. */
+  sessionNotes?: string;
+  /** Optional seed from prior sessions (signed-in opt-in). */
+  priorNotes?: string;
+  /** Effective message window for this session. */
+  messageWindow?: number;
 }
 
 /** Recent messages returned for prompt injection. */
 export interface RecentContext {
   messages: MemoryMessage[];
   messageCount: number;
+  sessionNotes?: string;
+  priorNotes?: string;
 }

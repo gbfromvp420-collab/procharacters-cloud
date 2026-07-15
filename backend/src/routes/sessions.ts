@@ -43,6 +43,10 @@ import { bearerToken } from "./accounts.js";
 const createSessionSchema = z.object({
   characterId: z.string().optional(),
   promptVersion: z.string().optional(),
+  /** Message history window: 20 | 30 | 50 | 80 */
+  messageWindow: z.union([z.literal(20), z.literal(30), z.literal(50), z.literal(80)]).optional(),
+  /** Signed-in: load prior notes for this character when opted in. */
+  useCrossSessionMemory: z.boolean().optional(),
 });
 
 const resumeSessionSchema = z.object({
@@ -494,7 +498,12 @@ export const createSessionRoutes = (
 
       try {
         const session = await sessionManager.createSession(
-          { ...body, accountId: account?.id },
+          {
+            ...body,
+            accountId: account?.id,
+            messageWindow: body.messageWindow,
+            useCrossSessionMemory: body.useCrossSessionMemory === true,
+          },
           wsBaseUrl,
         );
         const record = await sessionManager.getSessionAsync(session.sessionId);
@@ -823,6 +832,9 @@ export const createSessionRoutes = (
         return {
           messageCount: context.messageCount,
           recentMessages: context.messages,
+          sessionNotes: context.sessionNotes ?? session.memory.sessionNotes,
+          priorNotes: context.priorNotes ?? session.memory.priorNotes,
+          messageWindow: session.memory.messageWindow,
           characterId: session.characterId,
           characterName: session.promptSnapshot.characterName,
           status: session.status,

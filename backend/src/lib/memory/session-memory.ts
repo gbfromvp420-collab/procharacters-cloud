@@ -16,27 +16,60 @@ const DEFAULT_MAX_WINDOW = 30;
  */
 export class SessionMemory {
   private messages: MemoryMessage[];
+  private sessionNotes?: string;
+  private priorNotes?: string;
 
   constructor(
     private readonly maxWindow: number = DEFAULT_MAX_WINDOW,
     initialMessages: MemoryMessage[] = [],
+    meta?: { sessionNotes?: string; priorNotes?: string },
   ) {
     this.messages = [...initialMessages];
+    this.sessionNotes = meta?.sessionNotes;
+    this.priorNotes = meta?.priorNotes;
   }
 
   /** Start a new empty memory store. */
-  static empty(maxWindow = DEFAULT_MAX_WINDOW): SessionMemory {
-    return new SessionMemory(maxWindow);
+  static empty(
+    maxWindow = DEFAULT_MAX_WINDOW,
+    meta?: { priorNotes?: string; sessionNotes?: string },
+  ): SessionMemory {
+    return new SessionMemory(maxWindow, [], meta);
   }
 
   /** Restore memory from session state. */
   static fromData(data: SessionMemoryData, maxWindow = DEFAULT_MAX_WINDOW): SessionMemory {
-    return new SessionMemory(maxWindow, data.messages);
+    const window = data.messageWindow && data.messageWindow > 0 ? data.messageWindow : maxWindow;
+    return new SessionMemory(window, data.messages, {
+      sessionNotes: data.sessionNotes,
+      priorNotes: data.priorNotes,
+    });
   }
 
   /** Serialize for storage on SessionRecord. */
   toData(): SessionMemoryData {
-    return { messages: [...this.messages] };
+    return {
+      messages: [...this.messages],
+      messageWindow: this.maxWindow,
+      ...(this.sessionNotes ? { sessionNotes: this.sessionNotes } : {}),
+      ...(this.priorNotes ? { priorNotes: this.priorNotes } : {}),
+    };
+  }
+
+  setSessionNotes(notes: string): void {
+    this.sessionNotes = notes.trim().slice(0, 1200) || undefined;
+  }
+
+  getSessionNotes(): string | undefined {
+    return this.sessionNotes;
+  }
+
+  getPriorNotes(): string | undefined {
+    return this.priorNotes;
+  }
+
+  getMaxWindow(): number {
+    return this.maxWindow;
   }
 
   /** Add one message and trim to the window size. */
@@ -68,6 +101,8 @@ export class SessionMemory {
     return {
       messages: this.messages.slice(-limit),
       messageCount: this.messages.length,
+      ...(this.sessionNotes ? { sessionNotes: this.sessionNotes } : {}),
+      ...(this.priorNotes ? { priorNotes: this.priorNotes } : {}),
     };
   }
 

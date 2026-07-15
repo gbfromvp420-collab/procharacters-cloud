@@ -22,11 +22,19 @@ function authHeaders(accountToken?: string | null): HeadersInit {
 export async function createSession(
   characterId: CharacterId,
   accountToken?: string | null,
+  options?: {
+    messageWindow?: 20 | 30 | 50 | 80;
+    useCrossSessionMemory?: boolean;
+  },
 ): Promise<CreateSessionResponse> {
   const res = await fetch(`${API_BASE}/api/v1/sessions`, {
     method: "POST",
     headers: authHeaders(accountToken),
-    body: JSON.stringify({ characterId }),
+    body: JSON.stringify({
+      characterId,
+      ...(options?.messageWindow ? { messageWindow: options.messageWindow } : {}),
+      ...(options?.useCrossSessionMemory ? { useCrossSessionMemory: true } : {}),
+    }),
   });
 
   if (!res.ok) {
@@ -35,6 +43,68 @@ export async function createSession(
   }
 
   return res.json() as Promise<CreateSessionResponse>;
+}
+
+export async function fetchSessionMemory(
+  sessionId: string,
+  token?: string | null,
+): Promise<{
+  messageCount: number;
+  sessionNotes?: string;
+  priorNotes?: string;
+  messageWindow?: number;
+  characterName?: string;
+}> {
+  const q = token ? `?token=${encodeURIComponent(token)}` : "";
+  const res = await fetch(
+    `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/memory${q}`,
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Memory fetch failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    messageCount: number;
+    sessionNotes?: string;
+    priorNotes?: string;
+    messageWindow?: number;
+    characterName?: string;
+  }>;
+}
+
+export async function setCrossSessionMemoryOptIn(
+  accountToken: string,
+  characterId: string,
+  optIn: boolean,
+): Promise<{ optIn: boolean; notes: string }> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/memory/${encodeURIComponent(characterId)}`,
+    {
+      method: "PUT",
+      headers: authHeaders(accountToken),
+      body: JSON.stringify({ optIn }),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Memory opt-in failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ optIn: boolean; notes: string }>;
+}
+
+export async function getCrossSessionMemoryOptIn(
+  accountToken: string,
+  characterId: string,
+): Promise<{ optIn: boolean; notes: string }> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/memory/${encodeURIComponent(characterId)}`,
+    { headers: authHeaders(accountToken) },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Memory status failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ optIn: boolean; notes: string }>;
 }
 
 export async function resumeSession(

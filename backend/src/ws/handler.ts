@@ -116,6 +116,7 @@ export function createWebSocketHandler(
               messageId: result.messageId,
               content: result.content,
               avatarIntent: avatarState,
+              ...(result.sessionNotes ? { sessionNotes: result.sessionNotes } : {}),
             });
 
             send(socket, {

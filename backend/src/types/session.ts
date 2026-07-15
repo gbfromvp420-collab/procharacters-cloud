@@ -34,6 +34,10 @@ export interface CreateSessionInput {
   characterId?: string;
   promptVersion?: string;
   accountId?: string;
+  /** Override message window for this session (clamped). */
+  messageWindow?: number;
+  /** Signed-in only: seed prior notes if user opted in for this character. */
+  useCrossSessionMemory?: boolean;
 }
 
 export interface LiveKitJoinInfo {

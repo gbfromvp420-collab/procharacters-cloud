@@ -847,5 +847,51 @@ export const createAccountRoutes = (
         throw error;
       }
     });
+
+    /**
+     * Phase 6: opt-in cross-session memory notes for a character.
+     * When optIn=true, future notes from chats with this character are saved
+     * and can seed new sessions via useCrossSessionMemory on create.
+     */
+    app.get("/accounts/me/memory/:characterId", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { characterId } = request.params as { characterId: string };
+      const {
+        getCrossSessionNote,
+      } = await import("../lib/memory/cross-session-notes.js");
+      const note = await getCrossSessionNote(account.id, characterId);
+      return {
+        characterId,
+        optIn: note?.optIn === true,
+        notes: note?.notes ?? "",
+        updatedAt: note?.updatedAt ?? null,
+      };
+    });
+
+    app.put("/accounts/me/memory/:characterId", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { characterId } = request.params as { characterId: string };
+      const body = z
+        .object({
+          optIn: z.boolean(),
+        })
+        .parse(request.body ?? {});
+      const {
+        setCrossSessionOptIn,
+      } = await import("../lib/memory/cross-session-notes.js");
+      const note = await setCrossSessionOptIn(account.id, characterId, body.optIn);
+      return {
+        characterId,
+        optIn: note.optIn,
+        notes: note.notes,
+        updatedAt: note.updatedAt,
+      };
+    });
   };
 };
