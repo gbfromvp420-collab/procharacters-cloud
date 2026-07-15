@@ -101,3 +101,8 @@ python scripts/character_list.py
 ## License
 
 Private — KGC Ventures. All rights reserved.
+## Deployment source of truth (next 30 days)
+- Platform: Railway
+- API service Dockerfile: ackend/Dockerfile
+- Web service Dockerfile: rontend/Dockerfile
+- Render/Azure configs are inactive during stabilization
