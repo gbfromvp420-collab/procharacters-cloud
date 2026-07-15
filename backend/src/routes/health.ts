@@ -1,5 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { LiveKitService } from "../lib/livekit/service.js";
+import { isErrorReportingConfigured } from "../lib/observability/error-reporter.js";
+import { getMetrics } from "../lib/observability/metrics.js";
+import { isWebPushConfigured } from "../lib/push/web-push-service.js";
 
 export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync => {
   return async (app) => {
@@ -7,6 +10,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
       service: "procharacters-backend",
       status: "ok",
       health: "/health",
+      metrics: "/metrics",
     }));
 
     app.get("/health", async () => ({
@@ -23,6 +27,17 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
         clipSlots: ["idle", "teasing", "playful", "aroused"],
         energyBands: ["idle", "tease", "play", "edge"],
       },
+      observability: {
+        errorWebhook: isErrorReportingConfigured(),
+        webPush: isWebPushConfigured(),
+        logLevel: process.env.LOG_LEVEL?.trim() || "info",
+      },
+    }));
+
+    /** Lightweight ops metrics (in-process counters). */
+    app.get("/metrics", async () => ({
+      service: "procharacters-backend",
+      ...getMetrics(),
     }));
   };
 };

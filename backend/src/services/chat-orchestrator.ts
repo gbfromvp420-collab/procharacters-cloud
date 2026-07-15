@@ -10,6 +10,7 @@ import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
 import { saveCrossSessionNotes } from "../lib/memory/cross-session-notes.js";
 import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
+import { bump } from "../lib/observability/metrics.js";
 import type { AvatarState } from "../types/session.js";
 import { MemoryManager } from "./memory-manager.js";
 import { SessionManager } from "./session-manager.js";
@@ -109,12 +110,14 @@ export class ChatOrchestrator {
         parsedAvatar = parsed.avatarIntent;
         usedLlm = true;
       } catch (error) {
+        bump("chatLlmErrors");
         assistantContent = this.buildErrorReply(error);
       }
     } else {
       assistantContent = this.buildStubReply(session.characterId, content, injection.hash);
     }
 
+    bump("chatTurns");
     memory.addTurn(content, assistantContent);
 
     const notes = buildSessionNotes(memory.getRecentContext().messages, {

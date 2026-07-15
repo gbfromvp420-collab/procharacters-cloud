@@ -59,7 +59,14 @@ Optional persistence for custom characters:
 
 Without a volume, custom characters still save to `/data` inside the container but are lost on redeploy.
 
-4. Health: `GET /health` → `"status":"ok"`
+**Ops / Phase 8:**
+- Structured request logs (JSON) — set `LOG_LEVEL=info` or `debug`
+- Optional `ERROR_WEBHOOK_URL` for 5xx alerts (Slack/Discord webhook)
+- `GET /metrics` — in-process counters (sessions, chat turns, errors)
+- Full volume backup guide: [`docs/ops-data-backup.md`](ops-data-backup.md)
+
+4. Health: `GET /health` → `"status":"ok"`  
+   Metrics: `GET /metrics`
 
 ### 2. Frontend service (`procharacters-web`)
 

@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import websocket from "@fastify/websocket";
 import Fastify from "fastify";
+import { randomUUID } from "node:crypto";
 import { mkdir } from "node:fs/promises";
 import { env } from "./config/env.js";
 import { initAccountStore } from "./lib/accounts/account-store.js";
@@ -25,10 +26,22 @@ import { createWebSocketHandler } from "./ws/handler.js";
 
 export async function buildApp() {
   const app = Fastify({
-    logger: env.isDev,
+    // Structured JSON logs (pino). Disable default req spam — custom hooks log paths only.
+    logger: {
+      level: process.env.LOG_LEVEL?.trim() || "info",
+    },
     trustProxy: true,
+    disableRequestLogging: true,
     bodyLimit: Number(process.env.MAX_UPLOAD_BYTES ?? 45 * 1024 * 1024),
+    genReqId: (req) => {
+      const h = req.headers["x-request-id"];
+      if (typeof h === "string" && h.trim()) return h.trim().slice(0, 64);
+      return randomUUID();
+    },
   });
+
+  const { registerObservability } = await import("./lib/observability/request-logs.js");
+  registerObservability(app);
 
   await app.register(cors, { origin: true });
   await app.register(websocket);

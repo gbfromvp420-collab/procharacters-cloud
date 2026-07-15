@@ -1,6 +1,7 @@
 import type { FastifyRequest } from "fastify";
 import type { WebSocket } from "ws";
 import { z } from "zod";
+import { bump } from "../lib/observability/metrics.js";
 import type { ChatOrchestrator } from "../services/chat-orchestrator.js";
 import type { MediaWorker } from "../services/media-worker.js";
 import type { SessionManager } from "../services/session-manager.js";
@@ -33,6 +34,7 @@ export function createWebSocketHandler(
     const token = query.token;
 
     if (!token) {
+      bump("wsErrors");
       send(socket, { type: "error", code: "AUTH_REQUIRED", message: "Missing session token" });
       socket.close(4401, "Missing session token");
       return;
@@ -41,7 +43,9 @@ export function createWebSocketHandler(
     let session;
     try {
       session = await sessionManager.authenticateAsync(sessionId, token);
+      bump("wsConnections");
     } catch (error) {
+      bump("wsErrors");
       const message =
         error instanceof SessionNotFoundError || error instanceof SessionAuthError
           ? error.message

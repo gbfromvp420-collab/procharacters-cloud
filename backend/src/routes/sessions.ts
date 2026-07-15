@@ -16,6 +16,7 @@ import {
   listPublicCustomCharacters,
   updateCustomCharacter,
 } from "../lib/live/index.js";
+import { bump } from "../lib/observability/metrics.js";
 import { listClipUrls } from "../lib/media/clip-resolver.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
@@ -308,6 +309,7 @@ export const createSessionRoutes = (
           ownerAccountId: account.id,
           visibility: "private",
         });
+        bump("customCharactersCreated");
         return reply.code(201).send({
           id: created.id,
           displayName: created.displayName,
@@ -518,6 +520,7 @@ export const createSessionRoutes = (
           await media.publish(session.sessionId, record.characterId, avatarState);
         }
 
+        bump("sessionsCreated");
         return reply.code(201).send({
           ...session,
           avatarState,
