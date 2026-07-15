@@ -1,3 +1,8 @@
+import {
+  energyBandFromAvatar,
+  energyBandLabel,
+  energyBandBadgeClass,
+} from "@/lib/energy";
 import type { AvatarState } from "@/lib/types";
 
 function formatLabel(value: string): string {
@@ -23,6 +28,7 @@ interface AvatarPanelProps {
 export function AvatarPanel({ characterName, characterId, avatar, status }: AvatarPanelProps) {
   const initial = characterName?.charAt(0) ?? "?";
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
+  const band = energyBandFromAvatar(avatar);
 
   return (
     <aside className="flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-panel/90 p-3 shadow-card backdrop-blur-sm sm:gap-4 sm:p-4 lg:min-w-[240px]">
@@ -42,6 +48,13 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
             {characterId ? formatLabel(characterId) : "Start a session"}
             {avatar ? ` · ${formatLabel(avatar.emotion)}` : ""}
           </p>
+          {avatar && (
+            <span
+              className={`mt-1 inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(band)}`}
+            >
+              {energyBandLabel(band)} energy
+            </span>
+          )}
         </div>
         {avatar && (
           <div className="hidden w-16 shrink-0 sm:block lg:hidden">

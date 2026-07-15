@@ -7,10 +7,20 @@ import type { AvatarState, LiveKitJoinInfo } from "@/lib/types";
 interface LiveKitAvatarSyncProps {
   livekit: LiveKitJoinInfo | null;
   onAvatarSync: (avatar: AvatarState) => void;
+  /** Report room status for ops badge. */
+  onStatusChange?: (status: "off" | "connecting" | "connected" | "error") => void;
 }
 
-export function LiveKitAvatarSync({ livekit, onAvatarSync }: LiveKitAvatarSyncProps) {
+export function LiveKitAvatarSync({
+  livekit,
+  onAvatarSync,
+  onStatusChange,
+}: LiveKitAvatarSyncProps) {
   const [status, setStatus] = useState<"off" | "connecting" | "connected" | "error">("off");
+
+  useEffect(() => {
+    onStatusChange?.(status);
+  }, [status, onStatusChange]);
 
   useEffect(() => {
     if (!livekit) {

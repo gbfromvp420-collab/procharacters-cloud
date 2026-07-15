@@ -10,6 +10,8 @@ export interface AvatarState {
   arousalLevel: number;
   clothingState: string;
   mediaUrl?: string;
+  /** Phase 7 energy band for UI: idle | tease | play | edge */
+  energyBand?: string;
 }
 
 export interface SessionRecord {

@@ -121,6 +121,8 @@ export type ConnectionStatus = "idle" | "connecting" | "ready" | "error" | "ende
 
 export interface AvatarState {
   emotion: string;
+  /** Phase 7: idle | tease | play | edge (optional, from server). */
+  energyBand?: string;
   pose: string;
   action: string;
   arousalLevel: number;

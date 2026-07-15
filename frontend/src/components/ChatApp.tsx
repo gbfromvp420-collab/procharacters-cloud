@@ -7,6 +7,7 @@ import { AvatarVideo } from "@/components/AvatarVideo";
 import { ClipPreview } from "@/components/ClipPreview";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
+import { LiveKitBadge } from "@/components/LiveKitBadge";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import {
   claimSession,
@@ -169,6 +170,9 @@ export function ChatApp() {
   const [sessionNotes, setSessionNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
   const [crossSessionOptIn, setCrossSessionOptIn] = useState(false);
+  const [livekitRoomStatus, setLivekitRoomStatus] = useState<
+    "off" | "connecting" | "connected" | "error"
+  >("off");
 
   // Import JSON dry-run (same panel as account settings)
   const [importDoc, setImportDoc] = useState<unknown | null>(null);
@@ -1486,6 +1490,9 @@ export function ChatApp() {
             <StatusDot status={status} />
             {statusLabel}
           </span>
+          <span className="hidden sm:inline-flex">
+            <LiveKitBadge roomStatus={livekitRoomStatus} compact />
+          </span>
           {copyNotice && (
             <span className="hidden max-w-[10rem] truncate text-[11px] text-brand-accent sm:inline" role="status">
               {copyNotice}
@@ -1731,7 +1738,11 @@ export function ChatApp() {
         >
           {/* LiveKit stays mounted even when collapsed so avatar state keeps syncing */}
           <div className="sr-only" aria-hidden>
-            <LiveKitAvatarSync livekit={livekit} onAvatarSync={handleAvatarSync} />
+            <LiveKitAvatarSync
+              livekit={livekit}
+              onAvatarSync={handleAvatarSync}
+              onStatusChange={setLivekitRoomStatus}
+            />
           </div>
 
           {avatarCollapsed ? (

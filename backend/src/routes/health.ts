@@ -16,6 +16,12 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
       livekit: {
         configured: livekit.isConfigured,
         url: livekit.isConfigured ? livekit.serverUrl : null,
+        /** Ops badge: ready = keys present; live only when a client joins a room. */
+        badge: livekit.isConfigured ? "ready" : "off",
+      },
+      avatar: {
+        clipSlots: ["idle", "teasing", "playful", "aroused"],
+        energyBands: ["idle", "tease", "play", "edge"],
       },
     }));
   };

@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  energyBandBadgeClass,
+  energyBandFromAvatar,
+  energyBandLabel,
+  energyBandRingClass,
+} from "@/lib/energy";
 import type { AvatarState } from "@/lib/types";
 
 function formatLabel(value: string): string {
@@ -31,6 +37,8 @@ export function AvatarVideo({
 
   const mediaUrl = avatar?.mediaUrl ?? null;
   const isVideo = mediaUrl?.endsWith(".mp4") || mediaUrl?.endsWith(".webm");
+  const band = energyBandFromAvatar(avatar);
+  const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
 
   useEffect(() => {
     if (!mediaUrl) return;
@@ -46,11 +54,12 @@ export function AvatarVideo({
     setShowIncoming(false);
 
     const frame = requestAnimationFrame(() => setShowIncoming(true));
+    // Slightly longer crossfade for premium feel
     const timer = setTimeout(() => {
       setActiveSrc(mediaUrl);
       setIncomingSrc(null);
       setShowIncoming(false);
-    }, 500);
+    }, 620);
 
     return () => {
       cancelAnimationFrame(frame);
@@ -66,7 +75,7 @@ export function AvatarVideo({
 
   return (
     <div
-      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ${frameClass}`}
+      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-500 ${frameClass} ${energyBandRingClass(band)}`}
     >
       {!activeSrc && (
         <div
@@ -105,12 +114,31 @@ export function AvatarVideo({
         />
       )}
 
+      {/* Energy band chip */}
+      {avatar && (
+        <div
+          className={`absolute left-2 top-2 z-10 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur-sm ${energyBandBadgeClass(band)} ${
+            pip ? "left-1.5 top-1.5 px-1.5 text-[8px]" : ""
+          }`}
+        >
+          {energyBandLabel(band)}
+          {!pip && <span className="ml-1 opacity-80">{arousalPct}%</span>}
+        </div>
+      )}
+
       {avatar && !pip && (
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
           <p className="text-sm font-medium text-white">{characterName ?? "Character"}</p>
           <p className="text-xs text-white/70">
             {formatLabel(avatar.emotion)} · {formatLabel(avatar.pose)}
+            {avatar.action ? ` · ${formatLabel(avatar.action)}` : ""}
           </p>
+          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/15">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-brand-accentDim to-rose-400 transition-all duration-700"
+              style={{ width: `${arousalPct}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -119,7 +147,9 @@ export function AvatarVideo({
           <p className="truncate text-[10px] font-medium text-white">
             {characterName ?? "Live"}
           </p>
-          <p className="truncate text-[9px] text-white/70">{formatLabel(avatar.emotion)}</p>
+          <p className="truncate text-[9px] text-white/70">
+            {formatLabel(avatar.emotion)} · {arousalPct}%
+          </p>
         </div>
       )}
     </div>
@@ -137,7 +167,7 @@ function MediaLayer({
   visible: boolean;
   label?: string;
 }) {
-  const className = `absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
+  const className = `absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-out ${
     visible ? "opacity-100" : "opacity-0"
   }`;
 

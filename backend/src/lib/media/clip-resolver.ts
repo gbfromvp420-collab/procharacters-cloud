@@ -2,52 +2,104 @@ import { getCustomCharacter } from "../live/custom-characters.js";
 import { resolveAvatarBaseId } from "../live/character-catalog.js";
 import type { AvatarState } from "../../types/session.js";
 
+/** Shipped loop slots (files on disk). */
 export const CLIP_KEYS = ["idle", "teasing", "playful", "aroused"] as const;
 export type ClipKey = (typeof CLIP_KEYS)[number];
 
-const EMOTION_CLIPS = new Set([
-  "teasing",
-  "aroused",
-  "playful",
-  "intense",
-  "dominant",
-  "submissive",
-  "breathless",
-  "idle",
-]);
+/**
+ * Expanded energy vocabulary Grok may emit — all map onto the four loop files.
+ * Phase 7: richer labels for UX + better clip picking without new MP4s yet.
+ */
+export type EnergyBand = "idle" | "tease" | "play" | "edge";
 
-const POSE_CLIPS = new Set(["idle", "leaning", "kneeling", "standing"]);
-
-/** Map freeform Grok emotions onto the four clip slots we ship. */
 const EMOTION_TO_CLIP: Record<string, ClipKey> = {
+  // calm band → idle
   idle: "idle",
+  calm: "idle",
+  soft: "idle",
+  resting: "idle",
+  leaning: "idle",
+  standing: "idle",
+  goth_still: "idle",
+  cool_down: "idle",
+
+  // tease band → teasing
   teasing: "teasing",
+  seductive: "teasing",
+  flirty: "teasing",
+  seduction: "teasing",
+  submissive: "teasing",
+  inviting: "teasing",
+  shy: "teasing",
+  blushing: "teasing",
+  whisper: "teasing",
+  kneeling: "teasing",
+  soft_dom: "teasing",
+  soft_domme: "teasing",
+
+  // play band → playful
   playful: "playful",
+  bratty: "playful",
+  cocky: "playful",
+  brat: "playful",
+  smirk: "playful",
+  gamey: "playful",
+  gym_pulse: "playful",
+  showing_off: "playful",
+
+  // edge / high heat → aroused
   aroused: "aroused",
   intense: "aroused",
-  dominant: "aroused",
-  submissive: "teasing",
   breathless: "aroused",
-  leaning: "idle",
-  kneeling: "teasing",
-  standing: "idle",
+  edging: "aroused",
+  edge: "aroused",
+  dominant: "aroused",
+  close: "aroused",
+  desperate: "aroused",
+  pulsing: "aroused",
+  denial: "aroused",
 };
 
 function normalizeToken(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
 }
 
+/** Map avatar intent → energy band for UI badges. */
+export function resolveEnergyBand(state: AvatarState): EnergyBand {
+  const clip = pickClipName(state);
+  if (clip === "aroused") return "edge";
+  if (clip === "playful") return "play";
+  if (clip === "teasing") return "tease";
+  return "idle";
+}
+
 function pickClipName(state: AvatarState): ClipKey {
   const emotion = normalizeToken(state.emotion);
   const pose = normalizeToken(state.pose);
+  const action = normalizeToken(state.action ?? "");
 
-  if (EMOTION_TO_CLIP[emotion]) return EMOTION_TO_CLIP[emotion];
-  if (EMOTION_CLIPS.has(emotion) && CLIP_KEYS.includes(emotion as ClipKey)) {
-    return emotion as ClipKey;
+  // Explicit emotion map first
+  if (EMOTION_TO_CLIP[emotion]) {
+    const mapped = EMOTION_TO_CLIP[emotion]!;
+    // Arousal can push tease → edge when already hot
+    if (mapped === "teasing" && state.arousalLevel >= 0.78) return "aroused";
+    if (mapped === "idle" && state.arousalLevel >= 0.55) return "teasing";
+    return mapped;
   }
-  if (POSE_CLIPS.has(pose) && EMOTION_TO_CLIP[pose]) return EMOTION_TO_CLIP[pose];
-  if (state.arousalLevel >= 0.7) return "aroused";
-  if (state.arousalLevel >= 0.4) return "teasing";
+
+  // Action-driven hints
+  if (/edge|stroke|freeze|denial|climax/.test(action)) {
+    return state.arousalLevel >= 0.45 ? "aroused" : "teasing";
+  }
+  if (/hover|tease|trace|look/.test(action)) return "teasing";
+  if (/hip|grind|show|flex/.test(action)) return "playful";
+
+  if (EMOTION_TO_CLIP[pose]) return EMOTION_TO_CLIP[pose]!;
+
+  // Arousal bands (fallback)
+  if (state.arousalLevel >= 0.72) return "aroused";
+  if (state.arousalLevel >= 0.48) return "teasing";
+  if (state.arousalLevel >= 0.28) return "playful";
   return "idle";
 }
 
@@ -56,7 +108,6 @@ function normalizeMediaUrl(raw: string): string | null {
   if (!value) return null;
   if (/^https?:\/\//i.test(value)) return value;
   if (value.startsWith("/")) return value;
-  // Allow pack-relative paths like avatar/foo/teasing.mp4
   return `/${value.replace(/^\/+/, "")}`;
 }
 
@@ -86,7 +137,6 @@ export function resolveClipPath(characterId: string, state: AvatarState): string
     if (override) return override;
   }
 
-  // Fuzzy: if Grok said "intense" but only override is aroused, already mapped via pickClipName.
   if (custom?.mediaBase?.trim()) {
     return joinMediaBase(custom.mediaBase.trim(), clip);
   }
@@ -99,6 +149,7 @@ export function enrichAvatarWithMedia(characterId: string, state: AvatarState): 
   return {
     ...state,
     mediaUrl: resolveClipPath(characterId, state),
+    energyBand: resolveEnergyBand(state),
   };
 }
 
@@ -114,8 +165,20 @@ export function listClipUrls(characterId: string): Record<ClipKey, string> {
 
   return {
     idle: resolveClipPath(characterId, { ...baseState, emotion: "idle", arousalLevel: 0.1 }),
-    teasing: resolveClipPath(characterId, { ...baseState, emotion: "teasing", arousalLevel: 0.4 }),
-    playful: resolveClipPath(characterId, { ...baseState, emotion: "playful", arousalLevel: 0.35 }),
-    aroused: resolveClipPath(characterId, { ...baseState, emotion: "aroused", arousalLevel: 0.85 }),
+    teasing: resolveClipPath(characterId, {
+      ...baseState,
+      emotion: "teasing",
+      arousalLevel: 0.4,
+    }),
+    playful: resolveClipPath(characterId, {
+      ...baseState,
+      emotion: "playful",
+      arousalLevel: 0.35,
+    }),
+    aroused: resolveClipPath(characterId, {
+      ...baseState,
+      emotion: "aroused",
+      arousalLevel: 0.85,
+    }),
   };
 }

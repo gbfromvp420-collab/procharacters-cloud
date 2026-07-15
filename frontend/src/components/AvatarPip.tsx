@@ -9,7 +9,7 @@ const CORNER_KEY = "pc_avatar_pip_corner";
 const PIP_W_MOBILE = 116;
 const PIP_W_DESKTOP = 144;
 const EDGE_PAD = 12;
-const SAFE_BOTTOM = 76; // above composer
+const SAFE_BOTTOM = 88; // above composer + home indicator
 
 type Pos = { x: number; y: number };
 type Corner = "tl" | "tr" | "bl" | "br";
@@ -260,13 +260,18 @@ export function AvatarPip({ avatar, characterName, onExpand, onHide }: AvatarPip
       className={`fixed z-40 w-[7.25rem] touch-none select-none sm:w-36 ${
         dragging ? "cursor-grabbing transition-none" : "transition-[left,top] duration-200 ease-out"
       }`}
-      style={{ left: pos.x, top: pos.y }}
+      style={{
+        left: pos.x,
+        top: pos.y,
+        // Keep clear of iOS home indicator / notches when snapped low
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
       role="dialog"
       aria-label="Live avatar picture-in-picture"
     >
       <div
         className={`overflow-hidden rounded-2xl border border-brand-accent/50 bg-brand-panel/95 shadow-glow ring-1 ring-black/40 backdrop-blur-md ${
-          dragging ? "scale-[1.02] shadow-glow-sm" : "animate-rise-in"
+          dragging ? "scale-[1.03] shadow-glow-sm" : "animate-rise-in"
         }`}
       >
         <div
