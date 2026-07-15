@@ -48,6 +48,8 @@ const createSessionSchema = z.object({
   messageWindow: z.union([z.literal(20), z.literal(30), z.literal(50), z.literal(80)]).optional(),
   /** Signed-in: load prior notes for this character when opted in. */
   useCrossSessionMemory: z.boolean().optional(),
+  /** Phase 10: normal | edge_pace */
+  sessionMode: z.enum(["normal", "edge_pace"]).optional(),
 });
 
 const resumeSessionSchema = z.object({
@@ -505,6 +507,7 @@ export const createSessionRoutes = (
             accountId: account?.id,
             messageWindow: body.messageWindow,
             useCrossSessionMemory: body.useCrossSessionMemory === true,
+            sessionMode: body.sessionMode,
           },
           wsBaseUrl,
         );

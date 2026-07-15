@@ -24,6 +24,7 @@ export class LivePromptInjector {
     );
     const memoryBlock = formatMemoryBlock(memory.context, formatOptions);
     const liveFormat = buildLiveFormatInstructions(energyLabel);
+    const sessionMode = memory.sessionModeBlock?.trim() || "";
 
     const systemPrompt = [
       platform,
@@ -33,6 +34,7 @@ export class LivePromptInjector {
       consistency,
       "---",
       memoryBlock,
+      ...(sessionMode ? ["---", sessionMode] : []),
       "---",
       liveFormat,
     ].join("\n\n");
@@ -55,6 +57,7 @@ export class LivePromptInjector {
         consistency,
         memory: memoryBlock,
         liveFormat,
+        ...(sessionMode ? { sessionMode } : {}),
       },
       consistencyTraits: snapshot.consistencyTraits,
       turnNumber,

@@ -1,6 +1,10 @@
 import type { FastifyRequest } from "fastify";
 import type { WebSocket } from "ws";
 import { z } from "zod";
+import {
+  computeModeState,
+  formatModeForUi,
+} from "../lib/live/session-mode.js";
 import { bump } from "../lib/observability/metrics.js";
 import type { ChatOrchestrator } from "../services/chat-orchestrator.js";
 import type { MediaWorker } from "../services/media-worker.js";
@@ -57,6 +61,12 @@ export function createWebSocketHandler(
 
     const initialAvatar = media.enrich(session.characterId, session.avatarState);
     const recentMessages = session.memory?.messages ?? [];
+    const modeState = formatModeForUi(
+      computeModeState(
+        session.sessionMode ?? "normal",
+        session.modeStartedAt ?? session.createdAt,
+      ),
+    );
 
     send(socket, {
       type: "session_ready",
@@ -70,6 +80,8 @@ export function createWebSocketHandler(
         role: m.role,
         content: m.content,
       })),
+      sessionMode: session.sessionMode ?? "normal",
+      modeState,
     });
 
     socket.on("message", async (raw) => {
@@ -121,6 +133,7 @@ export function createWebSocketHandler(
               content: result.content,
               avatarIntent: avatarState,
               ...(result.sessionNotes ? { sessionNotes: result.sessionNotes } : {}),
+              ...(result.modeState ? { modeState: result.modeState } : {}),
             });
 
             send(socket, {

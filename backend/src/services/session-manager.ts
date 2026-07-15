@@ -9,6 +9,7 @@ import {
 import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
 import { assertLiveCharacter } from "../lib/live/character-catalog.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
+import { normalizeSessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
@@ -270,6 +271,9 @@ export class SessionManager {
         : {}),
     });
 
+    const sessionMode = normalizeSessionMode(input.sessionMode);
+    const modeStartedAt = now.toISOString();
+
     const record: SessionRecord = {
       id: sessionId,
       characterId: promptSnapshot.characterId,
@@ -283,6 +287,8 @@ export class SessionManager {
       updatedAt: now.toISOString(),
       expiresAt: expiresAt.toISOString(),
       resumeCode,
+      sessionMode,
+      modeStartedAt,
       ...(input.accountId ? { accountId: input.accountId } : {}),
     };
 
@@ -1164,6 +1170,8 @@ export class SessionManager {
       avatarState: record.avatarState,
       resumeCode: record.resumeCode,
       accountId: record.accountId,
+      sessionMode: record.sessionMode ?? "normal",
+      modeStartedAt: record.modeStartedAt ?? record.createdAt,
     };
   }
 

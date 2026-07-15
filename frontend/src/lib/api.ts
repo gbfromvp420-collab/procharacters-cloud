@@ -25,6 +25,7 @@ export async function createSession(
   options?: {
     messageWindow?: 20 | 30 | 50 | 80;
     useCrossSessionMemory?: boolean;
+    sessionMode?: "normal" | "edge_pace";
   },
 ): Promise<CreateSessionResponse> {
   const res = await fetch(`${API_BASE}/api/v1/sessions`, {
@@ -34,6 +35,7 @@ export async function createSession(
       characterId,
       ...(options?.messageWindow ? { messageWindow: options.messageWindow } : {}),
       ...(options?.useCrossSessionMemory ? { useCrossSessionMemory: true } : {}),
+      ...(options?.sessionMode ? { sessionMode: options.sessionMode } : {}),
     }),
   });
 

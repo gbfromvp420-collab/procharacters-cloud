@@ -7,6 +7,12 @@ import {
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
 import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
+import {
+  buildSessionModeInstructions,
+  computeModeState,
+  formatModeForUi,
+  type ModeRuntimeState,
+} from "../lib/live/session-mode.js";
 import { saveCrossSessionNotes } from "../lib/memory/cross-session-notes.js";
 import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
@@ -24,6 +30,8 @@ export interface ChatTurnResult {
   usedLlm: boolean;
   /** Compact memory blurb for UI. */
   sessionNotes?: string;
+  /** Phase 10 mode timer snapshot for UI. */
+  modeState?: ReturnType<typeof formatModeForUi>;
 }
 
 export interface ChatOrchestratorConfig {
@@ -84,9 +92,16 @@ export class ChatOrchestrator {
     const session = this.sessions.getSession(sessionId);
     const memory = SessionMemory.fromData(session.memory, this.config.maxMessageWindow);
 
+    const modeState = computeModeState(
+      session.sessionMode ?? "normal",
+      session.modeStartedAt ?? session.createdAt,
+    );
+    const sessionModeBlock = buildSessionModeInstructions(modeState);
+
     const injection = injector.injectTurn(session.promptSnapshot, {
       context: memory.getRecentContext(),
       pendingUserMessage: content,
+      sessionModeBlock,
     });
 
     let assistantContent: string;
@@ -103,6 +118,7 @@ export class ChatOrchestrator {
             injector.injectTurn(session.promptSnapshot, {
               context: memory.getRecentContext(),
               pendingUserMessage: content,
+              sessionModeBlock,
             }).messages,
         );
         const parsed = parseGrokReply(raw);
@@ -153,7 +169,17 @@ export class ChatOrchestrator {
       promptHash: injection.hash,
       usedLlm,
       sessionNotes: notes,
+      modeState: formatModeForUi(modeState),
     };
+  }
+
+  /** Current mode timer for UI (no chat turn). */
+  getModeState(sessionId: string): ModeRuntimeState {
+    const session = this.sessions.getSession(sessionId);
+    return computeModeState(
+      session.sessionMode ?? "normal",
+      session.modeStartedAt ?? session.createdAt,
+    );
   }
 
   /**

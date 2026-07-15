@@ -27,6 +27,8 @@ export interface PromptSnapshot {
 export interface SessionMemoryInput {
   context: RecentContext;
   pendingUserMessage?: string;
+  /** Phase 10 mode block (preformatted). */
+  sessionModeBlock?: string;
 }
 
 export interface PromptLayers {
@@ -35,6 +37,7 @@ export interface PromptLayers {
   consistency: string;
   memory: string;
   liveFormat: string;
+  sessionMode?: string;
 }
 
 export interface LiveInjectionResult {

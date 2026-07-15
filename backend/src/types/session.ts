@@ -14,6 +14,8 @@ export interface AvatarState {
   energyBand?: string;
 }
 
+export type SessionMode = "normal" | "edge_pace";
+
 export interface SessionRecord {
   id: string;
   characterId: string;
@@ -30,6 +32,10 @@ export interface SessionRecord {
   accountId?: string;
   /** Short public resume code — no raw ws token in share links. */
   resumeCode?: string;
+  /** Phase 10: normal | edge_pace */
+  sessionMode?: SessionMode;
+  /** ISO when mode clock started. */
+  modeStartedAt?: string;
 }
 
 export interface CreateSessionInput {
@@ -40,6 +46,8 @@ export interface CreateSessionInput {
   messageWindow?: number;
   /** Signed-in only: seed prior notes if user opted in for this character. */
   useCrossSessionMemory?: boolean;
+  /** Phase 10 assistant mode preview. */
+  sessionMode?: SessionMode;
 }
 
 export interface LiveKitJoinInfo {
@@ -60,4 +68,6 @@ export interface CreateSessionResult {
   /** ISO expiry for resume code (sliding TTL extended on open/resume). */
   resumeExpiresAt?: string;
   accountId?: string;
+  sessionMode?: SessionMode;
+  modeStartedAt?: string;
 }

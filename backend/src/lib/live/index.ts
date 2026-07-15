@@ -37,6 +37,13 @@ export { detectMissingTraits, buildConsistencyReminder } from "./consistency.js"
 export { LivePromptInjector } from "./injector.js";
 export { formatMemoryBlock, toLlmMessages } from "./memory-context.js";
 export { createPromptSnapshot } from "./prompt-snapshot.js";
+export {
+  buildSessionModeInstructions,
+  computeModeState,
+  formatModeForUi,
+  normalizeSessionMode,
+} from "./session-mode.js";
+export type { EdgePhase, ModeRuntimeState, SessionMode } from "./session-mode.js";
 export type {
   LiveInjectionResult,
   LlmMessage,

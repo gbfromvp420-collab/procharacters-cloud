@@ -36,6 +36,15 @@ export interface ServerEventBase {
   type: ServerEventType;
 }
 
+export interface SessionModeUiState {
+  mode: "normal" | "edge_pace";
+  label: string;
+  phase: string;
+  round: number;
+  phaseRemainingSec: number;
+  coachCue: string;
+}
+
 export interface SessionReadyEvent extends ServerEventBase {
   type: "session_ready";
   sessionId: string;
@@ -44,6 +53,8 @@ export interface SessionReadyEvent extends ServerEventBase {
   avatarState: AvatarState;
   /** Prior transcript when resuming or reconnecting. */
   messages?: Array<{ id: string; role: "user" | "assistant"; content: string }>;
+  sessionMode?: "normal" | "edge_pace";
+  modeState?: SessionModeUiState;
 }
 
 export interface AssistantStreamEvent extends ServerEventBase {
@@ -57,6 +68,8 @@ export interface AssistantCompleteEvent extends ServerEventBase {
   messageId: string;
   content: string;
   avatarIntent: AvatarState;
+  sessionNotes?: string;
+  modeState?: SessionModeUiState;
 }
 
 export interface AvatarUpdateEvent extends ServerEventBase {

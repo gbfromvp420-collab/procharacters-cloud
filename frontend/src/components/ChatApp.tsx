@@ -79,6 +79,8 @@ import type {
   LiveKitJoinInfo,
   MediaClipKey,
   MemoryMessage,
+  SessionMode,
+  SessionModeUiState,
 } from "@/lib/types";
 
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
@@ -173,6 +175,10 @@ export function ChatApp() {
   const [livekitRoomStatus, setLivekitRoomStatus] = useState<
     "off" | "connecting" | "connected" | "error"
   >("off");
+  /** Phase 10 assistant mode */
+  const [sessionMode, setSessionMode] = useState<SessionMode>("normal");
+  const [modeState, setModeState] = useState<SessionModeUiState | null>(null);
+  const [modeTick, setModeTick] = useState(0);
 
   // Import JSON dry-run (same panel as account settings)
   const [importDoc, setImportDoc] = useState<unknown | null>(null);
@@ -256,6 +262,7 @@ export function ChatApp() {
     setSending(false);
     setIsTyping(false);
     setSessionNotes(null);
+    setModeState(null);
     streamingIdRef.current = null;
     pendingHistoryRef.current = null;
   }, []);
@@ -437,6 +444,13 @@ export function ChatApp() {
             if (data.avatarState) {
               setAvatarState(data.avatarState as AvatarState);
             }
+            if (data.sessionMode === "edge_pace" || data.sessionMode === "normal") {
+              setSessionMode(data.sessionMode);
+            }
+            if (data.modeState && typeof data.modeState === "object") {
+              setModeState(data.modeState as SessionModeUiState);
+              setModeTick(0);
+            }
             const historyFromServer = Array.isArray(data.messages)
               ? (data.messages as MemoryMessage[]).map((m) => ({
                   id: m.id,
@@ -498,6 +512,10 @@ export function ChatApp() {
             }
             if (notes?.trim()) {
               setSessionNotes(notes.trim());
+            }
+            if (data.modeState && typeof data.modeState === "object") {
+              setModeState(data.modeState as SessionModeUiState);
+              setModeTick(0);
             }
 
             setMessages((prev) => {
@@ -611,15 +629,25 @@ export function ChatApp() {
       setStatus("connecting");
       pendingHistoryRef.current = null;
       setSessionNotes(null);
+      setModeState(null);
 
       const session = await createSession(characterId, account?.token, {
         messageWindow,
         useCrossSessionMemory: !!account?.token && crossSessionOptIn,
+        sessionMode,
       });
+      if (session.sessionMode) setSessionMode(session.sessionMode);
       await openLiveSession(session);
     },
-    [account?.token, openLiveSession, messageWindow, crossSessionOptIn],
+    [account?.token, openLiveSession, messageWindow, crossSessionOptIn, sessionMode],
   );
+
+  // Local countdown for edge_pace UI between WS updates
+  useEffect(() => {
+    if (!modeState || modeState.mode !== "edge_pace" || status !== "ready") return;
+    const id = window.setInterval(() => setModeTick((t) => t + 1), 1000);
+    return () => window.clearInterval(id);
+  }, [modeState?.mode, status]);
 
   // Load cross-session opt-in when signed in + character changes
   useEffect(() => {
@@ -1844,6 +1872,18 @@ export function ChatApp() {
               {!sessionActive && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
                   <label className="flex items-center gap-1.5">
+                    Mode
+                    <select
+                      value={sessionMode}
+                      onChange={(e) => setSessionMode(e.target.value as SessionMode)}
+                      className="field min-h-0 py-1 text-xs"
+                      title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="edge_pace">Edge Pace</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-1.5">
                     Memory window
                     <select
                       value={messageWindow}
@@ -2392,6 +2432,25 @@ export function ChatApp() {
               </button>
             </div>
             <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              {modeState && modeState.mode === "edge_pace" && status === "ready" && (
+                <div
+                  className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[11px] leading-relaxed text-rose-50"
+                  role="status"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-200/90">
+                      {modeState.label}
+                    </p>
+                    <p className="font-mono text-xs text-rose-100/90">
+                      {Math.max(0, modeState.phaseRemainingSec - modeTick)}s
+                    </p>
+                  </div>
+                  <p className="mt-1 text-brand-muted">{modeState.coachCue}</p>
+                  <p className="mt-1 text-[10px] text-brand-soft">
+                    v3 preview — soft timers, not a full assistant product
+                  </p>
+                </div>
+              )}
               {sessionNotes && (status === "ready" || messages.length > 0) && (
                 <div
                   className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-100/90"

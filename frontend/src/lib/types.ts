@@ -31,6 +31,17 @@ export interface MemoryMessage {
   createdAt?: string;
 }
 
+export type SessionMode = "normal" | "edge_pace";
+
+export interface SessionModeUiState {
+  mode: SessionMode;
+  label: string;
+  phase: string;
+  round: number;
+  phaseRemainingSec: number;
+  coachCue: string;
+}
+
 export interface CreateSessionResponse {
   sessionId: string;
   wsToken: string;
@@ -44,6 +55,8 @@ export interface CreateSessionResponse {
   /** ISO expiry after create/resume (sliding TTL extended on open). */
   resumeExpiresAt?: string;
   accountId?: string;
+  sessionMode?: SessionMode;
+  modeStartedAt?: string;
 }
 
 export interface CustomSceneInput {
