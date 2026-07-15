@@ -109,6 +109,27 @@ export async function getCrossSessionMemoryOptIn(
   return res.json() as Promise<{ optIn: boolean; notes: string }>;
 }
 
+/** Wipe long-term dossier for this character. optOut also turns Remember off. */
+export async function clearCrossSessionMemory(
+  accountToken: string,
+  characterId: string,
+  options?: { optOut?: boolean },
+): Promise<{ cleared: boolean; optIn: boolean; notes: string }> {
+  const q = options?.optOut ? "?optOut=1" : "";
+  const res = await fetch(
+    `${API_BASE}/api/v1/accounts/me/memory/${encodeURIComponent(characterId)}${q}`,
+    {
+      method: "DELETE",
+      headers: authHeaders(accountToken),
+    },
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Forget memory failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{ cleared: boolean; optIn: boolean; notes: string }>;
+}
+
 export async function resumeSession(
   sessionId: string,
   token: string,

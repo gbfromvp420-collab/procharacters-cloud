@@ -899,5 +899,27 @@ export const createAccountRoutes = (
         updatedAt: note.updatedAt,
       };
     });
+
+    /** Forget me — clear long-term dossier for this character (opt-in can stay on). */
+    app.delete("/accounts/me/memory/:characterId", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { characterId } = request.params as { characterId: string };
+      const query = request.query as { optOut?: string };
+      const optOut = query.optOut === "1" || query.optOut === "true";
+      const {
+        clearCrossSessionNotes,
+      } = await import("../lib/memory/cross-session-notes.js");
+      const note = await clearCrossSessionNotes(account.id, characterId, { optOut });
+      return {
+        characterId,
+        cleared: true,
+        optIn: note.optIn,
+        notes: note.notes,
+        updatedAt: note.updatedAt,
+      };
+    });
   };
 };

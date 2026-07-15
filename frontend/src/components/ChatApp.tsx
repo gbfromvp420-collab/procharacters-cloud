@@ -23,6 +23,7 @@ import {
   listAccountSessions,
   listLiveCharacters,
   setCrossSessionMemoryOptIn,
+  clearCrossSessionMemory,
   fetchAccountMe,
   linkEmailToAccount,
   loginAccount,
@@ -86,12 +87,12 @@ import type {
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   { id: "twink-default", displayName: "Twink Default", defaultVersion: "v1.3.0", kind: "default", featured: true },
   { id: "female-default", displayName: "Female Default", defaultVersion: "v1.3.0", kind: "default", featured: true },
-  { id: "twink-shy-boy", displayName: "Twink Shy Boy", defaultVersion: "v1.0.0", kind: "default", avatarBase: "twink-default" },
-  { id: "twink-gym", displayName: "Twink Gym", defaultVersion: "v1.0.0", kind: "default", avatarBase: "twink-default", featured: true },
-  { id: "twink-alt-punk", displayName: "Twink Alt Punk", defaultVersion: "v1.0.0", kind: "default", avatarBase: "twink-default" },
-  { id: "female-soft-goth", displayName: "Female Soft Goth", defaultVersion: "v1.0.0", kind: "default", avatarBase: "female-default", featured: true },
-  { id: "female-athletic-tease", displayName: "Female Athletic Tease", defaultVersion: "v1.0.0", kind: "default", avatarBase: "female-default" },
-  { id: "female-playful-brat", displayName: "Female Playful Brat", defaultVersion: "v1.0.0", kind: "default", avatarBase: "female-default", featured: true },
+  { id: "twink-shy-boy", displayName: "Twink Shy Boy", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
+  { id: "twink-gym", displayName: "Twink Gym", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default", featured: true },
+  { id: "twink-alt-punk", displayName: "Twink Alt Punk", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
+  { id: "female-soft-goth", displayName: "Female Soft Goth", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default", featured: true },
+  { id: "female-athletic-tease", displayName: "Female Athletic Tease", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default" },
+  { id: "female-playful-brat", displayName: "Female Playful Brat", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default", featured: true },
 ];
 
 function makeId(): string {
@@ -1933,22 +1934,42 @@ export function ChatApp() {
                     </select>
                   </label>
                   {account && (
-                    <label className="flex cursor-pointer items-center gap-1.5">
-                      <input
-                        type="checkbox"
-                        checked={crossSessionOptIn}
-                        onChange={(e) => {
-                          const next = e.target.checked;
-                          setCrossSessionOptIn(next);
-                          void setCrossSessionMemoryOptIn(account.token, character, next).catch(
-                            () => {
-                              /* ignore */
-                            },
-                          );
-                        }}
-                      />
-                      Remember across sessions
-                    </label>
+                    <>
+                      <label className="flex cursor-pointer items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={crossSessionOptIn}
+                          onChange={(e) => {
+                            const next = e.target.checked;
+                            setCrossSessionOptIn(next);
+                            void setCrossSessionMemoryOptIn(account.token, character, next).catch(
+                              () => {
+                                /* ignore */
+                              },
+                            );
+                          }}
+                        />
+                        Remember across sessions
+                      </label>
+                      {(crossSessionOptIn || priorNotes) && (
+                        <button
+                          type="button"
+                          className="text-[11px] text-violet-200/90 underline-offset-2 hover:underline"
+                          title="Clear long-term dossier for this character"
+                          onClick={() => {
+                            void clearCrossSessionMemory(account.token, character)
+                              .then((r) => {
+                                setPriorNotes(null);
+                                if (!r.optIn) setCrossSessionOptIn(false);
+                                flashCopy("Forgot this character’s memory");
+                              })
+                              .catch(() => flashCopy("Could not clear memory"));
+                          }}
+                        >
+                          Forget me
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}

@@ -65,7 +65,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-shy-boy": {
     id: "twink-shy-boy",
     displayName: "Twink Shy Boy",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -86,7 +86,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-gym": {
     id: "twink-gym",
     displayName: "Twink Gym",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
@@ -107,7 +107,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-alt-punk": {
     id: "twink-alt-punk",
     displayName: "Twink Alt Punk",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -128,7 +128,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "female-soft-goth": {
     id: "female-soft-goth",
     displayName: "Female Soft Goth",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: true,
@@ -149,7 +149,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "female-athletic-tease": {
     id: "female-athletic-tease",
     displayName: "Female Athletic Tease",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -170,7 +170,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "female-playful-brat": {
     id: "female-playful-brat",
     displayName: "Female Playful Brat",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: true,

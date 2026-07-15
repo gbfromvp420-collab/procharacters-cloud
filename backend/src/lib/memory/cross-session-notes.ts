@@ -91,6 +91,26 @@ export async function setCrossSessionOptIn(
   return next;
 }
 
+/** Wipe dossier text; optionally turn opt-in off. */
+export async function clearCrossSessionNotes(
+  accountId: string,
+  characterId: string,
+  options?: { optOut?: boolean },
+): Promise<CrossSessionNote> {
+  await ensureLoaded();
+  if (!data.byAccount[accountId]) data.byAccount[accountId] = {};
+  const prev = data.byAccount[accountId]![characterId];
+  const next: CrossSessionNote = {
+    notes: "",
+    updatedAt: new Date().toISOString(),
+    optIn: options?.optOut === true ? false : prev?.optIn === true,
+    messageCountHint: undefined,
+  };
+  data.byAccount[accountId]![characterId] = next;
+  await persist();
+  return next;
+}
+
 /** Save notes only when opt-in is already true (or forceOptIn). */
 export async function saveCrossSessionNotes(
   accountId: string,
