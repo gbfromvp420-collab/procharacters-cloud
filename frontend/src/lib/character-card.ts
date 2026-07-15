@@ -18,6 +18,10 @@ export interface CharacterCard {
   featured?: boolean;
   /** Short vibe chip from API (e.g. "gym interval edging") */
   vibeTag?: string;
+  /** Signature first line when chat starts */
+  openingMessage?: string;
+  /** Deep-link into Edge Pace mode */
+  edgePacePath?: string;
 }
 
 export async function fetchCharacterCard(characterId: string): Promise<CharacterCard | null> {

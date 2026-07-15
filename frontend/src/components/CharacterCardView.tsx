@@ -30,6 +30,18 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
     () => buildCharacterShareUrl(card.id, { origin: siteOrigin, autostart: true, card: false }),
     [card.id, siteOrigin],
   );
+  const edgePaceUrl = useMemo(
+    () =>
+      card.edgePacePath
+        ? `${siteOrigin}${card.edgePacePath.startsWith("/") ? "" : "/"}${card.edgePacePath}`
+        : buildCharacterShareUrl(card.id, {
+            origin: siteOrigin,
+            autostart: true,
+            card: false,
+            sessionMode: "edge_pace",
+          }),
+    [card.edgePacePath, card.id, siteOrigin],
+  );
   const resumeUrl = useMemo(
     () =>
       resumeCode
@@ -176,7 +188,21 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:mt-4 sm:text-base">
                 {card.teaser}
               </p>
+              {(card.vibeTag || card.energyLabel) && (
+                <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-brand-accent">
+                  {(card.vibeTag || card.energyLabel).split(",")[0]?.trim()}
+                </p>
+              )}
             </div>
+
+            {card.openingMessage && (
+              <blockquote className="rounded-xl border border-brand-accent/30 bg-brand-accent/5 px-4 py-3 text-sm leading-relaxed text-brand-text">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-brand-accent">
+                  Opening line
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-brand-muted">“{card.openingMessage}”</p>
+              </blockquote>
+            )}
 
             {card.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2">
@@ -194,6 +220,12 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
             <div className="hidden flex-wrap gap-3 sm:flex">
               <Link href={card.ctaPath} className="btn-primary px-6">
                 Start live chat
+              </Link>
+              <Link
+                href={card.edgePacePath || `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`}
+                className="btn-ghost border-rose-400/40 px-6 text-rose-100"
+              >
+                Edge Pace
               </Link>
               <button
                 type="button"
@@ -256,6 +288,10 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 <p className="font-medium text-brand-text">Start chat (autostart)</p>
                 <p className="mt-1 break-all font-mono text-[11px]">{autostartUrl}</p>
               </div>
+              <div>
+                <p className="font-medium text-rose-100">Edge Pace (autostart)</p>
+                <p className="mt-1 break-all font-mono text-[11px]">{edgePaceUrl}</p>
+              </div>
               {resumeUrl && resumeCode ? (
                 <div>
                   <p className="font-medium text-amber-200">
@@ -284,6 +320,15 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
         <div className="mx-auto flex max-w-lg flex-wrap gap-2">
           <Link href={card.ctaPath} className="btn-primary min-w-[5rem] flex-1">
             Start
+          </Link>
+          <Link
+            href={
+              card.edgePacePath ||
+              `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`
+            }
+            className="btn-ghost min-w-[5rem] flex-1 border-rose-400/40 text-rose-100"
+          >
+            Edge Pace
           </Link>
           <button
             type="button"

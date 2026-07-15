@@ -12,6 +12,7 @@ import {
   deleteCustomCharacter,
   getBaseModelPrefill,
   getCustomCharacter,
+  getOpeningMessage,
   listAccountCustomCharacters,
   listPublicCustomCharacters,
   updateCustomCharacter,
@@ -171,7 +172,9 @@ export const createSessionRoutes = (
           clips,
           featured: profile.featured === true,
           vibeTag: profile.energyLabel.split(",")[0]?.trim() ?? profile.energyLabel,
+          openingMessage: profile.openingMessage ?? getOpeningMessage(profile.id) ?? undefined,
           ctaPath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1`,
+          edgePacePath: `/chat?character=${encodeURIComponent(profile.id)}&autostart=1&mode=edge_pace`,
           cardPath: `/character/${encodeURIComponent(profile.id)}`,
         };
       });
@@ -440,7 +443,10 @@ export const createSessionRoutes = (
           posterClip: clips.teasing || clips.idle,
           clips,
           featured: custom.featured === true,
+          vibeTag: custom.energyLabel.split(",")[0]?.trim(),
+          openingMessage: getOpeningMessage(custom.id) ?? undefined,
           ctaPath: `/chat?character=${encodeURIComponent(custom.id)}&autostart=1`,
+          edgePacePath: `/chat?character=${encodeURIComponent(custom.id)}&autostart=1&mode=edge_pace`,
           cardPath: `/character/${encodeURIComponent(custom.id)}`,
         };
       }
@@ -457,7 +463,10 @@ export const createSessionRoutes = (
         posterClip: clips.teasing || clips.idle,
         clips,
         featured: builtIn!.featured === true,
+        vibeTag: builtIn!.energyLabel.split(",")[0]?.trim() ?? builtIn!.energyLabel,
+        openingMessage: builtIn!.openingMessage ?? getOpeningMessage(builtIn!.id) ?? undefined,
         ctaPath: `/chat?character=${encodeURIComponent(builtIn!.id)}&autostart=1`,
+        edgePacePath: `/chat?character=${encodeURIComponent(builtIn!.id)}&autostart=1&mode=edge_pace`,
         cardPath: `/character/${encodeURIComponent(builtIn!.id)}`,
       };
     });

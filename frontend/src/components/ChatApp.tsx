@@ -624,19 +624,24 @@ export function ChatApp() {
   );
 
   const connectSession = useCallback(
-    async (characterId: CharacterId) => {
+    async (
+      characterId: CharacterId,
+      options?: { sessionMode?: SessionMode },
+    ) => {
       setError(null);
       setStatus("connecting");
       pendingHistoryRef.current = null;
       setSessionNotes(null);
       setModeState(null);
 
+      const mode = options?.sessionMode ?? sessionMode;
       const session = await createSession(characterId, account?.token, {
         messageWindow,
         useCrossSessionMemory: !!account?.token && crossSessionOptIn,
-        sessionMode,
+        sessionMode: mode,
       });
       if (session.sessionMode) setSessionMode(session.sessionMode);
+      else if (options?.sessionMode) setSessionMode(options.sessionMode);
       await openLiveSession(session);
     },
     [account?.token, openLiveSession, messageWindow, crossSessionOptIn, sessionMode],
@@ -678,12 +683,16 @@ export function ChatApp() {
     [openLiveSession],
   );
 
-  const startSession = async (characterId: CharacterId = character) => {
+  const startSession = async (
+    characterId: CharacterId = character,
+    options?: { sessionMode?: SessionMode },
+  ) => {
     clearSessionState();
     setCharacter(characterId);
+    if (options?.sessionMode) setSessionMode(options.sessionMode);
     replaceCharacterInUrl(characterId);
     try {
-      await connectSession(characterId);
+      await connectSession(characterId, options);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start session");
       setStatus("error");
@@ -957,8 +966,15 @@ export function ChatApp() {
         return;
       }
       setCharacter(query.characterId);
+      // Deep-link mode=edge_pace must apply before createSession (state alone is too late).
+      if (query.sessionMode) {
+        setSessionMode(query.sessionMode);
+      }
       if (query.autostart) {
-        void startSession(query.characterId);
+        void startSession(
+          query.characterId,
+          query.sessionMode ? { sessionMode: query.sessionMode } : undefined,
+        );
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- boot once when catalog ready
@@ -2506,8 +2522,8 @@ export function ChatApp() {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Composer — sticky on mobile so keyboard UX stays usable */}
-            <div className="sticky bottom-0 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 backdrop-blur-md sm:p-4">
+            {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
+            <div className="sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:p-4 sm:pb-4">
               <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
@@ -2523,6 +2539,13 @@ export function ChatApp() {
                     ) {
                       setAvatarCollapsedPersist(true);
                     }
+                    // Keep focused input above soft keyboard
+                    window.setTimeout(() => {
+                      inputRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                      });
+                    }, 120);
                   }}
                   placeholder={
                     status === "ready"
@@ -2532,13 +2555,14 @@ export function ChatApp() {
                   disabled={status !== "ready" || sending}
                   rows={avatarCollapsed ? 3 : 2}
                   enterKeyHint="send"
-                  className="field min-h-[2.75rem] flex-1 resize-none py-2.5 disabled:opacity-50"
+                  autoComplete="off"
+                  className="field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm"
                 />
                 <button
                   type="button"
                   onClick={sendMessage}
                   disabled={!canSend}
-                  className="btn-primary min-h-[2.75rem] shrink-0 px-4 disabled:opacity-50 sm:px-5"
+                  className="btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5"
                 >
                   Send
                 </button>

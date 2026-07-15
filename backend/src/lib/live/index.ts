@@ -4,6 +4,7 @@ export {
   LiveCharacterError,
   assertLiveCharacter,
   getLiveCharacterProfile,
+  getOpeningMessage,
   resolveAvatarBaseId,
 } from "./character-catalog.js";
 export {

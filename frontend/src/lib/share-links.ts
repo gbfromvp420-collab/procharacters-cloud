@@ -10,6 +10,8 @@ export interface ShareQuery {
   /** Legacy private resume credentials. */
   sessionId?: string;
   token?: string;
+  /** Phase 10: normal | edge_pace */
+  sessionMode?: "normal" | "edge_pace";
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -19,6 +21,13 @@ export function parseShareQuery(search: string): ShareQuery {
   const magicToken = params.get("magic")?.trim() || undefined;
   const sessionId = params.get("session")?.trim() || undefined;
   const token = params.get("token")?.trim() || undefined;
+  const modeRaw = params.get("mode")?.trim().toLowerCase();
+  const sessionMode =
+    modeRaw === "edge_pace" || modeRaw === "edge" || modeRaw === "pace"
+      ? "edge_pace"
+      : modeRaw === "normal"
+        ? "normal"
+        : undefined;
   const autostartRaw = params.get("autostart")?.trim().toLowerCase();
   const autostart =
     autostartRaw === "1" ||
@@ -27,7 +36,7 @@ export function parseShareQuery(search: string): ShareQuery {
     !!resumeCode ||
     (!!sessionId && !!token);
 
-  return { characterId, autostart, resumeCode, magicToken, sessionId, token };
+  return { characterId, autostart, resumeCode, magicToken, sessionId, token, sessionMode };
 }
 
 /** Pretty public character card (preferred for sharing). */
@@ -45,7 +54,12 @@ export function buildCharacterCardUrl(
 
 export function buildCharacterShareUrl(
   characterId: string,
-  options: { origin?: string; autostart?: boolean; card?: boolean } = {},
+  options: {
+    origin?: string;
+    autostart?: boolean;
+    card?: boolean;
+    sessionMode?: "normal" | "edge_pace";
+  } = {},
 ): string {
   const origin =
     options.origin ??
@@ -61,6 +75,9 @@ export function buildCharacterShareUrl(
   url.searchParams.set("character", characterId);
   if (options.autostart) {
     url.searchParams.set("autostart", "1");
+  }
+  if (options.sessionMode === "edge_pace") {
+    url.searchParams.set("mode", "edge_pace");
   }
   return url.toString();
 }
@@ -110,12 +127,13 @@ export function replaceCharacterInUrl(characterId: string | null): void {
   } else {
     url.searchParams.delete("character");
   }
-  // Never leave private tokens / resume codes in the bar after boot
+  // Never leave private tokens / resume codes / one-shot mode flags in the bar after boot
   url.searchParams.delete("session");
   url.searchParams.delete("token");
   url.searchParams.delete("resume");
   url.searchParams.delete("magic");
   url.searchParams.delete("autostart");
+  url.searchParams.delete("mode");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
