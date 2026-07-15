@@ -2,6 +2,12 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypt
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { repoPath } from "../paths.js";
+import {
+  prismaCreateAccount,
+  prismaLoginAccount,
+  prismaResolveAccountToken,
+  prismaLogoutAccountToken,
+} from "./account-store-prisma.js";
 
 /** Phase 9 billing — free always works; paid plans are optional entitlements. */
 export type AccountPlan = "free" | "day_pass" | "supporter";
@@ -754,3 +760,7 @@ export async function bindResumeCodeAccount(sessionId: string, accountId: string
   }
   await persist();
 }
+
+
+
+
