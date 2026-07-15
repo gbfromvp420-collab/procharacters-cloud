@@ -93,6 +93,18 @@ Request logs include `requestId`, `method`, `path`, `statusCode`, `durationMs` (
 
 ---
 
+## Deploy smoke (after every production ship)
+
+From `backend/`:
+
+```bash
+npm run smoke:deploy
+# or local:
+API_BASE=http://localhost:3001 npm run smoke:deploy
+```
+
+Covers health, metrics, 8-model catalog, gallery, prefill, Edge Pace session create, My Character auth/private, billing free path.
+
 ## Checklist
 
 - [ ] Volume mounted at `/data` on production API  
@@ -100,3 +112,4 @@ Request logs include `requestId`, `method`, `path`, `statusCode`, `durationMs` (
 - [ ] Weekly backup reminder on calendar  
 - [ ] Off-site copy of last known-good tarball  
 - [ ] `GET /metrics` bookmarked for ops  
+- [ ] `npm run smoke:deploy` green after deploy  
