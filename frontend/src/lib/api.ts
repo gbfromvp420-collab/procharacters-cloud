@@ -1,5 +1,6 @@
 import type {
   CharacterId,
+  BaseModelPrefill,
   CreateCustomCharacterInput,
   CreateCustomCharacterResponse,
   CreateSessionResponse,
@@ -442,8 +443,12 @@ export async function resumeAccountSession(
   return res.json() as Promise<CreateSessionResponse & { messages: MemoryMessage[] }>;
 }
 
-export async function listLiveCharacters(): Promise<LiveCharacterOption[]> {
-  const res = await fetch(`${API_BASE}/api/v1/characters`);
+export async function listLiveCharacters(
+  accountToken?: string | null,
+): Promise<LiveCharacterOption[]> {
+  const res = await fetch(`${API_BASE}/api/v1/characters`, {
+    headers: accountToken ? authHeaders(accountToken) : undefined,
+  });
   if (!res.ok) {
     throw new Error(`Failed to list characters (${res.status})`);
   }
@@ -453,25 +458,48 @@ export async function listLiveCharacters(): Promise<LiveCharacterOption[]> {
 
 export async function createCustomCharacter(
   input: CreateCustomCharacterInput,
+  accountToken?: string | null,
 ): Promise<CreateCustomCharacterResponse> {
+  if (!accountToken) {
+    throw new Error("Sign in to save a My Character");
+  }
   const res = await fetch(`${API_BASE}/api/v1/characters/custom`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders(accountToken),
     body: JSON.stringify(input),
   });
 
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Failed to create character (${res.status}): ${text}`);
+    throw new Error(`Failed to create My Character (${res.status}): ${text}`);
   }
 
   return res.json() as Promise<CreateCustomCharacterResponse>;
 }
 
-export async function deleteCustomCharacter(characterId: string): Promise<void> {
+export async function fetchBaseModelPrefill(
+  baseModelId: string,
+): Promise<import("./types").BaseModelPrefill> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/characters/${encodeURIComponent(baseModelId)}/prefill`,
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Prefill failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<import("./types").BaseModelPrefill>;
+}
+
+export async function deleteCustomCharacter(
+  characterId: string,
+  accountToken?: string | null,
+): Promise<void> {
   const res = await fetch(
     `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}`,
-    { method: "DELETE" },
+    {
+      method: "DELETE",
+      headers: accountToken ? authHeaders(accountToken) : undefined,
+    },
   );
   if (!res.ok) {
     const text = await res.text();

@@ -7,18 +7,28 @@ export {
   resolveAvatarBaseId,
 } from "./character-catalog.js";
 export {
+  canAccessCustom,
+  countAccountCustoms,
   createCustomCharacter,
   deleteCustomCharacter,
+  getBaseModelPrefill,
   getCustomCharacter,
   getCustomCharactersPersistPath,
   initCustomCharacters,
+  isPublicCustom,
+  isSignatureModelId,
+  listAccountCustomCharacters,
   listCustomCharacters,
+  listPublicCustomCharacters,
+  resolveAvatarBaseFromModel,
   updateCustomCharacter,
 } from "./custom-characters.js";
 export type {
   CustomAvatarBase,
   CustomCharacterInput,
   CustomCharacterRecord,
+  CustomScene,
+  CustomVisibility,
   MediaClipKey,
   MediaOverrides,
   UpdateCustomCharacterInput,

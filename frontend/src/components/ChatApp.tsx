@@ -14,6 +14,7 @@ import {
   createSession,
   deleteCustomCharacter,
   exportLiveSession,
+  fetchBaseModelPrefill,
   fetchLiveSessionMarkdown,
   importFlashSummary,
   importSessionDocument,
@@ -126,7 +127,18 @@ export function ChatApp() {
   const [customAppearance, setCustomAppearance] = useState("");
   const [customEnergy, setCustomEnergy] = useState("");
   const [customClothing, setCustomClothing] = useState("");
+  /** Signature base (any of 8). */
+  const [customBaseModel, setCustomBaseModel] = useState("twink-default");
   const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
+  const [customPhrase1, setCustomPhrase1] = useState("");
+  const [customPhrase2, setCustomPhrase2] = useState("");
+  const [customPhrase3, setCustomPhrase3] = useState("");
+  const [customScene1Title, setCustomScene1Title] = useState("");
+  const [customScene1Body, setCustomScene1Body] = useState("");
+  const [customScene2Title, setCustomScene2Title] = useState("");
+  const [customScene2Body, setCustomScene2Body] = useState("");
+  const [customScene3Title, setCustomScene3Title] = useState("");
+  const [customScene3Body, setCustomScene3Body] = useState("");
   const [mediaBase, setMediaBase] = useState("");
   const [clipIdle, setClipIdle] = useState("");
   const [clipTeasing, setClipTeasing] = useState("");
@@ -320,7 +332,7 @@ export function ChatApp() {
 
   useEffect(() => {
     let cancelled = false;
-    listLiveCharacters()
+    listLiveCharacters(account?.token)
       .then((list) => {
         if (cancelled || list.length === 0) return;
         setCharacters(list);
@@ -338,7 +350,7 @@ export function ChatApp() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [account?.token]);
 
   useEffect(() => {
     setSavedSession(loadStoredSession());
@@ -348,6 +360,26 @@ export function ChatApp() {
       void refreshAccountSessions(storedAccount.token);
     }
   }, [refreshAccountSessions]);
+
+  // Prefill identity/vibe/clothing from selected base model (Phase 5)
+  useEffect(() => {
+    if (!showCreate) return;
+    let cancelled = false;
+    void fetchBaseModelPrefill(customBaseModel)
+      .then((p) => {
+        if (cancelled) return;
+        setCustomBase(p.avatarBase);
+        setCustomAppearance((prev) => (prev.trim().length >= 12 ? prev : p.identityHint));
+        setCustomEnergy((prev) => (prev.trim().length >= 4 ? prev : p.vibeHint));
+        setCustomClothing((prev) => (prev.trim().length >= 2 ? prev : p.clothingHint));
+      })
+      .catch(() => {
+        /* keep manual fields */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [customBaseModel, showCreate]);
 
   // Prefill clip editors when a custom character is selected.
   useEffect(() => {
@@ -1161,19 +1193,41 @@ export function ChatApp() {
   };
 
   const handleCreateCustom = async () => {
+    if (!account?.token) {
+      setError("Sign in to save a My Character (private)");
+      setShowAccount(true);
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
-      const created = await createCustomCharacter({
-        name: customName.trim(),
-        appearance: customAppearance.trim(),
-        energy: customEnergy.trim() || undefined,
-        clothing: customClothing.trim() || undefined,
-        avatarBase: customBase,
-        audience: customBase === "female-default" ? "straight" : "gay",
-        mediaBase: mediaBase.trim() || undefined,
-        mediaOverrides: buildMediaOverrides(),
-      });
+      const keyPhrases = [customPhrase1, customPhrase2, customPhrase3]
+        .map((p) => p.trim())
+        .filter((p) => p.length >= 2);
+      const scenes = [
+        { title: customScene1Title, body: customScene1Body },
+        { title: customScene2Title, body: customScene2Body },
+        { title: customScene3Title, body: customScene3Body },
+      ]
+        .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
+        .filter((s) => s.title.length >= 2 && s.body.length >= 12);
+
+      const created = await createCustomCharacter(
+        {
+          name: customName.trim(),
+          appearance: customAppearance.trim(),
+          energy: customEnergy.trim() || undefined,
+          clothing: customClothing.trim() || undefined,
+          baseModelId: customBaseModel,
+          avatarBase: customBase,
+          audience: customBase === "female-default" ? "straight" : "gay",
+          keyPhrases: keyPhrases.length ? keyPhrases : undefined,
+          scenes: scenes.length ? scenes : undefined,
+          mediaBase: mediaBase.trim() || undefined,
+          mediaOverrides: buildMediaOverrides(),
+        },
+        account.token,
+      );
       const option: LiveCharacterOption = {
         id: created.id,
         displayName: created.displayName,
@@ -1196,15 +1250,24 @@ export function ChatApp() {
       setCustomAppearance("");
       setCustomEnergy("");
       setCustomClothing("");
+      setCustomPhrase1("");
+      setCustomPhrase2("");
+      setCustomPhrase3("");
+      setCustomScene1Title("");
+      setCustomScene1Body("");
+      setCustomScene2Title("");
+      setCustomScene2Body("");
+      setCustomScene3Title("");
+      setCustomScene3Body("");
       setMediaBase("");
       setClipIdle("");
       setClipTeasing("");
       setClipPlayful("");
       setClipAroused("");
       setShowMediaAdvanced(false);
-      flashCopy("Custom ready — clips attached");
+      flashCopy("My Character saved (private) — ready to chat");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create custom character");
+      setError(err instanceof Error ? err.message : "Failed to create My Character");
     } finally {
       setCreating(false);
     }
@@ -1324,7 +1387,7 @@ export function ChatApp() {
 
     setError(null);
     try {
-      await deleteCustomCharacter(selected.id);
+      await deleteCustomCharacter(selected.id, account?.token);
       setCharacters((prev) => prev.filter((c) => c.id !== selected.id));
       setCharacter("twink-default");
     } catch (err) {
@@ -1902,9 +1965,34 @@ export function ChatApp() {
             {showCreate && !sessionActive && (
               <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
                 <p className="text-xs text-brand-muted">
-                  Custom characters persist on the server volume. Share links work after create.
-                  Video uses a default clip pack until custom footage is added.
+                  <strong className="text-brand-text">My Character (v2)</strong> — private to your
+                  account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save.
+                  {!account ? " Sign in required." : " Soft cap: 10 per account."}
                 </p>
+                <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
+                  Base model
+                </label>
+                <select
+                  id="baseModel"
+                  value={customBaseModel}
+                  onChange={(e) => {
+                    setCustomBaseModel(e.target.value);
+                    // Force re-prefill by clearing soft fields when switching base
+                    setCustomAppearance("");
+                    setCustomEnergy("");
+                    setCustomClothing("");
+                  }}
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                >
+                  {characters
+                    .filter((c) => c.kind === "default")
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.displayName}
+                        {c.energyLabel ? ` — ${c.energyLabel.slice(0, 40)}` : ""}
+                      </option>
+                    ))}
+                </select>
                 <input
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
@@ -1914,37 +2002,71 @@ export function ChatApp() {
                 <textarea
                   value={customAppearance}
                   onChange={(e) => setCustomAppearance(e.target.value)}
-                  placeholder="Appearance lock (body, hair, skin, face…)"
+                  placeholder="Core identity / appearance lock (prefilled from base — edit me)"
                   rows={3}
                   className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                 />
                 <input
                   value={customEnergy}
                   onChange={(e) => setCustomEnergy(e.target.value)}
-                  placeholder="Energy (optional — teasing, dominant, shy…)"
+                  placeholder="Vibe / energy (prefilled — edit me)"
                   className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                 />
                 <input
                   value={customClothing}
                   onChange={(e) => setCustomClothing(e.target.value)}
-                  placeholder="Clothing focus (optional)"
+                  placeholder="Clothing focus (sheer / crotchless — prefilled)"
                   className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                 />
+                <p className="text-[11px] font-medium text-brand-muted">Key phrases (optional)</p>
+                <div className="grid gap-1.5 sm:grid-cols-3">
+                  <input
+                    value={customPhrase1}
+                    onChange={(e) => setCustomPhrase1(e.target.value)}
+                    placeholder="Phrase 1"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                  />
+                  <input
+                    value={customPhrase2}
+                    onChange={(e) => setCustomPhrase2(e.target.value)}
+                    placeholder="Phrase 2"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                  />
+                  <input
+                    value={customPhrase3}
+                    onChange={(e) => setCustomPhrase3(e.target.value)}
+                    placeholder="Phrase 3"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                  />
+                </div>
+                <p className="text-[11px] font-medium text-brand-muted">
+                  Scene examples (2–3 recommended)
+                </p>
+                {(
+                  [
+                    [customScene1Title, setCustomScene1Title, customScene1Body, setCustomScene1Body, "Scene 1"],
+                    [customScene2Title, setCustomScene2Title, customScene2Body, setCustomScene2Body, "Scene 2"],
+                    [customScene3Title, setCustomScene3Title, customScene3Body, setCustomScene3Body, "Scene 3"],
+                  ] as const
+                ).map(([title, setTitle, body, setBody, label], idx) => (
+                  <div key={label} className="grid gap-1 rounded-lg border border-brand-border/50 p-2">
+                    <input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder={`${label} title (e.g. Mirror tease)`}
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
+                    <textarea
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      placeholder={`${label} body — what happens + a line of dialogue`}
+                      rows={2}
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
+                    {idx === 0 ? null : null}
+                  </div>
+                ))}
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="text-xs text-brand-muted" htmlFor="avatarBase">
-                    Fallback pack
-                  </label>
-                  <select
-                    id="avatarBase"
-                    value={customBase}
-                    onChange={(e) =>
-                      setCustomBase(e.target.value as "twink-default" | "female-default")
-                    }
-                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-                  >
-                    <option value="twink-default">Twink clips</option>
-                    <option value="female-default">Female clips</option>
-                  </select>
                   <button
                     type="button"
                     onClick={() => setShowMediaAdvanced((v) => !v)}
@@ -1960,7 +2082,7 @@ export function ChatApp() {
                     }
                     className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
                   >
-                    {creating ? "Creating…" : "Save & Select"}
+                    {creating ? "Saving…" : account ? "Save My Character" : "Sign in to save"}
                   </button>
                 </div>
 

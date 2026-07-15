@@ -236,8 +236,10 @@ export class SessionManager {
     const characterId = input.characterId ?? this.defaultCharacterId;
     const promptVersion = input.promptVersion ?? DEFAULT_PROMPT_VERSION;
 
-    assertLiveCharacter(characterId);
-    const promptSnapshot = await createPromptSnapshot(characterId, promptVersion);
+    assertLiveCharacter(characterId, { accountId: input.accountId });
+    const promptSnapshot = await createPromptSnapshot(characterId, promptVersion, {
+      accountId: input.accountId,
+    });
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.sessionTtlMinutes * 60_000);

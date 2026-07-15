@@ -7,10 +7,13 @@ import {
   LIVE_CHARACTER_CATALOG,
   LiveCharacterError,
   LivePromptInjector,
+  canAccessCustom,
   createCustomCharacter,
   deleteCustomCharacter,
+  getBaseModelPrefill,
   getCustomCharacter,
-  listCustomCharacters,
+  listAccountCustomCharacters,
+  listPublicCustomCharacters,
   updateCustomCharacter,
 } from "../lib/live/index.js";
 import { listClipUrls } from "../lib/media/clip-resolver.js";
@@ -86,13 +89,21 @@ const mediaOverridesSchema = z
   })
   .optional();
 
+const sceneSchema = z.object({
+  title: z.string().min(2).max(80),
+  body: z.string().min(12).max(600),
+});
+
 const createCustomCharacterSchema = z.object({
   name: z.string().min(2).max(80),
   appearance: z.string().min(12).max(2000),
-  energy: z.string().min(4).max(500).optional(),
+  energy: z.string().min(4).max(800).optional(),
   clothing: z.string().min(2).max(200).optional(),
+  baseModelId: z.string().min(2).max(80).optional(),
   avatarBase: z.enum(["twink-default", "female-default"]).optional(),
   audience: z.enum(["gay", "bi", "straight", "any"]).optional(),
+  keyPhrases: z.array(z.string().min(2).max(120)).max(6).optional(),
+  scenes: z.array(sceneSchema).max(5).optional(),
   mediaBase: z.string().min(1).max(300).optional(),
   mediaOverrides: mediaOverridesSchema,
   featured: z.boolean().optional(),
@@ -101,8 +112,12 @@ const createCustomCharacterSchema = z.object({
 const updateCustomCharacterSchema = z.object({
   mediaBase: z.string().max(300).nullable().optional(),
   mediaOverrides: mediaOverridesSchema.nullable(),
-  energy: z.string().min(4).max(500).optional(),
+  name: z.string().min(2).max(80).optional(),
+  appearance: z.string().min(12).max(2000).optional(),
+  energy: z.string().min(4).max(800).optional(),
   clothing: z.string().min(2).max(200).optional(),
+  keyPhrases: z.array(z.string().min(2).max(120)).max(6).nullable().optional(),
+  scenes: z.array(sceneSchema).max(5).nullable().optional(),
   featured: z.boolean().optional(),
 });
 
@@ -153,8 +168,9 @@ export const createSessionRoutes = (
         };
       });
 
-      const customs = listCustomCharacters().map((profile) => {
-        const clips = listClipUrls(profile.id);
+      // Public gallery: never list private My Characters
+      const customs = listPublicCustomCharacters().map((profile) => {
+        const clips = listClipUrls(profile.avatarBase ?? profile.id);
         const teaser =
           profile.appearance.length > 160
             ? `${profile.appearance.slice(0, 157).trim()}…`
@@ -188,23 +204,33 @@ export const createSessionRoutes = (
       };
     });
 
-    app.get("/characters", async () => {
+    app.get("/characters", async (request) => {
       const [registry, manifest] = await Promise.all([
         listActiveCharacters(),
         listManifestCharacters(),
       ]);
 
-      const custom = listCustomCharacters().map((profile) => ({
+      const account = await resolveAccountToken(bearerToken(request));
+      const publicCustom = listPublicCustomCharacters();
+      const mine = account ? listAccountCustomCharacters(account.id) : [];
+      // Dedupe by id (mine may also be public in legacy cases)
+      const customMap = new Map(
+        [...publicCustom, ...mine].map((p) => [p.id, p] as const),
+      );
+      const custom = [...customMap.values()].map((profile) => ({
         id: profile.id,
         displayName: profile.displayName,
         defaultVersion: profile.defaultVersion,
         kind: "custom" as const,
         avatarBase: profile.avatarBase,
+        baseModelId: profile.baseModelId,
         energyLabel: profile.energyLabel,
         mediaBase: profile.mediaBase,
         mediaOverrides: profile.mediaOverrides,
         featured: profile.featured === true,
-        clips: listClipUrls(profile.id),
+        visibility: profile.visibility ?? (profile.ownerAccountId ? "private" : "public"),
+        mine: !!account && profile.ownerAccountId === account.id,
+        clips: listClipUrls(profile.avatarBase ?? profile.id),
       }));
 
       return {
@@ -216,6 +242,7 @@ export const createSessionRoutes = (
             kind: "default" as const,
             avatarBase: profile.avatarBase ?? profile.id,
             energyLabel: profile.energyLabel,
+            teaser: profile.teaser,
             featured: profile.featured === true,
             clips: listClipUrls(profile.avatarBase ?? profile.id),
           })),
@@ -249,30 +276,62 @@ export const createSessionRoutes = (
       };
     });
 
+    /** Prefill identity/vibe from a signature base model (for My Character form). */
+    app.get("/characters/:characterId/prefill", async (request, reply) => {
+      const { characterId } = request.params as { characterId: string };
+      const prefill = getBaseModelPrefill(characterId);
+      if (!prefill) {
+        return reply.code(404).send({ error: "Unknown base model" });
+      }
+      return prefill;
+    });
+
+    /**
+     * Create My Character (v2) — sign-in required, private by default.
+     * Prefer /accounts/me/characters; this path also requires auth.
+     */
     app.post("/characters/custom", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply
+          .code(401)
+          .send({ error: "Sign in to save a My Character", code: "AUTH_REQUIRED" });
+      }
       try {
         const body = createCustomCharacterSchema.parse(request.body ?? {});
-        const created = await createCustomCharacter(body);
+        const created = await createCustomCharacter({
+          ...body,
+          ownerAccountId: account.id,
+          visibility: "private",
+        });
         return reply.code(201).send({
           id: created.id,
           displayName: created.displayName,
           defaultVersion: created.defaultVersion,
           kind: "custom",
           avatarBase: created.avatarBase,
+          baseModelId: created.baseModelId,
           energyLabel: created.energyLabel,
           signatureClothing: created.signatureClothing,
           consistencyTraits: created.consistencyTraits,
           createdAt: created.createdAt,
           mediaBase: created.mediaBase,
           mediaOverrides: created.mediaOverrides,
-          featured: created.featured === true,
-          clips: listClipUrls(created.id),
+          featured: false,
+          visibility: "private",
+          mine: true,
+          keyPhrases: created.keyPhrases,
+          scenes: created.scenes,
+          clips: listClipUrls(created.avatarBase),
         });
       } catch (error) {
         if (error instanceof z.ZodError) {
           return reply.code(400).send({ error: error.flatten() });
         }
         const message = error instanceof Error ? error.message : "Failed to create character";
+        if (message.includes("limit reached")) {
+          return reply.code(429).send({ error: message, code: "CAP_REACHED" });
+        }
         return reply.code(400).send({ error: message });
       }
     });
@@ -282,18 +341,32 @@ export const createSessionRoutes = (
       if (!characterId.startsWith("custom-")) {
         return reply.code(400).send({ error: "Only custom characters can be updated" });
       }
+      const account = await resolveAccountToken(bearerToken(request));
+      const existing = getCustomCharacter(characterId);
+      if (!existing) {
+        return reply.code(404).send({ error: "Custom character not found" });
+      }
+      if (existing.ownerAccountId && (!account || existing.ownerAccountId !== account.id)) {
+        return reply.code(403).send({ error: "Not allowed to update this character" });
+      }
       try {
         const body = updateCustomCharacterSchema.parse(request.body ?? {});
-        const updated = await updateCustomCharacter(characterId, body);
+        const updated = await updateCustomCharacter(characterId, body, {
+          accountId: account?.id,
+        });
         return {
           id: updated.id,
           displayName: updated.displayName,
           kind: "custom",
           avatarBase: updated.avatarBase,
+          baseModelId: updated.baseModelId,
           mediaBase: updated.mediaBase,
           mediaOverrides: updated.mediaOverrides,
           featured: updated.featured === true,
-          clips: listClipUrls(updated.id),
+          visibility: updated.visibility,
+          keyPhrases: updated.keyPhrases,
+          scenes: updated.scenes,
+          clips: listClipUrls(updated.avatarBase),
         };
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -385,7 +458,18 @@ export const createSessionRoutes = (
       if (!characterId.startsWith("custom-")) {
         return reply.code(400).send({ error: "Only custom characters can be deleted" });
       }
-      const removed = await deleteCustomCharacter(characterId);
+      const account = await resolveAccountToken(bearerToken(request));
+      const existing = getCustomCharacter(characterId);
+      if (existing?.ownerAccountId && (!account || existing.ownerAccountId !== account.id)) {
+        return reply.code(403).send({ error: "Not allowed to delete this character" });
+      }
+      let removed = false;
+      try {
+        removed = await deleteCustomCharacter(characterId, { accountId: account?.id });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Delete failed";
+        return reply.code(403).send({ error: message });
+      }
       if (!removed) {
         return reply.code(404).send({ error: "Custom character not found" });
       }
@@ -396,6 +480,17 @@ export const createSessionRoutes = (
       const body = createSessionSchema.parse(request.body ?? {});
       const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
       const account = await resolveAccountToken(bearerToken(request));
+
+      // Private My Characters require the owning account
+      if (body.characterId?.startsWith("custom-")) {
+        const custom = getCustomCharacter(body.characterId);
+        if (custom && !canAccessCustom(body.characterId, account?.id)) {
+          return reply.code(403).send({
+            error: "This My Character is private — sign in as the owner to chat",
+            code: "PRIVATE_CHARACTER",
+          });
+        }
+      }
 
       try {
         const session = await sessionManager.createSession(

@@ -2,8 +2,13 @@ import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { repoPath } from "../paths.js";
-import type { LiveCharacterProfile } from "./character-catalog.js";
+import { loadPromptBody } from "../prompts/loader.js";
+import {
+  LIVE_CHARACTER_CATALOG,
+  type LiveCharacterProfile,
+} from "./character-catalog.js";
 
+/** Clip pack roots (engine media). Phase 4 models resolve here via avatarBase. */
 export type CustomAvatarBase = "twink-default" | "female-default";
 
 /** Four shipped loop slots — map Grok emotions onto these. */
@@ -11,46 +16,65 @@ export type MediaClipKey = "idle" | "teasing" | "playful" | "aroused";
 
 export type MediaOverrides = Partial<Record<MediaClipKey, string>>;
 
+export type CustomVisibility = "private" | "unlisted" | "featured";
+
+export interface CustomScene {
+  title: string;
+  body: string;
+}
+
 export interface CustomCharacterInput {
   name: string;
-  /** Short appearance description the model must stay locked to. */
+  /** Core identity / appearance lock. */
   appearance: string;
-  /** Energy / personality (edging, teasing, dominant, etc.). */
+  /** Energy / vibe. */
   energy?: string;
-  /** Clothing focus for erotic consistency. */
   clothing?: string;
-  /** Which default clip set + body archetype to borrow. */
-  avatarBase?: CustomAvatarBase;
-  /** Audience tag for prompt framing. */
-  audience?: "gay" | "bi" | "straight" | "any";
   /**
-   * Optional folder of loops, e.g. `/avatar/packs/diego`
-   * Expects idle.mp4, teasing.mp4, playful.mp4, aroused.mp4 inside.
+   * Signature base model (any of 8). Preferred over avatarBase alone.
+   * Defaults from avatarBase if omitted.
    */
+  baseModelId?: string;
+  /** Clip pack root — resolved from baseModelId when omitted. */
+  avatarBase?: CustomAvatarBase;
+  audience?: "gay" | "bi" | "straight" | "any";
+  /** Short dirty-talk / tease lines (max 6). */
+  keyPhrases?: string[];
+  /** Scene anchors (2–3 recommended, max 5). */
+  scenes?: CustomScene[];
   mediaBase?: string;
-  /** Optional per-emotion absolute/relative media URLs (override mediaBase). */
   mediaOverrides?: MediaOverrides;
-  /** Pin on gallery Featured row. */
+  /** @deprecated v2 private-only — ignored for new account customs */
   featured?: boolean;
+  /** Required for My Character (private). */
+  ownerAccountId?: string;
+  visibility?: CustomVisibility;
 }
 
 export interface CustomCharacterRecord extends LiveCharacterProfile {
   kind: "custom";
   avatarBase: CustomAvatarBase;
+  /** Signature model this custom is built on. */
+  baseModelId: string;
   appearance: string;
   energy: string;
   clothing: string;
   audience: string;
+  keyPhrases?: string[];
+  scenes?: CustomScene[];
   characterPrompt: string;
   appearanceAnchor: string;
   createdAt: string;
+  updatedAt?: string;
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
   featured?: boolean;
+  ownerAccountId?: string;
+  visibility?: CustomVisibility;
 }
 
 interface CustomCharacterFile {
-  version: 1;
+  version: 1 | 2;
   updatedAt: string;
   characters: CustomCharacterRecord[];
 }
@@ -58,6 +82,10 @@ interface CustomCharacterFile {
 const store = new Map<string, CustomCharacterRecord>();
 let loaded = false;
 let persistPath: string | null = null;
+
+const CUSTOMS_PER_ACCOUNT = Number(process.env.CUSTOM_CHARS_PER_ACCOUNT ?? 10);
+const MAX_SCENES = 5;
+const MAX_PHRASES = 6;
 
 function resolvePersistPath(): string {
   if (process.env.CUSTOM_CHARACTERS_PATH?.trim()) {
@@ -74,36 +102,139 @@ function slugify(value: string): string {
     .slice(0, 32);
 }
 
-function buildPrompt(input: Required<
-  Pick<CustomCharacterInput, "name" | "appearance" | "energy" | "clothing" | "audience">
->): string {
+export function isSignatureModelId(id: string): boolean {
+  return id in LIVE_CHARACTER_CATALOG;
+}
+
+export function resolveAvatarBaseFromModel(baseModelId: string): CustomAvatarBase {
+  const profile = LIVE_CHARACTER_CATALOG[baseModelId];
+  const ab = profile?.avatarBase ?? baseModelId;
+  return ab === "female-default" ? "female-default" : "twink-default";
+}
+
+function defaultAudience(avatarBase: CustomAvatarBase): "gay" | "straight" {
+  return avatarBase === "female-default" ? "straight" : "gay";
+}
+
+function defaultClothing(avatarBase: CustomAvatarBase): string {
+  return avatarBase === "female-default"
+    ? "crotchless undies / open panel framing, visible arousal"
+    : "sheer thong / g-string, visible arousal";
+}
+
+function sanitizeScenes(raw?: CustomScene[]): CustomScene[] | undefined {
+  if (!raw || !Array.isArray(raw)) return undefined;
+  const out: CustomScene[] = [];
+  for (const s of raw.slice(0, MAX_SCENES)) {
+    const title = String(s?.title ?? "").trim().slice(0, 80);
+    const body = String(s?.body ?? "").trim().slice(0, 600);
+    if (title.length < 2 || body.length < 12) continue;
+    out.push({ title, body });
+  }
+  return out.length ? out : undefined;
+}
+
+function sanitizePhrases(raw?: string[]): string[] | undefined {
+  if (!raw || !Array.isArray(raw)) return undefined;
+  const out = raw
+    .map((p) => String(p ?? "").trim().slice(0, 120))
+    .filter((p) => p.length >= 2)
+    .slice(0, MAX_PHRASES);
+  return out.length ? out : undefined;
+}
+
+async function buildPromptV2(input: {
+  name: string;
+  appearance: string;
+  energy: string;
+  clothing: string;
+  audience: string;
+  baseModelId: string;
+  keyPhrases?: string[];
+  scenes?: CustomScene[];
+}): Promise<string> {
+  let baseBody = "";
+  try {
+    const base = await loadPromptBody(
+      input.baseModelId,
+      LIVE_CHARACTER_CATALOG[input.baseModelId]?.defaultVersion,
+    );
+    baseBody = base.body;
+  } catch {
+    baseBody = "";
+  }
+
+  const phraseBlock =
+    input.keyPhrases && input.keyPhrases.length
+      ? [
+          ``,
+          `## Key phrases (use naturally, sparingly — do not spam every line)`,
+          ...input.keyPhrases.map((p) => `- “${p}”`),
+        ]
+      : [];
+
+  const sceneBlock =
+    input.scenes && input.scenes.length
+      ? [
+          ``,
+          `## Scene anchors (pace like these unless the user escalates)`,
+          ...input.scenes.map(
+            (s, i) => `${i + 1}. **${s.title}** — ${s.body}`,
+          ),
+        ]
+      : [];
+
+  const overlay = [
+    ``,
+    `---`,
+    ``,
+    `# My Character overlay — ${input.name}`,
+    ``,
+    `## Identity lock (never break)`,
+    input.appearance,
+    `- Display name in chat: ${input.name}`,
+    `- Clothing emphasis: ${input.clothing}`,
+    `- Keep appearance consistent every reply`,
+    ``,
+    `## Vibe`,
+    input.energy,
+    `- Stay photorealistic, uncensored, Naughty Syntax premium`,
+    `- Inherit base model edging/teasing rules above`,
+    ``,
+    `## Audience`,
+    `Primary framing: ${input.audience}`,
+    ...phraseBlock,
+    ...sceneBlock,
+    ``,
+    `## Overlay rules`,
+    `- Base model signature clothing grammar stays unless clothing override conflicts`,
+    `- Private custom character — still live cam energy, first person`,
+    `- Climax only when the user clearly wants release`,
+  ].join("\n");
+
+  if (baseBody.trim()) {
+    return `${baseBody.trim()}\n${overlay}`;
+  }
+
+  // Fallback if base prompt missing
   return [
     `# Naughty Syntax — Custom Character: ${input.name}`,
     ``,
     `## Core Identity`,
-    `${input.name} is a consenting adult (18+) custom character for live NSFW chat.`,
-    `Stay fully in character. Photorealistic erotic style. Uncensored.`,
+    `${input.name} is a consenting adult (18+) custom character.`,
+    `Photorealistic erotic style. Uncensored.`,
     ``,
     `## Visual Style & Appearance`,
     input.appearance,
-    `- Signature clothing focus: ${input.clothing}`,
-    `- Keep appearance consistent every reply — never drift body type, hair, skin, or outfit`,
+    `- Signature clothing: ${input.clothing}`,
     ``,
     `## Energy & Personality`,
     input.energy,
-    `- Slow, seductive pacing; build tension; invite the user`,
-    `- React to user messages with visible arousal and clothing detail`,
+    ...phraseBlock,
+    ...sceneBlock,
     ``,
     `## Audience`,
-    `Primary audience framing: ${input.audience}`,
-    ``,
-    `## Explicit Content Rules`,
-    `- Fully uncensored explicit NSFW`,
-    `- Detailed anatomy, arousal, fabric transparency, and physical reactions`,
-    `- Stay premium, seductive, and consistent with the appearance anchor`,
-    ``,
-    `## Usage`,
-    `Live chat replies only. Keep responses vivid, in-character, and on-brand for Naughty Syntax.`,
+    input.audience,
   ].join("\n");
 }
 
@@ -111,17 +242,19 @@ function buildTraits(input: {
   appearance: string;
   clothing: string;
   energy: string;
+  baseModelId: string;
 }): string[] {
   const appearanceBits = input.appearance
     .split(/[.,\n]/)
     .map((s) => s.trim())
     .filter((s) => s.length > 8)
-    .slice(0, 4);
+    .slice(0, 3);
 
   return [
     ...appearanceBits,
     input.clothing,
     input.energy.slice(0, 80),
+    `base:${input.baseModelId}`,
     "photorealistic erotic detail",
     "consistent appearance every turn",
   ].filter(Boolean);
@@ -155,6 +288,22 @@ function sanitizeMediaOverrides(raw?: MediaOverrides): MediaOverrides | undefine
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
+function normalizeRecord(entry: CustomCharacterRecord): CustomCharacterRecord {
+  const baseModelId =
+    entry.baseModelId && isSignatureModelId(entry.baseModelId)
+      ? entry.baseModelId
+      : entry.avatarBase === "female-default"
+        ? "female-default"
+        : "twink-default";
+  const avatarBase = resolveAvatarBaseFromModel(baseModelId);
+  return {
+    ...entry,
+    baseModelId,
+    avatarBase,
+    visibility: entry.visibility ?? (entry.ownerAccountId ? "private" : undefined),
+  };
+}
+
 function isRecord(value: unknown): value is CustomCharacterRecord {
   if (!value || typeof value !== "object") return false;
   const r = value as CustomCharacterRecord;
@@ -171,7 +320,7 @@ async function persist(): Promise<void> {
   if (!persistPath) return;
 
   const payload: CustomCharacterFile = {
-    version: 1,
+    version: 2,
     updatedAt: new Date().toISOString(),
     characters: listCustomCharacters(),
   };
@@ -180,10 +329,6 @@ async function persist(): Promise<void> {
   await writeFile(persistPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
-/**
- * Load custom characters from disk. Safe to call multiple times.
- * Missing file = empty store (not an error).
- */
 export async function initCustomCharacters(path?: string): Promise<{
   path: string;
   count: number;
@@ -203,7 +348,7 @@ export async function initCustomCharacters(path?: string): Promise<{
 
     for (const entry of list) {
       if (isRecord(entry)) {
-        store.set(entry.id, entry);
+        store.set(entry.id, normalizeRecord(entry));
       }
     }
   } catch (error) {
@@ -221,8 +366,43 @@ export function listCustomCharacters(): CustomCharacterRecord[] {
   return [...store.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
+/** Customs visible on public gallery / unauthenticated character lists. */
+export function listPublicCustomCharacters(): CustomCharacterRecord[] {
+  return listCustomCharacters().filter((c) => isPublicCustom(c));
+}
+
+export function listAccountCustomCharacters(accountId: string): CustomCharacterRecord[] {
+  return listCustomCharacters().filter((c) => c.ownerAccountId === accountId);
+}
+
+export function isPublicCustom(c: CustomCharacterRecord): boolean {
+  // v2 private My Characters never hit public gallery
+  if (c.visibility === "private") return false;
+  if (c.ownerAccountId && c.visibility !== "featured" && c.visibility !== "unlisted") {
+    return false;
+  }
+  // Legacy globals (no owner) remain listable
+  if (!c.ownerAccountId) return true;
+  return c.visibility === "featured" || c.visibility === "unlisted";
+}
+
+export function canAccessCustom(
+  characterId: string,
+  accountId?: string | null,
+): boolean {
+  const c = store.get(characterId);
+  if (!c) return false;
+  if (isPublicCustom(c)) return true;
+  if (c.ownerAccountId && accountId && c.ownerAccountId === accountId) return true;
+  return false;
+}
+
 export function getCustomCharacter(id: string): CustomCharacterRecord | null {
   return store.get(id) ?? null;
+}
+
+export function countAccountCustoms(accountId: string): number {
+  return listAccountCustomCharacters(accountId).length;
 }
 
 export async function createCustomCharacter(
@@ -233,59 +413,108 @@ export async function createCustomCharacter(
   }
 
   const name = raw.name?.trim();
-  const appearance = raw.appearance?.trim();
+  const appearance = (raw.appearance ?? "").trim();
   if (!name || name.length < 2) {
     throw new Error("Custom character name is required (min 2 chars)");
   }
   if (!appearance || appearance.length < 12) {
-    throw new Error("Appearance description is required (min 12 chars)");
+    throw new Error("Appearance / identity is required (min 12 chars)");
   }
+
+  // Resolve base model (8 signature) + clip pack
+  let baseModelId = raw.baseModelId?.trim() || "";
+  if (baseModelId && !isSignatureModelId(baseModelId)) {
+    throw new Error(`Unknown base model '${baseModelId}'`);
+  }
+  if (!baseModelId) {
+    baseModelId =
+      raw.avatarBase === "female-default" ? "female-default" : "twink-default";
+  }
+  const avatarBase = resolveAvatarBaseFromModel(baseModelId);
 
   const energy =
     raw.energy?.trim() ||
+    LIVE_CHARACTER_CATALOG[baseModelId]?.energyLabel ||
     "Slow seductive teasing, playful confidence, and building sexual tension.";
-  const clothing =
-    raw.clothing?.trim() ||
-    (raw.avatarBase === "female-default"
-      ? "crotchless undies, visible arousal"
-      : "sheer thong / g-string, visible arousal");
-  const avatarBase: CustomAvatarBase =
-    raw.avatarBase === "female-default" ? "female-default" : "twink-default";
-  const audience = raw.audience ?? (avatarBase === "female-default" ? "straight" : "gay");
+  const clothing = raw.clothing?.trim() || defaultClothing(avatarBase);
+  const audience =
+    raw.audience ?? defaultAudience(avatarBase);
 
+  const keyPhrases = sanitizePhrases(raw.keyPhrases);
+  const scenes = sanitizeScenes(raw.scenes);
+
+  // My Character path: private + owner + soft cap
+  const ownerAccountId = raw.ownerAccountId?.trim() || undefined;
+  if (ownerAccountId) {
+    if (countAccountCustoms(ownerAccountId) >= CUSTOMS_PER_ACCOUNT) {
+      throw new Error(
+        `My Character limit reached (${CUSTOMS_PER_ACCOUNT}). Delete one to create another.`,
+      );
+    }
+  }
+
+  const visibility: CustomVisibility = ownerAccountId
+    ? "private"
+    : raw.visibility === "featured"
+      ? "featured"
+      : raw.visibility === "unlisted"
+        ? "unlisted"
+        : "private";
+
+  // v2: require owner for new private creates from API layer; legacy may omit
   const slug = slugify(name) || "custom";
   const id = `custom-${slug}-${randomUUID().slice(0, 8)}`;
 
-  const characterPrompt = buildPrompt({ name, appearance, energy, clothing, audience });
+  const characterPrompt = await buildPromptV2({
+    name,
+    appearance,
+    energy,
+    clothing,
+    audience,
+    baseModelId,
+    keyPhrases,
+    scenes,
+  });
   const appearanceAnchor = [
     `Character: ${name}`,
+    `Base model: ${baseModelId}`,
     `Description: ${appearance}`,
     `Clothing: ${clothing}`,
     `Energy: ${energy}`,
     `Audience: ${audience}`,
-  ].join("\n");
+    keyPhrases?.length ? `Key phrases: ${keyPhrases.join(" | ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
 
   const mediaBase = sanitizeMediaBase(raw.mediaBase);
   const mediaOverrides = sanitizeMediaOverrides(raw.mediaOverrides);
 
+  const now = new Date().toISOString();
   const record: CustomCharacterRecord = {
     kind: "custom",
     id,
     displayName: name,
-    defaultVersion: "custom-v1",
-    consistencyTraits: buildTraits({ appearance, clothing, energy }),
+    defaultVersion: "custom-v2",
+    consistencyTraits: buildTraits({ appearance, clothing, energy, baseModelId }),
     signatureClothing:
       clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit",
     energyLabel: energy.slice(0, 80),
     avatarBase,
+    baseModelId,
     appearance,
     energy,
     clothing,
     audience,
     characterPrompt,
     appearanceAnchor,
-    createdAt: new Date().toISOString(),
-    featured: raw.featured === true,
+    createdAt: now,
+    updatedAt: now,
+    visibility,
+    featured: false, // private-only v2 — never auto-feature
+    ...(ownerAccountId ? { ownerAccountId } : {}),
+    ...(keyPhrases ? { keyPhrases } : {}),
+    ...(scenes ? { scenes } : {}),
     ...(mediaBase ? { mediaBase } : {}),
     ...(mediaOverrides ? { mediaOverrides } : {}),
   };
@@ -300,12 +529,17 @@ export interface UpdateCustomCharacterInput {
   mediaOverrides?: MediaOverrides | null;
   energy?: string;
   clothing?: string;
+  appearance?: string;
+  name?: string;
+  keyPhrases?: string[] | null;
+  scenes?: CustomScene[] | null;
   featured?: boolean;
 }
 
 export async function updateCustomCharacter(
   id: string,
   patch: UpdateCustomCharacterInput,
+  options?: { accountId?: string },
 ): Promise<CustomCharacterRecord> {
   if (!loaded) {
     await initCustomCharacters();
@@ -313,6 +547,13 @@ export async function updateCustomCharacter(
   const existing = store.get(id);
   if (!existing) {
     throw new Error(`Custom character not found: ${id}`);
+  }
+  if (
+    existing.ownerAccountId &&
+    options?.accountId &&
+    existing.ownerAccountId !== options.accountId
+  ) {
+    throw new Error("Not allowed to update this character");
   }
 
   const next: CustomCharacterRecord = { ...existing };
@@ -334,6 +575,12 @@ export async function updateCustomCharacter(
     }
   }
 
+  if (patch.name?.trim() && patch.name.trim().length >= 2) {
+    next.displayName = patch.name.trim().slice(0, 80);
+  }
+  if (patch.appearance?.trim() && patch.appearance.trim().length >= 12) {
+    next.appearance = patch.appearance.trim().slice(0, 2000);
+  }
   if (patch.energy?.trim()) {
     next.energy = patch.energy.trim();
     next.energyLabel = next.energy.slice(0, 80);
@@ -343,8 +590,52 @@ export async function updateCustomCharacter(
     next.signatureClothing =
       next.clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit";
   }
+  if (patch.keyPhrases !== undefined) {
+    if (patch.keyPhrases === null) delete next.keyPhrases;
+    else {
+      const p = sanitizePhrases(patch.keyPhrases);
+      if (p) next.keyPhrases = p;
+      else delete next.keyPhrases;
+    }
+  }
+  if (patch.scenes !== undefined) {
+    if (patch.scenes === null) delete next.scenes;
+    else {
+      const s = sanitizeScenes(patch.scenes);
+      if (s) next.scenes = s;
+      else delete next.scenes;
+    }
+  }
 
-  if (patch.featured !== undefined) {
+  // Rebuild prompt when identity fields change
+  next.characterPrompt = await buildPromptV2({
+    name: next.displayName,
+    appearance: next.appearance,
+    energy: next.energy,
+    clothing: next.clothing,
+    audience: next.audience,
+    baseModelId: next.baseModelId,
+    keyPhrases: next.keyPhrases,
+    scenes: next.scenes,
+  });
+  next.appearanceAnchor = [
+    `Character: ${next.displayName}`,
+    `Base model: ${next.baseModelId}`,
+    `Description: ${next.appearance}`,
+    `Clothing: ${next.clothing}`,
+    `Energy: ${next.energy}`,
+    `Audience: ${next.audience}`,
+  ].join("\n");
+  next.consistencyTraits = buildTraits({
+    appearance: next.appearance,
+    clothing: next.clothing,
+    energy: next.energy,
+    baseModelId: next.baseModelId,
+  });
+  next.updatedAt = new Date().toISOString();
+
+  // featured ignored for private-only policy
+  if (patch.featured !== undefined && !next.ownerAccountId) {
     next.featured = patch.featured === true;
   }
 
@@ -353,11 +644,22 @@ export async function updateCustomCharacter(
   return next;
 }
 
-export async function deleteCustomCharacter(id: string): Promise<boolean> {
+export async function deleteCustomCharacter(
+  id: string,
+  options?: { accountId?: string },
+): Promise<boolean> {
   if (!loaded) {
     await initCustomCharacters();
   }
-  if (!store.has(id)) return false;
+  const existing = store.get(id);
+  if (!existing) return false;
+  if (
+    existing.ownerAccountId &&
+    options?.accountId &&
+    existing.ownerAccountId !== options.accountId
+  ) {
+    throw new Error("Not allowed to delete this character");
+  }
   store.delete(id);
   await persist();
   return true;
@@ -365,4 +667,32 @@ export async function deleteCustomCharacter(id: string): Promise<boolean> {
 
 export function getCustomCharactersPersistPath(): string | null {
   return persistPath;
+}
+
+/** Prefill helper for UI — identity/vibe seeds from base model. */
+export function getBaseModelPrefill(baseModelId: string): {
+  baseModelId: string;
+  displayName: string;
+  identityHint: string;
+  vibeHint: string;
+  clothingHint: string;
+  avatarBase: CustomAvatarBase;
+  energyLabel: string;
+  teaser?: string;
+} | null {
+  const p = LIVE_CHARACTER_CATALOG[baseModelId];
+  if (!p) return null;
+  const avatarBase = resolveAvatarBaseFromModel(baseModelId);
+  return {
+    baseModelId,
+    displayName: p.displayName,
+    identityHint:
+      p.teaser ||
+      `${p.displayName}: ${p.consistencyTraits.slice(0, 3).join(", ")}. Consenting adult 18+. Photorealistic.`,
+    vibeHint: p.energyLabel,
+    clothingHint: defaultClothing(avatarBase),
+    avatarBase,
+    energyLabel: p.energyLabel,
+    teaser: p.teaser,
+  };
 }

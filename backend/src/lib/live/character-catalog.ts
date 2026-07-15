@@ -1,4 +1,4 @@
-import { getCustomCharacter } from "./custom-characters.js";
+import { canAccessCustom, getCustomCharacter } from "./custom-characters.js";
 
 export interface LiveCharacterProfile {
   id: string;
@@ -174,12 +174,16 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
 
 export const LIVE_CHARACTER_IDS = Object.keys(LIVE_CHARACTER_CATALOG);
 
-export function getLiveCharacterProfile(characterId: string): LiveCharacterProfile | null {
+export function getLiveCharacterProfile(
+  characterId: string,
+  options?: { accountId?: string | null },
+): LiveCharacterProfile | null {
   const builtIn = LIVE_CHARACTER_CATALOG[characterId];
   if (builtIn) return builtIn;
 
   const custom = getCustomCharacter(characterId);
   if (!custom) return null;
+  if (!canAccessCustom(characterId, options?.accountId)) return null;
 
   return {
     id: custom.id,
@@ -206,12 +210,46 @@ export class LiveCharacterError extends Error {
   }
 }
 
-export function assertLiveCharacter(characterId: string): LiveCharacterProfile {
-  const profile = getLiveCharacterProfile(characterId);
-  if (!profile) {
-    throw new LiveCharacterError(
-      `Character '${characterId}' is not enabled for live sessions. Create a custom character or use: ${LIVE_CHARACTER_IDS.join(", ")}`,
-    );
+export function assertLiveCharacter(
+  characterId: string,
+  options?: { accountId?: string | null },
+): LiveCharacterProfile {
+  // Built-ins always ok; customs need access (private = owner only)
+  const builtIn = LIVE_CHARACTER_CATALOG[characterId];
+  if (builtIn) return builtIn;
+
+  const custom = getCustomCharacter(characterId);
+  if (custom && canAccessCustom(characterId, options?.accountId)) {
+    return {
+      id: custom.id,
+      displayName: custom.displayName,
+      defaultVersion: custom.defaultVersion,
+      consistencyTraits: custom.consistencyTraits,
+      signatureClothing: custom.signatureClothing,
+      energyLabel: custom.energyLabel,
+      avatarBase: custom.avatarBase,
+      kind: "custom",
+      featured: custom.featured === true,
+    };
   }
-  return profile;
+
+  // Legacy: allow private custom if store has it but no account check yet (prompt path)
+  // Prefer access check; fall back only for non-private
+  if (custom && !custom.ownerAccountId) {
+    return {
+      id: custom.id,
+      displayName: custom.displayName,
+      defaultVersion: custom.defaultVersion,
+      consistencyTraits: custom.consistencyTraits,
+      signatureClothing: custom.signatureClothing,
+      energyLabel: custom.energyLabel,
+      avatarBase: custom.avatarBase,
+      kind: "custom",
+      featured: custom.featured === true,
+    };
+  }
+
+  throw new LiveCharacterError(
+    `Character '${characterId}' is not enabled for live sessions. Create a custom character or use: ${LIVE_CHARACTER_IDS.join(", ")}`,
+  );
 }

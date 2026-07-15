@@ -46,13 +46,22 @@ export interface CreateSessionResponse {
   accountId?: string;
 }
 
+export interface CustomSceneInput {
+  title: string;
+  body: string;
+}
+
 export interface CreateCustomCharacterInput {
   name: string;
   appearance: string;
   energy?: string;
   clothing?: string;
+  /** Any of the 8 signature models. */
+  baseModelId?: string;
   avatarBase?: "twink-default" | "female-default";
   audience?: "gay" | "bi" | "straight" | "any";
+  keyPhrases?: string[];
+  scenes?: CustomSceneInput[];
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
 }
@@ -63,6 +72,7 @@ export interface CreateCustomCharacterResponse {
   defaultVersion: string;
   kind: "custom";
   avatarBase: string;
+  baseModelId?: string;
   energyLabel: string;
   signatureClothing: string;
   consistencyTraits: string[];
@@ -70,15 +80,34 @@ export interface CreateCustomCharacterResponse {
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
   featured?: boolean;
+  visibility?: string;
+  mine?: boolean;
+  keyPhrases?: string[];
+  scenes?: CustomSceneInput[];
   clips?: Record<MediaClipKey, string>;
 }
 
 export interface UpdateCustomCharacterInput {
   mediaBase?: string | null;
   mediaOverrides?: MediaOverrides | null;
+  name?: string;
+  appearance?: string;
   energy?: string;
   clothing?: string;
+  keyPhrases?: string[] | null;
+  scenes?: CustomSceneInput[] | null;
   featured?: boolean;
+}
+
+export interface BaseModelPrefill {
+  baseModelId: string;
+  displayName: string;
+  identityHint: string;
+  vibeHint: string;
+  clothingHint: string;
+  avatarBase: "twink-default" | "female-default";
+  energyLabel: string;
+  teaser?: string;
 }
 
 export interface ChatMessage {

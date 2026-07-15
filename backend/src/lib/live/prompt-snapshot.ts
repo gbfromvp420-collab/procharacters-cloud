@@ -8,12 +8,22 @@ import type { PromptSnapshot } from "./types.js";
 export async function createPromptSnapshot(
   characterId: string,
   promptVersion?: string,
+  options?: { accountId?: string | null },
 ): Promise<PromptSnapshot> {
-  const profile = assertLiveCharacter(characterId);
   const systemCorePrompt = await loadSystemCorePrompt();
 
   const custom = getCustomCharacter(characterId);
   if (custom) {
+    // Private My Characters: allow snapshot when account matches (session already authorized)
+    if (
+      custom.ownerAccountId &&
+      options?.accountId &&
+      custom.ownerAccountId !== options.accountId
+    ) {
+      throw new Error(`Character '${characterId}' is private`);
+    }
+    // If no account on snapshot but custom is private, still load when session was created by owner
+    // (session manager passes accountId when available)
     const hashInput = [
       custom.id,
       custom.defaultVersion,
@@ -40,6 +50,7 @@ export async function createPromptSnapshot(
     };
   }
 
+  const profile = assertLiveCharacter(characterId, options);
   const version = promptVersion ?? profile.defaultVersion;
   const bundle = await loadCharacterBundle(characterId, version);
 
