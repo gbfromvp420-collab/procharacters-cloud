@@ -9,6 +9,20 @@ import {
   prismaLogoutAccountToken,
 } from "./account-store-prisma.js";
 
+/**
+ * Auth storage backend.
+ * - `json` (default): file-backed accounts.json (production-safe today)
+ * - `prisma`: Postgres via Prisma (opt-in; requires DATABASE_URL + migrated schema)
+ *
+ * Resume codes, magic links, and billing grants stay on the JSON store until a later phase.
+ */
+export type AccountsProvider = "json" | "prisma";
+
+export function accountsProvider(): AccountsProvider {
+  const raw = (process.env.ACCOUNTS_PROVIDER ?? "json").trim().toLowerCase();
+  return raw === "prisma" ? "prisma" : "json";
+}
+
 /** Phase 9 billing — free always works; paid plans are optional entitlements. */
 export type AccountPlan = "free" | "day_pass" | "supporter";
 
@@ -200,6 +214,18 @@ export class AccountError extends Error {
   }
 }
 
+function mapPrismaAuthError(error: unknown): never {
+  if (error instanceof Error) {
+    if (error.message === "CONFLICT_HANDLE") {
+      throw new AccountError("Handle already taken", "CONFLICT");
+    }
+    if (error.message === "AUTH_INVALID") {
+      throw new AccountError("Invalid handle or passphrase", "AUTH");
+    }
+  }
+  throw error;
+}
+
 export async function createAccount(handleRaw: string, passphrase: string): Promise<{
   id: string;
   handle: string;
@@ -207,7 +233,6 @@ export async function createAccount(handleRaw: string, passphrase: string): Prom
   token: string;
   expiresAt: string;
 }> {
-  await ensureLoaded();
   const handle = normalizeHandle(handleRaw);
   if (handle.length < 3) {
     throw new AccountError("Handle must be at least 3 characters (a-z, 0-9, _ -)", "VALIDATION");
@@ -215,6 +240,16 @@ export async function createAccount(handleRaw: string, passphrase: string): Prom
   if (!passphrase || passphrase.length < 6) {
     throw new AccountError("Passphrase must be at least 6 characters", "VALIDATION");
   }
+
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaCreateAccount(handle, passphrase, hashPassphrase);
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
+  await ensureLoaded();
   if (handleIndex.has(handle)) {
     throw new AccountError("Handle already taken", "CONFLICT");
   }
@@ -244,8 +279,17 @@ export async function loginAccount(handleRaw: string, passphrase: string): Promi
   token: string;
   expiresAt: string;
 }> {
-  await ensureLoaded();
   const handle = normalizeHandle(handleRaw);
+
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaLoginAccount(handle, passphrase, hashPassphrase, safeEqualHex);
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
+  await ensureLoaded();
   const accountId = handleIndex.get(handle);
   if (!accountId) {
     throw new AccountError("Invalid handle or passphrase", "AUTH");
@@ -449,6 +493,11 @@ async function issueToken(accountId: string): Promise<{ token: string; expiresAt
 
 export async function resolveAccountToken(token: string | undefined | null): Promise<AccountRecord | null> {
   if (!token?.trim()) return null;
+
+  if (accountsProvider() === "prisma") {
+    return prismaResolveAccountToken(token.trim());
+  }
+
   await ensureLoaded();
   const record = tokens.get(hashToken(token.trim()));
   if (!record) return null;
@@ -461,6 +510,11 @@ export async function resolveAccountToken(token: string | undefined | null): Pro
 }
 
 export async function logoutAccountToken(token: string): Promise<void> {
+  if (accountsProvider() === "prisma") {
+    await prismaLogoutAccountToken(token);
+    return;
+  }
+
   await ensureLoaded();
   tokens.delete(hashToken(token.trim()));
   await persist();

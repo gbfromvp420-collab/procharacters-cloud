@@ -56,8 +56,12 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 | `STRIPE_SUPPORTER_CENTS` | (optional) default `999` ($9.99) |
 | `CUSTOM_CHARS_PER_ACCOUNT` | (optional) free My Character cap, default 10 |
 | `CUSTOM_CHARS_PER_ACCOUNT_PREMIUM` | (optional) premium cap, default 40 |
+| `ACCOUNTS_PROVIDER` | (optional) `json` (default) or `prisma` for handle/passphrase auth in Postgres |
+| `DATABASE_URL` | (required if `ACCOUNTS_PROVIDER=prisma`) Postgres connection string |
 
 Do **not** set `PORT` — Railway injects it.
+
+**Accounts / Prisma (phase 2 auth):** leave `ACCOUNTS_PROVIDER` unset or `json` for production file-backed auth. To opt into Postgres auth for create/login/token resolve: set `DATABASE_URL`, run `npx prisma migrate deploy` against that DB, then set `ACCOUNTS_PROVIDER=prisma`. Resume codes, magic links, and billing grants still use `ACCOUNTS_PATH` JSON until a later dual-write phase.
 
 Optional persistence for custom characters:
 - Mount a **volume** at `/data` on `procharacters-api`

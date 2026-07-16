@@ -90,7 +90,11 @@ export async function buildApp() {
 
   const accountStore = await initAccountStore(env.ACCOUNTS_PATH?.trim() || undefined);
   app.log.info(
-    { path: accountStore.path, accounts: accountStore.accounts },
+    {
+      path: accountStore.path,
+      accounts: accountStore.accounts,
+      provider: env.accountsProvider,
+    },
     "Account store ready",
   );
 

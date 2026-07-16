@@ -33,6 +33,14 @@ const envSchema = z.object({
   SESSIONS_PATH: z.string().optional(),
   /** Accounts + resume-code index JSON (Railway volume recommended). */
   ACCOUNTS_PATH: z.string().optional(),
+  /**
+   * Auth backend for handle/passphrase create/login/token resolve/logout.
+   * `json` (default) = file store; `prisma` = Postgres (requires DATABASE_URL).
+   * Resume codes / magic links / billing still use the JSON store.
+   */
+  ACCOUNTS_PROVIDER: z.enum(["json", "prisma"]).default("json"),
+  /** Postgres connection string (required when ACCOUNTS_PROVIDER=prisma). */
+  DATABASE_URL: z.string().optional(),
   /** Resend API key for magic-link emails (optional — without it, API returns the link). */
   RESEND_API_KEY: z.string().optional(),
   MAGIC_LINK_FROM: z.string().optional(),
@@ -57,4 +65,5 @@ export const env = {
   repoRoot: parsed.data.REPO_ROOT ?? resolveRepoRoot(),
   isDev: parsed.data.NODE_ENV === "development",
   livekitConfigured,
+  accountsProvider: parsed.data.ACCOUNTS_PROVIDER,
 };

@@ -357,15 +357,15 @@ if (account.email?.trim()) {
         return reply.code(401).send({ error: "Not signed in" });
       }
       const plan = getAccountPlanSummary(account);
-let prismaUserId: string | null = null;
-if (account.email?.trim()) {
-  try {
-    const dbUser = await getAccountByEmail(account.email.trim().toLowerCase());
-    prismaUserId = dbUser?.id ?? null;
-  } catch (e) {
-    request.log.warn({ err: e }, "Prisma lookup failed in /accounts/me");
-  }
-}
+      let prismaUserId: string | null = null;
+      if (account.email?.trim()) {
+        try {
+          const dbUser = await getAccountByEmail(account.email.trim().toLowerCase());
+          prismaUserId = dbUser?.id ?? null;
+        } catch (e) {
+          request.log.warn({ err: e }, "Prisma lookup failed in /accounts/me");
+        }
+      }
       return {
         accountId: account.id,
         handle: account.handle,
