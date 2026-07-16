@@ -16,6 +16,24 @@ import { bearerToken } from "./accounts.js";
 import { resolveAccountToken } from "../lib/accounts/account-store.js";
 import { env } from "../config/env.js";
 import { bump } from "../lib/observability/metrics.js";
+import {
+  RATE_LIMITS,
+  clientIp,
+  enforceRateLimits,
+} from "../lib/rate-limit.js";
+
+function rateLimited(
+  reply: import("fastify").FastifyReply,
+  result: { retryAfterSec: number; limit: number },
+) {
+  reply.header("Retry-After", String(result.retryAfterSec));
+  reply.header("X-RateLimit-Limit", String(result.limit));
+  return reply.code(429).send({
+    error: "Too many requests — try again later",
+    code: "RATE_LIMITED",
+    retryAfterSec: result.retryAfterSec,
+  });
+}
 
 const subscribeSchema = z.object({
   endpoint: z.string().url().max(2000),
@@ -151,6 +169,21 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
           configured: false,
         });
       }
+      const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
+      const denied = enforceRateLimits([
+        {
+          key: `push-test:acct:${account.id}`,
+          limit: RATE_LIMITS.pushTestPerAccount.limit,
+          windowMs: RATE_LIMITS.pushTestPerAccount.windowMs,
+        },
+        {
+          key: `push-test:ip:${ip}`,
+          limit: RATE_LIMITS.pushTestPerIp.limit,
+          windowMs: RATE_LIMITS.pushTestPerIp.windowMs,
+        },
+      ]);
+      if (denied) return rateLimited(reply, denied);
+
       const siteBase =
         env.MAGIC_LINK_BASE_URL ||
         process.env.NEXT_PUBLIC_SITE_URL ||

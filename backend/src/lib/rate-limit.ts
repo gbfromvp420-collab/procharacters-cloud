@@ -101,6 +101,15 @@ export const RATE_LIMITS = {
     limit: Number(process.env.RATE_LIMIT_RESUME_EMAIL ?? 5),
     windowMs: Number(process.env.RATE_LIMIT_RESUME_EMAIL_WINDOW_MS ?? 60 * 60 * 1000),
   },
+  /** Test push spam guard — per account */
+  pushTestPerAccount: {
+    limit: Number(process.env.RATE_LIMIT_PUSH_TEST ?? 6),
+    windowMs: Number(process.env.RATE_LIMIT_PUSH_TEST_WINDOW_MS ?? 15 * 60 * 1000),
+  },
+  pushTestPerIp: {
+    limit: Number(process.env.RATE_LIMIT_PUSH_TEST_IP ?? 12),
+    windowMs: Number(process.env.RATE_LIMIT_PUSH_TEST_IP_WINDOW_MS ?? 15 * 60 * 1000),
+  },
 };
 
 /** Apply multiple limiters; returns first denial or null if all pass. */
