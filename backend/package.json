@@ -11,6 +11,8 @@
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate --schema=../prisma/schema.prisma",
     "prisma:migrate": "prisma migrate deploy --schema=../prisma/schema.prisma",
+    "accounts:import-json": "tsx scripts/import-accounts-json.ts",
+    "accounts:smoke-prisma": "tsx scripts/smoke-accounts-prisma.ts",
     "test:memory": "tsx scripts/smoke-test-memory.ts",
     "test:livekit": "tsx scripts/verify-livekit.ts",
     "smoke:deploy": "tsx scripts/smoke-deploy.ts",
