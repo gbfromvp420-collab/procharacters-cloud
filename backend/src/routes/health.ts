@@ -8,7 +8,7 @@ import {
   phase4PackIds,
 } from "../lib/media/avatar-packs.js";
 import { isErrorReportingConfigured } from "../lib/observability/error-reporter.js";
-import { getMetrics } from "../lib/observability/metrics.js";
+import { getLastExpiryCron, getMetrics } from "../lib/observability/metrics.js";
 import { pingPrisma } from "../lib/prisma.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
 
@@ -82,6 +82,8 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
           errorWebhook: isErrorReportingConfigured(),
           webPush: isWebPushConfigured(),
           logLevel: process.env.LOG_LEVEL?.trim() || "info",
+          /** Resume-expiry push cron last tick (null until first run). */
+          lastExpiryCron: getLastExpiryCron(),
         },
         billing: {
           stripe: isStripeConfigured(),

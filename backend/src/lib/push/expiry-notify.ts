@@ -1,4 +1,5 @@
 import type { SessionManager } from "../../services/session-manager.js";
+import { recordExpiryCronTick } from "../observability/metrics.js";
 import {
   deletePushByEndpoint,
   listPushAccountIds,
@@ -163,6 +164,7 @@ export function startResumeExpiryPushCron(
   const tick = () => {
     void notifyAllSubscribedAccounts(sessionManager, { siteBase })
       .then((summary) => {
+        recordExpiryCronTick(summary);
         if (summary.sent > 0 || summary.accounts > 0) {
           log?.info(summary, "Resume expiry push cron tick");
         }

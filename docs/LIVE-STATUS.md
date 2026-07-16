@@ -28,7 +28,8 @@
 | Edge Pace mode (phase strip) | ✅ |
 | “What we remember” memory strip | ✅ |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
-| Chat push strip | ✅ Enable alerts + **Send test** (+ sign-in CTA) |
+| Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
+| Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; checkout waits for keys |
 | Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
@@ -60,12 +61,14 @@
 - `observability.webPush` = true  
 - `billing.stripe` = false until you add keys (expected)  
 - `deploy.gitSha` present after API redeploy (Railway commit)  
+- `observability.lastExpiryCron` present after first cron tick (or null until then)  
 - Manifest: `/manifest.webmanifest` returns 200  
 
 ---
 
 ## Related docs
 
+- [TODAY-PHASE-LIST.md](./TODAY-PHASE-LIST.md) — today’s ships + remaining  
 - [gg-continuity-lore.md](./gg-continuity-lore.md) — rehydrate first  
 - [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md) — who decides what  
 - [README-for-Gary.md](./README-for-Gary.md) — control panel  
