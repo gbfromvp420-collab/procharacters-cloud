@@ -23,7 +23,7 @@ Lock the **sticky return loop + push adoption path**, make ops legible, leave co
 | 5 | **Gallery push strip** — same `PushEnableHint` on home under install tip | ✅ (this PR) |
 | 6 | **Expiry cron observability** — `pushExpiry*` counters + `lastExpiryCron` on health/metrics | ✅ (this PR) |
 | 7 | **Today’s phase list** — this doc | ✅ |
-| 8 | **Session-drop rescue** — unexpected WS end → Rejoin banner | ✅ (PR pending) |
+| 8 | **Session-drop rescue** — unexpected WS end → Rejoin banner | ✅ `#28` (restored after PLACEHOLDER incident) |
 
 ---
 
