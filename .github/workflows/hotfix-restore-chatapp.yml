@@ -1,0 +1,51 @@
+name: hotfix-restore-chatapp
+on:
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: Branch to restore ChatApp on
+        required: true
+        default: hotfix/restore-chatapp
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Restore ChatApp from c99ce75 + session-drop patch
+        run: |
+          set -euo pipefail
+          BASE_SHA=c99ce75d8c8774e16c60455f818c9820235c9d94
+          mkdir -p frontend/src/components scripts
+          git show "${BASE_SHA}:frontend/src/components/ChatApp.tsx" > frontend/src/components/ChatApp.tsx
+          test -s frontend/src/components/ChatApp.tsx
+          head -1 frontend/src/components/ChatApp.tsx | grep -q 'use client'
+          # Fetch patch from hotfix branch if missing on this checkout
+          if [ ! -f scripts/restore-chatapp-session-drop.patch ]; then
+            git fetch origin hotfix/restore-chatapp || true
+            git show origin/hotfix/restore-chatapp:scripts/restore-chatapp-session-drop.patch > scripts/restore-chatapp-session-drop.patch 2>/dev/null || true
+          fi
+          if [ -f scripts/restore-chatapp-session-drop.patch ]; then
+            git apply scripts/restore-chatapp-session-drop.patch
+          fi
+          grep -q 'export function ChatApp' frontend/src/components/ChatApp.tsx
+          test -f frontend/src/components/SessionDropRescue.tsx
+          rm -rf frontend/src/components/chatapp-parts frontend/src/components/.hotfix-restore-marker.txt
+          wc -c frontend/src/components/ChatApp.tsx
+          head -3 frontend/src/components/ChatApp.tsx
+          git config user.name "hotfix-bot"
+          git config user.email "hotfix-bot@users.noreply.github.com"
+          git add frontend/src/components/ChatApp.tsx frontend/src/components/SessionDropRescue.tsx || true
+          git add -u frontend/src/components/ 2>/dev/null || true
+          git status
+          git commit -m "hotfix: restore full ChatApp.tsx + session-drop rescue (not PLACEHOLDER)" || echo "nothing to commit"
+          git push origin "HEAD:${{ inputs.target_branch }}"
