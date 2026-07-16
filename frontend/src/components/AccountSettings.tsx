@@ -48,6 +48,7 @@ import {
   type StoredAccount,
 } from "@/lib/account-storage";
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
+import { InstallAppHint } from "@/components/InstallAppHint";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import {
@@ -1222,6 +1223,8 @@ export function AccountSettings() {
             setSessions([]);
           }}
         />
+
+        <InstallAppHint className="mb-4" />
 
         {(error || notice) && (
           <div

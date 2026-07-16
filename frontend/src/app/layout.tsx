@@ -13,6 +13,11 @@ export const metadata: Metadata = {
       "https://procharacters-web-production-7288.up.railway.app",
   ),
   applicationName: "Procharacters",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+    apple: [{ url: "/icons/icon.svg", type: "image/svg+xml" }],
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
