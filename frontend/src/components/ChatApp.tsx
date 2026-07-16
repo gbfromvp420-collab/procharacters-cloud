@@ -43,6 +43,8 @@ import {
   type ImportPreview,
 } from "@/lib/api";
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
+import { EdgePaceStrip } from "@/components/EdgePaceStrip";
+import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -183,8 +185,16 @@ export function ChatApp() {
   const [livekitRoomStatus, setLivekitRoomStatus] = useState<
     "off" | "connecting" | "connected" | "error"
   >("off");
-  /** Phase 10 assistant mode */
-  const [sessionMode, setSessionMode] = useState<SessionMode>("normal");
+  /** Phase 10 assistant mode (persisted preference for new sessions). */
+  const [sessionMode, setSessionMode] = useState<SessionMode>(() => {
+    if (typeof window === "undefined") return "normal";
+    try {
+      const raw = window.localStorage.getItem("procharacters.sessionMode.v1");
+      return raw === "edge_pace" ? "edge_pace" : "normal";
+    } catch {
+      return "normal";
+    }
+  });
   const [modeState, setModeState] = useState<SessionModeUiState | null>(null);
   const [modeTick, setModeTick] = useState(0);
 
@@ -676,7 +686,21 @@ export function ChatApp() {
     if (!modeState || modeState.mode !== "edge_pace" || status !== "ready") return;
     const id = window.setInterval(() => setModeTick((t) => t + 1), 1000);
     return () => window.clearInterval(id);
-  }, [modeState?.mode, status]);
+  }, [modeState?.mode, modeState?.phase, modeState?.phaseRemainingSec, status]);
+
+  // Reset tick when server pushes a new phase snapshot
+  useEffect(() => {
+    setModeTick(0);
+  }, [modeState?.phase, modeState?.phaseRemainingSec, modeState?.label]);
+
+  // Remember mode preference for next Start (deep-link still wins on first load)
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("procharacters.sessionMode.v1", sessionMode);
+    } catch {
+      /* ignore */
+    }
+  }, [sessionMode]);
 
   // Load cross-session opt-in when signed in + character changes
   useEffect(() => {
@@ -1929,7 +1953,11 @@ export function ChatApp() {
                     <select
                       value={sessionMode}
                       onChange={(e) => setSessionMode(e.target.value as SessionMode)}
-                      className="field min-h-0 py-1 text-xs"
+                      className={`field min-h-0 py-1 text-xs ${
+                        sessionMode === "edge_pace"
+                          ? "border-rose-400/50 text-rose-100"
+                          : ""
+                      }`}
                       title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
                     >
                       <option value="normal">Normal</option>
@@ -2528,45 +2556,10 @@ export function ChatApp() {
                 );
               })()}
               {modeState && modeState.mode === "edge_pace" && status === "ready" && (
-                <div
-                  className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-[11px] leading-relaxed text-rose-50"
-                  role="status"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-200/90">
-                      {modeState.label}
-                    </p>
-                    <p className="font-mono text-xs text-rose-100/90">
-                      {Math.max(0, modeState.phaseRemainingSec - modeTick)}s
-                    </p>
-                  </div>
-                  <p className="mt-1 text-brand-muted">{modeState.coachCue}</p>
-                  <p className="mt-1 text-[10px] text-brand-soft">
-                    v3 preview — soft timers, not a full assistant product
-                  </p>
-                </div>
+                <EdgePaceStrip modeState={modeState} tickOffset={modeTick} />
               )}
-              {priorNotes && (status === "ready" || messages.length > 0) && (
-                <div
-                  className="rounded-xl border border-violet-400/30 bg-violet-500/5 px-3 py-2 text-[11px] leading-relaxed text-violet-100/90"
-                  role="status"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/85">
-                    Across sessions
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-brand-muted">{priorNotes}</p>
-                </div>
-              )}
-              {sessionNotes && (status === "ready" || messages.length > 0) && (
-                <div
-                  className="rounded-xl border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-100/90"
-                  role="status"
-                >
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
-                    This session
-                  </p>
-                  <p className="mt-1 text-brand-muted">{sessionNotes}</p>
-                </div>
+              {(status === "ready" || messages.length > 0) && (
+                <SessionMemoryStrip priorNotes={priorNotes} sessionNotes={sessionNotes} />
               )}
               {messages.length === 0 && !isTyping && (
                 <div className="px-2 py-12 text-center sm:py-16">
