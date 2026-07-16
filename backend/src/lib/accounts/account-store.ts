@@ -3,10 +3,23 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { repoPath } from "../paths.js";
 import {
+  prismaBindResumeCodeAccount,
+  prismaClearAccountResumeCodes,
   prismaCreateAccount,
+  prismaDeleteAccount,
+  prismaGetCachedAccount,
+  prismaGetResumeCodeForSession,
+  prismaGrantAccountPlan,
+  prismaListResumeCodesForAccount,
   prismaLoginAccount,
-  prismaResolveAccountToken,
   prismaLogoutAccountToken,
+  prismaPruneExpiredResumeCodes,
+  prismaRegisterResumeCode,
+  prismaRequestMagicLink,
+  prismaResolveAccountToken,
+  prismaResolveResumeCode,
+  prismaSetAccountPassphrase,
+  prismaVerifyMagicLink,
 } from "./account-store-prisma.js";
 
 /**
@@ -14,7 +27,8 @@ import {
  * - `json` (default): file-backed accounts.json (production-safe today)
  * - `prisma`: Postgres via Prisma (opt-in; requires DATABASE_URL + migrated schema)
  *
- * Resume codes, magic links, and billing grants stay on the JSON store until a later phase.
+ * When `prisma`, handle/passphrase auth, magic links, resume codes, plan grants,
+ * passphrase changes, and account delete all use Postgres.
  */
 export type AccountsProvider = "json" | "prisma";
 
@@ -216,11 +230,31 @@ export class AccountError extends Error {
 
 function mapPrismaAuthError(error: unknown): never {
   if (error instanceof Error) {
-    if (error.message === "CONFLICT_HANDLE") {
-      throw new AccountError("Handle already taken", "CONFLICT");
-    }
-    if (error.message === "AUTH_INVALID") {
-      throw new AccountError("Invalid handle or passphrase", "AUTH");
+    switch (error.message) {
+      case "CONFLICT_HANDLE":
+        throw new AccountError("Handle already taken", "CONFLICT");
+      case "CONFLICT_EMAIL":
+        throw new AccountError("That email is already linked to another account", "CONFLICT");
+      case "CONFLICT_RESUME":
+        throw new AccountError("Resume code already in use", "CONFLICT");
+      case "AUTH_INVALID":
+        throw new AccountError("Invalid handle or passphrase", "AUTH");
+      case "AUTH_MAGIC":
+        throw new AccountError("Magic link is invalid or already used", "AUTH");
+      case "AUTH_MAGIC_EXPIRED":
+        throw new AccountError("Magic link expired — request a new one", "AUTH");
+      case "NOT_FOUND":
+        throw new AccountError("Account not found", "NOT_FOUND");
+      case "VALIDATION_EMAIL_ALREADY":
+        throw new AccountError("This account already uses that email", "VALIDATION");
+      case "VALIDATION_MAGIC":
+        throw new AccountError("Missing magic link token", "VALIDATION");
+      case "VALIDATION_PASSPHRASE":
+        throw new AccountError("New passphrase must be at least 6 characters", "VALIDATION");
+      case "VALIDATION_CURRENT":
+        throw new AccountError("Current passphrase is required", "VALIDATION");
+      default:
+        break;
     }
   }
   throw error;
@@ -361,12 +395,20 @@ export async function requestMagicLink(
   isNewAccount: boolean;
   linking: boolean;
 }> {
-  await ensureLoaded();
   const email = normalizeEmail(emailRaw);
   if (!isValidEmail(email)) {
     throw new AccountError("Enter a valid email address", "VALIDATION");
   }
 
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaRequestMagicLink(email, options);
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
+  await ensureLoaded();
   const linkAccountId = options?.linkAccountId;
   if (linkAccountId) {
     const target = accounts.get(linkAccountId);
@@ -424,11 +466,20 @@ export async function verifyMagicLink(tokenRaw: string): Promise<{
   expiresAt: string;
   linked?: boolean;
 }> {
-  await ensureLoaded();
   const token = tokenRaw.trim();
   if (!token) {
     throw new AccountError("Missing magic link token", "VALIDATION");
   }
+
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaVerifyMagicLink(token);
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
+  await ensureLoaded();
   const tokenHash = hashToken(token);
   const magic = magicLinks.get(tokenHash);
   if (!magic || magic.consumedAt) {
@@ -521,6 +572,9 @@ export async function logoutAccountToken(token: string): Promise<void> {
 }
 
 export function getAccount(accountId: string): AccountRecord | null {
+  if (accountsProvider() === "prisma") {
+    return prismaGetCachedAccount(accountId);
+  }
   return accounts.get(accountId) ?? null;
 }
 
@@ -561,6 +615,14 @@ export async function grantAccountPlan(
   plan: "day_pass" | "supporter",
   options?: { stripeCustomerId?: string; checkoutSessionId?: string; days?: number },
 ): Promise<AccountRecord> {
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaGrantAccountPlan(accountId, plan, options);
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
   await ensureLoaded();
   const account = accounts.get(accountId);
   if (!account) {
@@ -603,13 +665,27 @@ export async function setAccountPassphrase(
   accountId: string,
   options: { newPassphrase: string; currentPassphrase?: string },
 ): Promise<AccountRecord> {
+  if (!options.newPassphrase || options.newPassphrase.length < 6) {
+    throw new AccountError("New passphrase must be at least 6 characters", "VALIDATION");
+  }
+
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaSetAccountPassphrase(
+        accountId,
+        options,
+        hashPassphrase,
+        safeEqualHex,
+      );
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
   await ensureLoaded();
   const account = accounts.get(accountId);
   if (!account) {
     throw new AccountError("Account not found", "NOT_FOUND");
-  }
-  if (!options.newPassphrase || options.newPassphrase.length < 6) {
-    throw new AccountError("New passphrase must be at least 6 characters", "VALIDATION");
   }
 
   if (account.passphraseHash && account.salt) {
@@ -635,12 +711,16 @@ export async function setAccountPassphrase(
 }
 
 export function accountHasPassphrase(accountId: string): boolean {
-  const account = accounts.get(accountId);
+  const account = getAccount(accountId);
   return !!(account?.passphraseHash && account.salt);
 }
 
 /** Permanently remove account, tokens, magic links, and resume-code bindings. */
 export async function deleteAccount(accountId: string): Promise<boolean> {
+  if (accountsProvider() === "prisma") {
+    return prismaDeleteAccount(accountId);
+  }
+
   await ensureLoaded();
   const account = accounts.get(accountId);
   if (!account) return false;
@@ -672,6 +752,10 @@ export async function deleteAccount(accountId: string): Promise<boolean> {
 
 /** Drop account ownership from all resume codes (sessions deleted separately). */
 export async function clearAccountResumeCodes(accountId: string): Promise<number> {
+  if (accountsProvider() === "prisma") {
+    return prismaClearAccountResumeCodes(accountId);
+  }
+
   await ensureLoaded();
   let n = 0;
   for (const [code, record] of resumeCodes) {
@@ -700,6 +784,14 @@ export async function registerResumeCode(
   preferred?: string,
   options?: { forceNew?: boolean; extendOnly?: boolean },
 ): Promise<string> {
+  if (accountsProvider() === "prisma") {
+    try {
+      return await prismaRegisterResumeCode(sessionId, accountId, preferred, options);
+    } catch (error) {
+      mapPrismaAuthError(error);
+    }
+  }
+
   await ensureLoaded();
 
   // If rebinding the same preferred code and it's still valid, optionally extend TTL
@@ -752,11 +844,19 @@ export async function rotateResumeCode(
   accountId?: string,
 ): Promise<{ code: string; expiresAt: string }> {
   const code = await registerResumeCode(sessionId, accountId, undefined, { forceNew: true });
+  if (accountsProvider() === "prisma") {
+    const record = await prismaGetResumeCodeForSession(sessionId);
+    return { code, expiresAt: record?.expiresAt ?? resumeCodeExpiresAt() };
+  }
   const record = resumeCodes.get(code)!;
   return { code, expiresAt: record.expiresAt ?? resumeCodeExpiresAt() };
 }
 
 export async function resolveResumeCode(codeRaw: string): Promise<ResumeCodeRecord | null> {
+  if (accountsProvider() === "prisma") {
+    return prismaResolveResumeCode(codeRaw);
+  }
+
   await ensureLoaded();
   const code = codeRaw.trim().toUpperCase();
   const record = resumeCodes.get(code);
@@ -772,6 +872,10 @@ export async function resolveResumeCode(codeRaw: string): Promise<ResumeCodeReco
 export async function getResumeCodeForSession(
   sessionId: string,
 ): Promise<ResumeCodeRecord | null> {
+  if (accountsProvider() === "prisma") {
+    return prismaGetResumeCodeForSession(sessionId);
+  }
+
   await ensureLoaded();
   for (const record of resumeCodes.values()) {
     if (record.sessionId === sessionId) {
@@ -788,6 +892,10 @@ export async function getResumeCodeForSession(
 
 /** Remove expired resume codes from the store. */
 export async function pruneExpiredResumeCodes(): Promise<number> {
+  if (accountsProvider() === "prisma") {
+    return prismaPruneExpiredResumeCodes();
+  }
+
   await ensureLoaded();
   let n = 0;
   for (const [code, record] of resumeCodes) {
@@ -801,11 +909,20 @@ export async function pruneExpiredResumeCodes(): Promise<number> {
 }
 
 export async function listResumeCodesForAccount(accountId: string): Promise<ResumeCodeRecord[]> {
+  if (accountsProvider() === "prisma") {
+    return prismaListResumeCodesForAccount(accountId);
+  }
+
   await ensureLoaded();
   return [...resumeCodes.values()].filter((c) => c.accountId === accountId);
 }
 
 export async function bindResumeCodeAccount(sessionId: string, accountId: string): Promise<void> {
+  if (accountsProvider() === "prisma") {
+    await prismaBindResumeCodeAccount(sessionId, accountId);
+    return;
+  }
+
   await ensureLoaded();
   for (const [key, value] of resumeCodes) {
     if (value.sessionId === sessionId) {

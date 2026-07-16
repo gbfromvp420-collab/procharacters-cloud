@@ -61,7 +61,7 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 
 Do **not** set `PORT` — Railway injects it.
 
-**Accounts / Prisma (phase 2 auth):** leave `ACCOUNTS_PROVIDER` unset or `json` for production file-backed auth. To opt into Postgres auth for create/login/token resolve: set `DATABASE_URL`, run `npx prisma migrate deploy` against that DB, then set `ACCOUNTS_PROVIDER=prisma`. Resume codes, magic links, and billing grants still use `ACCOUNTS_PATH` JSON until a later dual-write phase.
+**Accounts / Prisma (phase 2.5 dual-write):** leave `ACCOUNTS_PROVIDER` unset or `json` for production file-backed auth. To opt into full Postgres accounts (handle/passphrase, magic links, resume codes, plan grants): set `DATABASE_URL`, run `npx prisma migrate deploy`, then set `ACCOUNTS_PROVIDER=prisma`. JSON file remains the default and safe path until you deliberately flip the flag.
 
 Optional persistence for custom characters:
 - Mount a **volume** at `/data` on `procharacters-api`
