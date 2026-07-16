@@ -12,6 +12,29 @@ import { getMetrics } from "../lib/observability/metrics.js";
 import { pingPrisma } from "../lib/prisma.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
 
+/** Railway / CI inject these so ops can see which commit is live. */
+function deployFingerprint(): {
+  gitSha: string | null;
+  gitShaShort: string | null;
+  environment: string | null;
+  serviceName: string | null;
+} {
+  const gitSha =
+    process.env.RAILWAY_GIT_COMMIT_SHA?.trim() ||
+    process.env.GITHUB_SHA?.trim() ||
+    process.env.COMMIT_SHA?.trim() ||
+    null;
+  return {
+    gitSha,
+    gitShaShort: gitSha ? gitSha.slice(0, 7) : null,
+    environment:
+      process.env.RAILWAY_ENVIRONMENT_NAME?.trim() ||
+      process.env.NODE_ENV?.trim() ||
+      null,
+    serviceName: process.env.RAILWAY_SERVICE_NAME?.trim() || null,
+  };
+}
+
 export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync => {
   return async (app) => {
     app.get("/", async () => ({
@@ -39,6 +62,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
         status: "ok",
         service: "procharacters-backend",
         version: "0.1.0",
+        deploy: deployFingerprint(),
         accounts,
         livekit: {
           configured: livekit.isConfigured,
@@ -70,6 +94,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
     app.get("/metrics", async () => ({
       service: "procharacters-backend",
       accountsProvider: accountsProvider(),
+      deploy: deployFingerprint(),
       ...getMetrics(),
     }));
 

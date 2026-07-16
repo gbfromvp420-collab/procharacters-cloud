@@ -57,6 +57,12 @@ Full checklist: **[push-smoke-checklist.md](./push-smoke-checklist.md)**
 | `scripts/` | Simple tools to list and fetch prompts/characters (`.ps1` for Windows, `.py` if Python installed) |
 | `.grok/skills/kgc-delegate/` | The brain agents use to work on-brand |
 
+## Who runs development
+
+**You (Gary)** = Boss Sr., 50/50 vision & product taste.  
+**King Grok CEO** = final say on **engineering** priorities and shipping when you grant full control.  
+Details: **[CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md)** · rehydrate **[gg-continuity-lore.md](./gg-continuity-lore.md)**
+
 ## How to give direction to agents
 
 Copy-paste one of these templates:
@@ -71,7 +77,7 @@ Copy-paste one of these templates:
 > List all active prompts and characters. Summarize in plain English for Gary.
 
 **Protect scope:**
-> This is v1 only. Do not build streaming, accounts, or public UI. Flag anything that drifts.
+> Product is v2.2 live. Flag multi-week rewrites, full v3 gooning/voice, generative live video, or destructive prod ops.
 
 ## What's later (not blocking live chat)
 
