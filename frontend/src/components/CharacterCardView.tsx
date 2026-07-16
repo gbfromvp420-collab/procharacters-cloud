@@ -195,6 +195,17 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               <p className="text-sm text-brand-accent">
                 {card.kind === "custom" ? "Custom character" : "Signature model"} ·{" "}
                 {card.energyLabel}
+                {card.kind === "default" && (
+                  <span
+                    className={`ml-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      card.dedicatedPack
+                        ? "border-emerald-400/40 text-emerald-200"
+                        : "border-brand-border text-brand-muted"
+                    }`}
+                  >
+                    {card.dedicatedPack ? "Dedicated pack" : `Interim · ${card.avatarBase}`}
+                  </span>
+                )}
               </p>
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Meet {card.displayName}

@@ -18,6 +18,7 @@ import {
   updateCustomCharacter,
 } from "../lib/live/index.js";
 import { bump } from "../lib/observability/metrics.js";
+import { isDedicatedPackReady } from "../lib/media/avatar-packs.js";
 import { listClipUrls } from "../lib/media/clip-resolver.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
@@ -158,7 +159,9 @@ export const createSessionRoutes = (
   return async (app) => {
     app.get("/characters/gallery", async () => {
       const defaults = Object.values(LIVE_CHARACTER_CATALOG).map((profile) => {
-        const clips = listClipUrls(profile.avatarBase ?? profile.id);
+        // Resolve by character id so dedicated Phase 4 packs win when all 4 clips exist
+        const clips = listClipUrls(profile.id);
+        const dedicatedPack = isDedicatedPackReady(profile.id);
         return {
           id: profile.id,
           displayName: profile.displayName,
@@ -168,6 +171,8 @@ export const createSessionRoutes = (
           teaser: profile.teaser ?? profile.energyLabel,
           tags: profile.consistencyTraits.slice(0, 4),
           avatarBase: profile.avatarBase ?? profile.id,
+          dedicatedPack,
+          mediaLabel: dedicatedPack ? "dedicated" : "interim",
           posterClip: clips.teasing || clips.idle,
           clips,
           featured: profile.featured === true,
@@ -181,7 +186,7 @@ export const createSessionRoutes = (
 
       // Public gallery: never list private My Characters
       const customs = listPublicCustomCharacters().map((profile) => {
-        const clips = listClipUrls(profile.avatarBase ?? profile.id);
+        const clips = listClipUrls(profile.id);
         const teaser =
           profile.appearance.length > 160
             ? `${profile.appearance.slice(0, 157).trim()}…`
@@ -195,6 +200,8 @@ export const createSessionRoutes = (
           teaser,
           tags: profile.consistencyTraits.slice(0, 4),
           avatarBase: profile.avatarBase,
+          dedicatedPack: isDedicatedPackReady(profile.id),
+          mediaLabel: "custom" as const,
           posterClip: clips.teasing || clips.idle,
           clips,
           featured: profile.featured === true,
@@ -422,9 +429,8 @@ export const createSessionRoutes = (
         return reply.code(404).send({ error: "Character not found" });
       }
 
-      const avatarBase =
-        custom?.avatarBase ?? builtIn?.avatarBase ?? characterId;
-      const clips = listClipUrls(avatarBase);
+      const clips = listClipUrls(characterId);
+      const dedicatedPack = isDedicatedPackReady(characterId);
 
       if (custom) {
         const teaser =
@@ -440,6 +446,8 @@ export const createSessionRoutes = (
           teaser,
           tags: custom.consistencyTraits.slice(0, 4),
           avatarBase: custom.avatarBase,
+          dedicatedPack,
+          mediaLabel: "custom" as const,
           posterClip: clips.teasing || clips.idle,
           clips,
           featured: custom.featured === true,
@@ -460,6 +468,8 @@ export const createSessionRoutes = (
         teaser: builtIn!.teaser ?? builtIn!.energyLabel,
         tags: builtIn!.consistencyTraits.slice(0, 4),
         avatarBase: builtIn!.avatarBase ?? builtIn!.id,
+        dedicatedPack,
+        mediaLabel: dedicatedPack ? "dedicated" : "interim",
         posterClip: clips.teasing || clips.idle,
         clips,
         featured: builtIn!.featured === true,
