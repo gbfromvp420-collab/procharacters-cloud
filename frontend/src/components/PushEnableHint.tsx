@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { sendTestPush } from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { loadStoredSession } from "@/lib/session-storage";
 import {
@@ -10,14 +12,12 @@ import {
 } from "@/lib/web-push-client";
 
 const DISMISS_KEY = "procharacters.pushHint.dismissed.v1";
+const TESTED_KEY = "procharacters.pushHint.tested.v1";
 const RESUME_CACHE_KEY = "procharacters.resumeByCharacter.v1";
 
+type Mode = "enable" | "verify" | "sign_in";
+
 type Props = {
-  /**
-   * Optional overrides (e.g. live ChatApp session). When omitted, reads
-   * account + resume from localStorage so we can mount from chat/page.tsx
-   * without editing the large ChatApp module.
-   */
   accountToken?: string | null;
   hasResumeCode?: boolean;
   className?: string;
@@ -38,17 +38,26 @@ function hasAnyResumeCode(): boolean {
   }
 }
 
+function markTested() {
+  try {
+    window.localStorage.setItem(TESTED_KEY, String(Date.now()));
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
- * In-chat / page-level nudge: signed-in users with a resume code get one-tap
- * "Enable alerts" so expiry push isn't buried only on Account.
- * Metrics showed pushSubscribe=0 — surface the path where people already are.
+ * Full phone-smoke loop on /chat:
+ * 1. Sign-in CTA if resume exists but guest
+ * 2. Enable alerts if signed in, not subscribed
+ * 3. Send test once after subscribe (or if never tested)
  */
 export function PushEnableHint({
   accountToken: accountTokenProp,
   hasResumeCode: hasResumeCodeProp,
   className = "",
 }: Props) {
-  const [show, setShow] = useState(false);
+  const [mode, setMode] = useState<Mode | null>(null);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -61,7 +70,7 @@ export function PushEnableHint({
         /* ignore */
       }
     }
-    setShow(false);
+    setMode(null);
   }, []);
 
   useEffect(() => {
@@ -71,46 +80,63 @@ export function PushEnableHint({
     async function evaluate() {
       try {
         if (window.localStorage.getItem(DISMISS_KEY)) {
-          if (!cancelled) setShow(false);
+          if (!cancelled) setMode(null);
           return;
         }
         if (!isPushSupported()) {
-          if (!cancelled) setShow(false);
+          if (!cancelled) setMode(null);
+          return;
+        }
+
+        const hasResume =
+          hasResumeCodeProp !== undefined ? hasResumeCodeProp : hasAnyResumeCode();
+        if (!hasResume) {
+          if (!cancelled) setMode(null);
           return;
         }
 
         const account = loadStoredAccount();
         const resolvedToken = accountTokenProp ?? account?.token ?? null;
-        const hasResume =
-          hasResumeCodeProp !== undefined ? hasResumeCodeProp : hasAnyResumeCode();
-
         if (!cancelled) setToken(resolvedToken);
 
-        if (!resolvedToken || !hasResume) {
-          if (!cancelled) setShow(false);
+        // Guest with a resume worth protecting
+        if (!resolvedToken) {
+          if (!cancelled) setMode("sign_in");
           return;
         }
 
+        if (Notification.permission === "denied") {
+          if (!cancelled) setMode(null);
+          return;
+        }
+
+        let subscribed = false;
         if (Notification.permission === "granted") {
           const reg = await registerPushServiceWorker();
           const sub = await reg?.pushManager.getSubscription();
-          if (sub) {
-            if (!cancelled) setShow(false);
-            return;
-          }
+          subscribed = !!sub;
         }
-        if (Notification.permission === "denied") {
-          if (!cancelled) setShow(false);
+
+        const alreadyTested = !!window.localStorage.getItem(TESTED_KEY);
+
+        if (!subscribed) {
+          if (!cancelled) setMode("enable");
           return;
         }
-        if (!cancelled) setShow(true);
+
+        // Subscribed but never smoke-tested on this browser
+        if (!alreadyTested) {
+          if (!cancelled) setMode("verify");
+          return;
+        }
+
+        if (!cancelled) setMode(null);
       } catch {
-        if (!cancelled) setShow(false);
+        if (!cancelled) setMode(null);
       }
     }
 
     void evaluate();
-    // Poll lightly — resume/account land after first chat save
     timer = window.setInterval(() => void evaluate(), 4000);
 
     return () => {
@@ -119,16 +145,19 @@ export function PushEnableHint({
     };
   }, [accountTokenProp, hasResumeCodeProp]);
 
+  const resolveToken = () =>
+    token ?? accountTokenProp ?? loadStoredAccount()?.token ?? null;
+
   const onEnable = async () => {
-    const t = token ?? accountTokenProp ?? loadStoredAccount()?.token;
+    const t = resolveToken();
     if (!t) return;
     setBusy(true);
     setStatus(null);
     try {
       const result = await enableWebPush(t);
       if (result.ok) {
-        setStatus("Alerts on — we’ll ping you when this chat code ages.");
-        window.setTimeout(() => hide(true), 2200);
+        setStatus("Alerts on — send a test to prove the shade.");
+        setMode("verify");
       } else {
         setStatus(result.error || "Could not enable push");
       }
@@ -137,7 +166,45 @@ export function PushEnableHint({
     }
   };
 
-  if (!show) return null;
+  const onSendTest = async () => {
+    const t = resolveToken();
+    if (!t) return;
+    setBusy(true);
+    setStatus(null);
+    try {
+      const result = await sendTestPush(t);
+      if (result.ok && result.sent > 0) {
+        markTested();
+        setStatus(`Test sent to ${result.sent} device(s) — check the notification shade.`);
+        window.setTimeout(() => hide(true), 2800);
+      } else if (result.ok && result.sent === 0) {
+        setStatus("No devices got the test — try Enable alerts again.");
+        setMode("enable");
+      } else {
+        setStatus(result.error || "Test failed");
+      }
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "Test failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!mode) return null;
+
+  const title =
+    mode === "sign_in"
+      ? "Don’t lose this chat"
+      : mode === "verify"
+        ? "Prove alerts work"
+        : "Don’t lose this chat";
+
+  const body =
+    mode === "sign_in"
+      ? "Sign in so we can alert you when your resume code is about to expire — even with the tab closed."
+      : mode === "verify"
+        ? "You’re subscribed. Send a one-shot test now — no need to open Account."
+        : "Enable alerts so we can warn you when your resume code is about to expire — even with the tab closed.";
 
   return (
     <div
@@ -147,35 +214,69 @@ export function PushEnableHint({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-            Don’t lose this chat
+            {title}
           </p>
-          <p className="mt-1 text-brand-muted">
-            Enable alerts so we can warn you when your resume code is about to expire — even with
-            the tab closed.
-          </p>
+          <p className="mt-1 text-brand-muted">{body}</p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              disabled={busy || !(token ?? accountTokenProp)}
-              onClick={() => void onEnable()}
-              className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
-            >
-              {busy ? "Enabling…" : "Enable alerts"}
-            </button>
-            <button
-              type="button"
-              className="text-[10px] text-brand-muted hover:text-brand-text"
-              onClick={() => hide(true)}
-            >
-              Not now
-            </button>
+            {mode === "sign_in" && (
+              <Link
+                href="/account"
+                className="btn-primary min-h-0 px-3 py-1.5 text-xs no-underline"
+              >
+                Sign in for alerts
+              </Link>
+            )}
+            {mode === "enable" && (
+              <button
+                type="button"
+                disabled={busy || !resolveToken()}
+                onClick={() => void onEnable()}
+                className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
+              >
+                {busy ? "Enabling…" : "Enable alerts"}
+              </button>
+            )}
+            {mode === "verify" && (
+              <>
+                <button
+                  type="button"
+                  disabled={busy || !resolveToken()}
+                  onClick={() => void onSendTest()}
+                  className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
+                >
+                  {busy ? "Sending…" : "Send test"}
+                </button>
+                <button
+                  type="button"
+                  className="text-[10px] text-brand-muted hover:text-brand-text"
+                  onClick={() => {
+                    markTested();
+                    hide(true);
+                  }}
+                >
+                  Skip
+                </button>
+              </>
+            )}
+            {mode !== "verify" && (
+              <button
+                type="button"
+                className="text-[10px] text-brand-muted hover:text-brand-text"
+                onClick={() => hide(true)}
+              >
+                Not now
+              </button>
+            )}
           </div>
           {status && <p className="mt-1.5 text-[10px] text-brand-accent">{status}</p>}
         </div>
         <button
           type="button"
           className="shrink-0 text-[10px] text-brand-muted hover:text-brand-text"
-          onClick={() => hide(true)}
+          onClick={() => {
+            if (mode === "verify") markTested();
+            hide(true);
+          }}
           aria-label="Dismiss push hint"
         >
           ✕

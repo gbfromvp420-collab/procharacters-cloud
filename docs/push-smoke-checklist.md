@@ -49,11 +49,15 @@ Expect exit 0 and `configured: true`.
    - iOS 16.4+: open from the home icon for reliable push.  
    - Manifest: `https://…/manifest.webmanifest`
 2. Sign in (**Account** or chat Account panel).
-3. **Path A — in chat (fastest):** sign in, start/resume a chat (resume code saved) → top strip **Don’t lose this chat → Enable alerts**.  
+3. **Path A — in chat (fastest, no Account required):**  
+   - Start/resume a chat (resume code saved).  
+   - If guest: strip → **Sign in for alerts**.  
+   - Signed in: **Enable alerts** → Allow → **Send test** (same strip).  
+   - Check the notification shade.  
 4. **Path B — Account panel:**
    - Tap **Enable push** → Allow notifications.
    - Chip should read **This browser on**.
-5. Tap **Send test** (Account) — you should get a system notification within a few seconds.
+5. Tap **Send test** (Account, if you skipped chat strip) — system notification within a few seconds.
 6. Tap the test notification → opens **Account**.
 7. Optional: **Check expiry** forces a resume-code expiry scan (`force=true`).  
    Real alerts fire when a code is within 3 days (hourly cron also runs).
