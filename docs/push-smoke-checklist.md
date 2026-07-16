@@ -44,7 +44,10 @@ Expect exit 0 and `configured: true`.
 
 ## 3. Phone / browser (5 minutes)
 
-1. Open prod web on **Chrome Android** or **Safari iOS** (iOS 16.4+ add to **Home Screen** for reliable push).
+1. Open prod web on **Chrome Android** or **Safari iOS**.  
+   - Prefer **Add to Home Screen / Install app** (Account page shows a hint).  
+   - iOS 16.4+: open from the home icon for reliable push.  
+   - Manifest: `https://…/manifest.webmanifest`
 2. Sign in (**Account**).
 3. In **Web Push · resume expiry** panel:
    - Tap **Enable push** → Allow notifications.
