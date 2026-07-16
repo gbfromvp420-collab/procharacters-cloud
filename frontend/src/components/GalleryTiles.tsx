@@ -69,6 +69,22 @@ export function CharacterTile({
                 Featured
               </span>
             )}
+            {card.kind === "default" && (
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
+                  card.dedicatedPack
+                    ? "border-emerald-400/45 bg-emerald-500/25 text-emerald-50"
+                    : "border-white/20 bg-black/45 text-white/70"
+                }`}
+                title={
+                  card.dedicatedPack
+                    ? "Dedicated 4-clip pack active"
+                    : `Interim footage via ${card.avatarBase}`
+                }
+              >
+                {card.dedicatedPack ? "4K pack" : "Interim"}
+              </span>
+            )}
             <span className="rounded-full border border-white/20 bg-black/45 px-2 py-0.5 text-[9px] font-medium text-white/85 backdrop-blur">
               {visual.label}
             </span>
