@@ -37,10 +37,13 @@ import {
 } from "@/lib/api";
 import {
   clearStoredAccount,
+  DEFAULT_REAUTH_NOTICE,
+  invalidateStoredAccount,
   loadStoredAccount,
   saveStoredAccount,
   type StoredAccount,
 } from "@/lib/account-storage";
+import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import {
@@ -249,9 +252,11 @@ export function AccountSettings() {
     setAccount(stored);
     if (stored) {
       void refresh(stored.token).catch((err) => {
-        setError(err instanceof Error ? err.message : "Session expired — sign in again");
-        clearStoredAccount();
+        invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
         setAccount(null);
+        setEmail(null);
+        setSessions([]);
+        setError(DEFAULT_REAUTH_NOTICE);
       });
     }
 
@@ -1112,6 +1117,15 @@ export function AccountSettings() {
             Live chat
           </Link>
         </header>
+
+        <SessionAuthBanner
+          className="mb-4"
+          onInvalidated={() => {
+            setAccount(null);
+            setEmail(null);
+            setSessions([]);
+          }}
+        />
 
         {(error || notice) && (
           <div
