@@ -13,10 +13,11 @@ Hi Gary. This document is your control panel. No coding knowledge needed.
 
 ### Phone push smoke (1 minute)
 
-1. Open **Account** on your phone (Chrome Android, or Safari → **Add to Home Screen** on iPhone).  
-2. Sign in.  
-3. **Enable push** → Allow.  
-4. Tap **Send test** — you should get a system notification.  
+1. Open **Account** (or Home) on your phone.  
+2. If you see **Install for better push** — use **Install app** (Android) or Safari **Share → Add to Home Screen** (iPhone).  
+3. Open from the home icon → **Account** → sign in.  
+4. **Enable push** → Allow.  
+5. Tap **Send test** — you should get a system notification.  
 
 Full checklist: **[push-smoke-checklist.md](./push-smoke-checklist.md)**
 
