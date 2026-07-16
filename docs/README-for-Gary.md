@@ -28,6 +28,8 @@ We're past foundation — chat, accounts, resumes, gallery, and Web Push are liv
 
 **Accounts (July 2026):** sign-in is stored in **Postgres** (more reliable than a single file). If the site asks you to **sign in again**, that's expected once after the upgrade — your handle/passphrase and resume codes still work.
 
+**Money (optional):** chat is free forever. Day Pass / Supporter buttons appear on Account when you’re signed in. They turn on after Stripe keys are set (see **[ops-billing-stripe.md](./ops-billing-stripe.md)**).
+
 **Next 10 phases (plain English):** see **[v2.2-roadmap.md](./v2.2-roadmap.md)**  
 **Push smoke on your phone:** see **[push-smoke-checklist.md](./push-smoke-checklist.md)**  
 **Backups / disaster restore:** see **[ops-data-backup.md](./ops-data-backup.md)**

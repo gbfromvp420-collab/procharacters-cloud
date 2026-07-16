@@ -10,8 +10,11 @@ import {
   fetchAccountMe,
   fetchAccountSessionMarkdown,
   fetchAllAccountSessionsMarkdown,
+  fetchBillingCatalog,
   fetchBillingStatus,
+  formatUsdCents,
   startBillingCheckout,
+  type BillingCatalogProduct,
   importAccountSession,
   importFlashSummary,
   linkEmailToAccount,
@@ -113,6 +116,12 @@ export function AccountSettings() {
   const [customsLimit, setCustomsLimit] = useState(10);
   const [billingConfigured, setBillingConfigured] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
+  const [billingProducts, setBillingProducts] = useState<BillingCatalogProduct[]>([]);
+  const [freeBenefitLabel, setFreeBenefitLabel] = useState("Full chat + gallery · free forever");
+  const [premiumBenefitLabel, setPremiumBenefitLabel] = useState(
+    "More My Characters + higher upload headroom",
+  );
+  const [premiumCustomsLimit, setPremiumCustomsLimit] = useState(40);
 
   const EXPIRY_WARN_DAYS = 3;
 
@@ -207,6 +216,9 @@ export function AccountSettings() {
         setPlanExpiresAt(billing.planExpiresAt ?? null);
         setCustomsLimit(billing.customsLimit);
         setBillingConfigured(billing.configured);
+        setFreeBenefitLabel(billing.benefits.free.label);
+        setPremiumBenefitLabel(billing.benefits.premium.label);
+        setPremiumCustomsLimit(billing.benefits.premium.customsLimit);
       } else if (me.plan) {
         setPlan(me.plan);
         setActivePremium(me.activePremium === true);
@@ -217,6 +229,17 @@ export function AccountSettings() {
     },
     [checkResumeExpiryWarnings],
   );
+
+  useEffect(() => {
+    void fetchBillingCatalog()
+      .then((c) => {
+        setBillingConfigured(c.configured);
+        setBillingProducts(c.products ?? []);
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+  }, []);
 
   const onCheckout = async (product: "day_pass" | "supporter") => {
     if (!account) return;
@@ -236,13 +259,50 @@ export function AccountSettings() {
     const params = new URLSearchParams(window.location.search);
     const billing = params.get("billing");
     if (billing === "success") {
-      setNotice("Payment received — premium unlocks after Stripe confirms (refresh in a few seconds).");
+      setNotice("Payment received — confirming premium…");
       const stored = loadStoredAccount();
-      if (stored) void refresh(stored.token).catch(() => null);
-    } else if (billing === "cancel") {
-      setNotice("Checkout canceled — free path still works.");
+      if (!stored) return;
+      let tries = 0;
+      let done = false;
+      const finish = (msg: string) => {
+        if (done) return;
+        done = true;
+        setNotice(msg);
+        window.history.replaceState({}, "", "/account");
+      };
+      const poll = window.setInterval(() => {
+        tries += 1;
+        void fetchBillingStatus(stored.token)
+          .then((b) => {
+            setPlan(b.plan);
+            setActivePremium(b.activePremium);
+            setPlanExpiresAt(b.planExpiresAt ?? null);
+            setCustomsLimit(b.customsLimit);
+            setBillingConfigured(b.configured);
+            if (b.activePremium) {
+              window.clearInterval(poll);
+              finish("Premium unlocked — thank you for supporting Naughty Syntax.");
+            } else if (tries >= 6) {
+              window.clearInterval(poll);
+              finish(
+                "Payment received — if premium isn’t showing yet, refresh in a moment (webhook may still be landing).",
+              );
+            }
+          })
+          .catch(() => {
+            if (tries >= 6) {
+              window.clearInterval(poll);
+              finish("Payment received — refresh Account in a few seconds to see premium.");
+            }
+          });
+      }, 2000);
+      return () => window.clearInterval(poll);
     }
-  }, [refresh]);
+    if (billing === "cancel") {
+      setNotice("Checkout canceled — free path still works.");
+      window.history.replaceState({}, "", "/account");
+    }
+  }, []);
 
   useEffect(() => {
     setPushSupported(isPushSupported());
@@ -1268,35 +1328,114 @@ export function AccountSettings() {
             </section>
 
             <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
-              <h2 className="text-sm font-semibold text-brand-text">Support / Day Pass</h2>
-              <p className="mt-1 text-xs text-brand-muted">
-                Free path stays fully usable. Optional Day Pass / Supporter unlocks more My
-                Character slots and higher clip upload headroom.
-                {!billingConfigured
-                  ? " Payments not configured on this server yet — you can still use everything free."
-                  : ""}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={billingBusy || !billingConfigured}
-                  onClick={() => void onCheckout("day_pass")}
-                  className="rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold text-brand-text">Support / Day Pass</h2>
+                  <p className="mt-1 text-xs text-brand-muted">
+                    Chat stays free forever. Optional passes unlock higher My Character caps and
+                    upload headroom — never paywalls the core experience.
+                  </p>
+                </div>
+                <span
+                  className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                    activePremium
+                      ? "border-amber-400/50 bg-amber-400/15 text-amber-100"
+                      : billingConfigured
+                        ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
+                        : "border-brand-border bg-brand-bg/60 text-brand-muted"
+                  }`}
                 >
-                  {billingBusy ? "Redirecting…" : "Day Pass"}
-                </button>
-                <button
-                  type="button"
-                  disabled={billingBusy || !billingConfigured}
-                  onClick={() => void onCheckout("supporter")}
-                  className="rounded-lg border border-amber-500/40 px-4 py-2 text-sm text-amber-100 disabled:opacity-50"
-                >
-                  Supporter (30d)
-                </button>
+                  {activePremium
+                    ? "Premium"
+                    : billingConfigured
+                      ? "Checkout ready"
+                      : "Free path · checkout soon"}
+                </span>
               </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-xl border border-brand-border/80 bg-brand-bg/40 px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
+                    Free · forever
+                  </p>
+                  <p className="mt-1 text-sm text-brand-text">
+                    {customsLimit} My Characters
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-brand-muted">{freeBenefitLabel}</p>
+                </div>
+                <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+                    Premium
+                  </p>
+                  <p className="mt-1 text-sm text-brand-text">
+                    {premiumCustomsLimit} My Characters
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-brand-muted">{premiumBenefitLabel}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {(billingProducts.length
+                  ? billingProducts
+                  : [
+                      {
+                        id: "day_pass" as const,
+                        name: "Day Pass",
+                        description: "24h premium",
+                        amountCents: 499,
+                        currency: "usd",
+                      },
+                      {
+                        id: "supporter" as const,
+                        name: "Supporter",
+                        description: "30 days premium",
+                        amountCents: 999,
+                        currency: "usd",
+                      },
+                    ]
+                ).map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={billingBusy || !billingConfigured}
+                    onClick={() => void onCheckout(p.id)}
+                    className={`rounded-xl border px-4 py-3 text-left transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                      p.id === "day_pass"
+                        ? "border-brand-accent/50 bg-brand-accent text-white hover:brightness-110"
+                        : "border-amber-500/40 bg-brand-bg/50 text-amber-50 hover:border-amber-400/70"
+                    }`}
+                  >
+                    <p className="text-sm font-semibold">
+                      {p.name}{" "}
+                      <span className="font-normal opacity-90">
+                        · {formatUsdCents(p.amountCents, p.currency)}
+                      </span>
+                    </p>
+                    <p className="mt-0.5 text-[11px] opacity-85">{p.description}</p>
+                    <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide opacity-90">
+                      {billingBusy
+                        ? "Redirecting…"
+                        : billingConfigured
+                          ? "Checkout →"
+                          : "Not live yet"}
+                    </p>
+                  </button>
+                ))}
+              </div>
+
+              {!billingConfigured && (
+                <p className="mt-3 text-[11px] text-brand-muted">
+                  Payments aren’t enabled on this server yet. Everything above still works free —
+                  Stripe keys unlock the buttons (see ops-billing-stripe.md).
+                </p>
+              )}
               {activePremium && (
                 <p className="mt-2 text-xs text-amber-100/90">
-                  Premium active — thank you. Stacking another pass extends your expiry.
+                  Premium active
+                  {planExpiresAt
+                    ? ` until ${new Date(planExpiresAt).toLocaleString()}`
+                    : ""}
+                  . Stacking another pass extends your expiry — thank you.
                 </p>
               )}
             </section>
