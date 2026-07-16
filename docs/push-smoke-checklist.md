@@ -78,6 +78,8 @@ Content-Type: application/json
 | Permission denied | Browser settings → site notifications |
 | Subscribed but never notified | No codes in 3-day window; cron off; cooldown 12h |
 | 410 gone endpoints | Re-enable push (stale sub cleaned automatically) |
+| Send test → 429 | Rate limited (default 6 / 15 min per account) — wait and retry |
+| Offline page shows | Expected when network is down after SW install (PWA shell) |
 
 ---
 
