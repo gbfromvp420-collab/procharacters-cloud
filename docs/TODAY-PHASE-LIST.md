@@ -23,6 +23,7 @@ Lock the **sticky return loop + push adoption path**, make ops legible, leave co
 | 5 | **Gallery push strip** — same `PushEnableHint` on home under install tip | ✅ (this PR) |
 | 6 | **Expiry cron observability** — `pushExpiry*` counters + `lastExpiryCron` on health/metrics | ✅ (this PR) |
 | 7 | **Today’s phase list** — this doc | ✅ |
+| 8 | **Session-drop rescue** — unexpected WS end → Rejoin banner | ✅ (PR pending) |
 
 ---
 
@@ -30,7 +31,7 @@ Lock the **sticky return loop + push adoption path**, make ops legible, leave co
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | **Session-drop rescue** — unexpected WS end → Rejoin banner | M | Highest remaining stickiness; ChatApp surgical |
+| A | **Session-drop rescue** — unexpected WS end → Rejoin banner | M | ✅ shipping (see Done) |
 | B | **Expiry urgency** on Continue banner / tiles (`expires in 2d`) | S | Needs `resumeExpiresAt` in resume-cache |
 | C | **429 UX** on chat Send test (retry-after copy) | S | Rate-limit already server-side |
 | D | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
