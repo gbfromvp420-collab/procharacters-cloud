@@ -28,6 +28,7 @@
 | Edge Pace mode (phase strip) | ✅ |
 | “What we remember” memory strip | ✅ |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
+| Chat **Enable alerts** nudge | ✅ after sign-in + resume + first message |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; checkout waits for keys |
 | Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
