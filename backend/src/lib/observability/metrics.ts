@@ -18,6 +18,9 @@ export type MetricCounters = {
   authFailures: number;
   pushTestSent: number;
   pushSubscribe: number;
+  pushExpirySent: number;
+  pushExpirySkipped: number;
+  pushExpiryCronTicks: number;
   startedAt: string;
 };
 
@@ -36,8 +39,19 @@ const counters: MetricCounters = {
   authFailures: 0,
   pushTestSent: 0,
   pushSubscribe: 0,
+  pushExpirySent: 0,
+  pushExpirySkipped: 0,
+  pushExpiryCronTicks: 0,
   startedAt: new Date().toISOString(),
 };
+
+/** Last successful expiry-cron tick summary (in-memory). */
+let lastExpiryCron: {
+  at: string;
+  accounts: number;
+  sent: number;
+  skipped: number;
+} | null = null;
 
 export function bump(
   key: keyof Omit<MetricCounters, "startedAt">,
@@ -46,10 +60,33 @@ export function bump(
   counters[key] += by;
 }
 
-export function getMetrics(): MetricCounters & { uptimeSec: number } {
+export function recordExpiryCronTick(summary: {
+  accounts: number;
+  sent: number;
+  skipped: number;
+}): void {
+  bump("pushExpiryCronTicks");
+  if (summary.sent > 0) bump("pushExpirySent", summary.sent);
+  if (summary.skipped > 0) bump("pushExpirySkipped", summary.skipped);
+  lastExpiryCron = {
+    at: new Date().toISOString(),
+    accounts: summary.accounts,
+    sent: summary.sent,
+    skipped: summary.skipped,
+  };
+}
+
+export function getLastExpiryCron(): typeof lastExpiryCron {
+  return lastExpiryCron;
+}
+
+export function getMetrics(): MetricCounters & {
+  uptimeSec: number;
+  lastExpiryCron: typeof lastExpiryCron;
+} {
   const started = Date.parse(counters.startedAt);
   const uptimeSec = Number.isFinite(started)
     ? Math.max(0, Math.floor((Date.now() - started) / 1000))
     : 0;
-  return { ...counters, uptimeSec };
+  return { ...counters, uptimeSec, lastExpiryCron };
 }
