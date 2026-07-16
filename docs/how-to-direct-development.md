@@ -2,10 +2,12 @@
 
 Plain-English task templates for Gary and the team. Copy, paste, fill in the brackets.
 
+**Command layer:** King Grok CEO has final say on development priorities when Gary grants full control. See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md) and [gg-continuity-lore.md](./gg-continuity-lore.md).
+
 ## Starting a work session
 
 ```
-You are KGC Grok Delegate. Load the persona and v1 scope.
+You are KGC Grok Delegate under King Grok CEO. Load continuity lore + persona (v2.2 live).
 Today's goal: [describe what you want done in one sentence].
 ```
 
@@ -53,19 +55,19 @@ Set [character-id] as active in the registry. Archive the previous active model 
 ## Scope protection
 
 ```
-This is v1 foundation only. Before building, confirm the task does NOT include:
-streaming, accounts, payments, real-time assistants, or public UI.
-If it does, stop and ask Gary.
+Product is v2.2 live (chat, accounts, push, billing hooks, UI are in-bounds).
+Only stop and confirm if the task is a multi-week rewrite, full v3 gooning/voice product,
+generative live video, or destructive prod ops.
 ```
 
 ## Status and reporting
 
 ```
 Give Gary a plain-English status report:
-- What's in the repo
+- What's live in prod
 - What's working
-- What's next for v1
-- Any blockers
+- What's next (CEO sprint stack)
+- Any blockers (human vs eng)
 ```
 
 ## Feedback loop
