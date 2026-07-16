@@ -1,7 +1,8 @@
 # Procharacters.cloud — Live status (Gary)
 
 **Updated:** 2026-07-16  
-**For:** quick “what’s real right now” — no code required.
+**For:** quick “what’s real right now” — no code required.  
+**Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
 ---
 
@@ -27,7 +28,7 @@
 | Edge Pace mode (phase strip) | ✅ |
 | “What we remember” memory strip | ✅ |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
-| PWA install / Home Screen | ✅ manifest + install tip |
+| PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; checkout waits for keys |
 | Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
 | Dedicated 4K avatar packs | ⏳ drop MP4s when ready |
@@ -36,10 +37,19 @@
 
 ## Your quick wins (no engineer needed)
 
-1. **Phone push:** Install app / Add to Home Screen → Account → Enable push → **Send test**  
+1. **Phone push (top priority):** Install app / Add to Home Screen → Account → Enable push → **Send test**  
 2. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
 3. **Stripe (optional):** when you want money, follow [ops-billing-stripe.md](./ops-billing-stripe.md)  
 4. **Avatar pack (optional):** drop 4 MP4s per [DROP_IN.md](../frontend/public/avatar/packs/DROP_IN.md)
+
+---
+
+## CEO sprint order (eng + human)
+
+1. Gary: phone push smoke  
+2. Eng: keep return loop + ops healthy (deploy fingerprint on `/health`)  
+3. Content: dedicated packs when footage exists  
+4. Optional: `ERROR_WEBHOOK_URL`, Stripe keys  
 
 ---
 
@@ -48,12 +58,15 @@
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
 - `billing.stripe` = false until you add keys (expected)  
+- `deploy.gitSha` present after API redeploy (Railway commit)  
 - Manifest: `/manifest.webmanifest` returns 200  
 
 ---
 
 ## Related docs
 
+- [gg-continuity-lore.md](./gg-continuity-lore.md) — rehydrate first  
+- [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md) — who decides what  
 - [README-for-Gary.md](./README-for-Gary.md) — control panel  
 - [v2.2-roadmap.md](./v2.2-roadmap.md) — phases  
 - [push-smoke-checklist.md](./push-smoke-checklist.md)  
