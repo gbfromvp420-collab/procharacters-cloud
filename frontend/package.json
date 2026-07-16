@@ -3,11 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/assemble-chatapp.mjs",
     "dev": "next dev -p 3000",
     "dev:lan": "next dev -p 3000 -H 0.0.0.0",
-    "build": "next build",
+    "prebuild": "node scripts/assemble-chatapp.mjs",
+    "build": "node scripts/assemble-chatapp.mjs && next build",
     "start": "next start -H 0.0.0.0",
-    "lint": "next lint"
+    "lint": "next lint",
+    "assemble:chatapp": "node scripts/assemble-chatapp.mjs"
   },
   "dependencies": {
     "livekit-client": "^2.15.4",
