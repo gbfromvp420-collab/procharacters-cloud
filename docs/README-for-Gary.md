@@ -43,6 +43,7 @@ Full checklist: **[push-smoke-checklist.md](./push-smoke-checklist.md)**
 
 **Money (optional):** chat is free forever. Day Pass / Supporter on Account turn on after Stripe keys are set → **[ops-billing-stripe.md](./ops-billing-stripe.md)**.
 
+**Live snapshot (one page):** **[LIVE-STATUS.md](./LIVE-STATUS.md)**  
 **Roadmap:** **[v2.2-roadmap.md](./v2.2-roadmap.md)**  
 **Backups:** **[ops-data-backup.md](./ops-data-backup.md)**
 

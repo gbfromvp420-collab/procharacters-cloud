@@ -43,6 +43,7 @@ import {
   type ImportPreview,
 } from "@/lib/api";
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
+import { InstallAppHint } from "@/components/InstallAppHint";
 import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import {
@@ -1622,6 +1623,7 @@ export function ChatApp() {
             setAccountEmailLinked(null);
           }}
         />
+        <InstallAppHint className="mb-3" />
         {showAccount && (
           <div className="mb-3 rounded-xl border border-brand-border bg-brand-panel/95 p-3 shadow-card backdrop-blur-sm animate-fade-in">
             {account ? (

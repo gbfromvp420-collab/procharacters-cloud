@@ -16,6 +16,8 @@ export type MetricCounters = {
   authRegister: number;
   authLogin: number;
   authFailures: number;
+  pushTestSent: number;
+  pushSubscribe: number;
   startedAt: string;
 };
 
@@ -32,6 +34,8 @@ const counters: MetricCounters = {
   authRegister: 0,
   authLogin: 0,
   authFailures: 0,
+  pushTestSent: 0,
+  pushSubscribe: 0,
   startedAt: new Date().toISOString(),
 };
 
