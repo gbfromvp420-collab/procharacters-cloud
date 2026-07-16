@@ -48,15 +48,16 @@ Expect exit 0 and `configured: true`.
    - Prefer **Add to Home Screen / Install app** (Account page shows a hint).  
    - iOS 16.4+: open from the home icon for reliable push.  
    - Manifest: `https://…/manifest.webmanifest`
-2. Sign in (**Account**).
-3. In **Web Push · resume expiry** panel:
+2. Sign in (**Account** or chat Account panel).
+3. **Path A — in chat (fastest):** sign in, start/resume a chat (resume code saved) → top strip **Don’t lose this chat → Enable alerts**.  
+4. **Path B — Account panel:**
    - Tap **Enable push** → Allow notifications.
    - Chip should read **This browser on**.
-4. Tap **Send test** — you should get a system notification within a few seconds.
-5. Tap the test notification → opens **Account**.
-6. Optional: **Check expiry** forces a resume-code expiry scan (`force=true`).  
+5. Tap **Send test** (Account) — you should get a system notification within a few seconds.
+6. Tap the test notification → opens **Account**.
+7. Optional: **Check expiry** forces a resume-code expiry scan (`force=true`).  
    Real alerts fire when a code is within 3 days (hourly cron also runs).
-7. Real expiry notification opens **the soonest-expiring chat**
+8. Real expiry notification opens **the soonest-expiring chat**
    (`/chat?resume=CODE&character=…`) when a code exists — otherwise Account.
 
 ### API test (optional)

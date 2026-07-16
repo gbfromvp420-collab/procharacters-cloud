@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { loadStoredAccount } from "@/lib/account-storage";
+import { loadStoredSession } from "@/lib/session-storage";
 import {
   enableWebPush,
   isPushSupported,
@@ -8,31 +10,48 @@ import {
 } from "@/lib/web-push-client";
 
 const DISMISS_KEY = "procharacters.pushHint.dismissed.v1";
+const RESUME_CACHE_KEY = "procharacters.resumeByCharacter.v1";
 
 type Props = {
-  /** Bearer token — required to subscribe. */
-  accountToken: string | null | undefined;
-  /** Only nudge when there's something worth protecting. */
-  hasResumeCode: boolean;
-  /** User turns in this session (assistant replies don't count). */
-  userMessageCount: number;
+  /**
+   * Optional overrides (e.g. live ChatApp session). When omitted, reads
+   * account + resume from localStorage so we can mount from chat/page.tsx
+   * without editing the large ChatApp module.
+   */
+  accountToken?: string | null;
+  hasResumeCode?: boolean;
   className?: string;
 };
 
+function hasAnyResumeCode(): boolean {
+  try {
+    const stored = loadStoredSession();
+    if (stored?.resumeCode) return true;
+    const raw = window.localStorage.getItem(RESUME_CACHE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw) as {
+      byCharacter?: Record<string, { resumeCode?: string }>;
+    };
+    return Object.values(parsed.byCharacter ?? {}).some((e) => !!e?.resumeCode);
+  } catch {
+    return false;
+  }
+}
+
 /**
- * In-chat nudge: signed-in users with a live resume code get a one-tap
+ * In-chat / page-level nudge: signed-in users with a resume code get one-tap
  * "Enable alerts" so expiry push isn't buried only on Account.
  * Metrics showed pushSubscribe=0 — surface the path where people already are.
  */
 export function PushEnableHint({
-  accountToken,
-  hasResumeCode,
-  userMessageCount,
+  accountToken: accountTokenProp,
+  hasResumeCode: hasResumeCodeProp,
   className = "",
 }: Props) {
   const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const hide = useCallback((persistDismiss: boolean) => {
     if (persistDismiss) {
@@ -47,22 +66,31 @@ export function PushEnableHint({
 
   useEffect(() => {
     let cancelled = false;
+    let timer: number | undefined;
 
     async function evaluate() {
       try {
-        if (!accountToken || !hasResumeCode || userMessageCount < 1) {
-          setShow(false);
+        if (window.localStorage.getItem(DISMISS_KEY)) {
+          if (!cancelled) setShow(false);
           return;
         }
         if (!isPushSupported()) {
-          setShow(false);
+          if (!cancelled) setShow(false);
           return;
         }
-        if (window.localStorage.getItem(DISMISS_KEY)) {
-          setShow(false);
+
+        const account = loadStoredAccount();
+        const resolvedToken = accountTokenProp ?? account?.token ?? null;
+        const hasResume =
+          hasResumeCodeProp !== undefined ? hasResumeCodeProp : hasAnyResumeCode();
+
+        if (!cancelled) setToken(resolvedToken);
+
+        if (!resolvedToken || !hasResume) {
+          if (!cancelled) setShow(false);
           return;
         }
-        // Already allowed + subscribed → no nag
+
         if (Notification.permission === "granted") {
           const reg = await registerPushServiceWorker();
           const sub = await reg?.pushManager.getSubscription();
@@ -82,17 +110,22 @@ export function PushEnableHint({
     }
 
     void evaluate();
+    // Poll lightly — resume/account land after first chat save
+    timer = window.setInterval(() => void evaluate(), 4000);
+
     return () => {
       cancelled = true;
+      if (timer) window.clearInterval(timer);
     };
-  }, [accountToken, hasResumeCode, userMessageCount]);
+  }, [accountTokenProp, hasResumeCodeProp]);
 
   const onEnable = async () => {
-    if (!accountToken) return;
+    const t = token ?? accountTokenProp ?? loadStoredAccount()?.token;
+    if (!t) return;
     setBusy(true);
     setStatus(null);
     try {
-      const result = await enableWebPush(accountToken);
+      const result = await enableWebPush(t);
       if (result.ok) {
         setStatus("Alerts on — we’ll ping you when this chat code ages.");
         window.setTimeout(() => hide(true), 2200);
@@ -123,7 +156,7 @@ export function PushEnableHint({
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              disabled={busy || !accountToken}
+              disabled={busy || !(token ?? accountTokenProp)}
               onClick={() => void onEnable()}
               className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
             >
