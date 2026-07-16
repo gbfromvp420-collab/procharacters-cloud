@@ -25,6 +25,7 @@ import { CharacterTile } from "./GalleryTiles";
 import { ContinueBanner } from "./ContinueBanner";
 import { SessionAuthBanner } from "./SessionAuthBanner";
 import { InstallAppHint } from "./InstallAppHint";
+import { PushEnableHint } from "./PushEnableHint";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -236,6 +237,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           onInvalidated={() => setSignedInHandle(null)}
         />
         <InstallAppHint className="mb-4" />
+        <PushEnableHint className="mb-4" />
         <header className="mb-6 animate-fade-in sm:mb-10">
           <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">Live character gallery</h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">

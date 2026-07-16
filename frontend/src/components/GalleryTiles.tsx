@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { CharacterCard } from "@/lib/character-card";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
-import type { ResumeCacheEntry } from "@/lib/resume-cache";
+import { buildResumeChatPath, type ResumeCacheEntry } from "@/lib/resume-cache";
 import { canNativeShare } from "@/lib/share-links";
 
 export function posterUrl(card: CharacterCard): string {
@@ -109,8 +109,27 @@ export function CharacterTile({
           </div>
         )}
         <div className={`flex flex-wrap gap-2 ${compact ? "gap-1.5" : ""}`}>
-          <Link href={card.ctaPath} className="btn-primary min-h-0 px-3 py-2 text-xs">Chat</Link>
-          <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">Card</Link>
+          {resume?.resumeCode ? (
+            <>
+              <Link
+                href={buildResumeChatPath(resume)}
+                className="btn-primary min-h-0 px-3 py-2 text-xs"
+                title="Continue saved chat"
+              >
+                Continue
+              </Link>
+              <Link href={card.ctaPath} className="btn-ghost min-h-0 px-3 py-2 text-xs" title="Start a new session">
+                New chat
+              </Link>
+            </>
+          ) : (
+            <Link href={card.ctaPath} className="btn-primary min-h-0 px-3 py-2 text-xs">
+              Chat
+            </Link>
+          )}
+          <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">
+            Card
+          </Link>
           {!compact && (
             <button
               type="button"
@@ -121,25 +140,14 @@ export function CharacterTile({
               {canNativeShare() ? "Share" : "Copy link"}
             </button>
           )}
-          {resume?.resumeCode && (
-            <>
-              <Link
-                href={`/chat?resume=${encodeURIComponent(resume.resumeCode)}&character=${encodeURIComponent(card.id)}`}
-                className="btn-ghost min-h-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200"
-                title="Resume saved chat"
-              >
-                Resume
-              </Link>
-              {!compact && (
-                <button
-                  type="button"
-                  onClick={() => onShareResume(card, resume)}
-                  className="btn-ghost min-h-0 border-amber-500/30 px-3 py-2 text-xs text-amber-200/90"
-                >
-                  {canNativeShare() ? "Share resume" : "Copy resume"}
-                </button>
-              )}
-            </>
+          {resume?.resumeCode && !compact && (
+            <button
+              type="button"
+              onClick={() => onShareResume(card, resume)}
+              className="btn-ghost min-h-0 border-amber-500/30 px-3 py-2 text-xs text-amber-200/90"
+            >
+              {canNativeShare() ? "Share resume" : "Copy resume"}
+            </button>
           )}
         </div>
       </div>
