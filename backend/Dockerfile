@@ -3,8 +3,12 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
+# Keep NODE_ENV unset during install so devDependencies (prisma CLI) install.
 COPY backend/package.json backend/package-lock.json ./backend/
 RUN cd backend && npm ci
+
+# Let Prisma resolve packages from the monorepo root when schema lives at /app/prisma
+RUN ln -s /app/backend/node_modules /app/node_modules
 
 COPY backend ./backend
 COPY prisma ./prisma
@@ -12,10 +16,11 @@ COPY prisma.config.ts ./prisma.config.ts
 COPY prompts ./prompts
 COPY characters ./characters
 
-# Generate Prisma client (schema lives at repo root). No live DB required.
-RUN cd backend && npx prisma generate --schema=../prisma/schema.prisma
+# Generate into backend/node_modules/.prisma via the root symlink resolution.
+RUN cd /app/backend && npx prisma generate --schema=/app/prisma/schema.prisma
 
-RUN cd backend && npm run build
+# package.json "build" also runs generate; tsc only needs client present
+RUN cd /app/backend && npx tsc
 
 FROM node:20-alpine AS runner
 
@@ -24,15 +29,18 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV REPO_ROOT=/app
 ENV HOST=0.0.0.0
-# Persist custom characters + session memory (mount a Railway volume at /data).
 ENV CUSTOM_CHARACTERS_PATH=/data/custom-characters.json
 ENV SESSIONS_PATH=/data/sessions
 ENV ACCOUNTS_PATH=/data/accounts.json
 ENV UPLOADS_PATH=/data/uploads
+# Safe default: file-backed auth. Opt into Postgres with ACCOUNTS_PROVIDER=prisma + DATABASE_URL.
+ENV ACCOUNTS_PROVIDER=json
 
 COPY --from=build /app/backend/package.json /app/backend/package-lock.json ./
 COPY --from=build /app/backend/node_modules ./node_modules
 COPY --from=build /app/backend/dist ./dist
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY prompts ./prompts
 COPY characters ./characters
 
