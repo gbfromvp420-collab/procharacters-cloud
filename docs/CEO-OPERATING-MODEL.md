@@ -33,7 +33,7 @@ Ordered by leverage for a sticky, monetizable free-path product:
 
 ## How agents work
 
-1. Rehydrate: `docs/gg-continuity-lore.md` → `docs/LIVE-STATUS.md` → this file.
+1. Rehydrate: `docs/gg-continuity-lore.md` → `docs/LIVE-STATUS.md` → `docs/TODAY-PHASE-LIST.md` (if present) → this file.
 2. Prefer small, shippable PRs that land on `main` and Railway.
 3. Typecheck / smoke when possible; don’t leave half-broken Account or Chat.
 4. End work with 1–3 next steps for the company — not a laundry list of 20.
