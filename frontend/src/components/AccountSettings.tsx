@@ -70,6 +70,7 @@ import {
   enableWebPush,
   getLocalPushSubscription,
   isPushSupported,
+  registerPushServiceWorker,
 } from "@/lib/web-push-client";
 
 export function AccountSettings() {
@@ -312,6 +313,10 @@ export function AccountSettings() {
     setPushSupported(isPushSupported());
     if (typeof Notification !== "undefined") {
       setPushPermission(Notification.permission);
+    }
+    // Warm the service worker early so Enable push / Send test is snappy
+    if (isPushSupported()) {
+      void registerPushServiceWorker();
     }
     void getLocalPushSubscription().then((sub) => setPushEnabled(!!sub));
 

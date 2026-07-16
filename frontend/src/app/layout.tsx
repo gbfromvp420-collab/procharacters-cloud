@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_SITE_URL ||
       "https://procharacters-web-production-7288.up.railway.app",
   ),
+  applicationName: "Procharacters",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
@@ -19,6 +20,10 @@ export const metadata: Metadata = {
   },
   formatDetection: {
     telephone: false,
+  },
+  // Helps iOS “Add to Home Screen” + Android install prompts for Web Push reliability
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 };
 
