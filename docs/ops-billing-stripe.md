@@ -3,28 +3,49 @@
 ## Free path
 
 Chat, gallery, resumes, and My Characters (up to free cap) work **without** Stripe.
+The Account UI always shows Day Pass / Supporter prices from `GET /api/v1/billing/catalog`;
+checkout buttons enable only when `STRIPE_SECRET_KEY` is set.
 
-## Enable Checkout
+## Enable Checkout (Railway)
 
-1. Create a Stripe account → Developers → API keys → **Secret key**  
-2. Railway `procharacters-api` variables:
+1. Stripe Dashboard → Developers → API keys  
+   - Start with **test** keys (`sk_test_…`)  
+   - Switch to **live** (`sk_live_…`) when ready to charge  
+2. Railway **procharacters-api** variables:
 
 ```
-STRIPE_SECRET_KEY=sk_live_...
+STRIPE_SECRET_KEY=sk_test_...          # or sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 MAGIC_LINK_BASE_URL=https://procharacters-web-production-7288.up.railway.app
+# optional price overrides (cents)
+# STRIPE_DAY_PASS_CENTS=499
+# STRIPE_SUPPORTER_CENTS=999
+# STRIPE_DAY_PASS_DAYS=1
+# STRIPE_SUPPORTER_DAYS=30
 ```
 
-3. Stripe Dashboard → Developers → Webhooks → Add endpoint:
+3. Stripe → Developers → Webhooks → Add endpoint:
 
 ```
 https://procharacters-api-production-0417.up.railway.app/api/v1/billing/webhook
 ```
 
-Events: `checkout.session.completed`  
-Copy signing secret → `STRIPE_WEBHOOK_SECRET`
+- Events: **`checkout.session.completed`** only (v1)  
+- Copy signing secret → `STRIPE_WEBHOOK_SECRET`  
+- Endpoint must hit the **API** service (not the Next.js web)
 
-4. Redeploy API.
+4. Redeploy **procharacters-api**.
+
+5. Confirm:
+
+```bash
+curl -sS https://procharacters-api-production-0417.up.railway.app/api/v1/billing/catalog
+# "configured": true
+curl -sS https://procharacters-api-production-0417.up.railway.app/health
+# billing.stripe: true
+```
+
+6. UI: Account → **Checkout ready** chip → Day Pass / Supporter buttons live.
 
 ## Products (no Price IDs required)
 
@@ -53,5 +74,18 @@ Checkout uses dynamic `price_data`:
 
 Account page → **Support / Day Pass** when signed in.
 
-Success return: `/account?billing=success`  
-Cancel: `/account?billing=cancel`
+- Success return: `/account?billing=success` (polls plan for a few seconds)  
+- Cancel: `/account?billing=cancel`
+
+## Test card (Stripe test mode)
+
+Use Stripe’s [test cards](https://stripe.com/docs/testing) e.g. `4242 4242 4242 4242`.
+
+## Rollback
+
+Unset `STRIPE_SECRET_KEY` → redeploy API. Free path unchanged; buttons show **Not live yet**.
+
+## Notes
+
+- Plans are stored on the **Prisma** account when `ACCOUNTS_PROVIDER=prisma` (phase 2.5 dual-write).  
+- Free chat is never gated by Stripe.

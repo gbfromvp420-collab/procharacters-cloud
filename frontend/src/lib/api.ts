@@ -842,6 +842,43 @@ export async function validateStoredAccountSession(): Promise<{
   }
 }
 
+export type BillingProductId = "day_pass" | "supporter";
+
+export interface BillingCatalogProduct {
+  id: BillingProductId;
+  name: string;
+  description: string;
+  amountCents: number;
+  currency: string;
+}
+
+export async function fetchBillingCatalog(): Promise<{
+  configured: boolean;
+  products: BillingCatalogProduct[];
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/billing/catalog`);
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Billing catalog failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    configured: boolean;
+    products: BillingCatalogProduct[];
+  }>;
+}
+
+export function formatUsdCents(cents: number, currency = "usd"): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency.toUpperCase(),
+      maximumFractionDigits: 2,
+    }).format(cents / 100);
+  } catch {
+    return `$${(cents / 100).toFixed(2)}`;
+  }
+}
+
 export async function fetchBillingStatus(accountToken: string): Promise<{
   configured: boolean;
   plan: string;
