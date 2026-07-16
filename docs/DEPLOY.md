@@ -61,31 +61,26 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 
 Do **not** set `PORT` — Railway injects it.
 
-**Accounts / Prisma (phase 2.5 dual-write):** leave `ACCOUNTS_PROVIDER` unset or `json` for production file-backed auth (current prod default).
+**Accounts / Prisma (phase 2.5):** **production cutover complete (2026-07-16).**
 
-### Postgres cutover checklist (when ready)
+| Setting | Value |
+|---------|--------|
+| `ACCOUNTS_PROVIDER` | `prisma` |
+| Postgres service | `Postgres-Hw0Y` |
+| `DATABASE_URL` | `${{Postgres-Hw0Y.DATABASE_URL}}` (internal) |
+| Volume `accounts.json` | cold backup only (not live auth path) |
 
-1. **Postgres plugin online** in Railway project `captivating-vision` (service should expose `DATABASE_URL`, `PGHOST`, etc.).
-2. On **procharacters-api**, set:
-   - `DATABASE_URL=${{Postgres-Hw0Y.DATABASE_URL}}` (or your Postgres service name)
-   - Keep `ACCOUNTS_PROVIDER=json` until import + smoke pass
-3. **Migrate** (local machine with `DATABASE_URL` public/proxy URL, or Railway one-off):
-   ```bash
-   cd backend
-   npx prisma migrate deploy --schema=../prisma/schema.prisma
-   ```
-4. **Smoke** (does not flip prod auth):
-   ```bash
-   cd backend
-   npm run accounts:smoke-prisma
-   ```
-5. **Import** existing JSON users (idempotent; skips bearer tokens — users re-login):
-   ```bash
-   # copy /data/accounts.json from the API volume first
-   npm run accounts:import-json -- --path ./accounts.json --dry-run
-   npm run accounts:import-json -- --path ./accounts.json
-   ```
-6. Flip **`ACCOUNTS_PROVIDER=prisma`** on procharacters-api and redeploy. Watch logs for `provider:"prisma"`.
+**Verified live:** register → `/accounts/me` → login → bad login 401 → delete account.  
+**Note:** bearer tokens were not imported — users re-login once after cutover. Resume codes were imported.
+
+### Postgres cutover checklist (historical / re-run on a new env)
+
+1. Postgres plugin online (`DATABASE_URL`, `PGHOST`, …).
+2. On **procharacters-api**: set `DATABASE_URL` ref; keep `ACCOUNTS_PROVIDER=json` until smoke/import pass.
+3. Migrate: `cd backend && npx prisma migrate deploy --schema=../prisma/schema.prisma` (use public proxy URL from laptop).
+4. Smoke: `npm run accounts:smoke-prisma`
+5. Import: `npm run accounts:import-json -- --path ./accounts.json` (after volume download).
+6. Flip `ACCOUNTS_PROVIDER=prisma` and confirm logs show `provider:"prisma"`.
 
 Optional persistence for custom characters:
 - Mount a **volume** at `/data` on `procharacters-api`
