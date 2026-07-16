@@ -61,7 +61,31 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 
 Do **not** set `PORT` — Railway injects it.
 
-**Accounts / Prisma (phase 2.5 dual-write):** leave `ACCOUNTS_PROVIDER` unset or `json` for production file-backed auth. To opt into full Postgres accounts (handle/passphrase, magic links, resume codes, plan grants): set `DATABASE_URL`, run `npx prisma migrate deploy`, then set `ACCOUNTS_PROVIDER=prisma`. JSON file remains the default and safe path until you deliberately flip the flag.
+**Accounts / Prisma (phase 2.5 dual-write):** leave `ACCOUNTS_PROVIDER` unset or `json` for production file-backed auth (current prod default).
+
+### Postgres cutover checklist (when ready)
+
+1. **Postgres plugin online** in Railway project `captivating-vision` (service should expose `DATABASE_URL`, `PGHOST`, etc.).
+2. On **procharacters-api**, set:
+   - `DATABASE_URL=${{Postgres-Hw0Y.DATABASE_URL}}` (or your Postgres service name)
+   - Keep `ACCOUNTS_PROVIDER=json` until import + smoke pass
+3. **Migrate** (local machine with `DATABASE_URL` public/proxy URL, or Railway one-off):
+   ```bash
+   cd backend
+   npx prisma migrate deploy --schema=../prisma/schema.prisma
+   ```
+4. **Smoke** (does not flip prod auth):
+   ```bash
+   cd backend
+   npm run accounts:smoke-prisma
+   ```
+5. **Import** existing JSON users (idempotent; skips bearer tokens — users re-login):
+   ```bash
+   # copy /data/accounts.json from the API volume first
+   npm run accounts:import-json -- --path ./accounts.json --dry-run
+   npm run accounts:import-json -- --path ./accounts.json
+   ```
+6. Flip **`ACCOUNTS_PROVIDER=prisma`** on procharacters-api and redeploy. Watch logs for `provider:"prisma"`.
 
 Optional persistence for custom characters:
 - Mount a **volume** at `/data` on `procharacters-api`
