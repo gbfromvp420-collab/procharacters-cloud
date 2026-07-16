@@ -39,6 +39,10 @@ export interface SessionModeUiState {
   phase: string;
   round: number;
   phaseRemainingSec: number;
+  /** Seconds into the current phase (optional; older servers omit). */
+  phaseElapsedSec?: number;
+  /** Full length of current phase in seconds (optional). */
+  phaseDurationSec?: number;
   coachCue: string;
 }
 

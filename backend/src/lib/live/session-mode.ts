@@ -157,14 +157,21 @@ export function formatModeForUi(state: ModeRuntimeState): {
   phase: EdgePhase;
   round: number;
   phaseRemainingSec: number;
+  phaseElapsedSec: number;
+  phaseDurationSec: number;
   coachCue: string;
 } {
+  const phaseDurationSec =
+    EDGE_PHASES.find((p) => p.phase === state.phase)?.seconds ??
+    Math.max(1, state.phaseElapsedSec + state.phaseRemainingSec);
   return {
     mode: state.mode,
     label: state.label,
     phase: state.phase,
     round: state.round,
     phaseRemainingSec: state.phaseRemainingSec,
+    phaseElapsedSec: state.phaseElapsedSec,
+    phaseDurationSec,
     coachCue: state.coachCue,
   };
 }
