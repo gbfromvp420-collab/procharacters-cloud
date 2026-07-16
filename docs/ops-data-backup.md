@@ -14,8 +14,9 @@ Mount a Railway volume at **`/data`** on `procharacters-api`. Typical layout:
 |------|----------|
 | `/data/custom-characters.json` | Runtime custom / My Characters |
 | `/data/sessions/` | Session transcripts (JSON per session) |
-| `/data/accounts.json` (or `ACCOUNTS_PATH`) | Accounts + resume codes (JSON provider; default) |
-| Postgres `UserAccount` / `AuthCredential` / `AuthToken` | Handle/passphrase auth when `ACCOUNTS_PROVIDER=prisma` |
+| `/data/accounts.json` (or `ACCOUNTS_PATH`) | **Legacy** accounts + resume codes (JSON provider). Prod cutover: live auth is Postgres. |
+| `/data/accounts.json.pre-prisma-backup-*` | Cold JSON snapshot after Prisma cutover (disaster recovery only) |
+| Postgres (`ACCOUNTS_PROVIDER=prisma`) | Live accounts, credentials, tokens, magic links, resume codes, plan fields |
 | `/data/push-subscriptions.json` | Web Push subscriptions |
 | `/data/cross-session-notes.json` | Opt-in cross-session memory notes |
 | `/data/uploads/` | Custom clip uploads (if configured) |
@@ -66,12 +67,37 @@ Store backups **off Railway** (encrypted drive, S3, etc.).
 
 ---
 
+## Accounts / Prisma cutover (production)
+
+**Status:** Live on `ACCOUNTS_PROVIDER=prisma` + Railway `Postgres-Hw0Y` (2026-07-16).
+
+| Asset | Where |
+|-------|--------|
+| Live auth | Postgres tables (`UserAccount`, `AuthCredential`, `AuthToken`, `MagicLink`, `ResumeCode`) |
+| Volume cold backup | `/data/accounts.json.pre-prisma-backup-2026-07-16` |
+| Laptop cold backup | `data/backups/accounts-2026-07-16-pre-prisma-cutover.json` (**gitignored** — keep off-repo copy) |
+
+**Disaster restore (JSON → Postgres):**
+
+```bash
+# Prefer public DATABASE_URL proxy from Railway Postgres vars
+cd backend
+npm run accounts:import-json -- --path ../data/backups/accounts-YYYY-MM-DD.json --dry-run
+npm run accounts:import-json -- --path ../data/backups/accounts-YYYY-MM-DD.json
+# Keep ACCOUNTS_PROVIDER=prisma
+```
+
+**Do not** flip back to `json` without understanding you will drop Postgres-only accounts created after cutover.
+
+---
+
 ## Restore (high level)
 
 1. Stop or pause traffic if possible (or accept brief inconsistency).  
 2. Restore files into `/data` with the same names.  
 3. Restart `procharacters-api`.  
-4. Smoke: `GET /health`, sign-in, list My Characters, open a resume code.
+4. Smoke: `GET /health`, sign-in, list My Characters, open a resume code.  
+5. For accounts on Prisma: restore DB (or re-import JSON backup) — volume JSON alone is not enough.
 
 ---
 
