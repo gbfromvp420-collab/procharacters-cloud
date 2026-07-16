@@ -19,6 +19,30 @@ function authHeaders(accountToken?: string | null): HeadersInit {
   return headers;
 }
 
+/** Thrown when a stored account bearer token is rejected (401/403). */
+export class AccountAuthError extends Error {
+  readonly status: number;
+  constructor(message: string, status = 401) {
+    super(message);
+    this.name = "AccountAuthError";
+    this.status = status;
+  }
+}
+
+export function isAccountAuthError(error: unknown): error is AccountAuthError {
+  return error instanceof AccountAuthError;
+}
+
+function throwIfAuthFailed(res: Response, text: string, fallback: string): void {
+  if (res.status === 401 || res.status === 403) {
+    throw new AccountAuthError(
+      "Session expired — sign in again to sync chats.",
+      res.status,
+    );
+  }
+  throw new Error(`${fallback} (${res.status}): ${text}`);
+}
+
 export async function createSession(
   characterId: CharacterId,
   accountToken?: string | null,
@@ -262,6 +286,7 @@ export async function logoutAccount(accountToken: string): Promise<void> {
   await fetch(`${API_BASE}/api/v1/accounts/logout`, {
     method: "POST",
     headers: authHeaders(accountToken),
+    body: "{}",
   });
 }
 
@@ -286,7 +311,7 @@ export async function listAccountSessions(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`List sessions failed (${res.status}): ${text}`);
+    throwIfAuthFailed(res, text, "List sessions failed");
   }
   const data = (await res.json()) as { sessions: AccountSessionSummary[] };
   const sessions = data.sessions ?? [];
@@ -774,7 +799,7 @@ export async function fetchAccountMe(
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(`Account me failed (${res.status}): ${text}`);
+    throwIfAuthFailed(res, text, "Account me failed");
   }
   return res.json() as Promise<{
     accountId: string;
@@ -787,6 +812,34 @@ export async function fetchAccountMe(
     planExpiresAt?: string;
     customsLimit?: number;
   }>;
+}
+
+/**
+ * Probe stored bearer token. On 401/403 clears local auth and sets re-login notice.
+ * Returns me payload when valid, null when missing/invalid.
+ */
+export async function validateStoredAccountSession(): Promise<{
+  valid: boolean;
+  handle?: string;
+  notice?: string | null;
+}> {
+  const { loadStoredAccount, invalidateStoredAccount, DEFAULT_REAUTH_NOTICE } =
+    await import("./account-storage");
+  const stored = loadStoredAccount();
+  if (!stored) {
+    return { valid: false, notice: null };
+  }
+  try {
+    const me = await fetchAccountMe(stored.token);
+    return { valid: true, handle: me.handle };
+  } catch (error) {
+    if (isAccountAuthError(error)) {
+      invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
+      return { valid: false, notice: DEFAULT_REAUTH_NOTICE };
+    }
+    // Network blip — keep local session
+    return { valid: true, handle: stored.handle };
+  }
 }
 
 export async function fetchBillingStatus(accountToken: string): Promise<{

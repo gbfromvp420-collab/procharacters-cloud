@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
-import { loadStoredAccount } from "@/lib/account-storage";
-import { listAccountSessions } from "@/lib/api";
+import {
+  DEFAULT_REAUTH_NOTICE,
+  invalidateStoredAccount,
+  loadStoredAccount,
+} from "@/lib/account-storage";
+import { isAccountAuthError, listAccountSessions } from "@/lib/api";
 import {
   buildResumeChatPath,
   getMostRecentResume,
@@ -19,6 +23,7 @@ import {
 } from "@/lib/share-links";
 import { CharacterTile } from "./GalleryTiles";
 import { ContinueBanner } from "./ContinueBanner";
+import { SessionAuthBanner } from "./SessionAuthBanner";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -86,7 +91,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           appliedSignedInDefaults.current = true;
         }
       })
-      .catch(() => {});
+      .catch((err) => {
+        if (cancelled) return;
+        if (isAccountAuthError(err)) {
+          invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
+          setSignedInHandle(null);
+        }
+      });
     return () => {
       cancelled = true;
     };
@@ -219,6 +230,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       </div>
 
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
+        <SessionAuthBanner
+          className="mb-4"
+          onInvalidated={() => setSignedInHandle(null)}
+        />
         <header className="mb-6 animate-fade-in sm:mb-10">
           <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">Live character gallery</h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">

@@ -38,9 +38,11 @@ import {
   uploadCharacterClip,
   uploadCharacterClipsBatch,
   verifyMagicLink,
+  isAccountAuthError,
   type AccountSessionSummary,
   type ImportPreview,
 } from "@/lib/api";
+import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -49,6 +51,8 @@ import {
 } from "@/lib/import-characters";
 import {
   clearStoredAccount,
+  DEFAULT_REAUTH_NOTICE,
+  invalidateStoredAccount,
   loadStoredAccount,
   saveStoredAccount,
   type StoredAccount,
@@ -276,12 +280,17 @@ export function ChatApp() {
     try {
       const [sessions, me] = await Promise.all([
         listAccountSessions(token),
-        fetchAccountMe(token).catch(() => null),
+        fetchAccountMe(token),
       ]);
       setAccountSessions(sessions);
       setAccountEmailLinked(me?.email ?? null);
-    } catch {
+    } catch (err) {
       setAccountSessions([]);
+      if (isAccountAuthError(err)) {
+        invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
+        setAccount(null);
+        setAccountEmailLinked(null);
+      }
     }
   }, []);
 
@@ -1581,6 +1590,14 @@ export function ChatApp() {
       </header>
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
+        <SessionAuthBanner
+          className="mb-3"
+          onInvalidated={() => {
+            setAccount(null);
+            setAccountSessions([]);
+            setAccountEmailLinked(null);
+          }}
+        />
         {showAccount && (
           <div className="mb-3 rounded-xl border border-brand-border bg-brand-panel/95 p-3 shadow-card backdrop-blur-sm animate-fade-in">
             {account ? (
