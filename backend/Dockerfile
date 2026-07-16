@@ -7,8 +7,13 @@ COPY backend/package.json backend/package-lock.json ./backend/
 RUN cd backend && npm ci
 
 COPY backend ./backend
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
 COPY prompts ./prompts
 COPY characters ./characters
+
+# Generate Prisma client (schema lives at repo root). No live DB required.
+RUN cd backend && npx prisma generate --schema=../prisma/schema.prisma
 
 RUN cd backend && npm run build
 

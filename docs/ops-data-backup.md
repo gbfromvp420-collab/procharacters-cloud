@@ -14,7 +14,8 @@ Mount a Railway volume at **`/data`** on `procharacters-api`. Typical layout:
 |------|----------|
 | `/data/custom-characters.json` | Runtime custom / My Characters |
 | `/data/sessions/` | Session transcripts (JSON per session) |
-| `/data/accounts.json` (or `ACCOUNTS_PATH`) | Accounts + resume codes |
+| `/data/accounts.json` (or `ACCOUNTS_PATH`) | Accounts + resume codes (JSON provider; default) |
+| Postgres `UserAccount` / `AuthCredential` / `AuthToken` | Handle/passphrase auth when `ACCOUNTS_PROVIDER=prisma` |
 | `/data/push-subscriptions.json` | Web Push subscriptions |
 | `/data/cross-session-notes.json` | Opt-in cross-session memory notes |
 | `/data/uploads/` | Custom clip uploads (if configured) |

@@ -199,12 +199,12 @@ export const createAccountRoutes = (
         if (denied) return rateLimited(reply, denied);
 
         const magic = await requestMagicLink(body.email);
-// Best-effort Prisma sync (non-blocking)
-try {
-  await upsertAccountByEmail(magic.email.trim().toLowerCase());
-} catch (e) {
-  request.log.warn({ err: e }, "Prisma upsert failed in /accounts/magic/request");
-}
+        // Best-effort Prisma email row (JSON mode); no-op-ish when already on prisma
+        try {
+          await upsertAccountByEmail(magic.email.trim().toLowerCase());
+        } catch (e) {
+          request.log.warn({ err: e }, "Prisma upsert failed in /accounts/magic/request");
+        }
         const siteBase =
           env.MAGIC_LINK_BASE_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
@@ -268,11 +268,11 @@ try {
         if (denied) return rateLimited(reply, denied);
 
         const magic = await requestMagicLink(body.email, { linkAccountId: account.id });
-try {
-  await upsertAccountByEmail(magic.email.trim().toLowerCase());
-} catch (e) {
-  request.log.warn({ err: e }, "Prisma upsert failed in /accounts/me/link-email");
-}
+        try {
+          await upsertAccountByEmail(magic.email.trim().toLowerCase());
+        } catch (e) {
+          request.log.warn({ err: e }, "Prisma upsert failed in /accounts/me/link-email");
+        }
         const siteBase =
           env.MAGIC_LINK_BASE_URL ||
           process.env.NEXT_PUBLIC_SITE_URL ||
@@ -323,13 +323,13 @@ try {
       try {
         const body = magicVerifySchema.parse(request.body ?? {});
         const account = await verifyMagicLink(body.token);
-if (account.email?.trim()) {
-  try {
-    await upsertAccountByEmail(account.email.trim().toLowerCase());
-  } catch (e) {
-    request.log.warn({ err: e }, "Prisma upsert failed in /accounts/magic/verify");
-  }
-}
+        if (account.email?.trim()) {
+          try {
+            await upsertAccountByEmail(account.email.trim().toLowerCase());
+          } catch (e) {
+            request.log.warn({ err: e }, "Prisma upsert failed in /accounts/magic/verify");
+          }
+        }
         return {
           accountId: account.id,
           handle: account.handle,
@@ -357,15 +357,15 @@ if (account.email?.trim()) {
         return reply.code(401).send({ error: "Not signed in" });
       }
       const plan = getAccountPlanSummary(account);
-let prismaUserId: string | null = null;
-if (account.email?.trim()) {
-  try {
-    const dbUser = await getAccountByEmail(account.email.trim().toLowerCase());
-    prismaUserId = dbUser?.id ?? null;
-  } catch (e) {
-    request.log.warn({ err: e }, "Prisma lookup failed in /accounts/me");
-  }
-}
+      let prismaUserId: string | null = null;
+      if (account.email?.trim()) {
+        try {
+          const dbUser = await getAccountByEmail(account.email.trim().toLowerCase());
+          prismaUserId = dbUser?.id ?? null;
+        } catch (e) {
+          request.log.warn({ err: e }, "Prisma lookup failed in /accounts/me");
+        }
+      }
       return {
         accountId: account.id,
         handle: account.handle,
