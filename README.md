@@ -1,6 +1,6 @@
 # Procharacters.cloud
 
-**KGC Ventures / Naughty Syntax**
+**GG Ventures / Naughty Syntax**
 
 ## Sync with the GG Vision — Read the Continuity Lore First
 
