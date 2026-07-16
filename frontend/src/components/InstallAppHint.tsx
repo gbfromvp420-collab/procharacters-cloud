@@ -2,6 +2,11 @@
 
 import { useEffect, useState } from "react";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 function isStandaloneDisplay(): boolean {
   if (typeof window === "undefined") return false;
   const mq = window.matchMedia("(display-mode: standalone)").matches;
@@ -14,7 +19,9 @@ function isStandaloneDisplay(): boolean {
 function isIosSafari(): boolean {
   if (typeof navigator === "undefined") return false;
   const ua = navigator.userAgent;
-  const iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const iOS =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const webkit = /WebKit/.test(ua);
   const criOS = /CriOS|FxiOS|EdgiOS/.test(ua);
   return iOS && webkit && !criOS;
@@ -22,27 +29,65 @@ function isIosSafari(): boolean {
 
 /**
  * Nudge mobile users to install / Add to Home Screen for reliable Web Push.
- * Hidden once running as installed PWA or after dismiss.
+ * On Chromium Android, uses beforeinstallprompt for a one-tap Install button.
  */
 export function InstallAppHint({ className = "" }: { className?: string }) {
   const [show, setShow] = useState(false);
   const [ios, setIos] = useState(false);
+  const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installing, setInstalling] = useState(false);
 
   useEffect(() => {
     try {
       if (isStandaloneDisplay()) return;
       if (window.sessionStorage.getItem("procharacters.installHint.dismissed") === "1") return;
+
+      const iosSafari = isIosSafari();
+      setIos(iosSafari);
       const narrow = window.matchMedia("(max-width: 768px)").matches;
-      if (!narrow && !("BeforeInstallPromptEvent" in window)) {
-        // Desktop usually fine in browser; still allow if very useful — skip
-        return;
+
+      const onBip = (e: Event) => {
+        e.preventDefault();
+        setDeferred(e as BeforeInstallPromptEvent);
+        setShow(true);
+      };
+      window.addEventListener("beforeinstallprompt", onBip);
+
+      if (narrow || iosSafari) {
+        setShow(true);
       }
-      setIos(isIosSafari());
-      setShow(narrow || isIosSafari());
+
+      return () => window.removeEventListener("beforeinstallprompt", onBip);
     } catch {
       /* ignore */
     }
   }, []);
+
+  const dismiss = () => {
+    try {
+      window.sessionStorage.setItem("procharacters.installHint.dismissed", "1");
+    } catch {
+      /* ignore */
+    }
+    setShow(false);
+  };
+
+  const onInstall = async () => {
+    if (!deferred) return;
+    setInstalling(true);
+    try {
+      await deferred.prompt();
+      const choice = await deferred.userChoice;
+      if (choice.outcome === "accepted") {
+        setDeferred(null);
+        setShow(false);
+      }
+    } catch {
+      /* user closed prompt */
+    } finally {
+      setInstalling(false);
+    }
+  };
 
   if (!show) return null;
 
@@ -52,7 +97,7 @@ export function InstallAppHint({ className = "" }: { className?: string }) {
       role="note"
     >
       <div className="flex items-start justify-between gap-2">
-        <div>
+        <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
             Install for better push
           </p>
@@ -63,6 +108,10 @@ export function InstallAppHint({ className = "" }: { className?: string }) {
                 <strong className="text-brand-text">Add to Home Screen</strong>, then open from the
                 icon. Notifications are more reliable that way.
               </>
+            ) : deferred ? (
+              <>
+                Install Procharacters on your home screen for stabler alerts when the tab is closed.
+              </>
             ) : (
               <>
                 Use your browser menu → <strong className="text-brand-text">Install app</strong> or{" "}
@@ -71,18 +120,21 @@ export function InstallAppHint({ className = "" }: { className?: string }) {
               </>
             )}
           </p>
+          {deferred && !ios && (
+            <button
+              type="button"
+              disabled={installing}
+              onClick={() => void onInstall()}
+              className="btn-primary mt-2 min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
+            >
+              {installing ? "Opening…" : "Install app"}
+            </button>
+          )}
         </div>
         <button
           type="button"
           className="shrink-0 text-[10px] text-brand-muted hover:text-brand-text"
-          onClick={() => {
-            try {
-              window.sessionStorage.setItem("procharacters.installHint.dismissed", "1");
-            } catch {
-              /* ignore */
-            }
-            setShow(false);
-          }}
+          onClick={dismiss}
         >
           Dismiss
         </button>
