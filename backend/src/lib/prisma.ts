@@ -49,3 +49,31 @@ export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
     return typeof value === "function" ? value.bind(client) : value;
   },
 });
+
+/** Lightweight health probe — does not throw; safe for /health. */
+export async function pingPrisma(timeoutMs = 800): Promise<{
+  ok: boolean;
+  latencyMs?: number;
+  error?: string;
+}> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { ok: false, error: "DATABASE_URL unset" };
+  }
+  const started = Date.now();
+  try {
+    const race = await Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("timeout")), timeoutMs);
+      }),
+    ]);
+    void race;
+    return { ok: true, latencyMs: Date.now() - started };
+  } catch (error) {
+    return {
+      ok: false,
+      latencyMs: Date.now() - started,
+      error: error instanceof Error ? error.message : "prisma_ping_failed",
+    };
+  }
+}
