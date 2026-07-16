@@ -15,6 +15,7 @@ import type { SessionManager } from "../services/session-manager.js";
 import { bearerToken } from "./accounts.js";
 import { resolveAccountToken } from "../lib/accounts/account-store.js";
 import { env } from "../config/env.js";
+import { bump } from "../lib/observability/metrics.js";
 
 const subscribeSchema = z.object({
   endpoint: z.string().url().max(2000),
@@ -59,6 +60,7 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
               ? request.headers["user-agent"].slice(0, 300)
               : undefined,
         });
+        bump("pushSubscribe");
         // Fire expiry check immediately for this account
         const siteBase =
           env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
@@ -180,6 +182,7 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
           await removePushSubscription(account.id, sub.endpoint);
         } else failed += 1;
       }
+      if (sent > 0) bump("pushTestSent", sent);
       return {
         ok: sent > 0,
         configured: true,
