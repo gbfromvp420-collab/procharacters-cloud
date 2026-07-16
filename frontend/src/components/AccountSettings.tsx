@@ -24,6 +24,7 @@ import {
   checkPushExpiry,
   emailAccountResumeLinks,
   fetchPushStatus,
+  sendTestPush,
   refreshAccountSessionResume,
   refreshAllAccountResumes,
   type ImportPreview,
@@ -85,6 +86,9 @@ export function AccountSettings() {
   const [pushServerCount, setPushServerCount] = useState(0);
   const [pushLastNotify, setPushLastNotify] = useState<string | null>(null);
   const [pushConfigured, setPushConfigured] = useState<boolean | null>(null);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | "unknown">(
+    "unknown",
+  );
 
   // Signed-out forms
   const [handle, setHandle] = useState("");
@@ -306,6 +310,9 @@ export function AccountSettings() {
 
   useEffect(() => {
     setPushSupported(isPushSupported());
+    if (typeof Notification !== "undefined") {
+      setPushPermission(Notification.permission);
+    }
     void getLocalPushSubscription().then((sub) => setPushEnabled(!!sub));
 
     const stored = loadStoredAccount();
@@ -791,9 +798,15 @@ export function AccountSettings() {
         return;
       }
       setPushEnabled(true);
+      if (typeof Notification !== "undefined") {
+        setPushPermission(Notification.permission);
+      }
       await refresh(account.token);
-      flash("Web Push on — you'll get alerts when resume codes expire soon");
+      flash("Web Push on — try Send test to prove it on this device");
     } catch (err) {
+      if (typeof Notification !== "undefined") {
+        setPushPermission(Notification.permission);
+      }
       setError(err instanceof Error ? err.message : "Could not enable push");
     } finally {
       setBusy(false);
@@ -821,7 +834,7 @@ export function AccountSettings() {
     setBusy(true);
     setError(null);
     try {
-      const result = await checkPushExpiry(account.token);
+      const result = await checkPushExpiry(account.token, { force: true });
       await refresh(account.token);
       if (!result.configured) {
         flash("Push not configured on server (VAPID keys)");
@@ -836,6 +849,24 @@ export function AccountSettings() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not check push expiry");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onTestPush = async () => {
+    if (!account) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const result = await sendTestPush(account.token);
+      if (result.sent > 0) {
+        flash(`Test alert sent to ${result.sent} device(s) — check your notification shade`);
+      } else {
+        setError("Test push did not deliver — re-enable push on this browser");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Test push failed");
     } finally {
       setBusy(false);
     }
@@ -1687,39 +1718,82 @@ export function AccountSettings() {
                 </div>
               )}
 
-              {(pushSupported || pushServerCount > 0) && (
-                <div className="mb-4 rounded-xl border border-brand-border bg-brand-surface/40 px-4 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
-                      <p className="text-sm font-medium text-brand-text">
-                        Web Push · resume expiry
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-brand-muted">
+              {(pushSupported || pushServerCount > 0 || pushConfigured !== false) && (
+                <div className="mb-4 rounded-xl border border-sky-500/25 bg-sky-500/5 px-4 py-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-medium text-brand-text">
+                          Web Push · resume expiry
+                        </p>
+                        <span
+                          className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
+                            pushEnabled
+                              ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
+                              : pushConfigured === false
+                                ? "border-brand-border text-brand-muted"
+                                : "border-sky-400/40 bg-sky-500/10 text-sky-100"
+                          }`}
+                        >
+                          {pushEnabled
+                            ? "This browser on"
+                            : pushConfigured === false
+                              ? "Server off"
+                              : "Ready to enable"}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-brand-muted">
                         {pushEnabled
-                          ? "This browser is subscribed. Alerts when codes expire within 3 days (server also scans hourly)."
-                          : "Get a system notification when resume codes are about to expire (even if this tab is closed)."}
+                          ? "Subscribed. Alerts when codes expire within 3 days (hourly server scan)."
+                          : "Get a system notification when resume codes are about to expire — even with the tab closed."}
                       </p>
                       <p className="mt-1 text-[10px] text-brand-muted">
                         Server:{" "}
                         {pushConfigured === false
                           ? "VAPID not configured"
                           : `${pushServerCount} device(s)`}
+                        {pushPermission !== "unknown"
+                          ? ` · permission ${pushPermission}`
+                          : ""}
                         {pushLastNotify
-                          ? ` · last alert ${new Date(pushLastNotify).toLocaleString()}`
-                          : " · no expiry alert sent yet"}
+                          ? ` · last expiry alert ${new Date(pushLastNotify).toLocaleString()}`
+                          : " · no expiry alert yet"}
                       </p>
+                      {!pushSupported && (
+                        <p className="mt-1 text-[10px] text-amber-100/80">
+                          This browser may not support Web Push. Try Chrome Android, or Safari iOS
+                          16.4+ after adding the site to your Home Screen.
+                        </p>
+                      )}
+                      {pushPermission === "denied" && (
+                        <p className="mt-1 text-[10px] text-rose-200/90">
+                          Notifications are blocked for this site — enable them in browser settings,
+                          then tap Enable push again.
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {pushEnabled || pushServerCount > 0 ? (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => void onCheckPushExpiry()}
-                          className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                          title="Re-check expiring codes and push if needed"
-                        >
-                          Check now
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void onTestPush()}
+                            className="shrink-0 rounded-lg bg-sky-500/20 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/30 disabled:opacity-50"
+                            title="Send a test notification now"
+                          >
+                            Send test
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => void onCheckPushExpiry()}
+                            className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
+                            title="Re-check expiring codes and push if needed"
+                          >
+                            Check expiry
+                          </button>
+                        </>
                       ) : null}
                       {pushEnabled ? (
                         <button
@@ -1728,12 +1802,12 @@ export function AccountSettings() {
                           onClick={() => void onDisablePush()}
                           className="shrink-0 rounded-lg border border-brand-border px-3 py-1.5 text-xs text-brand-muted hover:text-brand-text disabled:opacity-50"
                         >
-                          Disable push
+                          Disable
                         </button>
                       ) : pushSupported ? (
                         <button
                           type="button"
-                          disabled={busy}
+                          disabled={busy || pushConfigured === false}
                           onClick={() => void onEnablePush()}
                           className="shrink-0 rounded-lg bg-brand-accent/20 px-3 py-1.5 text-xs font-medium text-brand-accent hover:bg-brand-accent/30 disabled:opacity-50"
                         >
