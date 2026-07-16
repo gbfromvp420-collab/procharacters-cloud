@@ -2,37 +2,48 @@
 
 Hi Gary. This document is your control panel. No coding knowledge needed.
 
+## Open the live site (prod)
+
+| What | Link |
+|------|------|
+| **Home / gallery** | https://procharacters-web-production-7288.up.railway.app |
+| **Account** (sign-in, push, billing) | https://procharacters-web-production-7288.up.railway.app/account |
+| **Live chat** | https://procharacters-web-production-7288.up.railway.app/chat |
+| API health (optional) | https://procharacters-api-production-0417.up.railway.app/health |
+
+### Phone push smoke (1 minute)
+
+1. Open **Account** on your phone (Chrome Android, or Safari → **Add to Home Screen** on iPhone).  
+2. Sign in.  
+3. **Enable push** → Allow.  
+4. Tap **Send test** — you should get a system notification.  
+
+Full checklist: **[push-smoke-checklist.md](./push-smoke-checklist.md)**
+
+---
+
 ## What we're building
 
-**Procharacters.cloud** is a live uncensored NSFW AI video chat platform. Version 1 is just the **foundation** — the bones everything else will grow on.
+**Procharacters.cloud** is a live uncensored NSFW AI video chat platform (Naughty Syntax / KGC Ventures).
 
-Think of v1 like building the warehouse before opening the store. We're setting up:
+**Already live:** chat with Grok, character gallery, accounts, resume codes, Web Push, Edge Pace mode, optional Stripe hooks.
 
-- Where prompts live and how they're versioned
-- Where character models are defined and switched
-- How agents (like Grok) work consistently on our brand
-- Simple docs so you can direct development in plain English
-
-## Your two signature characters (Naughty Syntax defaults)
+## Your signature characters (Naughty Syntax defaults)
 
 | Character | Description |
 |-----------|-------------|
 | **Twink Default** | Skinny 18yo Mexican/Latino twink, sheer thong/g-string, edging/foreplay/handjob energy |
 | **Female Default** | Fit 18yo small-breast female, crotchless undies, seductive teasing energy |
+| **+ 6 Phase 4 models** | Gym, shy boy, alt punk, soft goth, athletic tease, playful brat (interim avatar footage until dedicated packs land) |
 
-These are stored in the project now as structured files. Live video chat comes in v2.
+## Live product notes (July 2026)
 
-## Live product roadmap (v2.2)
+**Accounts:** sign-in is stored in **Postgres**. If the site asks you to **sign in again**, do it once — handle/passphrase and resume codes still work.
 
-We're past foundation — chat, accounts, resumes, gallery, and Web Push are live.
+**Money (optional):** chat is free forever. Day Pass / Supporter on Account turn on after Stripe keys are set → **[ops-billing-stripe.md](./ops-billing-stripe.md)**.
 
-**Accounts (July 2026):** sign-in is stored in **Postgres** (more reliable than a single file). If the site asks you to **sign in again**, that's expected once after the upgrade — your handle/passphrase and resume codes still work.
-
-**Money (optional):** chat is free forever. Day Pass / Supporter buttons appear on Account when you’re signed in. They turn on after Stripe keys are set (see **[ops-billing-stripe.md](./ops-billing-stripe.md)**).
-
-**Next 10 phases (plain English):** see **[v2.2-roadmap.md](./v2.2-roadmap.md)**  
-**Push smoke on your phone:** see **[push-smoke-checklist.md](./push-smoke-checklist.md)**  
-**Backups / disaster restore:** see **[ops-data-backup.md](./ops-data-backup.md)**
+**Roadmap:** **[v2.2-roadmap.md](./v2.2-roadmap.md)**  
+**Backups:** **[ops-data-backup.md](./ops-data-backup.md)**
 
 ## Folder map (what's where)
 
@@ -60,20 +71,17 @@ Copy-paste one of these templates:
 **Protect scope:**
 > This is v1 only. Do not build streaming, accounts, or public UI. Flag anything that drifts.
 
-## What's NOT in v1
+## What's later (not blocking live chat)
 
-- No live video chat yet
-- No user accounts or payments
-- No public website
-- No edging/gooning real-time assistant (that's v3+)
-
-If an agent starts building any of these, tell it: **"Stop — that's out of v1 scope."**
+- Dedicated filmed avatar packs for every Phase 4 model (drop-in MP4s — see `frontend/public/avatar/packs/DROP_IN.md`)
+- Stripe live keys (optional revenue)
+- Full v3 gooning assistant / voice (preview Edge Pace is already in chat)
 
 ## Quick status check
 
 Ask any agent running the KGC Delegate skill:
 
-> Give me a v1 status report for Gary. What's built, what's next, what's blocked?
+> Give me a status report for Gary. What's live, what's next, what's blocked?
 
 ## Questions?
 
