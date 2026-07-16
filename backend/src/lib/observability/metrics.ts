@@ -13,6 +13,9 @@ export type MetricCounters = {
   chatTurns: number;
   chatLlmErrors: number;
   customCharactersCreated: number;
+  authRegister: number;
+  authLogin: number;
+  authFailures: number;
   startedAt: string;
 };
 
@@ -26,6 +29,9 @@ const counters: MetricCounters = {
   chatTurns: 0,
   chatLlmErrors: 0,
   customCharactersCreated: 0,
+  authRegister: 0,
+  authLogin: 0,
+  authFailures: 0,
   startedAt: new Date().toISOString(),
 };
 

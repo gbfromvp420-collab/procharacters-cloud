@@ -93,7 +93,8 @@ export async function buildApp() {
     {
       path: accountStore.path,
       accounts: accountStore.accounts,
-      provider: env.accountsProvider,
+      provider: accountStore.provider,
+      jsonLoaded: accountStore.jsonLoaded,
     },
     "Account store ready",
   );

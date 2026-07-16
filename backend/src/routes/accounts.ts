@@ -43,6 +43,7 @@ import {
   getAccountByEmail,
   upsertAccountByEmail,
 } from "../lib/accounts/account-repo-prisma.js";
+import { bump } from "../lib/observability/metrics.js";
 
 function rateLimited(
   reply: import("fastify").FastifyReply,
@@ -124,6 +125,7 @@ export const createAccountRoutes = (
       try {
         const body = credentialsSchema.parse(request.body ?? {});
         const account = await createAccount(body.handle, body.passphrase);
+        bump("authRegister");
         return reply.code(201).send({
           accountId: account.id,
           handle: account.handle,
@@ -135,6 +137,7 @@ export const createAccountRoutes = (
           return reply.code(400).send({ error: error.flatten() });
         }
         if (error instanceof AccountError) {
+          bump("authFailures");
           const status = error.code === "CONFLICT" ? 409 : error.code === "AUTH" ? 401 : 400;
           return reply.code(status).send({ error: error.message, code: error.code });
         }
@@ -156,6 +159,7 @@ export const createAccountRoutes = (
       try {
         const body = credentialsSchema.parse(request.body ?? {});
         const account = await loginAccount(body.handle, body.passphrase);
+        bump("authLogin");
         return {
           accountId: account.id,
           handle: account.handle,
@@ -167,6 +171,7 @@ export const createAccountRoutes = (
           return reply.code(400).send({ error: error.flatten() });
         }
         if (error instanceof AccountError) {
+          bump("authFailures");
           return reply.code(401).send({ error: error.message, code: error.code });
         }
         throw error;

@@ -159,6 +159,8 @@ function isValidEmail(email: string): boolean {
 }
 
 async function persist(): Promise<void> {
+  // Live auth is Postgres — never resurrect / rewrite legacy accounts.json.
+  if (accountsProvider() === "prisma") return;
   if (!persistPath) return;
   const payload: AccountFile = {
     version: 1,
@@ -171,7 +173,12 @@ async function persist(): Promise<void> {
   await writeFile(persistPath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
-export async function initAccountStore(path?: string): Promise<{ path: string; accounts: number }> {
+export async function initAccountStore(path?: string): Promise<{
+  path: string;
+  accounts: number;
+  provider: AccountsProvider;
+  jsonLoaded: boolean;
+}> {
   const resolved = path?.trim() || resolvePath();
   persistPath = resolved;
   accounts.clear();
@@ -181,37 +188,44 @@ export async function initAccountStore(path?: string): Promise<{ path: string; a
   resumeCodes.clear();
   magicLinks.clear();
 
-  try {
-    const raw = await readFile(resolved, "utf8");
-    const parsed = JSON.parse(raw) as AccountFile;
-    for (const account of parsed.accounts ?? []) {
-      accounts.set(account.id, account);
-      handleIndex.set(account.handle, account.id);
-      if (account.email) emailIndex.set(normalizeEmail(account.email), account.id);
-    }
-    const now = Date.now();
-    for (const token of parsed.tokens ?? []) {
-      if (new Date(token.expiresAt).getTime() > now) {
-        tokens.set(token.tokenHash, token);
+  const provider = accountsProvider();
+  let jsonLoaded = false;
+
+  // Prisma owns live auth — skip legacy JSON load (cold backups may sit beside ACCOUNTS_PATH).
+  if (provider === "json") {
+    try {
+      const raw = await readFile(resolved, "utf8");
+      const parsed = JSON.parse(raw) as AccountFile;
+      for (const account of parsed.accounts ?? []) {
+        accounts.set(account.id, account);
+        handleIndex.set(account.handle, account.id);
+        if (account.email) emailIndex.set(normalizeEmail(account.email), account.id);
       }
-    }
-    for (const code of parsed.resumeCodes ?? []) {
-      resumeCodes.set(code.code.toUpperCase(), code);
-    }
-    for (const magic of parsed.magicLinks ?? []) {
-      if (!magic.consumedAt && new Date(magic.expiresAt).getTime() > now) {
-        magicLinks.set(magic.tokenHash, magic);
+      const now = Date.now();
+      for (const token of parsed.tokens ?? []) {
+        if (new Date(token.expiresAt).getTime() > now) {
+          tokens.set(token.tokenHash, token);
+        }
       }
-    }
-  } catch (error) {
-    const err = error as NodeJS.ErrnoException;
-    if (err.code !== "ENOENT") {
-      console.error("[accounts] failed to load store:", error);
+      for (const code of parsed.resumeCodes ?? []) {
+        resumeCodes.set(code.code.toUpperCase(), code);
+      }
+      for (const magic of parsed.magicLinks ?? []) {
+        if (!magic.consumedAt && new Date(magic.expiresAt).getTime() > now) {
+          magicLinks.set(magic.tokenHash, magic);
+        }
+      }
+      jsonLoaded = true;
+    } catch (error) {
+      const err = error as NodeJS.ErrnoException;
+      if (err.code !== "ENOENT") {
+        console.error("[accounts] failed to load store:", error);
+      }
     }
   }
 
   loaded = true;
-  return { path: resolved, accounts: accounts.size };
+  return { path: resolved, accounts: accounts.size, provider, jsonLoaded };
 }
 
 async function ensureLoaded(): Promise<void> {
