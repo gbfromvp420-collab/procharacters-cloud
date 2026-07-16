@@ -5,7 +5,13 @@ on:
       target_branch:
         description: Branch to restore ChatApp on
         required: true
-        default: hotfix/restore-chatapp
+        default: main
+  # Allow one-shot restore when this workflow lands on main
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/hotfix-restore-chatapp.yml"
+      - "scripts/restore-chatapp-session-drop.patch"
 
 permissions:
   contents: write
@@ -13,39 +19,50 @@ permissions:
 jobs:
   restore:
     runs-on: ubuntu-latest
+    # Avoid infinite loop: only run if ChatApp is still PLACEHOLDER
     steps:
       - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.target_branch }}
+          ref: ${{ github.event.inputs.target_branch || 'main' }}
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Restore ChatApp from c99ce75 + session-drop patch
+      - name: Restore ChatApp from known-good base + session-drop patch
         run: |
           set -euo pipefail
-          BASE_SHA=c99ce75d8c8774e16c60455f818c9820235c9d94
-          mkdir -p frontend/src/components scripts
+          TARGET="${{ github.event.inputs.target_branch || 'main' }}"
+          # Skip if already restored
+          if grep -q 'export function ChatApp' frontend/src/components/ChatApp.tsx 2>/dev/null \
+            && ! grep -qx 'PLACEHOLDER' frontend/src/components/ChatApp.tsx 2>/dev/null; then
+            echo "ChatApp already restored — nothing to do"
+            exit 0
+          fi
+          BASE_SHA=e0986f5c4bc23c979f48960abd6628af698847f1
+          mkdir -p frontend/src/components
           git show "${BASE_SHA}:frontend/src/components/ChatApp.tsx" > frontend/src/components/ChatApp.tsx
           test -s frontend/src/components/ChatApp.tsx
           head -1 frontend/src/components/ChatApp.tsx | grep -q 'use client'
-          # Fetch patch from hotfix branch if missing on this checkout
-          if [ ! -f scripts/restore-chatapp-session-drop.patch ]; then
-            git fetch origin hotfix/restore-chatapp || true
-            git show origin/hotfix/restore-chatapp:scripts/restore-chatapp-session-drop.patch > scripts/restore-chatapp-session-drop.patch 2>/dev/null || true
-          fi
           if [ -f scripts/restore-chatapp-session-drop.patch ]; then
             git apply scripts/restore-chatapp-session-drop.patch
           fi
           grep -q 'export function ChatApp' frontend/src/components/ChatApp.tsx
+          grep -q 'SessionDropRescue' frontend/src/components/ChatApp.tsx
           test -f frontend/src/components/SessionDropRescue.tsx
-          rm -rf frontend/src/components/chatapp-parts frontend/src/components/.hotfix-restore-marker.txt
+          rm -rf frontend/src/components/chatapp-parts
           wc -c frontend/src/components/ChatApp.tsx
-          head -3 frontend/src/components/ChatApp.tsx
           git config user.name "hotfix-bot"
           git config user.email "hotfix-bot@users.noreply.github.com"
-          git add frontend/src/components/ChatApp.tsx frontend/src/components/SessionDropRescue.tsx || true
-          git add -u frontend/src/components/ 2>/dev/null || true
+          git add frontend/src/components/ChatApp.tsx
+          git add frontend/src/components/SessionDropRescue.tsx 2>/dev/null || true
+          git add -u frontend/src/components/chatapp-parts 2>/dev/null || true
+          # Drop temporary hotfix note if present
+          if [ -f docs/HOTFIX-CHATAPP-RESTORE.md ]; then
+            git rm -f docs/HOTFIX-CHATAPP-RESTORE.md || rm -f docs/HOTFIX-CHATAPP-RESTORE.md
+          fi
           git status
-          git commit -m "hotfix: restore full ChatApp.tsx + session-drop rescue (not PLACEHOLDER)" || echo "nothing to commit"
-          git push origin "HEAD:${{ inputs.target_branch }}"
+          git commit -m "hotfix: restore full ChatApp.tsx + session-drop rescue (not PLACEHOLDER)" || {
+            echo "nothing to commit"
+            exit 0
+          }
+          git push origin "HEAD:${TARGET}"

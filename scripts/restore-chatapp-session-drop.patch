@@ -1,0 +1,316 @@
+diff --git a/frontend/src/components/ChatApp.tsx b/frontend/src/components/ChatApp.tsx
+index 724e8ab..f963231 100644
+--- a/frontend/src/components/ChatApp.tsx
++++ b/frontend/src/components/ChatApp.tsx
+@@ -44,6 +44,7 @@ import {
+ } from "@/lib/api";
+ import { SessionAuthBanner } from "@/components/SessionAuthBanner";
+ import { InstallAppHint } from "@/components/InstallAppHint";
++import { SessionDropRescue } from "@/components/SessionDropRescue";
+ import { EdgePaceStrip } from "@/components/EdgePaceStrip";
+ import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
+ import {
+@@ -198,6 +199,8 @@ export function ChatApp() {
+   });
+   const [modeState, setModeState] = useState<SessionModeUiState | null>(null);
+   const [modeTick, setModeTick] = useState(0);
++  /** Unexpected WS drop while a session was live — show Rejoin rescue. */
++  const [connectionDropped, setConnectionDropped] = useState(false);
+ 
+   // Import JSON dry-run (same panel as account settings)
+   const [importDoc, setImportDoc] = useState<unknown | null>(null);
+@@ -257,10 +260,25 @@ export function ChatApp() {
+   const inputRef = useRef<HTMLTextAreaElement>(null);
+   const pendingHistoryRef = useRef<ChatMessage[] | null>(null);
+   const deepLinkHandledRef = useRef(false);
++  /** True only for deliberate closes (End, Switch, unmount) — suppresses rescue banner. */
++  const intentionalCloseRef = useRef(false);
++  const sessionIdRef = useRef<string | null>(null);
++  const statusRef = useRef<ConnectionStatus>("idle");
++  const liveCredsRef = useRef<{
++    sessionId: string;
++    wsToken: string;
++    characterId: string;
++    characterName: string | null;
++    resumeCode: string | null;
++  } | null>(null);
+ 
+   const closeSocket = useCallback((sendEnd = true) => {
+     const ws = wsRef.current;
+-    if (!ws) return;
++    if (!ws) {
++      // No onclose will fire — do not leave intentionalCloseRef stuck true.
++      intentionalCloseRef.current = false;
++      return;
++    }
+ 
+     if (sendEnd && ws.readyState === WebSocket.OPEN) {
+       ws.send(JSON.stringify({ type: "end_session" }));
+@@ -283,8 +301,10 @@ export function ChatApp() {
+     setSessionNotes(null);
+     setPriorNotes(null);
+     setModeState(null);
++    setConnectionDropped(false);
+     streamingIdRef.current = null;
+     pendingHistoryRef.current = null;
++    liveCredsRef.current = null;
+   }, []);
+ 
+   const refreshAccountSessions = useCallback(async (token: string) => {
+@@ -339,6 +359,8 @@ export function ChatApp() {
+ 
+   const endSession = useCallback(() => {
+     // End on server but keep local resume credentials (memory is persisted server-side).
++    intentionalCloseRef.current = true;
++    setConnectionDropped(false);
+     closeSocket(true);
+     if (sessionId && wsToken && (activeCharacterId || character)) {
+       rememberSession({
+@@ -370,7 +392,30 @@ export function ChatApp() {
+   }, [messages, isTyping]);
+ 
+   useEffect(() => {
+-    return () => closeSocket(false);
++    sessionIdRef.current = sessionId;
++  }, [sessionId]);
++
++  useEffect(() => {
++    statusRef.current = status;
++  }, [status]);
++
++  useEffect(() => {
++    if (sessionId && wsToken) {
++      liveCredsRef.current = {
++        sessionId,
++        wsToken,
++        characterId: activeCharacterId ?? character,
++        characterName,
++        resumeCode,
++      };
++    }
++  }, [sessionId, wsToken, activeCharacterId, character, characterName, resumeCode]);
++
++  useEffect(() => {
++    return () => {
++      intentionalCloseRef.current = true;
++      closeSocket(false);
++    };
+   }, [closeSocket]);
+ 
+   useEffect(() => {
+@@ -464,6 +509,7 @@ export function ChatApp() {
+         switch (data.type) {
+           case "session_ready": {
+             setStatus("ready");
++            setConnectionDropped(false);
+             const name = (data.characterName as string) ?? null;
+             setCharacterName(name);
+             if (data.avatarState) {
+@@ -571,10 +617,25 @@ export function ChatApp() {
+             setAvatarState(data.avatarState as AvatarState);
+             break;
+ 
+-          case "session_ended":
++          case "session_ended": {
++            // Soft end — keep credentials so user can rejoin without a dead composer.
++            const code = resumeCode ?? liveCredsRef.current?.resumeCode ?? null;
++            rememberSession({
++              sessionId: session.sessionId,
++              wsToken: session.wsToken,
++              characterId: session.characterId,
++              characterName:
++                liveCredsRef.current?.characterName ?? characterName,
++              resumeCode: code,
++            });
++            if (code || (session.sessionId && session.wsToken)) {
++              setConnectionDropped(true);
++            }
+             setStatus("ended");
++            intentionalCloseRef.current = true;
+             closeSocket(false);
+             break;
++          }
+ 
+           case "error":
+             setError((data.message as string) ?? "Unknown server error");
+@@ -587,6 +648,28 @@ export function ChatApp() {
+       };
+ 
+       ws.onerror = () => {
++        const wasLive =
++          statusRef.current === "ready" ||
++          statusRef.current === "connecting" ||
++          !!sessionIdRef.current;
++        if (wasLive) {
++          const creds = liveCredsRef.current;
++          if (creds) {
++            rememberSession({
++              sessionId: creds.sessionId,
++              wsToken: creds.wsToken,
++              characterId: creds.characterId,
++              characterName: creds.characterName,
++              resumeCode: creds.resumeCode,
++            });
++          }
++          setConnectionDropped(true);
++          setStatus("ended");
++          setSending(false);
++          setIsTyping(false);
++          setRestarting(false);
++          return;
++        }
+         setError("WebSocket connection failed");
+         setStatus("error");
+         setSending(false);
+@@ -595,16 +678,35 @@ export function ChatApp() {
+       };
+ 
+       ws.onclose = () => {
++        const intentional = intentionalCloseRef.current;
++        intentionalCloseRef.current = false;
+         wsRef.current = null;
+         setSending(false);
+         setIsTyping(false);
+-        setStatus((current) =>
+-          current === "ready" || current === "connecting" ? "ended" : current,
+-        );
+         setRestarting(false);
++        if (intentional) return;
++
++        const wasLive =
++          statusRef.current === "ready" ||
++          statusRef.current === "connecting" ||
++          !!sessionIdRef.current;
++        if (wasLive) {
++          const creds = liveCredsRef.current;
++          if (creds) {
++            rememberSession({
++              sessionId: creds.sessionId,
++              wsToken: creds.wsToken,
++              characterId: creds.characterId,
++              characterName: creds.characterName,
++              resumeCode: creds.resumeCode,
++            });
++          }
++          setConnectionDropped(true);
++          setStatus("ended");
++        }
+       };
+     },
+-    [closeSocket, rememberSession, resumeCode],
++    [characterName, closeSocket, rememberSession, resumeCode],
+   );
+ 
+   const openLiveSession = useCallback(
+@@ -1298,6 +1400,8 @@ export function ChatApp() {
+   const startNewSession = async () => {
+     setRestarting(true);
+     setError(null);
++    intentionalCloseRef.current = true;
++    setConnectionDropped(false);
+     closeSocket(true);
+     clearSessionState();
+     try {
+@@ -1309,6 +1413,68 @@ export function ChatApp() {
+     }
+   };
+ 
++  const rejoinAfterDrop = useCallback(async () => {
++    setConnectionDropped(false);
++    setError(null);
++    setRestarting(true);
++    try {
++      const code =
++        resumeCode ??
++        savedSession?.resumeCode ??
++        liveCredsRef.current?.resumeCode ??
++        null;
++      if (code) {
++        setStatus("connecting");
++        const session = await resumeByCode(code);
++        await openLiveSession(session);
++        return;
++      }
++      const stored: StoredSession | null =
++        sessionId && wsToken
++          ? {
++              sessionId,
++              wsToken,
++              characterId: activeCharacterId ?? character,
++              characterName: characterName ?? undefined,
++              resumeCode: resumeCode ?? undefined,
++              savedAt: new Date().toISOString(),
++            }
++          : savedSession ??
++            (liveCredsRef.current
++              ? {
++                  sessionId: liveCredsRef.current.sessionId,
++                  wsToken: liveCredsRef.current.wsToken,
++                  characterId: liveCredsRef.current.characterId,
++                  characterName:
++                    liveCredsRef.current.characterName ?? undefined,
++                  resumeCode: liveCredsRef.current.resumeCode ?? undefined,
++                  savedAt: new Date().toISOString(),
++                }
++              : null);
++      if (stored) {
++        await connectResumedSession(stored);
++        return;
++      }
++      throw new Error("Nothing to rejoin — start a new session");
++    } catch (err) {
++      setError(err instanceof Error ? err.message : "Rejoin failed");
++      setStatus("error");
++      setConnectionDropped(true);
++    } finally {
++      setRestarting(false);
++    }
++  }, [
++    activeCharacterId,
++    character,
++    characterName,
++    connectResumedSession,
++    openLiveSession,
++    resumeCode,
++    savedSession,
++    sessionId,
++    wsToken,
++  ]);
++
+   const buildMediaOverrides = () => {
+     const mediaOverrides: {
+       idle?: string;
+@@ -1624,6 +1790,22 @@ export function ChatApp() {
+           }}
+         />
+         <InstallAppHint className="mb-3" />
++        <SessionDropRescue
++          className="mb-3"
++          show={connectionDropped}
++          resumeCode={
++            resumeCode ??
++            savedSession?.resumeCode ??
++            liveCredsRef.current?.resumeCode ??
++            null
++          }
++          characterName={
++            characterName ?? savedSession?.characterName ?? null
++          }
++          busy={restarting}
++          onRejoin={() => void rejoinAfterDrop()}
++          onDismiss={() => setConnectionDropped(false)}
++        />
+         {showAccount && (
+           <div className="mb-3 rounded-xl border border-brand-border bg-brand-panel/95 p-3 shadow-card backdrop-blur-sm animate-fade-in">
+             {account ? (
+@@ -2635,7 +2817,9 @@ export function ChatApp() {
+                   placeholder={
+                     status === "ready"
+                       ? "Message… (Enter to send)"
+-                      : "Start a session first"
++                      : connectionDropped
++                        ? "Rejoin to keep chatting"
++                        : "Start a session first"
+                   }
+                   disabled={status !== "ready" || sending}
+                   rows={avatarCollapsed ? 3 : 2}
