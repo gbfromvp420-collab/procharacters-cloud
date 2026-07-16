@@ -446,6 +446,47 @@ export async function checkPushExpiry(
   }>;
 }
 
+/** One-shot test notification (phone smoke). */
+export async function sendTestPush(accountToken: string): Promise<{
+  ok: boolean;
+  sent: number;
+  failed?: number;
+  gone?: number;
+  devices?: number;
+  error?: string;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/accounts/me/push/test`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+    body: "{}",
+  });
+  const text = await res.text();
+  let data: {
+    ok?: boolean;
+    sent?: number;
+    failed?: number;
+    gone?: number;
+    devices?: number;
+    error?: string;
+  } = {};
+  try {
+    data = JSON.parse(text) as typeof data;
+  } catch {
+    /* ignore */
+  }
+  if (!res.ok) {
+    throw new Error(data.error || text || `Test push failed (${res.status})`);
+  }
+  return {
+    ok: data.ok === true,
+    sent: data.sent ?? 0,
+    failed: data.failed,
+    gone: data.gone,
+    devices: data.devices,
+    error: data.error,
+  };
+}
+
 /** Email all resume links to the account's linked email. */
 export async function emailAccountResumeLinks(accountToken: string): Promise<{
   ok: boolean;

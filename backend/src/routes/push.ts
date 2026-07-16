@@ -6,7 +6,11 @@ import {
   savePushSubscription,
 } from "../lib/push/push-store.js";
 import { notifyAccountResumeExpiry } from "../lib/push/expiry-notify.js";
-import { getVapidPublicKey, isWebPushConfigured } from "../lib/push/web-push-service.js";
+import {
+  getVapidPublicKey,
+  isWebPushConfigured,
+  sendWebPush,
+} from "../lib/push/web-push-service.js";
 import type { SessionManager } from "../services/session-manager.js";
 import { bearerToken } from "./accounts.js";
 import { resolveAccountToken } from "../lib/accounts/account-store.js";
@@ -127,6 +131,63 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
         force,
       });
       return { ok: true, ...result };
+    });
+
+    /**
+     * Send a one-shot test notification to all devices on this account.
+     * Used for phone smoke (Phase 1) without waiting for resume-code expiry.
+     */
+    app.post("/accounts/me/push/test", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      if (!isWebPushConfigured()) {
+        return reply.code(503).send({
+          error: "Web Push not configured (set VAPID keys)",
+          code: "PUSH_DISABLED",
+          configured: false,
+        });
+      }
+      const siteBase =
+        env.MAGIC_LINK_BASE_URL ||
+        process.env.NEXT_PUBLIC_SITE_URL ||
+        "https://procharacters-web-production-7288.up.railway.app";
+      const subs = await listPushSubscriptionsForAccount(account.id);
+      if (subs.length === 0) {
+        return reply.code(400).send({
+          error: "No push devices on this account — enable push on this browser first",
+          code: "NO_SUBSCRIPTIONS",
+          sent: 0,
+        });
+      }
+      let sent = 0;
+      let failed = 0;
+      let gone = 0;
+      for (const sub of subs) {
+        const result = await sendWebPush(
+          { endpoint: sub.endpoint, keys: sub.keys },
+          {
+            title: "Procharacters · test alert",
+            body: "Push works. You'll get similar pings when resume codes expire soon.",
+            url: `${siteBase.replace(/\/$/, "")}/account`,
+            tag: "procharacters-push-test",
+          },
+        );
+        if (result.ok) sent += 1;
+        else if (result.gone) {
+          gone += 1;
+          await removePushSubscription(account.id, sub.endpoint);
+        } else failed += 1;
+      }
+      return {
+        ok: sent > 0,
+        configured: true,
+        devices: subs.length,
+        sent,
+        failed,
+        gone,
+      };
     });
   };
 };

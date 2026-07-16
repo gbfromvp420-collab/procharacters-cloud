@@ -44,19 +44,26 @@ Expect exit 0 and `configured: true`.
 
 ## 3. Phone / browser (5 minutes)
 
-1. Open prod web on **Chrome Android** or **Safari iOS** (iOS 16.4+ PWA/home screen may be required for reliable push).
-2. Sign in (Account).
-3. Tap **Enable push** → Allow notifications.
-4. Confirm UI says push is on / subscribed.
-5. Optional force check (while signed in, from browser console on account page — or use Account after deploy if “Check now” exists):
+1. Open prod web on **Chrome Android** or **Safari iOS** (iOS 16.4+ add to **Home Screen** for reliable push).
+2. Sign in (**Account**).
+3. In **Web Push · resume expiry** panel:
+   - Tap **Enable push** → Allow notifications.
+   - Chip should read **This browser on**.
+4. Tap **Send test** — you should get a system notification within a few seconds.
+5. Tap the test notification → opens **Account**.
+6. Optional: **Check expiry** forces a resume-code expiry scan (`force=true`).  
+   Real alerts fire when a code is within 3 days (hourly cron also runs).
+7. Real expiry notification opens **the soonest-expiring chat**
+   (`/chat?resume=CODE&character=…`) when a code exists — otherwise Account.
 
-   Server will also run a background scan when `RESUME_EXPIRY_PUSH_CRON_MS` is set (default 1 hour).
+### API test (optional)
 
-6. To force a test notification without waiting for real expiry:
-   - Create a session with a resume code, or temporarily lower `RESUME_EXPIRY_PUSH_DAYS` on a staging env.
-   - Or POST `/api/v1/accounts/me/push/check-expiry` with `Authorization: Bearer <token>` after ensuring a code is within the window.
-
-7. Notification should open **the soonest-expiring chat** (`/chat?resume=CODE&character=…`) when a resume code exists — otherwise Account.
+```http
+POST /api/v1/accounts/me/push/test
+Authorization: Bearer <token>
+Content-Type: application/json
+{}
+```
 
 ---
 
