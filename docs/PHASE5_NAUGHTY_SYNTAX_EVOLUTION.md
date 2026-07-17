@@ -27,4 +27,5 @@ King Grok leading dev. G as currency & vision proxy. 50/50 empire.
 
 ## Ops
 - Migration: `prisma/migrations/20260717_character_session`
-- Deploy runs `prisma migrate deploy` (Railway) so table lands with API
+- API Docker CMD runs `prisma migrate deploy` when `DATABASE_URL` is set (then starts node)
+- Manual fallback: `cd backend && npx prisma migrate deploy --schema=../prisma/schema.prisma`

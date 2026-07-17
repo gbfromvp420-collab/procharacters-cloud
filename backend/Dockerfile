@@ -51,4 +51,6 @@ EXPOSE 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://127.0.0.1:'+(process.env.PORT||3001)+'/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
-CMD ["node", "dist/index.js"]
+# Apply pending Prisma migrations when DATABASE_URL is set (CharacterSession, auth, etc.).
+# Skip cleanly when JSON-only / no DB — app still boots.
+CMD ["sh", "-c", "if [ -n \"$DATABASE_URL\" ]; then npx prisma migrate deploy --schema=./prisma/schema.prisma; fi; exec node dist/index.js"]
