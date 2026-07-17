@@ -15,6 +15,10 @@ import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { normalizeSessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
 import { returnGreetingHint } from "../lib/memory/cross-session-dossier.js";
+import {
+  getCharacterSession,
+  priorNotesFromCharacterSession,
+} from "../lib/memory/character-session-store.js";
 import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
@@ -255,9 +259,29 @@ export class SessionManager {
 
     let priorNotes: string | undefined;
     if (input.accountId && input.useCrossSessionMemory) {
+      // File dossier is the opt-in gate; Prisma CharacterSession is durable mirror.
       const prior = await getCrossSessionNote(input.accountId, characterId);
-      if (prior?.optIn && prior.notes?.trim()) {
-        priorNotes = prior.notes.trim();
+      if (prior?.optIn) {
+        if (prior.notes?.trim()) {
+          priorNotes = prior.notes.trim();
+        }
+        const durable = await getCharacterSession(input.accountId, characterId);
+        const fromDb = priorNotesFromCharacterSession(durable);
+        if (fromDb) {
+          // Prefer longer of file vs DB (DB may include kink line)
+          if (!priorNotes || fromDb.length > priorNotes.length) {
+            priorNotes = fromDb;
+          } else if (durable?.kinkProfile?.tags?.length) {
+            // File dossier won length — still append kink prefs once if missing
+            const kinkHint = priorNotesFromCharacterSession({
+              ...durable,
+              memorySummary: null,
+            });
+            if (kinkHint && !priorNotes.includes("Learned heat prefs")) {
+              priorNotes = `${priorNotes}\n\n${kinkHint}`.slice(0, 1600);
+            }
+          }
+        }
       }
     }
 

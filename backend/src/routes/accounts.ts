@@ -949,7 +949,12 @@ export const createAccountRoutes = (
       const {
         clearCrossSessionNotes,
       } = await import("../lib/memory/cross-session-notes.js");
+      const { clearCharacterSession } = await import(
+        "../lib/memory/character-session-store.js"
+      );
       const note = await clearCrossSessionNotes(account.id, characterId, { optOut });
+      // Also wipe Postgres CharacterSession mirror (summary / kink / history)
+      await clearCharacterSession(account.id, characterId);
       return {
         characterId,
         cleared: true,

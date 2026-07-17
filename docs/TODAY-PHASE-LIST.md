@@ -27,6 +27,7 @@ Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrat
 | 9 | **Expiry urgency** — Continue banner / tiles show `expires in 2d` | ✅ |
 | 10 | **Phase 5 anti-loop + memory rehydrate** — unchained continuity, session restore scene blurb | ✅ `f4218eb` live |
 | 11 | **429 UX** on chat/account Send test — “try again in Ns” from Retry-After | ✅ |
+| 12 | **CharacterSession Prisma** — durable summary + kink + history; forget-me clears both | ✅ |
 
 ---
 
@@ -34,9 +35,8 @@ Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrat
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Wire **CharacterSession** Prisma persistence (schema stub exists; file/session memory is live) | M | Evolution layer next |
+| A | LiveKit avatar reactivity polish | M | Badge already ready |
 | B | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
-| C | LiveKit avatar reactivity polish | M | Badge already ready |
 
 ---
 

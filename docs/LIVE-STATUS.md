@@ -28,6 +28,7 @@
 | Edge Pace mode (phase strip) | ✅ |
 | “What we remember” memory strip | ✅ |
 | Phase 5 anti-loop + restore rehydrate | ✅ `f4218eb` |
+| CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
 | Send test **429 UX** (retry-after copy) | ✅ |
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |

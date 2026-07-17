@@ -16,6 +16,7 @@ import {
 } from "../lib/live/session-mode.js";
 import { saveCrossSessionNotes } from "../lib/memory/cross-session-notes.js";
 import { buildCrossSessionDossier } from "../lib/memory/cross-session-dossier.js";
+import { upsertCharacterSession } from "../lib/memory/character-session-store.js";
 import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { bump } from "../lib/observability/metrics.js";
@@ -164,15 +165,27 @@ export class ChatOrchestrator {
     // Opt-in cross-session: merge durable dossier (who they are / wants / heat)
     let priorNotesOut = memory.getRecentContext().priorNotes;
     if (session.accountId) {
+      const recent = memory.getRecentContext();
       const dossier = buildCrossSessionDossier({
-        priorDossier: memory.getRecentContext().priorNotes,
+        priorDossier: recent.priorNotes,
         sessionNotes: notes,
-        messages: memory.getRecentContext().messages,
+        messages: recent.messages,
         characterName: session.promptSnapshot.characterName,
       });
       priorNotesOut = dossier;
       void saveCrossSessionNotes(session.accountId, session.characterId, dossier, {
-        messageCountHint: memory.getRecentContext().messageCount,
+        messageCountHint: recent.messageCount,
+      }).then((saved) => {
+        // Only mirror to Postgres when file opt-in actually saved
+        if (!saved) return;
+        void upsertCharacterSession({
+          userId: session.accountId!,
+          characterId: session.characterId,
+          memorySummary: dossier,
+          messages: recent.messages,
+          messageCountHint: recent.messageCount,
+          lastSessionId: sessionId,
+        });
       });
     }
 

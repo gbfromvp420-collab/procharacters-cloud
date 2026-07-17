@@ -82,13 +82,25 @@ model ResumeCode {
   @@index([expiresAt])
 }
 
+/**
+ * Durable per-account + character memory (Phase 5 evolution).
+ * Complements file cross-session notes; written when opt-in dossier saves.
+ */
 model CharacterSession {
   id            String   @id @default(cuid())
   characterId   String
-  userId        String?
+  /** Account id (UserAccount.id) — required for durable memory. */
+  userId        String
   memorySummary String?
   kinkProfile   Json?
-  history       Json[]
+  /** Recent message slice (JSON array of MemoryMessage). */
+  history       Json     @default("[]")
+  messageCount  Int      @default(0)
+  lastSessionId String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@unique([userId, characterId])
+  @@index([characterId])
+  @@index([updatedAt])
 }
