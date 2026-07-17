@@ -349,6 +349,7 @@ export async function refreshAccountSessionResume(
       characterId: "", // filled by caller if known
       sessionId: data.sessionId,
       resumeCode: data.resumeCode,
+      resumeExpiresAt: data.resumeExpiresAt,
     });
   } catch {
     /* ignore */
@@ -552,6 +553,7 @@ export async function fetchLatestAccountSessionForCharacter(
     characterId: string;
     characterName: string;
     resumeCode?: string;
+    resumeExpiresAt?: string;
     messageCount: number;
     status: string;
     updatedAt: string;
@@ -564,6 +566,7 @@ export async function fetchLatestAccountSessionForCharacter(
         characterName: data.characterName,
         sessionId: data.sessionId,
         resumeCode: data.resumeCode,
+        resumeExpiresAt: data.resumeExpiresAt,
       });
     } catch {
       /* ignore */

@@ -1,0 +1,720 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { AvatarPanel } from "@/components/AvatarPanel";
+import { AvatarPip } from "@/components/AvatarPip";
+import { AvatarVideo } from "@/components/AvatarVideo";
+import { ClipPreview } from "@/components/ClipPreview";
+import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
+import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
+import { LiveKitBadge } from "@/components/LiveKitBadge";
+import { TypingIndicator } from "@/components/TypingIndicator";
+import {
+  claimSession,
+  createCustomCharacter,
+  createSession,
+  deleteCustomCharacter,
+  exportLiveSession,
+  fetchBaseModelPrefill,
+  fetchLiveSessionMarkdown,
+  getCrossSessionMemoryOptIn,
+  importFlashSummary,
+  importSessionDocument,
+  listAccountSessions,
+  listLiveCharacters,
+  setCrossSessionMemoryOptIn,
+  clearCrossSessionMemory,
+  fetchAccountMe,
+  linkEmailToAccount,
+  loginAccount,
+  logoutAccount,
+  previewImportDocument,
+  registerAccount,
+  requestMagicLink,
+  resumeAccountSession,
+  resumeByCode,
+  resumeSession,
+  updateCustomCharacter,
+  uploadCharacterClip,
+  uploadCharacterClipsBatch,
+  verifyMagicLink,
+  isAccountAuthError,
+  type AccountSessionSummary,
+  type ImportPreview,
+} from "@/lib/api";
+import { SessionAuthBanner } from "@/components/SessionAuthBanner";
+import { InstallAppHint } from "@/components/InstallAppHint";
+import { SessionDropRescue } from "@/components/SessionDropRescue";
+import { EdgePaceStrip } from "@/components/EdgePaceStrip";
+import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
+import {
+  collectExportCharacters,
+  partitionCharacters,
+  suggestFallbackId,
+  type ExportCharacterRef,
+} from "@/lib/import-characters";
+import {
+  clearStoredAccount,
+  DEFAULT_REAUTH_NOTICE,
+  invalidateStoredAccount,
+  loadStoredAccount,
+  saveStoredAccount,
+  type StoredAccount,
+} from "@/lib/account-storage";
+import {
+  clearStoredSession,
+  loadStoredSession,
+  saveStoredSession,
+  type StoredSession,
+} from "@/lib/session-storage";
+import {
+  buildCharacterShareUrl,
+  buildResumeCodeShareUrl,
+  canNativeShare,
+  copyText,
+  parseShareQuery,
+  replaceCharacterInUrl,
+  shareOrCopyText,
+  shareOrCopyUrl,
+  shareResultLabel,
+  shareUrlResultLabel,
+} from "@/lib/share-links";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
+import type {
+  AvatarState,
+  CharacterId,
+  ChatMessage,
+  ConnectionStatus,
+  LiveCharacterOption,
+  LiveKitJoinInfo,
+  MediaClipKey,
+  MemoryMessage,
+  SessionMode,
+  SessionModeUiState,
+} from "@/lib/types";
+
+const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
+  { id: "twink-default", displayName: "Twink Default", defaultVersion: "v1.3.1", kind: "default", featured: true },
+  { id: "female-default", displayName: "Female Default", defaultVersion: "v1.3.1", kind: "default", featured: true },
+  { id: "twink-shy-boy", displayName: "Twink Shy Boy", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
+  { id: "twink-gym", displayName: "Twink Gym", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default", featured: true },
+  { id: "twink-alt-punk", displayName: "Twink Alt Punk", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
+  { id: "female-soft-goth", displayName: "Female Soft Goth", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default", featured: true },
+  { id: "female-athletic-tease", displayName: "Female Athletic Tease", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default" },
+  { id: "female-playful-brat", displayName: "Female Playful Brat", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default", featured: true },
+];
+
+function makeId(): string {
+  return crypto.randomUUID();
+}
+
+function StatusDot({ status }: { status: ConnectionStatus }) {
+  const color =
+    status === "ready"
+      ? "bg-emerald-400"
+      : status === "connecting"
+        ? "bg-amber-400 animate-pulse"
+        : status === "error"
+          ? "bg-red-400"
+          : "bg-brand-muted";
+
+  return <span className={`inline-block h-2 w-2 rounded-full ${color}`} />;
+}
+
+export function ChatApp() {
+  const [characters, setCharacters] = useState<LiveCharacterOption[]>(FALLBACK_CHARACTERS);
+  const [character, setCharacter] = useState<CharacterId>("twink-default");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [characterName, setCharacterName] = useState<string | null>(null);
+  const [activeCharacterId, setActiveCharacterId] = useState<string | null>(null);
+  const [status, setStatus] = useState<ConnectionStatus>("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+  const [avatarState, setAvatarState] = useState<AvatarState | null>(null);
+  const [livekit, setLivekit] = useState<LiveKitJoinInfo | null>(null);
+  const [restarting, setRestarting] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [customName, setCustomName] = useState("");
+  const [customAppearance, setCustomAppearance] = useState("");
+  const [customEnergy, setCustomEnergy] = useState("");
+  const [customClothing, setCustomClothing] = useState("");
+  /** Signature base (any of 8). */
+  const [customBaseModel, setCustomBaseModel] = useState("twink-default");
+  const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
+  const [customPhrase1, setCustomPhrase1] = useState("");
+  const [customPhrase2, setCustomPhrase2] = useState("");
+  const [customPhrase3, setCustomPhrase3] = useState("");
+  const [customScene1Title, setCustomScene1Title] = useState("");
+  const [customScene1Body, setCustomScene1Body] = useState("");
+  const [customScene2Title, setCustomScene2Title] = useState("");
+  const [customScene2Body, setCustomScene2Body] = useState("");
+  const [customScene3Title, setCustomScene3Title] = useState("");
+  const [customScene3Body, setCustomScene3Body] = useState("");
+  const [mediaBase, setMediaBase] = useState("");
+  const [clipIdle, setClipIdle] = useState("");
+  const [clipTeasing, setClipTeasing] = useState("");
+  const [clipPlayful, setClipPlayful] = useState("");
+  const [clipAroused, setClipAroused] = useState("");
+  const [showMediaAdvanced, setShowMediaAdvanced] = useState(false);
+  const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
+  const [wsToken, setWsToken] = useState<string | null>(null);
+  const [resumeCode, setResumeCode] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const [account, setAccount] = useState<StoredAccount | null>(null);
+  const [showAccount, setShowAccount] = useState(false);
+  const [accountHandle, setAccountHandle] = useState("");
+  const [accountPass, setAccountPass] = useState("");
+  const [accountEmail, setAccountEmail] = useState("");
+  const [magicDevLink, setMagicDevLink] = useState<string | null>(null);
+  const [accountBusy, setAccountBusy] = useState(false);
+  const [accountSessions, setAccountSessions] = useState<AccountSessionSummary[]>([]);
+  const [accountEmailLinked, setAccountEmailLinked] = useState<string | null>(null);
+  const [resumeCodeInput, setResumeCodeInput] = useState("");
+  /** Hide avatar video/panel for more transcript space. */
+  const [avatarCollapsed, setAvatarCollapsed] = useState(false);
+  /** Floating mini player while collapsed (picture-in-picture style). */
+  const [avatarPip, setAvatarPip] = useState(true);
+  /** Phase 6: compact "what we remember" blurb. */
+  const [sessionNotes, setSessionNotes] = useState<string | null>(null);
+  /** Opt-in long-term dossier (across sessions). */
+  const [priorNotes, setPriorNotes] = useState<string | null>(null);
+  const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
+  const [crossSessionOptIn, setCrossSessionOptIn] = useState(false);
+  const [livekitRoomStatus, setLivekitRoomStatus] = useState<
+    "off" | "connecting" | "connected" | "error"
+  >("off");
+  /** Phase 10 assistant mode (persisted preference for new sessions). */
+  const [sessionMode, setSessionMode] = useState<SessionMode>(() => {
+    if (typeof window === "undefined") return "normal";
+    try {
+      const raw = window.localStorage.getItem("procharacters.sessionMode.v1");
+      return raw === "edge_pace" ? "edge_pace" : "normal";
+    } catch {
+      return "normal";
+    }
+  });
+  const [modeState, setModeState] = useState<SessionModeUiState | null>(null);
+  const [modeTick, setModeTick] = useState(0);
+  /** Unexpected WS drop while a session was live — show Rejoin rescue. */
+  const [connectionDropped, setConnectionDropped] = useState(false);
+
+  // Import JSON dry-run (same panel as account settings)
+  const [importDoc, setImportDoc] = useState<unknown | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [importMissing, setImportMissing] = useState<ExportCharacterRef[]>([]);
+  const [importCharacterMap, setImportCharacterMap] = useState<Record<string, string>>({});
+  const [importFallbackId, setImportFallbackId] = useState("twink-default");
+  const [importBusy, setImportBusy] = useState(false);
+  /** Which bulk export session to open live after confirm. */
+  const [importOpenIndex, setImportOpenIndex] = useState<number | null>(null);
+
+  const handleAvatarSync = useCallback((avatar: AvatarState) => {
+    setAvatarState(avatar);
+  }, []);
+
+  const setAvatarCollapsedPersist = useCallback((next: boolean) => {
+    setAvatarCollapsed(next);
+    try {
+      window.localStorage.setItem("pc_avatar_collapsed", next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+    // Re-show PiP when collapsing again so user always gets the mini feed
+    if (next) {
+      setAvatarPip(true);
+      try {
+        window.localStorage.setItem("pc_avatar_pip", "1");
+      } catch {
+        /* ignore */
+      }
+    }
+  }, []);
+
+  const setAvatarPipPersist = useCallback((next: boolean) => {
+    setAvatarPip(next);
+    try {
+      window.localStorage.setItem("pc_avatar_pip", next ? "1" : "0");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem("pc_avatar_collapsed");
+      if (raw === "1") setAvatarCollapsed(true);
+      const pip = window.localStorage.getItem("pc_avatar_pip");
+      if (pip === "0") setAvatarPip(false);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const wsRef = useRef<WebSocket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const streamingIdRef = useRef<string | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const pendingHistoryRef = useRef<ChatMessage[] | null>(null);
+  const deepLinkHandledRef = useRef(false);
+  /** True only for deliberate closes (End, Switch, unmount) — suppresses rescue banner. */
+  const intentionalCloseRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
+  const statusRef = useRef<ConnectionStatus>("idle");
+  const liveCredsRef = useRef<{
+    sessionId: string;
+    wsToken: string;
+    characterId: string;
+    characterName: string | null;
+    resumeCode: string | null;
+  } | null>(null);
+
+  const closeSocket = useCallback((sendEnd = true) => {
+    const ws = wsRef.current;
+    if (!ws) {
+      // No onclose will fire — do not leave intentionalCloseRef stuck true.
+      intentionalCloseRef.current = false;
+      return;
+    }
+
+    if (sendEnd && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: "end_session" }));
+    }
+    ws.close();
+    wsRef.current = null;
+  }, []);
+
+  const clearSessionState = useCallback(() => {
+    setSessionId(null);
+    setWsToken(null);
+    setResumeCode(null);
+    setCharacterName(null);
+    setActiveCharacterId(null);
+    setMessages([]);
+    setAvatarState(null);
+    setLivekit(null);
+    setSending(false);
+    setIsTyping(false);
+    setSessionNotes(null);
+    setPriorNotes(null);
+    setModeState(null);
+    setConnectionDropped(false);
+    streamingIdRef.current = null;
+    pendingHistoryRef.current = null;
+    liveCredsRef.current = null;
+  }, []);
+
+  const refreshAccountSessions = useCallback(async (token: string) => {
+    try {
+      const [sessions, me] = await Promise.all([
+        listAccountSessions(token),
+        fetchAccountMe(token),
+      ]);
+      setAccountSessions(sessions);
+      setAccountEmailLinked(me?.email ?? null);
+    } catch (err) {
+      setAccountSessions([]);
+      if (isAccountAuthError(err)) {
+        invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
+        setAccount(null);
+        setAccountEmailLinked(null);
+      }
+    }
+  }, []);
+
+  const rememberSession = useCallback(
+    (info: {
+      sessionId: string;
+      wsToken: string;
+      characterId: string;
+      characterName?: string | null;
+      resumeCode?: string | null;
+    }) => {
+      const stored: StoredSession = {
+        sessionId: info.sessionId,
+        wsToken: info.wsToken,
+        characterId: info.characterId,
+        characterName: info.characterName ?? undefined,
+        resumeCode: info.resumeCode ?? undefined,
+        savedAt: new Date().toISOString(),
+      };
+      saveStoredSession(stored);
+      setSavedSession(stored);
+      if (info.resumeCode) {
+        void import("@/lib/resume-cache").then(({ rememberLocalResume }) => {
+          rememberLocalResume({
+            characterId: info.characterId,
+            characterName: info.characterName,
+            sessionId: info.sessionId,
+            resumeCode: info.resumeCode!,
+          });
+        });
+      }
+    },
+    [],
+  );
+
+  const endSession = useCallback(() => {
+    // End on server but keep local resume credentials (memory is persisted server-side).
+    intentionalCloseRef.current = true;
+    setConnectionDropped(false);
+    closeSocket(true);
+    if (sessionId && wsToken && (activeCharacterId || character)) {
+      rememberSession({
+        sessionId,
+        wsToken,
+        characterId: activeCharacterId ?? character,
+        characterName,
+        resumeCode,
+      });
+    }
+    clearSessionState();
+    setStatus("idle");
+    setError(null);
+    setRestarting(false);
+  }, [
+    activeCharacterId,
+    character,
+    characterName,
+    clearSessionState,
+    closeSocket,
+    rememberSession,
+    resumeCode,
+    sessionId,
+    wsToken,
+  ]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, isTyping]);
+
+  useEffect(() => {
+    sessionIdRef.current = sessionId;
+  }, [sessionId]);
+
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  useEffect(() => {
+    if (sessionId && wsToken) {
+      liveCredsRef.current = {
+        sessionId,
+        wsToken,
+        characterId: activeCharacterId ?? character,
+        characterName,
+        resumeCode,
+      };
+    }
+  }, [sessionId, wsToken, activeCharacterId, character, characterName, resumeCode]);
+
+  useEffect(() => {
+    return () => {
+      intentionalCloseRef.current = true;
+      closeSocket(false);
+    };
+  }, [closeSocket]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listLiveCharacters(account?.token)
+      .then((list) => {
+        if (cancelled || list.length === 0) return;
+        setCharacters(list);
+        const query = parseShareQuery(window.location.search);
+        setCharacter((current) => {
+          if (query.characterId && list.some((c) => c.id === query.characterId)) {
+            return query.characterId!;
+          }
+          return list.some((c) => c.id === current) ? current : list[0]!.id;
+        });
+      })
+      .catch(() => {
+        /* keep fallback list */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [account?.token]);
+
+  useEffect(() => {
+    setSavedSession(loadStoredSession());
+    const storedAccount = loadStoredAccount();
+    setAccount(storedAccount);
+    if (storedAccount) {
+      void refreshAccountSessions(storedAccount.token);
+    }
+  }, [refreshAccountSessions]);
+
+  // Prefill identity/vibe/clothing from selected base model (Phase 5)
+  useEffect(() => {
+    if (!showCreate) return;
+    let cancelled = false;
+    void fetchBaseModelPrefill(customBaseModel)
+      .then((p) => {
+        if (cancelled) return;
+        setCustomBase(p.avatarBase);
+        setCustomAppearance((prev) => (prev.trim().length >= 12 ? prev : p.identityHint));
+        setCustomEnergy((prev) => (prev.trim().length >= 4 ? prev : p.vibeHint));
+        setCustomClothing((prev) => (prev.trim().length >= 2 ? prev : p.clothingHint));
+      })
+      .catch(() => {
+        /* keep manual fields */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [customBaseModel, showCreate]);
+
+  // Prefill clip editors when a custom character is selected.
+  useEffect(() => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") return;
+    setMediaBase(selected.mediaBase ?? "");
+    setClipIdle(selected.mediaOverrides?.idle ?? "");
+    setClipTeasing(selected.mediaOverrides?.teasing ?? "");
+    setClipPlayful(selected.mediaOverrides?.playful ?? "");
+    setClipAroused(selected.mediaOverrides?.aroused ?? "");
+  }, [character, characters]);
+
+  // Keep address bar shareable without private tokens after boot.
+  useEffect(() => {
+    if (status === "idle" || status === "ended" || status === "error") {
+      replaceCharacterInUrl(character);
+    }
+  }, [character, status]);
+
+  const bindWebSocket = useCallback(
+    (
+      ws: WebSocket,
+      session: { sessionId: string; characterId: string; wsToken: string },
+    ) => {
+      ws.onopen = () => {
+        setSessionId(session.sessionId);
+        setWsToken(session.wsToken);
+        setActiveCharacterId(session.characterId);
+      };
+
+      ws.onmessage = (event) => {
+        let data: { type: string; [key: string]: unknown };
+        try {
+          data = JSON.parse(event.data as string);
+        } catch {
+          return;
+        }
+
+        switch (data.type) {
+          case "session_ready": {
+            setStatus("ready");
+            setConnectionDropped(false);
+            const name = (data.characterName as string) ?? null;
+            setCharacterName(name);
+            if (data.avatarState) {
+              setAvatarState(data.avatarState as AvatarState);
+            }
+            if (data.sessionMode === "edge_pace" || data.sessionMode === "normal") {
+              setSessionMode(data.sessionMode);
+            }
+            if (data.modeState && typeof data.modeState === "object") {
+              setModeState(data.modeState as SessionModeUiState);
+              setModeTick(0);
+            }
+            if (typeof data.sessionNotes === "string" && data.sessionNotes.trim()) {
+              setSessionNotes(data.sessionNotes.trim());
+            }
+            if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
+              setPriorNotes(data.priorNotes.trim());
+            }
+            const historyFromServer = Array.isArray(data.messages)
+              ? (data.messages as MemoryMessage[]).map((m) => ({
+                  id: m.id,
+                  role: m.role as ChatMessage["role"],
+                  content: m.content,
+                }))
+              : null;
+            const history = historyFromServer?.length
+              ? historyFromServer
+              : pendingHistoryRef.current;
+            if (history?.length) {
+              setMessages(history);
+            }
+            pendingHistoryRef.current = null;
+            rememberSession({
+              sessionId: session.sessionId,
+              wsToken: session.wsToken,
+              characterId: session.characterId,
+              characterName: name,
+              resumeCode,
+            });
+            setRestarting(false);
+            inputRef.current?.focus();
+            break;
+          }
+
+          case "assistant_stream": {
+            const messageId = data.messageId as string;
+            const chunk = data.chunk as string;
+            setIsTyping(false);
+
+            if (streamingIdRef.current !== messageId) {
+              streamingIdRef.current = messageId;
+              setMessages((prev) => [
+                ...prev,
+                { id: messageId, role: "assistant", content: chunk, streaming: true },
+              ]);
+            } else {
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === messageId ? { ...msg, content: msg.content + chunk } : msg,
+                ),
+              );
+            }
+            break;
+          }
+
+          case "assistant_complete": {
+            const messageId = data.messageId as string;
+            const content = data.content as string;
+            const avatarIntent = data.avatarIntent as AvatarState | undefined;
+            const notes = data.sessionNotes as string | undefined;
+            streamingIdRef.current = null;
+            setSending(false);
+            setIsTyping(false);
+
+            if (avatarIntent) {
+              setAvatarState(avatarIntent);
+            }
+            if (notes?.trim()) {
+              setSessionNotes(notes.trim());
+            }
+            if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
+              setPriorNotes(data.priorNotes.trim());
+            }
+            if (data.modeState && typeof data.modeState === "object") {
+              setModeState(data.modeState as SessionModeUiState);
+              setModeTick(0);
+            }
+
+            setMessages((prev) => {
+              const exists = prev.some((msg) => msg.id === messageId);
+              if (exists) {
+                return prev.map((msg) =>
+                  msg.id === messageId ? { ...msg, content, streaming: false } : msg,
+                );
+              }
+              return [
+                ...prev,
+                { id: messageId, role: "assistant", content, streaming: false },
+              ];
+            });
+            break;
+          }
+
+          case "avatar_update":
+            setAvatarState(data.avatarState as AvatarState);
+            break;
+
+          case "session_ended": {
+            // Soft end — keep credentials so user can rejoin without a dead composer.
+            const code = resumeCode ?? liveCredsRef.current?.resumeCode ?? null;
+            rememberSession({
+              sessionId: session.sessionId,
+              wsToken: session.wsToken,
+              characterId: session.characterId,
+              characterName:
+                liveCredsRef.current?.characterName ?? characterName,
+              resumeCode: code,
+            });
+            if (code || (session.sessionId && session.wsToken)) {
+              setConnectionDropped(true);
+            }
+            setStatus("ended");
+            intentionalCloseRef.current = true;
+            closeSocket(false);
+            break;
+          }
+
+          case "error":
+            setError((data.message as string) ?? "Unknown server error");
+            setStatus("error");
+            setSending(false);
+            setIsTyping(false);
+            setRestarting(false);
+            break;
+        }
+      };
+
+      ws.onerror = () => {
+        const wasLive =
+          statusRef.current === "ready" ||
+          statusRef.current === "connecting" ||
+          !!sessionIdRef.current;
+        if (wasLive) {
+          const creds = liveCredsRef.current;
+          if (creds) {
+            rememberSession({
+              sessionId: creds.sessionId,
+              wsToken: creds.wsToken,
+              characterId: creds.characterId,
+              characterName: creds.characterName,
+              resumeCode: creds.resumeCode,
+            });
+          }
+          setConnectionDropped(true);
+          setStatus("ended");
+          setSending(false);
+          setIsTyping(false);
+          setRestarting(false);
+          return;
+        }
+        setError("WebSocket connection failed");
+        setStatus("error");
+        setSending(false);
+        setIsTyping(false);
+        setRestarting(false);
+      };
+
+      ws.onclose = () => {
+        const intentional = intentionalCloseRef.current;
+        intentionalCloseRef.current = false;
+        wsRef.current = null;
+        setSending(false);
+        setIsTyping(false);
+        setRestarting(false);
+        if (intentional) return;
+
+        const wasLive =
+          statusRef.current === "ready" ||
+          statusRef.current === "connecting" ||
+          !!sessionIdRef.current;
+        if (wasLive) {
+          const creds = liveCredsRef.current;
+          if (creds) {
+            rememberSession({
+              sessionId: creds.sessionId,
+              wsToken: creds.wsToken,
+              characterId: creds.characterId,
+              characterName: creds.characterName,
+              resumeCode: creds.resumeCode,
+            });
+          }
+          setConnectionDropped(true);
+          setStatus("ended");
+        }
+      };
+    },
+    [characterName, closeSocket, rememberSession, resumeCode],
+  );
+
+  const openLiveSession = useCallback(
+    async (
+      session: {
+        sessionId: string;
+        characterId: string;
+        wsToken: string;
+        wsUrl: string;
+        avatarState: AvatarState;
+        livekit?: LiveKitJoinInfo;

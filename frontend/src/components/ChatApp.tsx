@@ -332,6 +332,7 @@ export function ChatApp() {
       characterId: string;
       characterName?: string | null;
       resumeCode?: string | null;
+      resumeExpiresAt?: string | null;
     }) => {
       const stored: StoredSession = {
         sessionId: info.sessionId,
@@ -339,6 +340,7 @@ export function ChatApp() {
         characterId: info.characterId,
         characterName: info.characterName ?? undefined,
         resumeCode: info.resumeCode ?? undefined,
+        resumeExpiresAt: info.resumeExpiresAt ?? undefined,
         savedAt: new Date().toISOString(),
       };
       saveStoredSession(stored);
@@ -350,6 +352,7 @@ export function ChatApp() {
             characterName: info.characterName,
             sessionId: info.sessionId,
             resumeCode: info.resumeCode!,
+            resumeExpiresAt: info.resumeExpiresAt,
           });
         });
       }
@@ -735,6 +738,16 @@ export function ChatApp() {
       setLivekit(session.livekit ?? null);
       setWsToken(session.wsToken);
       setResumeCode(session.resumeCode ?? null);
+      if (session.resumeCode) {
+        rememberSession({
+          sessionId: session.sessionId,
+          wsToken: session.wsToken,
+          characterId: session.characterId,
+          characterName,
+          resumeCode: session.resumeCode,
+          resumeExpiresAt: session.resumeExpiresAt,
+        });
+      }
       // Sliding resume TTL: server extends on every open/resume
       if (session.resumeCode && session.resumeExpiresAt && history.length > 0) {
         const exp = Date.parse(session.resumeExpiresAt);
@@ -756,7 +769,7 @@ export function ChatApp() {
         wsToken: session.wsToken,
       });
     },
-    [bindWebSocket],
+    [bindWebSocket, characterName, rememberSession],
   );
 
   const connectSession = useCallback(

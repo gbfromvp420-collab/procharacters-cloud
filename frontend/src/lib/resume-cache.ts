@@ -15,7 +15,30 @@ export type ResumeCacheEntry = {
   resumeCode: string;
   updatedAt: string;
   source: "account" | "local";
+  /** ISO when the resume code expires (for urgency on Continue UI). */
+  resumeExpiresAt?: string;
 };
+
+/** Short urgency label for gallery / banner (e.g. "expires in 2d"). */
+export function formatResumeExpiryShort(iso?: string | null): string | null {
+  if (!iso) return null;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return null;
+  const days = Math.ceil((t - Date.now()) / (24 * 60 * 60 * 1000));
+  if (days < 0) return "expired";
+  if (days === 0) return "expires today";
+  if (days === 1) return "expires tomorrow";
+  return `expires in ${days}d`;
+}
+
+/** True when code is gone or within 2 days — style Continue as urgent. */
+export function isResumeExpiryUrgent(iso?: string | null): boolean {
+  if (!iso) return false;
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return false;
+  const days = Math.ceil((t - Date.now()) / (24 * 60 * 60 * 1000));
+  return days <= 2;
+}
 
 type CacheFile = {
   byCharacter: Record<string, ResumeCacheEntry>;
@@ -78,6 +101,7 @@ export function syncResumeCacheFromAccountSessions(
       resumeCode: s.resumeCode,
       updatedAt: nextUpdated || new Date().toISOString(),
       source: "account",
+      resumeExpiresAt: s.resumeExpiresAt || prev?.resumeExpiresAt,
     };
   }
   writeCache(file);
@@ -89,6 +113,7 @@ export function rememberLocalResume(options: {
   characterName?: string | null;
   sessionId: string;
   resumeCode: string;
+  resumeExpiresAt?: string | null;
 }): void {
   if (!options.resumeCode?.trim()) return;
   const file = readCache();
@@ -105,6 +130,9 @@ export function rememberLocalResume(options: {
   if (prev?.source === "account" && prev.resumeCode && prev.sessionId !== options.sessionId) {
     return;
   }
+  const nextExpiry =
+    options.resumeExpiresAt?.trim() ||
+    (prev?.sessionId === options.sessionId ? prev.resumeExpiresAt : undefined);
   file.byCharacter[characterId] = {
     characterId,
     characterName: options.characterName ?? prev?.characterName,
@@ -112,6 +140,7 @@ export function rememberLocalResume(options: {
     resumeCode: options.resumeCode.trim().toUpperCase(),
     updatedAt: new Date().toISOString(),
     source: prev?.source === "account" || !options.characterName ? prev?.source ?? "local" : "local",
+    resumeExpiresAt: nextExpiry,
   };
   // Prefer account source when we already had account for this character
   if (prev?.source === "account") {
@@ -148,6 +177,7 @@ export function getResumeForCharacter(characterId: string): ResumeCacheEntry | n
       resumeCode: local.resumeCode,
       updatedAt: local.savedAt,
       source: "local",
+      resumeExpiresAt: local.resumeExpiresAt,
     };
   }
   return null;
@@ -170,6 +200,7 @@ export function listResumeCacheEntries(): ResumeCacheEntry[] {
         resumeCode: local.resumeCode,
         updatedAt: local.savedAt,
         source: "local",
+        resumeExpiresAt: local.resumeExpiresAt,
       };
     } else if (
       existing.source !== "account" &&
@@ -183,6 +214,7 @@ export function listResumeCacheEntries(): ResumeCacheEntry[] {
         resumeCode: local.resumeCode,
         updatedAt: local.savedAt,
         source: "local",
+        resumeExpiresAt: local.resumeExpiresAt ?? existing.resumeExpiresAt,
       };
     }
   }
@@ -209,6 +241,7 @@ export function getMostRecentResume(): ResumeCacheEntry | null {
       resumeCode: local.resumeCode,
       updatedAt: local.savedAt,
       source: "local",
+      resumeExpiresAt: local.resumeExpiresAt,
     };
   }
   return null;

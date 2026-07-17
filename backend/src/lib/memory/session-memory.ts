@@ -110,4 +110,21 @@ export class SessionMemory {
   clear(): void {
     this.messages = [];
   }
+
+  // Naughty Syntax Unchained Extension
+  getKinkProfile() {
+    // TODO: load from character-memory store
+    return {};
+  }
+
+  updateKinkProfile(newProfile: any) {
+    // Merge into persistent store
+    console.log("[Naughty Syntax] Kink profile evolving:", newProfile);
+  }
+
+  // Bridge to our JSON persistent store
+  loadPersistentMemory(characterId: string, userId: string = "default") {
+    // TODO: import and call character-memory.js helpers here (or convert to TS)
+    console.log(`[Naughty Syntax] Loading persistent memory for ${characterId}`);
+  }
 }

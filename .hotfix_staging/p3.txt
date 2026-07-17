@@ -1,0 +1,707 @@
+                      <option value={30}>30 msgs</option>
+                      <option value={50}>50 msgs</option>
+                      <option value={80}>80 msgs</option>
+                    </select>
+                  </label>
+                  {account && (
+                    <>
+                      <label className="flex cursor-pointer items-center gap-1.5">
+                        <input
+                          type="checkbox"
+                          checked={crossSessionOptIn}
+                          onChange={(e) => {
+                            const next = e.target.checked;
+                            setCrossSessionOptIn(next);
+                            void setCrossSessionMemoryOptIn(account.token, character, next).catch(
+                              () => {
+                                /* ignore */
+                              },
+                            );
+                          }}
+                        />
+                        Remember across sessions
+                      </label>
+                      {(crossSessionOptIn || priorNotes) && (
+                        <button
+                          type="button"
+                          className="text-[11px] text-violet-200/90 underline-offset-2 hover:underline"
+                          title="Clear long-term dossier for this character"
+                          onClick={() => {
+                            void clearCrossSessionMemory(account.token, character)
+                              .then((r) => {
+                                setPriorNotes(null);
+                                if (!r.optIn) setCrossSessionOptIn(false);
+                                flashCopy("Forgot this character’s memory");
+                              })
+                              .catch(() => flashCopy("Could not clear memory"));
+                          }}
+                        >
+                          Forget me
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
+              {!sessionActive ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void startSession()}
+                    className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                  >
+                    Start
+                  </button>
+                  {savedSession && (
+                    <button
+                      type="button"
+                      onClick={() => void resumeLastSession()}
+                      className="btn-ghost min-h-0 shrink-0 border-brand-accent/50 bg-brand-accent/10 px-3 py-2 text-xs sm:text-sm"
+                      title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
+                    >
+                      Resume last
+                    </button>
+                  )}
+                  <label
+                    className={`btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
+                      importBusy ? "opacity-50" : ""
+                    }`}
+                    title="Preview then restore exported chat JSON"
+                  >
+                    {importBusy ? "…" : "Import"}
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      disabled={importBusy}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] ?? null;
+                        e.target.value = "";
+                        void importChatFromFile(f);
+                      }}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreate((v) => !v)}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                  >
+                    {showCreate ? "Close" : "Create"}
+                  </button>
+                  {characters.some((c) => c.id === character && c.kind === "custom") && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteCustom}
+                      className="btn-ghost min-h-0 shrink-0 border-red-500/40 px-3 py-2 text-xs text-red-300 sm:text-sm"
+                    >
+                      Delete
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void shareCharacterLink(false)}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                    title={
+                      canNativeShare()
+                        ? "Share character card via system sheet"
+                        : "Copy character card link"
+                    }
+                  >
+                    {canNativeShare() ? "Share card" : "Copy card"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void shareCharacterLink(true)}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                    title={
+                      canNativeShare()
+                        ? "Share autostart chat link"
+                        : "Copy autostart chat link"
+                    }
+                  >
+                    {canNativeShare() ? "Share chat" : "Copy ▶"}
+                  </button>
+                  <a
+                    href={`/character/${encodeURIComponent(character)}`}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs text-brand-muted sm:text-sm"
+                  >
+                    Card
+                  </a>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={startNewSession}
+                    disabled={status === "connecting" || restarting}
+                    className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                  >
+                    {restarting ? "…" : "Switch"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={endSession}
+                    disabled={status === "connecting" || restarting}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                  >
+                    End
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void shareCharacterLink(true)}
+                    disabled={status === "connecting" || restarting}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    title={
+                      canNativeShare()
+                        ? "Share public character link"
+                        : "Copy public character link"
+                    }
+                  >
+                    {canNativeShare() ? "Share" : "Copy link"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void sharePrivateResumeLink()}
+                    disabled={status !== "ready" || !resumeCode}
+                    className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
+                    title={
+                      canNativeShare()
+                        ? "Share resume code link"
+                        : "Copy resume code link"
+                    }
+                  >
+                    {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void exportChat("json")}
+                    disabled={!sessionId || !wsToken || messages.length === 0}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    title="Download chat history as JSON (no secrets)"
+                  >
+                    JSON
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void exportChat("md")}
+                    disabled={!sessionId || !wsToken || messages.length === 0}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    title="Download chat history as Markdown"
+                  >
+                    MD
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void shareChatMarkdown()}
+                    disabled={messages.length === 0 && !(sessionId && wsToken)}
+                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    title={
+                      canNativeShare()
+                        ? "Share Markdown via system share sheet"
+                        : "Copy Markdown transcript to clipboard"
+                    }
+                  >
+                    {canNativeShare() ? "Share MD" : "Copy MD"}
+                  </button>
+                </>
+              )}
+              </div>
+            </div>
+
+            {showCreate && !sessionActive && (
+              <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
+                <p className="text-xs text-brand-muted">
+                  <strong className="text-brand-text">My Character (v2)</strong> — private to your
+                  account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save.
+                  {!account ? " Sign in required." : " Soft cap: 10 per account."}
+                </p>
+                <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
+                  Base model
+                </label>
+                <select
+                  id="baseModel"
+                  value={customBaseModel}
+                  onChange={(e) => {
+                    setCustomBaseModel(e.target.value);
+                    // Force re-prefill by clearing soft fields when switching base
+                    setCustomAppearance("");
+                    setCustomEnergy("");
+                    setCustomClothing("");
+                  }}
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                >
+                  {characters
+                    .filter((c) => c.kind === "default")
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.displayName}
+                        {c.energyLabel ? ` — ${c.energyLabel.slice(0, 40)}` : ""}
+                      </option>
+                    ))}
+                </select>
+                <input
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  placeholder="Name (e.g. Diego)"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <textarea
+                  value={customAppearance}
+                  onChange={(e) => setCustomAppearance(e.target.value)}
+                  placeholder="Core identity / appearance lock (prefilled from base — edit me)"
+                  rows={3}
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <input
+                  value={customEnergy}
+                  onChange={(e) => setCustomEnergy(e.target.value)}
+                  placeholder="Vibe / energy (prefilled — edit me)"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <input
+                  value={customClothing}
+                  onChange={(e) => setCustomClothing(e.target.value)}
+                  placeholder="Clothing focus (sheer / crotchless — prefilled)"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                />
+                <p className="text-[11px] font-medium text-brand-muted">Key phrases (optional)</p>
+                <div className="grid gap-1.5 sm:grid-cols-3">
+                  <input
+                    value={customPhrase1}
+                    onChange={(e) => setCustomPhrase1(e.target.value)}
+                    placeholder="Phrase 1"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                  />
+                  <input
+                    value={customPhrase2}
+                    onChange={(e) => setCustomPhrase2(e.target.value)}
+                    placeholder="Phrase 2"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                  />
+                  <input
+                    value={customPhrase3}
+                    onChange={(e) => setCustomPhrase3(e.target.value)}
+                    placeholder="Phrase 3"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                  />
+                </div>
+                <p className="text-[11px] font-medium text-brand-muted">
+                  Scene examples (2–3 recommended)
+                </p>
+                {(
+                  [
+                    [customScene1Title, setCustomScene1Title, customScene1Body, setCustomScene1Body, "Scene 1"],
+                    [customScene2Title, setCustomScene2Title, customScene2Body, setCustomScene2Body, "Scene 2"],
+                    [customScene3Title, setCustomScene3Title, customScene3Body, setCustomScene3Body, "Scene 3"],
+                  ] as const
+                ).map(([title, setTitle, body, setBody, label], idx) => (
+                  <div key={label} className="grid gap-1 rounded-lg border border-brand-border/50 p-2">
+                    <input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder={`${label} title (e.g. Mirror tease)`}
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
+                    <textarea
+                      value={body}
+                      onChange={(e) => setBody(e.target.value)}
+                      placeholder={`${label} body — what happens + a line of dialogue`}
+                      rows={2}
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
+                    {idx === 0 ? null : null}
+                  </div>
+                ))}
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowMediaAdvanced((v) => !v)}
+                    className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-muted hover:border-brand-accent"
+                  >
+                    {showMediaAdvanced ? "Hide custom clips" : "Custom clips…"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCreateCustom}
+                    disabled={
+                      creating || customName.trim().length < 2 || customAppearance.trim().length < 12
+                    }
+                    className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
+                  >
+                    {creating ? "Saving…" : account ? "Save My Character" : "Sign in to save"}
+                  </button>
+                </div>
+
+                {showMediaAdvanced && (
+                  <div className="grid gap-2 rounded-lg border border-dashed border-brand-border/80 p-2">
+                    <p className="text-[11px] leading-relaxed text-brand-muted">
+                      Point at a folder of loops under the web app (e.g.{" "}
+                      <code className="text-brand-text">/avatar/packs/diego</code> with{" "}
+                      idle/teasing/playful/aroused.mp4) or paste full https URLs per emotion.
+                    </p>
+                    <input
+                      value={mediaBase}
+                      onChange={(e) => setMediaBase(e.target.value)}
+                      placeholder="Media base folder — /avatar/packs/your-name"
+                      className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                    />
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(
+                        [
+                          ["idle", clipIdle, setClipIdle],
+                          ["teasing", clipTeasing, setClipTeasing],
+                          ["playful", clipPlayful, setClipPlayful],
+                          ["aroused", clipAroused, setClipAroused],
+                        ] as const
+                      ).map(([emotion, value, setValue]) => (
+                        <div key={emotion} className="space-y-1">
+                          <ClipPreview
+                            src={
+                              value ||
+                              (mediaBase
+                                ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
+                                : `/avatar/${customBase}/${emotion}.mp4`)
+                            }
+                            label={emotion}
+                          />
+                          <input
+                            value={value}
+                            onChange={(e) => setValue(e.target.value)}
+                            placeholder={`${emotion} clip URL (optional)`}
+                            className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {!sessionActive &&
+              characters.some((c) => c.id === character && c.kind === "custom") && (
+                <div className="rounded-lg border border-brand-border/70 bg-brand-bg p-3">
+                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs text-brand-muted">
+                      Edit clips for{" "}
+                      <span className="text-brand-text">
+                        {characters.find((c) => c.id === character)?.displayName}
+                      </span>
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-brand-muted">
+                        <input
+                          type="checkbox"
+                          checked={
+                            characters.find((c) => c.id === character)?.featured === true
+                          }
+                          disabled={creating}
+                          onChange={(e) => {
+                            const selected = characters.find((c) => c.id === character);
+                            if (!selected || selected.kind !== "custom") return;
+                            void (async () => {
+                              setCreating(true);
+                              try {
+                                const updated = await updateCustomCharacter(selected.id, {
+                                  featured: e.target.checked,
+                                });
+                                setCharacters((prev) =>
+                                  prev.map((c) =>
+                                    c.id === selected.id
+                                      ? { ...c, featured: updated.featured === true }
+                                      : c,
+                                  ),
+                                );
+                                flashCopy(
+                                  e.target.checked
+                                    ? "Pinned to Featured row"
+                                    : "Removed from Featured",
+                                );
+                              } catch (err) {
+                                setError(
+                                  err instanceof Error ? err.message : "Could not update featured",
+                                );
+                              } finally {
+                                setCreating(false);
+                              }
+                            })();
+                          }}
+                        />
+                        Featured
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowMediaAdvanced((v) => !v)}
+                        className="text-xs text-brand-accent hover:underline"
+                      >
+                        {showMediaAdvanced ? "Hide" : "Edit media"}
+                      </button>
+                    </div>
+                  </div>
+                  {showMediaAdvanced && (
+                    <div className="grid gap-2">
+                      <input
+                        value={mediaBase}
+                        onChange={(e) => setMediaBase(e.target.value)}
+                        placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
+                        className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                      />
+                      <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand-accent/40 bg-brand-accent/5 px-3 py-3 text-center text-xs text-brand-muted transition hover:border-brand-accent hover:text-brand-text">
+                        <span className="font-medium text-brand-text">
+                          {creating ? "Uploading…" : "Batch upload clips"}
+                        </span>
+                        <span>
+                          Select multiple files named idle / teasing / playful / aroused
+                        </span>
+                        <input
+                          type="file"
+                          accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
+                          multiple
+                          className="hidden"
+                          disabled={creating}
+                          onChange={(e) => {
+                            const list = e.target.files;
+                            e.target.value = "";
+                            void handleBatchUpload(list);
+                          }}
+                        />
+                      </label>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {(
+                          [
+                            ["idle", clipIdle, setClipIdle],
+                            ["teasing", clipTeasing, setClipTeasing],
+                            ["playful", clipPlayful, setClipPlayful],
+                            ["aroused", clipAroused, setClipAroused],
+                          ] as const
+                        ).map(([emotion, value, setValue]) => {
+                          const selected = characters.find((c) => c.id === character);
+                          const previewSrc =
+                            value ||
+                            selected?.clips?.[emotion] ||
+                            (mediaBase
+                              ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
+                              : selected?.avatarBase
+                                ? `/avatar/${selected.avatarBase}/${emotion}.mp4`
+                                : null);
+                          return (
+                            <div key={emotion} className="space-y-1">
+                              <ClipPreview src={previewSrc} label={emotion} />
+                              <input
+                                value={value}
+                                onChange={(e) => setValue(e.target.value)}
+                                placeholder={`${emotion} URL (optional)`}
+                                className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                              />
+                              <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
+                                <span>Upload {emotion}.mp4/.webm</span>
+                                <input
+                                  type="file"
+                                  accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
+                                  className="hidden"
+                                  disabled={creating}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0] ?? null;
+                                    e.target.value = "";
+                                    void handleUploadClip(emotion, file);
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[11px] text-brand-muted">
+                        Uploads store on the API volume and update this character&apos;s clip map
+                        (max ~40MB each). Only real MP4/WebM — type + file header checked.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleSaveMediaForSelected}
+                        disabled={creating}
+                        className="justify-self-end rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                      >
+                        {creating ? "Saving…" : "Save clip pack"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+          </section>
+
+          <section
+            className={`flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
+              avatarCollapsed
+                ? "min-h-[min(70dvh,560px)] sm:min-h-[480px]"
+                : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
+            }`}
+          >
+            <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
+              <p className="text-[11px] text-brand-muted">
+                {messages.length > 0 ? `${messages.length} messages` : "Transcript"}
+                {avatarCollapsed ? " · avatar hidden" : ""}
+              </p>
+              <button
+                type="button"
+                onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
+                className="text-[11px] text-brand-accent hover:underline"
+                title={
+                  avatarCollapsed
+                    ? "Show avatar video and status"
+                    : "Hide avatar for more chat space"
+                }
+              >
+                {avatarCollapsed ? "Show avatar" : "Hide avatar"}
+              </button>
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
+              {(() => {
+                const mind = mindFingerprint(activeCharacterId ?? character);
+                if (!mind) return null;
+                return (
+                  <div
+                    className="rounded-xl border border-brand-accent/25 bg-brand-accent/5 px-3 py-2 text-[11px] leading-relaxed"
+                    role="status"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                        Mind · {mind.tag}
+                      </p>
+                      {mind.bilingual && (
+                        <span className="rounded-full border border-brand-border/80 px-2 py-0.5 text-[9px] text-brand-muted">
+                          Soft ES spice
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-brand-muted">{mind.blurb}</p>
+                  </div>
+                );
+              })()}
+              {modeState && modeState.mode === "edge_pace" && status === "ready" && (
+                <EdgePaceStrip modeState={modeState} tickOffset={modeTick} />
+              )}
+              {(status === "ready" || messages.length > 0) && (
+                <SessionMemoryStrip priorNotes={priorNotes} sessionNotes={sessionNotes} />
+              )}
+              {messages.length === 0 && !isTyping && (
+                <div className="px-2 py-12 text-center sm:py-16">
+                  <p className="text-sm text-brand-muted">
+                    {status === "ready"
+                      ? "Session live — they should greet you first. Memory saves as you go."
+                      : status === "connecting" || restarting
+                        ? "Opening live session…"
+                        : savedSession
+                          ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
+                          : "Pick a character, choose Normal or Edge Pace, then Start."}
+                  </p>
+                  {status !== "ready" && status !== "connecting" && !restarting && (
+                    <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
+                      Signature models open with a brand line. Edge Pace adds soft build → hold →
+                      almost → breathe cycles. Free path always works.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                >
+                  <div
+                    className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[80%] sm:px-4 ${
+                      msg.role === "user"
+                        ? "bg-brand-accent text-white shadow-glow-sm"
+                        : "border border-brand-border bg-brand-bg text-brand-text"
+                    }`}
+                  >
+                    <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+                    {msg.streaming && (
+                      <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-brand-accent align-middle" />
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && <TypingIndicator name={characterName} />}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
+            <div className="sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:p-4 sm:pb-4">
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => {
+                    // Phone: auto-collapse avatar on focus so keyboard + chat fit
+                    if (
+                      typeof window !== "undefined" &&
+                      window.matchMedia("(max-width: 639px)").matches &&
+                      !avatarCollapsed
+                    ) {
+                      setAvatarCollapsedPersist(true);
+                    }
+                    // Keep focused input above soft keyboard
+                    window.setTimeout(() => {
+                      inputRef.current?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "nearest",
+                      });
+                    }, 120);
+                  }}
+                  placeholder={
+                    status === "ready"
+                      ? "Message… (Enter to send)"
+                      : connectionDropped
+                        ? "Rejoin to keep chatting"
+                        : "Start a session first"
+                  }
+                  disabled={status !== "ready" || sending}
+                  rows={avatarCollapsed ? 3 : 2}
+                  enterKeyHint="send"
+                  autoComplete="off"
+                  className="field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={sendMessage}
+                  disabled={!canSend}
+                  className="btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5"
+                >
+                  Send
+                </button>
+              </div>
+            </div>
+          </section>
+          </div>
+        </div>
+
+        <footer className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-brand-border/40 py-3 text-[11px] text-brand-muted sm:text-xs">
+          <span className="inline-flex items-center gap-1.5 sm:hidden">
+            <StatusDot status={status} />
+            {statusLabel}
+          </span>
+          <span className="hidden sm:inline">Uncensored 18+ · Procharacters.cloud</span>
+          {sessionId && <span className="font-mono">#{sessionId.slice(0, 8)}</span>}
+          <span className="sm:hidden">18+ · KGC</span>
+        </footer>
+      </div>
+
+      {/* Picture-in-picture mini avatar — draggable when rail is collapsed */}
+      {avatarCollapsed && avatarPip && (
+        <AvatarPip
+          avatar={avatarState}
+          characterName={characterName}
+          characterId={activeCharacterId ?? character}
+          onExpand={() => setAvatarCollapsedPersist(false)}
+          onHide={() => setAvatarPipPersist(false)}
+        />
+      )}
+    </main>
+  );
+}

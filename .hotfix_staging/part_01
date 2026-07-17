@@ -1,0 +1,884 @@
+e, modeState?.phaseRemainingSec, modeState?.label]);
+
+  // Remember mode preference for next Start (deep-link still wins on first load)
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("procharacters.sessionMode.v1", sessionMode);
+    } catch {
+      /* ignore */
+    }
+  }, [sessionMode]);
+
+  // Load cross-session opt-in when signed in + character changes
+  useEffect(() => {
+    if (!account?.token) {
+      setCrossSessionOptIn(false);
+      return;
+    }
+    let cancelled = false;
+    void getCrossSessionMemoryOptIn(account.token, character)
+      .then((r) => {
+        if (!cancelled) setCrossSessionOptIn(r.optIn === true);
+      })
+      .catch(() => {
+        if (!cancelled) setCrossSessionOptIn(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [account?.token, character]);
+
+  const connectResumedSession = useCallback(
+    async (stored: StoredSession) => {
+      setError(null);
+      setStatus("connecting");
+      const session = await resumeSession(stored.sessionId, stored.wsToken);
+      await openLiveSession(session);
+    },
+    [openLiveSession],
+  );
+
+  const startSession = async (
+    characterId: CharacterId = character,
+    options?: { sessionMode?: SessionMode },
+  ) => {
+    clearSessionState();
+    setCharacter(characterId);
+    if (options?.sessionMode) setSessionMode(options.sessionMode);
+    replaceCharacterInUrl(characterId);
+    try {
+      await connectSession(characterId, options);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start session");
+      setStatus("error");
+      setRestarting(false);
+    }
+  };
+
+  const clearImportDraft = useCallback(() => {
+    setImportDoc(null);
+    setImportPreview(null);
+    setImportMissing([]);
+    setImportCharacterMap({});
+    setImportOpenIndex(null);
+  }, []);
+
+  const loadChatImportPreview = async (
+    document: unknown,
+    options?: { characterMap?: Record<string, string>; fallbackCharacterId?: string },
+  ) => {
+    const map =
+      options?.characterMap && Object.keys(options.characterMap).length > 0
+        ? options.characterMap
+        : undefined;
+    const preview = await previewImportDocument(document, {
+      accountToken: account?.token,
+      importAll: true,
+      characterMap: map,
+      fallbackCharacterId: options?.fallbackCharacterId,
+    });
+    setImportPreview(preview);
+    // Default open picker to first successful row (keep user pick if still valid)
+    setImportOpenIndex((prev) => {
+      const ok = preview.sessions.filter((s) => s.ok);
+      if (prev != null && ok.some((s) => s.index === prev)) return prev;
+      return ok[0]?.index ?? null;
+    });
+    return preview;
+  };
+
+  const importChatFromFile = async (file: File | null) => {
+    if (!file) return;
+    setError(null);
+    setImportBusy(true);
+    try {
+      const text = await file.text();
+      let document: unknown;
+      try {
+        document = JSON.parse(text);
+      } catch {
+        throw new Error("File is not valid JSON");
+      }
+
+      const liveIds = new Set(characters.map((c) => c.id));
+      liveIds.add("twink-default");
+      liveIds.add("female-default");
+
+      const refs = collectExportCharacters(document);
+      const { missing } = partitionCharacters(refs, liveIds);
+      const draft: Record<string, string> = {};
+      for (const m of missing) {
+        draft[m.id] = suggestFallbackId(m.name, liveIds);
+      }
+      const fb = liveIds.has("twink-default")
+        ? "twink-default"
+        : [...liveIds][0] ?? "twink-default";
+
+      setImportDoc(document);
+      setImportMissing(missing);
+      setImportCharacterMap(draft);
+      setImportFallbackId(fb);
+
+      const preview = await loadChatImportPreview(document, {
+        characterMap: Object.keys(draft).length ? draft : undefined,
+        // Always offer a safety net for chat imports when anything is missing
+        fallbackCharacterId: missing.length ? fb : undefined,
+      });
+
+      flashCopy(
+        missing.length > 0
+          ? `Preview: ${preview.willSucceed} ready · ${missing.length} need remap`
+          : `Preview: ${preview.willSucceed} chat(s), ${preview.totalMessages} msgs — confirm to open`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import preview failed");
+      clearImportDraft();
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const onRefreshChatImportPreview = async () => {
+    if (!importDoc) return;
+    setImportBusy(true);
+    setError(null);
+    try {
+      for (const m of importMissing) {
+        if (!importCharacterMap[m.id]?.trim()) {
+          setError(`Map a live character for “${m.name}”`);
+          return;
+        }
+      }
+      const preview = await loadChatImportPreview(importDoc, {
+        characterMap: Object.keys(importCharacterMap).length
+          ? importCharacterMap
+          : undefined,
+        fallbackCharacterId: importMissing.length ? importFallbackId : undefined,
+      });
+      flashCopy(
+        `Preview updated: ${preview.willSucceed} will import, ${preview.willFail} blocked`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Preview failed");
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const confirmChatImport = async () => {
+    if (!importDoc) return;
+    for (const m of importMissing) {
+      if (!importCharacterMap[m.id]?.trim()) {
+        setError(`Map a live character for “${m.name}”`);
+        return;
+      }
+    }
+    setImportBusy(true);
+    setError(null);
+    try {
+      const opts = {
+        characterMap: Object.keys(importCharacterMap).length
+          ? importCharacterMap
+          : undefined,
+        fallbackCharacterId: importMissing.length ? importFallbackId : undefined,
+      };
+      const preview = await loadChatImportPreview(importDoc, opts);
+      if (preview.willSucceed === 0) {
+        setError("Nothing would import — fix remaps");
+        setImportBusy(false);
+        return;
+      }
+
+      clearSessionState();
+      setStatus("connecting");
+      const session = await importSessionDocument(importDoc, {
+        accountToken: account?.token,
+        importAll: true,
+        characterMap: opts.characterMap,
+        fallbackCharacterId: opts.fallbackCharacterId ?? "twink-default",
+        openIndex: importOpenIndex ?? undefined,
+      });
+      clearImportDraft();
+      await openLiveSession(session);
+      const remapped =
+        !!session.imported.remappedFrom ||
+        !!session.bulk?.results.some((r) => r.ok && r.remappedFrom);
+      flashCopy(
+        `${importFlashSummary(session)}${session.imported.truncated ? " (trimmed)" : ""}${
+          remapped ? " · remapped" : ""
+        }`,
+      );
+      if (session.bulk && session.bulk.failed > 0) {
+        setError(
+          `${session.bulk.failed} chat(s) could not be restored (empty or unmapped)`,
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Import failed");
+      setStatus("error");
+      setRestarting(false);
+    } finally {
+      setImportBusy(false);
+    }
+  };
+
+  const resumeLastSession = async (storedOverride?: StoredSession) => {
+    const stored = storedOverride ?? savedSession ?? loadStoredSession();
+    if (!stored) {
+      setError("No saved session on this device");
+      return;
+    }
+    clearSessionState();
+    try {
+      await connectResumedSession(stored);
+    } catch (err) {
+      if (!storedOverride) {
+        clearStoredSession();
+        setSavedSession(null);
+      }
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not resume — start a new session",
+      );
+      setStatus("error");
+    }
+  };
+
+  // Deep-links: ?magic=  ?character=  ?resume=  or legacy ?session=&token=
+  useEffect(() => {
+    if (deepLinkHandledRef.current) return;
+    if (typeof window === "undefined") return;
+
+    const query = parseShareQuery(window.location.search);
+
+    if (query.magicToken) {
+      deepLinkHandledRef.current = true;
+      void (async () => {
+        setAccountBusy(true);
+        setError(null);
+        try {
+          const result = await verifyMagicLink(query.magicToken!);
+          const stored: StoredAccount = {
+            accountId: result.accountId,
+            handle: result.handle,
+            token: result.token,
+            expiresAt: result.expiresAt,
+            savedAt: new Date().toISOString(),
+          };
+          saveStoredAccount(stored);
+          setAccount(stored);
+          setShowAccount(true);
+          await refreshAccountSessions(stored.token);
+          flashCopy(`Signed in as @${result.handle}`);
+          replaceCharacterInUrl(null);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Magic link failed");
+          setShowAccount(true);
+        } finally {
+          setAccountBusy(false);
+        }
+      })();
+      return;
+    }
+
+    if (characters.length === 0) return;
+    if (!query.characterId && !query.resumeCode && !(query.sessionId && query.token)) return;
+
+    deepLinkHandledRef.current = true;
+
+    if (query.resumeCode) {
+      void (async () => {
+        try {
+          setStatus("connecting");
+          const session = await resumeByCode(query.resumeCode!);
+          await openLiveSession(session);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "Invalid resume code");
+          setStatus("error");
+        }
+      })();
+      return;
+    }
+
+    if (query.sessionId && query.token) {
+      const stored: StoredSession = {
+        sessionId: query.sessionId,
+        wsToken: query.token,
+        characterId: query.characterId ?? "twink-default",
+        savedAt: new Date().toISOString(),
+      };
+      void resumeLastSession(stored);
+      return;
+    }
+
+    if (query.characterId) {
+      const exists = characters.some((c) => c.id === query.characterId);
+      if (!exists) {
+        setError(
+          `Unknown character “${query.characterId}” — it may be a custom model not on this server.`,
+        );
+        return;
+      }
+      setCharacter(query.characterId);
+      // Deep-link mode=edge_pace must apply before createSession (state alone is too late).
+      if (query.sessionMode) {
+        setSessionMode(query.sessionMode);
+      }
+      if (query.autostart) {
+        void startSession(
+          query.characterId,
+          query.sessionMode ? { sessionMode: query.sessionMode } : undefined,
+        );
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- boot once when catalog ready
+  }, [characters]);
+
+  const flashCopy = (label: string) => {
+    setCopyNotice(label);
+    window.setTimeout(() => setCopyNotice(null), 2200);
+  };
+
+  const shareCharacterLink = async (autostart = false) => {
+    const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
+    const name =
+      characters.find((c) => c.id === character)?.displayName ?? characterName ?? character;
+    const result = await shareOrCopyUrl({
+      url,
+      title: `${name} · Procharacters`,
+      text: autostart
+        ? `Chat with ${name} on Procharacters.cloud`
+        : `Meet ${name} on Procharacters.cloud`,
+    });
+    const label = shareUrlResultLabel(
+      result,
+      autostart ? "Autostart link" : "Character card",
+    );
+    if (label) flashCopy(label);
+  };
+
+  const sharePrivateResumeLink = async () => {
+    if (!resumeCode) {
+      setError("Start or resume a session first — resume code not ready yet");
+      return;
+    }
+    const url = buildResumeCodeShareUrl(resumeCode, {
+      characterId: activeCharacterId ?? character,
+    });
+    const result = await shareOrCopyUrl({
+      url,
+      title: "Resume Procharacters chat",
+      text: `Continue your chat (code ${resumeCode})`,
+    });
+    const label = shareUrlResultLabel(result, `Resume ${resumeCode}`);
+    if (label) flashCopy(label);
+  };
+
+  const exportChat = async (format: "json" | "md" = "json") => {
+    if (!sessionId || !wsToken) {
+      setError("Start a session before exporting");
+      return;
+    }
+    try {
+      const result = await exportLiveSession(sessionId, wsToken, format);
+      if (format === "md") {
+        flashCopy(`Markdown → ${result.filename}`);
+      } else {
+        flashCopy(`Exported ${result.doc?.session.messageCount ?? "?"} msgs → ${result.filename}`);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Export failed");
+    }
+  };
+
+  const shareChatMarkdown = async () => {
+    const safeName = (characterName ?? character ?? "chat")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40);
+    const day = new Date().toISOString().slice(0, 10);
+    const filename = `procharacters-${safeName || "chat"}-${day}.md`;
+    const title = `Chat with ${characterName ?? character ?? "character"}`;
+
+    const deliver = async (markdown: string, kind: string) => {
+      const result = await shareOrCopyText({ title, text: markdown, filename });
+      const label = shareResultLabel(result, kind);
+      if (label) flashCopy(label);
+    };
+
+    try {
+      let markdown: string;
+      if (sessionId && wsToken) {
+        markdown = await fetchLiveSessionMarkdown(sessionId, wsToken);
+      } else if (messages.length > 0) {
+        const { buildLocalTranscriptMarkdown } = await import("@/lib/transcript-md");
+        markdown = buildLocalTranscriptMarkdown({
+          characterName: characterName ?? character,
+          characterId: activeCharacterId ?? character,
+          sessionId,
+          resumeCode,
+          messages: messages
+            .filter((m) => m.role === "user" || m.role === "assistant")
+            .map((m) => ({
+              role: m.role as "user" | "assistant",
+              content: m.content,
+            })),
+        });
+      } else {
+        setError("Nothing to share yet — start chatting first");
+        return;
+      }
+      await deliver(markdown, "Transcript");
+    } catch (err) {
+      // Fallback: build from local messages if server export fails mid-stream
+      if (messages.length > 0) {
+        try {
+          const { buildLocalTranscriptMarkdown } = await import("@/lib/transcript-md");
+          const markdown = buildLocalTranscriptMarkdown({
+            characterName: characterName ?? character,
+            characterId: activeCharacterId ?? character,
+            sessionId,
+            resumeCode,
+            messages: messages
+              .filter((m) => m.role === "user" || m.role === "assistant")
+              .map((m) => ({
+                role: m.role as "user" | "assistant",
+                content: m.content,
+              })),
+          });
+          await deliver(markdown, "Transcript");
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
+      setError(err instanceof Error ? err.message : "Share transcript failed");
+    }
+  };
+
+  const applyAccountAuth = async (result: {
+    accountId: string;
+    handle: string;
+    token: string;
+    expiresAt: string;
+  }, label: string) => {
+    const stored: StoredAccount = {
+      accountId: result.accountId,
+      handle: result.handle,
+      token: result.token,
+      expiresAt: result.expiresAt,
+      savedAt: new Date().toISOString(),
+    };
+    saveStoredAccount(stored);
+    setAccount(stored);
+    setAccountPass("");
+    setMagicDevLink(null);
+    await refreshAccountSessions(stored.token);
+    if (sessionId) {
+      try {
+        const claimed = await claimSession(stored.token, sessionId);
+        if (claimed.resumeCode) {
+          setResumeCode(claimed.resumeCode);
+          rememberSession({
+            sessionId,
+            wsToken: wsToken ?? "",
+            characterId: activeCharacterId ?? character,
+            characterName,
+            resumeCode: claimed.resumeCode,
+          });
+        }
+        // Refresh so list + resume cache pick up the claimed session
+        await refreshAccountSessions(stored.token);
+      } catch {
+        /* optional claim */
+      }
+    }
+    flashCopy(label);
+  };
+
+  const handleAccountAuth = async (mode: "login" | "register") => {
+    setAccountBusy(true);
+    setError(null);
+    try {
+      const result =
+        mode === "register"
+          ? await registerAccount(accountHandle.trim(), accountPass)
+          : await loginAccount(accountHandle.trim(), accountPass);
+      await applyAccountAuth(
+        result,
+        mode === "register" ? "Account created" : `Signed in as ${result.handle}`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Account auth failed");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleMagicRequest = async () => {
+    setAccountBusy(true);
+    setError(null);
+    setMagicDevLink(null);
+    try {
+      const result = await requestMagicLink(accountEmail.trim());
+      if (result.magicUrl) {
+        setMagicDevLink(result.magicUrl);
+        flashCopy(result.delivered ? "Email sent" : "Magic link ready (open below)");
+      } else {
+        flashCopy(result.delivered ? "Check your email" : "Request sent");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Magic link failed");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleLinkEmail = async () => {
+    if (!account) return;
+    setAccountBusy(true);
+    setError(null);
+    setMagicDevLink(null);
+    try {
+      const result = await linkEmailToAccount(account.token, accountEmail.trim());
+      if (result.magicUrl) {
+        setMagicDevLink(result.magicUrl);
+        flashCopy("Confirm email link ready");
+      } else {
+        flashCopy(result.delivered ? "Check your email to confirm" : "Link request sent");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not link email");
+    } finally {
+      setAccountBusy(false);
+    }
+  };
+
+  const handleAccountLogout = async () => {
+    if (account) {
+      try {
+        await logoutAccount(account.token);
+      } catch {
+        /* ignore */
+      }
+    }
+    clearStoredAccount();
+    setAccount(null);
+    setAccountSessions([]);
+    flashCopy("Signed out");
+  };
+
+  const handleResumeCodeSubmit = async () => {
+    const code = resumeCodeInput.trim();
+    if (code.length < 6) {
+      setError("Enter a valid resume code");
+      return;
+    }
+    clearSessionState();
+    try {
+      setStatus("connecting");
+      const session = await resumeByCode(code);
+      await openLiveSession(session);
+      setResumeCodeInput("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Resume code failed");
+      setStatus("error");
+    }
+  };
+
+  const handleAccountSessionResume = async (sessionIdToResume: string) => {
+    if (!account) return;
+    clearSessionState();
+    try {
+      setStatus("connecting");
+      const session = await resumeAccountSession(account.token, sessionIdToResume);
+      await openLiveSession(session);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not resume account session");
+      setStatus("error");
+    }
+  };
+
+  const startNewSession = async () => {
+    setRestarting(true);
+    setError(null);
+    intentionalCloseRef.current = true;
+    setConnectionDropped(false);
+    closeSocket(true);
+    clearSessionState();
+    try {
+      await connectSession(character);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start new session");
+      setStatus("error");
+      setRestarting(false);
+    }
+  };
+
+  const rejoinAfterDrop = useCallback(async () => {
+    setConnectionDropped(false);
+    setError(null);
+    setRestarting(true);
+    try {
+      const code =
+        resumeCode ??
+        savedSession?.resumeCode ??
+        liveCredsRef.current?.resumeCode ??
+        null;
+      if (code) {
+        setStatus("connecting");
+        const session = await resumeByCode(code);
+        await openLiveSession(session);
+        return;
+      }
+      const stored: StoredSession | null =
+        sessionId && wsToken
+          ? {
+              sessionId,
+              wsToken,
+              characterId: activeCharacterId ?? character,
+              characterName: characterName ?? undefined,
+              resumeCode: resumeCode ?? undefined,
+              savedAt: new Date().toISOString(),
+            }
+          : savedSession ??
+            (liveCredsRef.current
+              ? {
+                  sessionId: liveCredsRef.current.sessionId,
+                  wsToken: liveCredsRef.current.wsToken,
+                  characterId: liveCredsRef.current.characterId,
+                  characterName:
+                    liveCredsRef.current.characterName ?? undefined,
+                  resumeCode: liveCredsRef.current.resumeCode ?? undefined,
+                  savedAt: new Date().toISOString(),
+                }
+              : null);
+      if (stored) {
+        await connectResumedSession(stored);
+        return;
+      }
+      throw new Error("Nothing to rejoin — start a new session");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Rejoin failed");
+      setStatus("error");
+      setConnectionDropped(true);
+    } finally {
+      setRestarting(false);
+    }
+  }, [
+    activeCharacterId,
+    character,
+    characterName,
+    connectResumedSession,
+    openLiveSession,
+    resumeCode,
+    savedSession,
+    sessionId,
+    wsToken,
+  ]);
+
+  const buildMediaOverrides = () => {
+    const mediaOverrides: {
+      idle?: string;
+      teasing?: string;
+      playful?: string;
+      aroused?: string;
+    } = {};
+    if (clipIdle.trim()) mediaOverrides.idle = clipIdle.trim();
+    if (clipTeasing.trim()) mediaOverrides.teasing = clipTeasing.trim();
+    if (clipPlayful.trim()) mediaOverrides.playful = clipPlayful.trim();
+    if (clipAroused.trim()) mediaOverrides.aroused = clipAroused.trim();
+    return Object.keys(mediaOverrides).length > 0 ? mediaOverrides : undefined;
+  };
+
+  const handleCreateCustom = async () => {
+    if (!account?.token) {
+      setError("Sign in to save a My Character (private)");
+      setShowAccount(true);
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const keyPhrases = [customPhrase1, customPhrase2, customPhrase3]
+        .map((p) => p.trim())
+        .filter((p) => p.length >= 2);
+      const scenes = [
+        { title: customScene1Title, body: customScene1Body },
+        { title: customScene2Title, body: customScene2Body },
+        { title: customScene3Title, body: customScene3Body },
+      ]
+        .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
+        .filter((s) => s.title.length >= 2 && s.body.length >= 12);
+
+      const created = await createCustomCharacter(
+        {
+          name: customName.trim(),
+          appearance: customAppearance.trim(),
+          energy: customEnergy.trim() || undefined,
+          clothing: customClothing.trim() || undefined,
+          baseModelId: customBaseModel,
+          avatarBase: customBase,
+          audience: customBase === "female-default" ? "straight" : "gay",
+          keyPhrases: keyPhrases.length ? keyPhrases : undefined,
+          scenes: scenes.length ? scenes : undefined,
+          mediaBase: mediaBase.trim() || undefined,
+          mediaOverrides: buildMediaOverrides(),
+        },
+        account.token,
+      );
+      const option: LiveCharacterOption = {
+        id: created.id,
+        displayName: created.displayName,
+        defaultVersion: created.defaultVersion,
+        kind: "custom",
+        avatarBase: created.avatarBase,
+        energyLabel: created.energyLabel,
+        mediaBase: created.mediaBase,
+        mediaOverrides: created.mediaOverrides,
+        clips: created.clips,
+      };
+      setCharacters((prev) => {
+        if (prev.some((c) => c.id === option.id)) return prev;
+        return [...prev, option];
+      });
+      setCharacter(created.id);
+      replaceCharacterInUrl(created.id);
+      setShowCreate(false);
+      setCustomName("");
+      setCustomAppearance("");
+      setCustomEnergy("");
+      setCustomClothing("");
+      setCustomPhrase1("");
+      setCustomPhrase2("");
+      setCustomPhrase3("");
+      setCustomScene1Title("");
+      setCustomScene1Body("");
+      setCustomScene2Title("");
+      setCustomScene2Body("");
+      setCustomScene3Title("");
+      setCustomScene3Body("");
+      setMediaBase("");
+      setClipIdle("");
+      setClipTeasing("");
+      setClipPlayful("");
+      setClipAroused("");
+      setShowMediaAdvanced(false);
+      flashCopy("My Character saved (private) — ready to chat");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create My Character");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSaveMediaForSelected = async () => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character to update clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const updated = await updateCustomCharacter(selected.id, {
+        mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
+        mediaOverrides: buildMediaOverrides() ?? null,
+      });
+      setCharacters((prev) =>
+        prev.map((c) =>
+          c.id === selected.id
+            ? {
+                ...c,
+                mediaBase: updated.mediaBase,
+                mediaOverrides: updated.mediaOverrides,
+                clips: updated.clips,
+              }
+            : c,
+        ),
+      );
+      flashCopy("Clip pack updated");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update clips");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const applyClipResult = (
+    selectedId: string,
+    mediaOverrides?: { idle?: string; teasing?: string; playful?: string; aroused?: string },
+    clips?: LiveCharacterOption["clips"],
+  ) => {
+    if (mediaOverrides?.idle) setClipIdle(mediaOverrides.idle);
+    if (mediaOverrides?.teasing) setClipTeasing(mediaOverrides.teasing);
+    if (mediaOverrides?.playful) setClipPlayful(mediaOverrides.playful);
+    if (mediaOverrides?.aroused) setClipAroused(mediaOverrides.aroused);
+    setCharacters((prev) =>
+      prev.map((c) =>
+        c.id === selectedId
+          ? {
+              ...c,
+              mediaOverrides: mediaOverrides ?? c.mediaOverrides,
+              clips: clips ?? c.clips,
+            }
+          : c,
+      ),
+    );
+  };
+
+  const handleUploadClip = async (emotion: MediaClipKey, file: File | null) => {
+    if (!file) return;
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character before uploading clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const result = await uploadCharacterClip(selected.id, emotion, file);
+      applyClipResult(selected.id, result.mediaOverrides, result.clips);
+      flashCopy(`Uploaded ${emotion} clip`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleBatchUpload = async (fileList: FileList | null) => {
+    if (!fileList?.length) return;
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character before uploading clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const files = Array.from(fileList);
+      const result = await uploadCharacterClipsBatch(selected.id, files);
+      applyClipResult(selected.id, result.mediaOverrides, result.clips);
+      const n = result.uploaded.length;
+      const skip = result.skipped.length;
+      flashCopy(
+        skip > 0
+          ? `Uploaded ${n} clip(s), skipped ${skip}`
+          : `Uploaded ${n} clip(s)`,
+      );
+      if (skip > 0) {
+        setError(
+          result.skipped.map((s) => `${s.filename}: ${s.reason}`).join(" · "),
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Batch upload failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDel

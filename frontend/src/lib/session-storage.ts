@@ -7,6 +7,8 @@ export interface StoredSession {
   characterName?: string;
   /** Short resume code when available (for share links). */
   resumeCode?: string;
+  /** ISO when the resume code expires (optional; for Continue urgency). */
+  resumeExpiresAt?: string;
   savedAt: string;
 }
 

@@ -23,7 +23,8 @@ Lock the **sticky return loop + push adoption path**, make ops legible, leave co
 | 5 | **Gallery push strip** — same `PushEnableHint` on home under install tip | ✅ (this PR) |
 | 6 | **Expiry cron observability** — `pushExpiry*` counters + `lastExpiryCron` on health/metrics | ✅ (this PR) |
 | 7 | **Today’s phase list** — this doc | ✅ |
-| 8 | **Session-drop rescue** — unexpected WS end → Rejoin banner | ✅ (PR pending) |
+| 8 | **Session-drop rescue** — unexpected WS end → Rejoin banner | ✅ |
+| 9 | **Expiry urgency** — Continue banner / tiles show `expires in 2d` | ✅ (this PR) |
 
 ---
 
@@ -31,8 +32,8 @@ Lock the **sticky return loop + push adoption path**, make ops legible, leave co
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | **Session-drop rescue** — unexpected WS end → Rejoin banner | M | ✅ shipping (see Done) |
-| B | **Expiry urgency** on Continue banner / tiles (`expires in 2d`) | S | Needs `resumeExpiresAt` in resume-cache |
+| A | **Session-drop rescue** — unexpected WS end → Rejoin banner | M | ✅ done |
+| B | **Expiry urgency** on Continue banner / tiles (`expires in 2d`) | S | ✅ `resumeExpiresAt` in resume-cache + UI |
 | C | **429 UX** on chat Send test (retry-after copy) | S | Rate-limit already server-side |
 | D | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
 

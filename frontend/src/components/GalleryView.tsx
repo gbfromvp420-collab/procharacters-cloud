@@ -80,6 +80,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             resumeCode: s.resumeCode,
             updatedAt: s.updatedAt || s.createdAt,
             source: "account",
+            resumeExpiresAt: s.resumeExpiresAt,
           };
         }
         for (const c of characters) {

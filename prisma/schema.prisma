@@ -81,3 +81,14 @@ model ResumeCode {
   @@index([accountId])
   @@index([expiresAt])
 }
+
+model CharacterSession {
+  id            String   @id @default(cuid())
+  characterId   String
+  userId        String?
+  memorySummary String?
+  kinkProfile   Json?
+  history       Json[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

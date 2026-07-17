@@ -3,7 +3,12 @@
 import Link from "next/link";
 import type { CharacterCard } from "@/lib/character-card";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
-import { buildResumeChatPath, type ResumeCacheEntry } from "@/lib/resume-cache";
+import {
+  buildResumeChatPath,
+  formatResumeExpiryShort,
+  isResumeExpiryUrgent,
+  type ResumeCacheEntry,
+} from "@/lib/resume-cache";
 import { canNativeShare } from "@/lib/share-links";
 
 export function posterUrl(card: CharacterCard): string {
@@ -28,6 +33,8 @@ export function CharacterTile({
   const poster = posterUrl(card);
   const skin = resolvePresenceSkin(undefined, card.id);
   const visual = presenceVisual(skin);
+  const expiryLabel = formatResumeExpiryShort(resume?.resumeExpiresAt);
+  const urgent = isResumeExpiryUrgent(resume?.resumeExpiresAt);
   return (
     <article
       className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
@@ -50,13 +57,28 @@ export function CharacterTile({
           aria-hidden
         />
         {resume?.resumeCode && (
-          <div className="absolute right-2 top-2 z-10">
+          <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
             <span
-              className="rounded-full border border-amber-400/50 bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide text-amber-200 backdrop-blur"
+              className={`rounded-full border bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
+                urgent
+                  ? "border-rose-400/60 text-rose-100"
+                  : "border-amber-400/50 text-amber-200"
+              }`}
               title={resume.source === "account" ? "Saved chat (account)" : "Saved chat on this device"}
             >
               {resume.resumeCode}
             </span>
+            {expiryLabel && (
+              <span
+                className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
+                  urgent
+                    ? "border-rose-400/50 bg-rose-950/80 text-rose-100"
+                    : "border-amber-400/35 bg-black/70 text-amber-100/90"
+                }`}
+              >
+                {expiryLabel}
+              </span>
+            )}
           </div>
         )}
         <div className="absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
@@ -113,8 +135,8 @@ export function CharacterTile({
             <>
               <Link
                 href={buildResumeChatPath(resume)}
-                className="btn-primary min-h-0 px-3 py-2 text-xs"
-                title="Continue saved chat"
+                className={`btn-primary min-h-0 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
+                title={expiryLabel ? `Continue saved chat · ${expiryLabel}` : "Continue saved chat"}
               >
                 Continue
               </Link>
