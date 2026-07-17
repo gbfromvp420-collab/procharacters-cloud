@@ -111,6 +111,38 @@ export class SessionMemory {
     this.messages = [];
   }
 
+  /**
+   * On resume/reload: rebuild compact notes if missing and return a scene
+   * continuity blurb so the first post-restore turn rehydrates hard.
+   */
+  ensureResumeContinuity(options?: {
+    characterName?: string;
+    characterId?: string;
+    sessionNotesBuilder?: (messages: MemoryMessage[]) => string;
+  }): {
+    rehydrated: boolean;
+    sessionNotes?: string;
+    sceneLock: string;
+    lastUserAction?: string;
+    turnCount: number;
+  } {
+    const turnCount = Math.floor(this.messages.length / 2);
+    const lastUser = [...this.messages].reverse().find((m) => m.role === "user");
+    const sceneLock = extractSceneLock(this.messages, options?.characterId);
+
+    if (!this.sessionNotes?.trim() && this.messages.length > 0 && options?.sessionNotesBuilder) {
+      this.sessionNotes = options.sessionNotesBuilder(this.messages).trim().slice(0, 1200) || undefined;
+    }
+
+    return {
+      rehydrated: this.messages.length > 0,
+      sessionNotes: this.sessionNotes,
+      sceneLock,
+      lastUserAction: lastUser?.content,
+      turnCount,
+    };
+  }
+
   // Naughty Syntax Unchained Extension
   getKinkProfile() {
     // TODO: load from character-memory store
@@ -123,8 +155,39 @@ export class SessionMemory {
   }
 
   // Bridge to our JSON persistent store
-  loadPersistentMemory(characterId: string, userId: string = "default") {
+  loadPersistentMemory(characterId: string, _userId: string = "default") {
     // TODO: import and call character-memory.js helpers here (or convert to TS)
     console.log(`[Naughty Syntax] Loading persistent memory for ${characterId}`);
   }
+}
+
+
+/** Heuristic scene lock for resume — clothing / arousal / game. */
+export function extractSceneLock(messages: MemoryMessage[], characterId?: string): string {
+  const corpus = messages
+    .slice(-16)
+    .map((m) => m.content.toLowerCase())
+    .join(" ");
+
+  const clothing =
+    /crotchless|open panel|open-panel/.test(corpus)
+      ? "crotchless open"
+      : /sheer|thong|g-string|mesh/.test(corpus)
+        ? "sheer signature on"
+        : characterId?.includes("female") || characterId?.includes("brat")
+          ? "crotchless open"
+          : "signature clothing on";
+
+  let arousal = "warm / building";
+  if (/edge|edging|so close|almost|hold it|don't cum|dont cum|denial/.test(corpus)) {
+    arousal = "high · edging / denial active";
+  } else if (/wet|hard|throbbing|dripping|moan|puffy|swollen/.test(corpus)) {
+    arousal = "visibly aroused";
+  }
+
+  const game = /edge|deny|denial|count|beg|please|no finish/.test(corpus)
+    ? "ongoing edging/denial game"
+    : "tease / escalate in-character";
+
+  return `clothing="${clothing}"; arousal=${arousal}; game=${game}`;
 }

@@ -16,7 +16,11 @@ export class LivePromptInjector {
     const profile = getLiveCharacterProfile(snapshot.characterId);
     const energyLabel = profile?.energyLabel ?? "teasing, foreplay-first";
     const presenceHint = buildPresenceAvatarHint(snapshot.characterId);
-    const formatOptions = { pendingUserMessage: memory.pendingUserMessage };
+    const formatOptions = {
+      pendingUserMessage: memory.pendingUserMessage,
+      characterId: snapshot.characterId,
+      rehydrating: memory.rehydrating === true,
+    };
 
     const platform = snapshot.systemCorePrompt;
     const character = snapshot.characterPrompt;

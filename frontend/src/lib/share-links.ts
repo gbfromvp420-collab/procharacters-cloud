@@ -12,6 +12,8 @@ export interface ShareQuery {
   token?: string;
   /** Phase 10: normal | edge_pace */
   sessionMode?: "normal" | "edge_pace";
+  /** Force full memory re-injection after resume (Continue links set this). */
+  rehydrate?: boolean;
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -21,6 +23,9 @@ export function parseShareQuery(search: string): ShareQuery {
   const magicToken = params.get("magic")?.trim() || undefined;
   const sessionId = params.get("session")?.trim() || undefined;
   const token = params.get("token")?.trim() || undefined;
+  const rehydrateRaw = params.get("rehydrate")?.trim().toLowerCase();
+  const rehydrate =
+    rehydrateRaw === "1" || rehydrateRaw === "true" || rehydrateRaw === "yes" || !!resumeCode;
   const modeRaw = params.get("mode")?.trim().toLowerCase();
   const sessionMode =
     modeRaw === "edge_pace" || modeRaw === "edge" || modeRaw === "pace"
@@ -36,7 +41,16 @@ export function parseShareQuery(search: string): ShareQuery {
     !!resumeCode ||
     (!!sessionId && !!token);
 
-  return { characterId, autostart, resumeCode, magicToken, sessionId, token, sessionMode };
+  return {
+    characterId,
+    autostart,
+    resumeCode,
+    magicToken,
+    sessionId,
+    token,
+    sessionMode,
+    rehydrate,
+  };
 }
 
 /** Pretty public character card (preferred for sharing). */

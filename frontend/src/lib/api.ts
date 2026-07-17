@@ -174,7 +174,15 @@ export async function resumeSession(
 
 export async function resumeByCode(
   code: string,
-): Promise<CreateSessionResponse & { messages: MemoryMessage[] }> {
+): Promise<
+  CreateSessionResponse & {
+    messages: MemoryMessage[];
+    sessionNotes?: string;
+    priorNotes?: string;
+    rehydrate?: boolean;
+    sceneLock?: string;
+  }
+> {
   const res = await fetch(`${API_BASE}/api/v1/sessions/resume-code`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -184,7 +192,50 @@ export async function resumeByCode(
     const text = await res.text();
     throw new Error(`Failed to resume code (${res.status}): ${text}`);
   }
-  return res.json() as Promise<CreateSessionResponse & { messages: MemoryMessage[] }>;
+  return res.json() as Promise<
+    CreateSessionResponse & {
+      messages: MemoryMessage[];
+      sessionNotes?: string;
+      priorNotes?: string;
+      rehydrate?: boolean;
+      sceneLock?: string;
+    }
+  >;
+}
+
+/** Full memory dump after resume — forces UI + next turn continuity. */
+export async function fetchSessionMemory(
+  sessionId: string,
+  wsToken: string,
+): Promise<{
+  messageCount: number;
+  recentMessages: MemoryMessage[];
+  sessionNotes?: string;
+  priorNotes?: string;
+  messageWindow?: number;
+  characterId?: string;
+  characterName?: string;
+  status?: string;
+}> {
+  const url = new URL(
+    `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/memory`,
+  );
+  url.searchParams.set("token", wsToken);
+  const res = await fetch(url.toString());
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Session memory failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    messageCount: number;
+    recentMessages: MemoryMessage[];
+    sessionNotes?: string;
+    priorNotes?: string;
+    messageWindow?: number;
+    characterId?: string;
+    characterName?: string;
+    status?: string;
+  }>;
 }
 
 export interface AccountAuthResponse {

@@ -15,6 +15,7 @@ import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { normalizeSessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
 import { returnGreetingHint } from "../lib/memory/cross-session-dossier.js";
+import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
   buildAccountSessionsExport,
@@ -1121,7 +1122,15 @@ export class SessionManager {
   private async reactivate(
     session: SessionRecord,
     wsBaseUrl: string,
-  ): Promise<CreateSessionResult & { messages: SessionRecord["memory"]["messages"] }> {
+  ): Promise<
+    CreateSessionResult & {
+      messages: SessionRecord["memory"]["messages"];
+      sessionNotes?: string;
+      priorNotes?: string;
+      rehydrate: true;
+      sceneLock?: string;
+    }
+  > {
     const now = new Date();
     const hardExpiry = new Date(session.createdAt).getTime() + 14 * 24 * 60 * 60 * 1000;
     if (hardExpiry < now.getTime()) {
@@ -1140,11 +1149,33 @@ export class SessionManager {
       });
     }
 
+    // Force memory re-anchor on every resume so the next LLM turn is not a cold open.
+    const memory = SessionMemory.fromData(session.memory, this.maxMessageWindow);
+    const continuity = memory.ensureResumeContinuity({
+      characterId: session.characterId,
+      characterName: session.promptSnapshot.characterName,
+      sessionNotesBuilder: (msgs) =>
+        buildSessionNotes(msgs, {
+          characterId: session.characterId,
+          characterName: session.promptSnapshot.characterName,
+          sessionMode: session.sessionMode,
+        }),
+    });
+    // Stamp scene lock into session notes so prompt formatter always sees it.
+    if (continuity.sceneLock) {
+      const base = continuity.sessionNotes?.trim() || "";
+      const stamped = base.includes(continuity.sceneLock)
+        ? base
+        : [base, `Scene lock: ${continuity.sceneLock}`].filter(Boolean).join(" · ").slice(0, 1200);
+      memory.setSessionNotes(stamped);
+    }
+
     const updated: SessionRecord = {
       ...session,
       wsToken: randomUUID(),
       status: "active",
       resumeCode,
+      memory: memory.toData(),
       expiresAt: new Date(now.getTime() + this.sessionTtlMinutes * 60_000).toISOString(),
       updatedAt: now.toISOString(),
     };
@@ -1152,9 +1183,16 @@ export class SessionManager {
     this.sessions.set(session.id, updated);
     await this.persist(updated);
 
+    const notes = memory.getSessionNotes();
+    const prior = memory.getPriorNotes();
+
     return {
       ...(await this.withResumeExpiry(this.toCreateResult(updated, wsBaseUrl), updated.id)),
       messages: updated.memory.messages ?? [],
+      rehydrate: true,
+      ...(notes ? { sessionNotes: notes } : {}),
+      ...(prior ? { priorNotes: prior } : {}),
+      ...(continuity.sceneLock ? { sceneLock: continuity.sceneLock } : {}),
     };
   }
 

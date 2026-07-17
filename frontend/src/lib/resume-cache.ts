@@ -247,10 +247,10 @@ export function getMostRecentResume(): ResumeCacheEntry | null {
   return null;
 }
 
-/** Chat deep-link for a resume entry. */
+/** Chat deep-link for a resume entry. Always requests full memory rehydrate. */
 export function buildResumeChatPath(entry: Pick<ResumeCacheEntry, "resumeCode" | "characterId">): string {
   const code = entry.resumeCode.trim().toUpperCase();
-  const params = new URLSearchParams({ resume: code });
+  const params = new URLSearchParams({ resume: code, rehydrate: "1" });
   if (entry.characterId) params.set("character", entry.characterId);
   return `/chat?${params.toString()}`;
 }

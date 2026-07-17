@@ -27,6 +27,8 @@ export interface PromptSnapshot {
 export interface SessionMemoryInput {
   context: RecentContext;
   pendingUserMessage?: string;
+  /** True after resume/reload — force continuity lock in memory block. */
+  rehydrating?: boolean;
   /** Phase 10 mode block (preformatted). */
   sessionModeBlock?: string;
 }

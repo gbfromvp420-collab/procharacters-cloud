@@ -108,10 +108,16 @@ export class ChatOrchestrator {
       session.characterId,
     );
 
+    // First turn after resume (or any turn with a scene lock in notes) rehydrates hard.
+    const rehydrating =
+      !!memory.getSessionNotes()?.includes("Scene lock:") ||
+      memory.getRecentContext().messageCount > 0;
+
     const injection = injector.injectTurn(session.promptSnapshot, {
       context: memory.getRecentContext(),
       pendingUserMessage: content,
       sessionModeBlock,
+      rehydrating,
     });
 
     let assistantContent: string;
@@ -129,6 +135,7 @@ export class ChatOrchestrator {
               context: memory.getRecentContext(),
               pendingUserMessage: content,
               sessionModeBlock,
+              rehydrating,
             }).messages,
         );
         const parsed = parseGrokReply(raw);

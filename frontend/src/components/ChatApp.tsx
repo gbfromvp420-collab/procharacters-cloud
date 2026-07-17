@@ -33,6 +33,7 @@ import {
   requestMagicLink,
   resumeAccountSession,
   resumeByCode,
+  fetchSessionMemory,
   resumeSession,
   updateCustomCharacter,
   uploadCharacterClip,
@@ -724,15 +725,48 @@ export function ChatApp() {
         messages?: MemoryMessage[];
         resumeCode?: string;
         resumeExpiresAt?: string;
+        sessionNotes?: string;
+        priorNotes?: string;
+        rehydrate?: boolean;
+        sceneLock?: string;
       },
+      options?: { forceRehydrate?: boolean },
     ) => {
-      const history = (session.messages ?? []).map((m) => ({
+      let history = (session.messages ?? []).map((m) => ({
         id: m.id,
         role: m.role as ChatMessage["role"],
         content: m.content,
       }));
+      let notes = session.sessionNotes?.trim() || null;
+      let prior = session.priorNotes?.trim() || null;
+
+      // Continue / resume code: always pull full server memory so UI + next turn match.
+      const shouldRehydrate =
+        options?.forceRehydrate === true ||
+        session.rehydrate === true ||
+        !!session.resumeCode;
+      if (shouldRehydrate) {
+        try {
+          const mem = await fetchSessionMemory(session.sessionId, session.wsToken);
+          if (mem.recentMessages?.length) {
+            history = mem.recentMessages.map((m) => ({
+              id: m.id,
+              role: m.role as ChatMessage["role"],
+              content: m.content,
+            }));
+          }
+          if (mem.sessionNotes?.trim()) notes = mem.sessionNotes.trim();
+          if (mem.priorNotes?.trim()) prior = mem.priorNotes.trim();
+        } catch {
+          /* resume payload messages are enough if /memory fails */
+        }
+      }
+
       pendingHistoryRef.current = history.length ? history : null;
       if (history.length) setMessages(history);
+      else setMessages([]);
+      setSessionNotes(notes);
+      setPriorNotes(prior);
       setCharacter(session.characterId);
       setAvatarState(session.avatarState);
       setLivekit(session.livekit ?? null);
@@ -755,11 +789,18 @@ export function ChatApp() {
           const days = Math.ceil((exp - Date.now()) / (24 * 60 * 60 * 1000));
           setCopyNotice(
             days > 1
-              ? `Resume code extended · good for ~${days} more days`
-              : "Resume code extended · still active",
+              ? `Resume code extended · good for ~${days} more days · memory restored`
+              : "Resume code extended · memory restored",
           );
           window.setTimeout(() => setCopyNotice(null), 2800);
         }
+      } else if (shouldRehydrate && history.length > 0) {
+        setCopyNotice(
+          session.sceneLock
+            ? `Memory restored · ${session.sceneLock}`
+            : `Memory restored · ${history.length} messages`,
+        );
+        window.setTimeout(() => setCopyNotice(null), 2800);
       }
       const ws = new WebSocket(session.wsUrl);
       wsRef.current = ws;
@@ -1101,7 +1142,9 @@ export function ChatApp() {
         try {
           setStatus("connecting");
           const session = await resumeByCode(query.resumeCode!);
-          await openLiveSession(session);
+          await openLiveSession(session, {
+            forceRehydrate: query.rehydrate !== false,
+          });
         } catch (err) {
           setError(err instanceof Error ? err.message : "Invalid resume code");
           setStatus("error");
@@ -1389,7 +1432,7 @@ export function ChatApp() {
     try {
       setStatus("connecting");
       const session = await resumeByCode(code);
-      await openLiveSession(session);
+      await openLiveSession(session, { forceRehydrate: true });
       setResumeCodeInput("");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Resume code failed");
@@ -1403,7 +1446,7 @@ export function ChatApp() {
     try {
       setStatus("connecting");
       const session = await resumeAccountSession(account.token, sessionIdToResume);
-      await openLiveSession(session);
+      await openLiveSession(session, { forceRehydrate: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not resume account session");
       setStatus("error");
