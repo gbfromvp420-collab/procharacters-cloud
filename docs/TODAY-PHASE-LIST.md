@@ -1,41 +1,42 @@
-# Today’s phase list — 2026-07-16
+# Today’s phase list — 2026-07-17
 
 **Owner:** King Grok CEO (final say on eng)  
 **Boss Sr.:** Gary (phone smoke, footage, Stripe keys)  
-**Command:** Say **next** to keep shipping. Agents welcome.
+**Command:** Say **next** / **cont** to keep shipping. Agents welcome.
 
 ---
 
 ## Goal for today
 
-Lock the **sticky return loop + push adoption path**, make ops legible, leave content/Stripe for human when ready. No v3 scope creep.
+Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrate**, polish rate-limit UX. Content/Stripe still human-gated.
 
 ---
 
-## Done today (eng)
+## Done (eng)
 
 | # | Ship | Status |
 |---|------|--------|
-| 1 | **CEO command layer** — continuity lore, operating model, persona v2.2, deploy fingerprint on `/health` | ✅ `#23` |
-| 2 | **Chat push strip** — Enable alerts on `/chat` | ✅ `#25` |
-| 3 | **Chat full smoke** — Sign-in CTA + Enable + **Send test** | ✅ `#26` |
-| 4 | **Gallery return loop** — tile primary = **Continue** when resume exists; **New chat** demoted | ✅ (this PR) |
-| 5 | **Gallery push strip** — same `PushEnableHint` on home under install tip | ✅ (this PR) |
-| 6 | **Expiry cron observability** — `pushExpiry*` counters + `lastExpiryCron` on health/metrics | ✅ (this PR) |
+| 1 | **CEO command layer** — continuity lore, operating model, persona v2.2, deploy fingerprint on `/health` | ✅ |
+| 2 | **Chat push strip** — Enable alerts on `/chat` | ✅ |
+| 3 | **Chat full smoke** — Sign-in CTA + Enable + **Send test** | ✅ |
+| 4 | **Gallery return loop** — tile primary = **Continue** when resume exists; **New chat** demoted | ✅ |
+| 5 | **Gallery push strip** — same `PushEnableHint` on home under install tip | ✅ |
+| 6 | **Expiry cron observability** — `pushExpiry*` counters + `lastExpiryCron` on health/metrics | ✅ |
 | 7 | **Today’s phase list** — this doc | ✅ |
 | 8 | **Session-drop rescue** — unexpected WS end → Rejoin banner | ✅ |
-| 9 | **Expiry urgency** — Continue banner / tiles show `expires in 2d` | ✅ (this PR) |
+| 9 | **Expiry urgency** — Continue banner / tiles show `expires in 2d` | ✅ |
+| 10 | **Phase 5 anti-loop + memory rehydrate** — unchained continuity, session restore scene blurb | ✅ `f4218eb` live |
+| 11 | **429 UX** on chat/account Send test — “try again in Ns” from Retry-After | ✅ |
 
 ---
 
-## Still in flight today (if time)
+## Still open (if time)
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | **Session-drop rescue** — unexpected WS end → Rejoin banner | M | ✅ done |
-| B | **Expiry urgency** on Continue banner / tiles (`expires in 2d`) | S | ✅ `resumeExpiresAt` in resume-cache + UI |
-| C | **429 UX** on chat Send test (retry-after copy) | S | Rate-limit already server-side |
-| D | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
+| A | Wire **CharacterSession** Prisma persistence (schema stub exists; file/session memory is live) | M | Evolution layer next |
+| B | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
+| C | LiveKit avatar reactivity polish | M | Badge already ready |
 
 ---
 

@@ -498,6 +498,14 @@ export async function checkPushExpiry(
   }>;
 }
 
+/** Format retry-after seconds for rate-limit UX (e.g. "45s", "2 min"). */
+export function formatRetryAfter(sec: number): string {
+  const s = Math.max(1, Math.ceil(sec));
+  if (s < 60) return `${s}s`;
+  const min = Math.ceil(s / 60);
+  return min === 1 ? "1 min" : `${min} min`;
+}
+
 /** One-shot test notification (phone smoke). */
 export async function sendTestPush(accountToken: string): Promise<{
   ok: boolean;
@@ -520,6 +528,8 @@ export async function sendTestPush(accountToken: string): Promise<{
     gone?: number;
     devices?: number;
     error?: string;
+    retryAfterSec?: number;
+    code?: string;
   } = {};
   try {
     data = JSON.parse(text) as typeof data;
@@ -527,6 +537,19 @@ export async function sendTestPush(accountToken: string): Promise<{
     /* ignore */
   }
   if (!res.ok) {
+    // 429: show clear "try again in Ns" so spam-taps don't look broken
+    if (res.status === 429) {
+      const headerRetry = Number(res.headers.get("Retry-After") || 0);
+      const retryAfterSec =
+        (typeof data.retryAfterSec === "number" && data.retryAfterSec > 0
+          ? data.retryAfterSec
+          : 0) ||
+        (Number.isFinite(headerRetry) && headerRetry > 0 ? headerRetry : 0) ||
+        60;
+      throw new Error(
+        `Too many test alerts — try again in ${formatRetryAfter(retryAfterSec)}`,
+      );
+    }
     throw new Error(data.error || text || `Test push failed (${res.status})`);
   }
   return {

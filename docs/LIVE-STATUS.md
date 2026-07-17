@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-16  
+**Updated:** 2026-07-17  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -27,7 +27,9 @@
 | Resume codes (multi-device) | ✅ |
 | Edge Pace mode (phase strip) | ✅ |
 | “What we remember” memory strip | ✅ |
+| Phase 5 anti-loop + restore rehydrate | ✅ `f4218eb` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
+| Send test **429 UX** (retry-after copy) | ✅ |
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |

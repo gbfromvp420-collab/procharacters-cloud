@@ -184,6 +184,7 @@ export function PushEnableHint({
         setStatus(result.error || "Test failed");
       }
     } catch (err) {
+      // Includes 429 "try again in Ns" from sendTestPush
       setStatus(err instanceof Error ? err.message : "Test failed");
     } finally {
       setBusy(false);
