@@ -26,8 +26,9 @@
 | Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` |
 | Resume codes (multi-device) | ✅ |
 | Edge Pace mode (phase strip) | ✅ |
-| “What we remember” memory strip | ✅ |
+| “What we remember” memory strip | ✅ scene lock chips + structured prior |
 | Phase 5 anti-loop + restore rehydrate | ✅ `f4218eb` |
+| Memory stickiness (2026-07-18 night) | ✅ scene lock every turn · sticky Remember default · resume dossier refresh |
 | CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |

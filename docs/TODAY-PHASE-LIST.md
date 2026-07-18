@@ -29,6 +29,7 @@ Keep **return loop + push** airtight. Gary confirmed **phone push**. Ship **Live
 | 11 | **429 UX** on chat/account Send test — “try again in Ns” from Retry-After | ✅ |
 | 12 | **CharacterSession Prisma** — durable summary + kink + history; forget-me clears both | ✅ |
 | 13 | **LiveKit avatar reactivity polish** — sticky energy bands, updatedAt merge, crossfade fix, band pulse | ✅ |
+| 14 | **Memory stickiness pass** — scene lock every turn, prior seed, resume dossier refresh, sticky default Remember, strip chips | ✅ |
 
 ---
 

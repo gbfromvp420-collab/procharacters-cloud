@@ -905,12 +905,37 @@ export const createAccountRoutes = (
       const {
         getCrossSessionNote,
       } = await import("../lib/memory/cross-session-notes.js");
+      const {
+        getCharacterSession,
+        priorNotesFromCharacterSession,
+      } = await import("../lib/memory/character-session-store.js");
       const note = await getCrossSessionNote(account.id, characterId);
+      let notes = note?.notes ?? "";
+      // Merge durable Prisma mirror when opt-in (or when file is empty but DB has heat).
+      const durable = await getCharacterSession(account.id, characterId);
+      const fromDb = priorNotesFromCharacterSession(durable);
+      if (fromDb) {
+        if (!notes.trim() || fromDb.length > notes.length) {
+          notes = fromDb;
+        } else if (
+          durable?.kinkProfile?.tags?.length &&
+          !notes.includes("Learned heat prefs")
+        ) {
+          const kinkOnly = priorNotesFromCharacterSession({
+            ...durable,
+            memorySummary: null,
+          });
+          if (kinkOnly) notes = `${notes}\n\n${kinkOnly}`.slice(0, 1600);
+        }
+      }
       return {
         characterId,
         optIn: note?.optIn === true,
-        notes: note?.notes ?? "",
-        updatedAt: note?.updatedAt ?? null,
+        /** True when account has never set opt-in for this character (client may default ON). */
+        neverConfigured: !note,
+        notes,
+        updatedAt: note?.updatedAt ?? durable?.updatedAt ?? null,
+        hasDurable: !!durable,
       };
     });
 

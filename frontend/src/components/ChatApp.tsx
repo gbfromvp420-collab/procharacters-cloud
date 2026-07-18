@@ -791,12 +791,17 @@ export function ChatApp() {
         const exp = Date.parse(session.resumeExpiresAt);
         if (!Number.isNaN(exp)) {
           const days = Math.ceil((exp - Date.now()) / (24 * 60 * 60 * 1000));
+          const sceneBit = session.sceneLock
+            ? " · scene locked"
+            : notes
+              ? " · heat restored"
+              : " · memory restored";
           setCopyNotice(
             days > 1
-              ? `Resume code extended · good for ~${days} more days · memory restored`
-              : "Resume code extended · memory restored",
+              ? `Resume code extended · ~${days}d left${sceneBit}`
+              : `Resume code extended${sceneBit}`,
           );
-          window.setTimeout(() => setCopyNotice(null), 2800);
+          window.setTimeout(() => setCopyNotice(null), 3200);
         }
       } else if (shouldRehydrate && history.length > 0) {
         setCopyNotice(
@@ -826,8 +831,18 @@ export function ChatApp() {
       setStatus("connecting");
       pendingHistoryRef.current = null;
       setSessionNotes(null);
-      setPriorNotes(null);
+      // Keep priorNotes preview while connecting if remember is on
+      if (!crossSessionOptIn) setPriorNotes(null);
       setModeState(null);
+
+      // Sticky by default: persist opt-in before create so dossier actually saves.
+      if (account?.token && crossSessionOptIn) {
+        try {
+          await setCrossSessionMemoryOptIn(account.token, characterId, true);
+        } catch {
+          /* still try create with flag */
+        }
+      }
 
       const mode = options?.sessionMode ?? sessionMode;
       const session = await createSession(characterId, account?.token, {
@@ -863,7 +878,8 @@ export function ChatApp() {
     }
   }, [sessionMode]);
 
-  // Load cross-session opt-in when signed in + character changes
+  // Load cross-session opt-in when signed in + character changes.
+  // Never configured → sticky ON by default for signed-in (can uncheck anytime).
   useEffect(() => {
     if (!account?.token) {
       setCrossSessionOptIn(false);
@@ -872,10 +888,19 @@ export function ChatApp() {
     let cancelled = false;
     void getCrossSessionMemoryOptIn(account.token, character)
       .then((r) => {
-        if (!cancelled) setCrossSessionOptIn(r.optIn === true);
+        if (cancelled) return;
+        const defaultOn = r.neverConfigured === true || (!r.updatedAt && !r.notes);
+        setCrossSessionOptIn(defaultOn ? true : r.optIn === true);
+        // Preview prior heat before Start — feels like they never left.
+        if (r.notes?.trim() && (r.optIn === true || defaultOn || r.hasDurable)) {
+          setPriorNotes(r.notes.trim());
+        }
       })
       .catch(() => {
-        if (!cancelled) setCrossSessionOptIn(false);
+        if (!cancelled) {
+          // Signed-in but offline status — still prefer sticky default
+          setCrossSessionOptIn(true);
+        }
       });
     return () => {
       cancelled = true;
@@ -2225,13 +2250,17 @@ export function ChatApp() {
                   </label>
                   {account && (
                     <>
-                      <label className="flex cursor-pointer items-center gap-1.5">
+                      <label
+                        className="flex cursor-pointer items-center gap-1.5"
+                        title="Saves vibe + wants for this character when signed in. Uncheck anytime; Forget me clears it."
+                      >
                         <input
                           type="checkbox"
                           checked={crossSessionOptIn}
                           onChange={(e) => {
                             const next = e.target.checked;
                             setCrossSessionOptIn(next);
+                            if (!next) setPriorNotes(null);
                             void setCrossSessionMemoryOptIn(account.token, character, next).catch(
                               () => {
                                 /* ignore */
@@ -2239,7 +2268,7 @@ export function ChatApp() {
                             );
                           }}
                         />
-                        Remember across sessions
+                        Remember me (sticky heat)
                       </label>
                       {(crossSessionOptIn || priorNotes) && (
                         <button
@@ -2802,19 +2831,25 @@ export function ChatApp() {
               {modeState && modeState.mode === "edge_pace" && status === "ready" && (
                 <EdgePaceStrip modeState={modeState} tickOffset={modeTick} />
               )}
-              {(status === "ready" || messages.length > 0) && (
+              {(status === "ready" ||
+                messages.length > 0 ||
+                (!!priorNotes && status !== "connecting")) && (
                 <SessionMemoryStrip priorNotes={priorNotes} sessionNotes={sessionNotes} />
               )}
               {messages.length === 0 && !isTyping && (
                 <div className="px-2 py-12 text-center sm:py-16">
                   <p className="text-sm text-brand-muted">
                     {status === "ready"
-                      ? "Session live — they should greet you first. Memory saves as you go."
+                      ? priorNotes
+                        ? "Session live — they still remember you. Heat continues from the strip above."
+                        : "Session live — they should greet you first. Memory saves as you go."
                       : status === "connecting" || restarting
                         ? "Opening live session…"
                         : savedSession
                           ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
-                          : "Pick a character, choose Normal or Edge Pace, then Start."}
+                          : priorNotes
+                            ? "They kept a little of you — Start to pick up the heat."
+                            : "Pick a character, choose Normal or Edge Pace, then Start."}
                   </p>
                   {status !== "ready" && status !== "connecting" && !restarting && (
                     <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">

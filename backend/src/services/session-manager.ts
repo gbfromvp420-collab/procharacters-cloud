@@ -19,7 +19,10 @@ import {
   getCharacterSession,
   priorNotesFromCharacterSession,
 } from "../lib/memory/character-session-store.js";
-import { buildSessionNotes } from "../lib/memory/session-notes.js";
+import {
+  buildPriorContinuitySeed,
+  buildSessionNotes,
+} from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import {
   buildAccountSessionsExport,
@@ -295,7 +298,10 @@ export class SessionManager {
       ...(priorNotes ? { priorNotes } : {}),
       ...(priorNotes
         ? {
-            sessionNotes: `Continuing with ${promptSnapshot.characterName}. Prior vibe: ${priorNotes.slice(0, 280)}`,
+            sessionNotes: buildPriorContinuitySeed(
+              priorNotes,
+              promptSnapshot.characterName,
+            ),
           }
         : {}),
     });
@@ -1175,6 +1181,37 @@ export class SessionManager {
 
     // Force memory re-anchor on every resume so the next LLM turn is not a cold open.
     const memory = SessionMemory.fromData(session.memory, this.maxMessageWindow);
+
+    // Refresh opt-in prior dossier from file + CharacterSession so resume isn't stale.
+    if (session.accountId) {
+      try {
+        const prior = await getCrossSessionNote(session.accountId, session.characterId);
+        if (prior?.optIn) {
+          let refreshed = prior.notes?.trim() || memory.getPriorNotes() || "";
+          const durable = await getCharacterSession(session.accountId, session.characterId);
+          const fromDb = priorNotesFromCharacterSession(durable);
+          if (fromDb) {
+            if (!refreshed || fromDb.length > refreshed.length) {
+              refreshed = fromDb;
+            } else if (durable?.kinkProfile?.tags?.length && !refreshed.includes("Learned heat prefs")) {
+              const kinkHint = priorNotesFromCharacterSession({
+                ...durable,
+                memorySummary: null,
+              });
+              if (kinkHint) {
+                refreshed = `${refreshed}\n\n${kinkHint}`.slice(0, 1600);
+              }
+            }
+          }
+          if (refreshed.trim()) {
+            memory.setPriorNotes(refreshed);
+          }
+        }
+      } catch (error) {
+        console.error("[session] prior-notes refresh on resume failed:", error);
+      }
+    }
+
     const continuity = memory.ensureResumeContinuity({
       characterId: session.characterId,
       characterName: session.promptSnapshot.characterName,
@@ -1186,9 +1223,10 @@ export class SessionManager {
         }),
     });
     // Stamp scene lock into session notes so prompt formatter always sees it.
+    // buildSessionNotes already includes Scene lock — only append if missing (older sessions).
     if (continuity.sceneLock) {
       const base = continuity.sessionNotes?.trim() || "";
-      const stamped = base.includes(continuity.sceneLock)
+      const stamped = /Scene lock:/i.test(base)
         ? base
         : [base, `Scene lock: ${continuity.sceneLock}`].filter(Boolean).join(" · ").slice(0, 1200);
       memory.setSessionNotes(stamped);

@@ -71,33 +71,6 @@ export async function createSession(
   return res.json() as Promise<CreateSessionResponse>;
 }
 
-export async function fetchSessionMemory(
-  sessionId: string,
-  token?: string | null,
-): Promise<{
-  messageCount: number;
-  sessionNotes?: string;
-  priorNotes?: string;
-  messageWindow?: number;
-  characterName?: string;
-}> {
-  const q = token ? `?token=${encodeURIComponent(token)}` : "";
-  const res = await fetch(
-    `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/memory${q}`,
-  );
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`Memory fetch failed (${res.status}): ${text}`);
-  }
-  return res.json() as Promise<{
-    messageCount: number;
-    sessionNotes?: string;
-    priorNotes?: string;
-    messageWindow?: number;
-    characterName?: string;
-  }>;
-}
-
 export async function setCrossSessionMemoryOptIn(
   accountToken: string,
   characterId: string,
@@ -121,7 +94,13 @@ export async function setCrossSessionMemoryOptIn(
 export async function getCrossSessionMemoryOptIn(
   accountToken: string,
   characterId: string,
-): Promise<{ optIn: boolean; notes: string }> {
+): Promise<{
+  optIn: boolean;
+  notes: string;
+  neverConfigured?: boolean;
+  hasDurable?: boolean;
+  updatedAt?: string | null;
+}> {
   const res = await fetch(
     `${API_BASE}/api/v1/accounts/me/memory/${encodeURIComponent(characterId)}`,
     { headers: authHeaders(accountToken) },
@@ -130,7 +109,13 @@ export async function getCrossSessionMemoryOptIn(
     const text = await res.text();
     throw new Error(`Memory status failed (${res.status}): ${text}`);
   }
-  return res.json() as Promise<{ optIn: boolean; notes: string }>;
+  return res.json() as Promise<{
+    optIn: boolean;
+    notes: string;
+    neverConfigured?: boolean;
+    hasDurable?: boolean;
+    updatedAt?: string | null;
+  }>;
 }
 
 /** Wipe long-term dossier for this character. optOut also turns Remember off. */

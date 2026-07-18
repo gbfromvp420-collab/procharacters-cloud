@@ -64,6 +64,12 @@ export class SessionMemory {
     return this.sessionNotes;
   }
 
+  /** Merge / refresh opt-in dossier (e.g. on resume from CharacterSession). */
+  setPriorNotes(notes: string | undefined | null): void {
+    const trimmed = notes?.trim();
+    this.priorNotes = trimmed ? trimmed.slice(0, 1600) : undefined;
+  }
+
   getPriorNotes(): string | undefined {
     return this.priorNotes;
   }
