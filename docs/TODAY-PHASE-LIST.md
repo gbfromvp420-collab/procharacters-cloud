@@ -32,6 +32,7 @@ Keep **return loop + push** airtight. Gary confirmed **phone push**. Ship **Live
 | 14 | **Memory stickiness pass** — scene lock every turn, prior seed, resume dossier refresh, sticky default Remember, strip chips | ✅ |
 | 15 | **Repo hygiene** — close stale PRs `#1` `#2` `#3` `#4` `#29`; ship split CI + PR template (salvage from `#4`) | ✅ |
 | 16 | **Ops evening sprint** — Azure deploy → manual-only; Account **System pulse**; Continue **Copy code** | ✅ |
+| 17 | **Stripe go-live eng** — checkout **confirm-on-return**, idempotent grants, health mode/webhook chips, Account setup checklist | ✅ |
 
 ---
 

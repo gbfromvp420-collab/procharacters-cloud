@@ -957,6 +957,8 @@ export interface BillingCatalogProduct {
 
 export async function fetchBillingCatalog(): Promise<{
   configured: boolean;
+  webhookConfigured?: boolean;
+  mode?: "test" | "live" | "off";
   products: BillingCatalogProduct[];
 }> {
   const res = await fetch(`${API_BASE}/api/v1/billing/catalog`);
@@ -966,6 +968,8 @@ export async function fetchBillingCatalog(): Promise<{
   }
   return res.json() as Promise<{
     configured: boolean;
+    webhookConfigured?: boolean;
+    mode?: "test" | "live" | "off";
     products: BillingCatalogProduct[];
   }>;
 }
@@ -984,6 +988,8 @@ export function formatUsdCents(cents: number, currency = "usd"): string {
 
 export async function fetchBillingStatus(accountToken: string): Promise<{
   configured: boolean;
+  webhookConfigured?: boolean;
+  mode?: "test" | "live" | "off";
   plan: string;
   activePremium: boolean;
   planExpiresAt?: string;
@@ -1003,6 +1009,8 @@ export async function fetchBillingStatus(accountToken: string): Promise<{
   }
   return res.json() as Promise<{
     configured: boolean;
+    webhookConfigured?: boolean;
+    mode?: "test" | "live" | "off";
     plan: string;
     activePremium: boolean;
     planExpiresAt?: string;
@@ -1029,6 +1037,35 @@ export async function startBillingCheckout(
     throw new Error(`Checkout failed (${res.status}): ${text}`);
   }
   return res.json() as Promise<{ url: string; sessionId: string }>;
+}
+
+/** Apply paid Checkout Session on return page (backup if webhook is slow). */
+export async function confirmBillingCheckout(
+  accountToken: string,
+  sessionId: string,
+): Promise<{
+  ok: boolean;
+  plan?: string;
+  activePremium?: boolean;
+  planExpiresAt?: string;
+  customsLimit?: number;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/billing/confirm`, {
+    method: "POST",
+    headers: authHeaders(accountToken),
+    body: JSON.stringify({ sessionId }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Confirm billing failed (${res.status}): ${text}`);
+  }
+  return res.json() as Promise<{
+    ok: boolean;
+    plan?: string;
+    activePremium?: boolean;
+    planExpiresAt?: string;
+    customsLimit?: number;
+  }>;
 }
 
 export async function setAccountPassphrase(

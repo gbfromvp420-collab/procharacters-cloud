@@ -21,7 +21,12 @@ type HealthPayload = {
     webPush?: boolean;
     lastExpiryCron?: { at?: string; accounts?: number; sent?: number } | null;
   };
-  billing?: { stripe?: boolean; freePath?: boolean };
+  billing?: {
+    stripe?: boolean;
+    webhook?: boolean;
+    mode?: "test" | "live" | "off";
+    freePath?: boolean;
+  };
   avatar?: { dedicatedReady?: string[] };
 };
 
@@ -126,14 +131,28 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       title: "LiveKit room metadata for avatar layer",
     });
 
+    const stripeOn = !!health.billing?.stripe;
+    const stripeMode = health.billing?.mode ?? (stripeOn ? "live" : "off");
     chips.push({
       key: "stripe",
-      label: health.billing?.stripe ? "Stripe live" : "Stripe off",
-      ok: health.billing?.stripe ? true : "info",
+      label: stripeOn
+        ? stripeMode === "test"
+          ? "Stripe test"
+          : "Stripe live"
+        : "Stripe off",
+      ok: stripeOn ? true : "info",
       title: health.billing?.freePath
-        ? "Free chat always works; Stripe unlocks Day Pass / Supporter"
+        ? `Free chat always works; mode=${stripeMode}; webhook=${health.billing?.webhook ? "on" : "off"}`
         : "Billing",
     });
+    if (stripeOn) {
+      chips.push({
+        key: "stripeWebhook",
+        label: health.billing?.webhook ? "Pay webhook on" : "Pay webhook off",
+        ok: health.billing?.webhook ? true : "warn",
+        title: "STRIPE_WEBHOOK_SECRET — checkout.session.completed on API /billing/webhook",
+      });
+    }
 
     chips.push({
       key: "webhook",

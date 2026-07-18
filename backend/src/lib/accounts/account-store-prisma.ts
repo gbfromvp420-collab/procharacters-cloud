@@ -370,6 +370,14 @@ export async function prismaGrantAccountPlan(
   });
   if (!user) throw new Error("NOT_FOUND");
 
+  // Idempotent: same Checkout Session must not stack twice (webhook + confirm).
+  if (
+    options?.checkoutSessionId &&
+    user.lastCheckoutSessionId === options.checkoutSessionId
+  ) {
+    return asAccountRecord(user);
+  }
+
   const days =
     options?.days ??
     (plan === "day_pass"

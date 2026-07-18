@@ -11,6 +11,20 @@ export function isStripeConfigured(): boolean {
   return !!process.env.STRIPE_SECRET_KEY?.trim();
 }
 
+export function isStripeWebhookConfigured(): boolean {
+  return !!process.env.STRIPE_WEBHOOK_SECRET?.trim();
+}
+
+/** test | live | off — derived from secret key prefix (never logs the key). */
+export function stripeMode(): "test" | "live" | "off" {
+  const key = process.env.STRIPE_SECRET_KEY?.trim() ?? "";
+  if (!key) return "off";
+  if (key.startsWith("sk_live_")) return "live";
+  if (key.startsWith("sk_test_")) return "test";
+  // Restricted keys / other formats — treat as configured unknown; prefer test label
+  return key.includes("live") ? "live" : "test";
+}
+
 function stripeClient(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY?.trim();
   if (!key) {
@@ -37,6 +51,8 @@ function supporterAmountCents(): number {
 
 export function getBillingCatalog(): {
   configured: boolean;
+  webhookConfigured: boolean;
+  mode: "test" | "live" | "off";
   products: Array<{
     id: CheckoutProduct;
     name: string;
@@ -47,6 +63,8 @@ export function getBillingCatalog(): {
 } {
   return {
     configured: isStripeConfigured(),
+    webhookConfigured: isStripeWebhookConfigured(),
+    mode: stripeMode(),
     products: [
       {
         id: "day_pass",
@@ -152,4 +170,52 @@ export async function handleStripeWebhook(
   }
 
   return { received: true, type: event.type };
+}
+
+/**
+ * Client return-page confirm — grants plan from a paid Checkout Session even if
+ * the webhook is delayed/misconfigured. Idempotent with webhook via session id.
+ */
+export async function confirmCheckoutSession(options: {
+  sessionId: string;
+  accountId: string;
+}): Promise<{
+  ok: boolean;
+  plan?: "day_pass" | "supporter";
+  alreadyApplied?: boolean;
+  paymentStatus?: string;
+}> {
+  const stripe = stripeClient();
+  const session = await stripe.checkout.sessions.retrieve(options.sessionId);
+
+  const sessionAccountId =
+    session.metadata?.accountId || session.client_reference_id || "";
+  if (!sessionAccountId || sessionAccountId !== options.accountId) {
+    throw new Error("Checkout session does not belong to this account");
+  }
+
+  if (session.payment_status !== "paid" && session.status !== "complete") {
+    return {
+      ok: false,
+      paymentStatus: session.payment_status ?? session.status ?? "unpaid",
+    };
+  }
+
+  const product = (session.metadata?.product || "day_pass") as CheckoutProduct;
+  const plan = product === "supporter" ? "supporter" : "day_pass";
+  const customerId =
+    typeof session.customer === "string"
+      ? session.customer
+      : session.customer?.id;
+
+  await grantAccountPlan(options.accountId, plan, {
+    stripeCustomerId: customerId,
+    checkoutSessionId: session.id,
+  });
+
+  return {
+    ok: true,
+    plan,
+    paymentStatus: session.payment_status ?? "paid",
+  };
 }

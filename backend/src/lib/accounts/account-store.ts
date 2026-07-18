@@ -643,6 +643,14 @@ export async function grantAccountPlan(
     throw new AccountError("Account not found", "NOT_FOUND");
   }
 
+  // Idempotent: webhook + return-page confirm must not double-stack the same session.
+  if (
+    options?.checkoutSessionId &&
+    account.lastCheckoutSessionId === options.checkoutSessionId
+  ) {
+    return account;
+  }
+
   const days =
     options?.days ??
     (plan === "day_pass"

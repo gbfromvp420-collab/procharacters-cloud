@@ -10,6 +10,7 @@ import {
   fetchAccountMe,
   fetchAccountSessionMarkdown,
   fetchAllAccountSessionsMarkdown,
+  confirmBillingCheckout,
   fetchBillingCatalog,
   fetchBillingStatus,
   formatUsdCents,
@@ -269,41 +270,70 @@ export function AccountSettings() {
       setNotice("Payment received — confirming premium…");
       const stored = loadStoredAccount();
       if (!stored) return;
+      const sessionId = params.get("session_id");
       let tries = 0;
       let done = false;
+      let poll: number | undefined;
       const finish = (msg: string) => {
         if (done) return;
         done = true;
+        if (poll != null) window.clearInterval(poll);
         setNotice(msg);
         window.history.replaceState({}, "", "/account");
       };
-      const poll = window.setInterval(() => {
+      const applyStatus = (b: {
+        plan: string;
+        activePremium: boolean;
+        planExpiresAt?: string;
+        customsLimit: number;
+        configured: boolean;
+      }) => {
+        setPlan(b.plan);
+        setActivePremium(b.activePremium);
+        setPlanExpiresAt(b.planExpiresAt ?? null);
+        setCustomsLimit(b.customsLimit);
+        setBillingConfigured(b.configured);
+      };
+      // Prefer explicit confirm (session_id) so premium lands even if webhook is slow.
+      if (sessionId) {
+        void confirmBillingCheckout(stored.token, sessionId)
+          .then((c) => {
+            if (c.activePremium != null) {
+              setActivePremium(!!c.activePremium);
+            }
+            if (c.plan) setPlan(c.plan);
+            if (c.planExpiresAt) setPlanExpiresAt(c.planExpiresAt);
+            if (c.customsLimit != null) setCustomsLimit(c.customsLimit);
+            if (c.ok || c.activePremium) {
+              finish("Premium unlocked — thank you for supporting Naughty Syntax.");
+            }
+          })
+          .catch(() => {
+            /* fall through to poll — webhook may still apply */
+          });
+      }
+      poll = window.setInterval(() => {
         tries += 1;
         void fetchBillingStatus(stored.token)
           .then((b) => {
-            setPlan(b.plan);
-            setActivePremium(b.activePremium);
-            setPlanExpiresAt(b.planExpiresAt ?? null);
-            setCustomsLimit(b.customsLimit);
-            setBillingConfigured(b.configured);
+            applyStatus(b);
             if (b.activePremium) {
-              window.clearInterval(poll);
               finish("Premium unlocked — thank you for supporting Naughty Syntax.");
-            } else if (tries >= 6) {
-              window.clearInterval(poll);
+            } else if (tries >= 8) {
               finish(
                 "Payment received — if premium isn’t showing yet, refresh in a moment (webhook may still be landing).",
               );
             }
           })
           .catch(() => {
-            if (tries >= 6) {
-              window.clearInterval(poll);
+            if (tries >= 8) {
               finish("Payment received — refresh Account in a few seconds to see premium.");
             }
           });
-      }, 2000);
-      return () => window.clearInterval(poll);
+      }, 1500);
+      return () => {
+        if (poll != null) window.clearInterval(poll);
+      };
     }
     if (billing === "cancel") {
       setNotice("Checkout canceled — free path still works.");
@@ -1468,9 +1498,41 @@ export function AccountSettings() {
               </div>
 
               {!billingConfigured && (
-                <p className="mt-3 text-[11px] text-brand-muted">
-                  Payments aren’t enabled on this server yet. Everything above still works free —
-                  Stripe keys unlock the buttons (see ops-billing-stripe.md).
+                <div className="mt-3 rounded-xl border border-brand-border/70 bg-brand-bg/50 px-3 py-2.5 text-[11px] text-brand-muted">
+                  <p className="font-medium text-brand-text/90">
+                    Payments aren’t live on the API yet — free chat still works.
+                  </p>
+                  <p className="mt-1.5">
+                    Boss move (Railway → <strong>procharacters-api</strong> variables):
+                  </p>
+                  <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+                    <li>
+                      Paste <code className="text-brand-muted/90">STRIPE_SECRET_KEY</code>{" "}
+                      (start with <code className="text-brand-muted/90">sk_test_…</code>)
+                    </li>
+                    <li>
+                      Stripe Dashboard → Webhooks → endpoint{" "}
+                      <code className="break-all text-brand-muted/90">
+                        …/api/v1/billing/webhook
+                      </code>{" "}
+                      · event <code className="text-brand-muted/90">checkout.session.completed</code>
+                    </li>
+                    <li>
+                      Paste signing secret as{" "}
+                      <code className="text-brand-muted/90">STRIPE_WEBHOOK_SECRET</code>
+                    </li>
+                    <li>Redeploy API → this chip turns green · buttons unlock</li>
+                  </ol>
+                  <p className="mt-1.5">
+                    Full steps: docs/ops-billing-stripe.md · test card{" "}
+                    <code className="text-brand-muted/90">4242 4242 4242 4242</code>
+                  </p>
+                </div>
+              )}
+              {billingConfigured && (
+                <p className="mt-3 text-[11px] text-emerald-100/85">
+                  Checkout is live on the server. After pay, Account confirms your session even if
+                  the webhook is a second slow — free path never breaks.
                 </p>
               )}
               {activePremium && (

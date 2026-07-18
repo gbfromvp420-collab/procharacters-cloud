@@ -39,7 +39,7 @@
 | Account **System pulse** | ✅ live `/health` chips (deploy SHA, push, DB, Stripe, webhook) |
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
-| Stripe Day Pass / Supporter UI | ✅ free path; checkout waits for keys |
+| Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; checkout waits for Railway keys |
 | Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
 | Dedicated 4K avatar packs | ⏳ drop MP4s when ready |
 
@@ -49,8 +49,8 @@
 
 1. ~~**Phone push**~~ ✅ done  
 2. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
-3. **Stripe (optional):** when you want money, follow [ops-billing-stripe.md](./ops-billing-stripe.md)  
-4. **Avatar pack (optional):** drop 4 MP4s per [DROP_IN.md](../frontend/public/avatar/packs/DROP_IN.md)
+3. **Stripe (when ready):** paste keys on Railway API per [ops-billing-stripe.md](./ops-billing-stripe.md) — eng confirm-on-return already shipped  
+4. **Avatar pack (optional, content):** drop 4 loop MP4s per model in `frontend/public/avatar/<id>/` — see [DROP_IN.md](../frontend/public/avatar/packs/DROP_IN.md)
 
 ---
 
@@ -69,7 +69,7 @@
 
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
-- `billing.stripe` = false until you add keys (expected)  
+- `billing.stripe` = false until you add keys (expected); after keys: `billing.mode` test|live + `billing.webhook`  
 - `deploy.gitSha` present after API redeploy (Railway commit)  
 - `observability.lastExpiryCron` present after first cron tick (or null until then)  
 - Manifest: `/manifest.webmanifest` returns 200  

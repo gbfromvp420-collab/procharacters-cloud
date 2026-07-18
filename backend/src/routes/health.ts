@@ -1,7 +1,11 @@
 import type { FastifyPluginAsync } from "fastify";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { accountsProvider } from "../lib/accounts/account-store.js";
-import { isStripeConfigured } from "../lib/billing/stripe-billing.js";
+import {
+  isStripeConfigured,
+  isStripeWebhookConfigured,
+  stripeMode,
+} from "../lib/billing/stripe-billing.js";
 import {
   buildPackStatusFile,
   listPackStatuses,
@@ -87,6 +91,8 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
         },
         billing: {
           stripe: isStripeConfigured(),
+          webhook: isStripeWebhookConfigured(),
+          mode: stripeMode(),
           freePath: true,
         },
       };
