@@ -10,8 +10,8 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | Eng day | Mostly shipped (`main` includes billing confirm-on-return `b10c416`, pack docs `68c4560`) | — |
-| Stripe | Eng ready; **prod keys not on Railway yet** | Gary: Railway API vars when ready |
-| Railway CLI + MCP | ✅ **Authed** (token UUID) · project `captivating-vision` · services web/api/Postgres | Stripe vars still missing on API — Gary can paste keys here or set in dashboard |
+| Stripe | ✅ **LIVE** on API (`billing.mode=live`, webhook on) · Day Pass $4.99 / Supporter $9.99 | Gary: smoke checkout carefully — **real money** |
+| Railway CLI + MCP | ✅ Authed · project `captivating-vision` · Stripe vars upserted + API redeployed | — |
 | 4K packs | 6 Phase 4 folders empty (interim only) · guide `docs/GARY-PACK-EDITING.md` | Gary: edit 4 clips × 6 models first |
 
 ---
