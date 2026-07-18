@@ -41,6 +41,15 @@ jobs:
           # Prisma generate may read config; no real DB in CI
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
 
+      # Schema lives at repo-root prisma/; Prisma resolves @prisma/client from there.
+      # Local dev has a root node_modules link — recreate it for CI.
+      - name: Link Prisma packages for monorepo schema
+        working-directory: .
+        run: |
+          mkdir -p node_modules
+          ln -sfn "$GITHUB_WORKSPACE/backend/node_modules/@prisma" node_modules/@prisma
+          ln -sfn "$GITHUB_WORKSPACE/backend/node_modules/prisma" node_modules/prisma
+
       # Client is gitignored — typecheck needs generate before tsc
       - name: Prisma generate
         run: npm run prisma:generate
