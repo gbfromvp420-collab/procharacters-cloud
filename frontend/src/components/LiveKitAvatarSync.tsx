@@ -11,6 +11,28 @@ interface LiveKitAvatarSyncProps {
   onStatusChange?: (status: "off" | "connecting" | "connected" | "error") => void;
 }
 
+type RoomMeta = {
+  avatar?: AvatarState;
+  updatedAt?: number;
+};
+
+function parseAvatarFromMetadata(metadata: string | undefined): AvatarState | null {
+  if (!metadata) return null;
+  try {
+    const parsed = JSON.parse(metadata) as RoomMeta;
+    if (!parsed?.avatar || typeof parsed.avatar !== "object") return null;
+    const updatedAt =
+      typeof parsed.avatar.updatedAt === "number"
+        ? parsed.avatar.updatedAt
+        : typeof parsed.updatedAt === "number"
+          ? parsed.updatedAt
+          : Date.now();
+    return { ...parsed.avatar, updatedAt };
+  } catch {
+    return null;
+  }
+}
+
 export function LiveKitAvatarSync({
   livekit,
   onAvatarSync,
@@ -30,18 +52,16 @@ export function LiveKitAvatarSync({
 
     const room = new Room({ adaptiveStream: true, dynacast: true });
     let cancelled = false;
+    /** Last applied LiveKit metadata clock — drop out-of-order room events. */
+    let lastMetaAt = 0;
 
     const handleMetadata = (metadata: string | undefined) => {
-      if (!metadata) return;
-
-      try {
-        const parsed = JSON.parse(metadata) as { avatar?: AvatarState };
-        if (parsed.avatar) {
-          onAvatarSync(parsed.avatar);
-        }
-      } catch {
-        // ignore malformed metadata
-      }
+      const avatar = parseAvatarFromMetadata(metadata);
+      if (!avatar) return;
+      const ts = avatar.updatedAt ?? 0;
+      if (ts && ts < lastMetaAt) return;
+      if (ts) lastMetaAt = ts;
+      onAvatarSync(avatar);
     };
 
     room.on(RoomEvent.Connected, () => {
@@ -53,6 +73,15 @@ export function LiveKitAvatarSync({
 
     room.on(RoomEvent.Disconnected, () => {
       if (!cancelled) setStatus("off");
+    });
+
+    room.on(RoomEvent.Reconnecting, () => {
+      if (!cancelled) setStatus("connecting");
+    });
+
+    room.on(RoomEvent.Reconnected, () => {
+      if (!cancelled) setStatus("connected");
+      handleMetadata(room.metadata);
     });
 
     setStatus("connecting");

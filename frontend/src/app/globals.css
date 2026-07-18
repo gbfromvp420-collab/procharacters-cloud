@@ -88,6 +88,23 @@ body {
   transition: box-shadow 0.5s ease, background 0.5s ease;
 }
 
+/* Brief glow when energy band changes (LiveKit / WS reactivity feedback) */
+@keyframes avatar-band-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+  35% {
+    box-shadow: 0 0 28px 4px rgba(251, 113, 133, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 113, 133, 0);
+  }
+}
+
+.avatar-band-pulse {
+  animation: avatar-band-pulse 0.7s ease-out;
+}
+
 /* Glass panels / sticky chrome */
 @layer components {
   .glass-bar {

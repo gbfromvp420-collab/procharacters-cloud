@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   energyBandBadgeClass,
   energyBandFromAvatar,
   energyBandLabel,
   energyBandRingClass,
+  type EnergyBand,
 } from "@/lib/energy";
 import {
   presenceMotionClass,
@@ -32,6 +33,8 @@ interface AvatarVideoProps {
   pip?: boolean;
 }
 
+const CROSSFADE_MS = 620;
+
 export function AvatarVideo({
   avatar,
   characterName,
@@ -43,48 +46,74 @@ export function AvatarVideo({
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [showIncoming, setShowIncoming] = useState(false);
   const [usedFallback, setUsedFallback] = useState(false);
+  const [bandPulse, setBandPulse] = useState(false);
+  const prevBandRef = useRef<EnergyBand | null>(null);
+  const crossfadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const mediaUrl = avatar?.mediaUrl ?? null;
   const fallbackUrl = avatar?.mediaFallbackUrl ?? null;
-  const effectivePrimary = mediaUrl;
-  const isVideo =
-    (activeSrc ?? mediaUrl)?.endsWith(".mp4") ||
-    (activeSrc ?? mediaUrl)?.endsWith(".webm");
   const band = energyBandFromAvatar(avatar);
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
   const skin = resolvePresenceSkin(avatar?.presenceSkin, characterId);
   const visual = presenceVisual(skin);
 
-  // Reset when server sends a new primary URL
+  // Smooth crossfade on primary URL change (do not hard-reset activeSrc).
   useEffect(() => {
-    if (!effectivePrimary) return;
+    if (!mediaUrl) return;
+
+    if (!activeSrc) {
+      setUsedFallback(false);
+      setActiveSrc(mediaUrl);
+      setIncomingSrc(null);
+      setShowIncoming(false);
+      return;
+    }
+
+    if (mediaUrl === activeSrc) {
+      // Recovered primary after a failed fallback attempt
+      if (usedFallback) setUsedFallback(false);
+      return;
+    }
+
+    // Mid-fallback: only jump when primary fails again is handled by onMediaError
+    if (usedFallback && mediaUrl === fallbackUrl) return;
+
     setUsedFallback(false);
-    setActiveSrc(effectivePrimary);
-    setIncomingSrc(null);
-    setShowIncoming(false);
-  }, [effectivePrimary]);
-
-  useEffect(() => {
-    if (!mediaUrl || !activeSrc) return;
-    if (mediaUrl === activeSrc) return;
-    // Crossfade only when not mid-fallback recovery
-    if (usedFallback) return;
-
     setIncomingSrc(mediaUrl);
     setShowIncoming(false);
 
     const frame = requestAnimationFrame(() => setShowIncoming(true));
-    const timer = setTimeout(() => {
+    if (crossfadeTimer.current) clearTimeout(crossfadeTimer.current);
+    crossfadeTimer.current = setTimeout(() => {
       setActiveSrc(mediaUrl);
       setIncomingSrc(null);
       setShowIncoming(false);
-    }, 620);
+      crossfadeTimer.current = null;
+    }, CROSSFADE_MS);
 
     return () => {
       cancelAnimationFrame(frame);
-      clearTimeout(timer);
+      if (crossfadeTimer.current) {
+        clearTimeout(crossfadeTimer.current);
+        crossfadeTimer.current = null;
+      }
     };
-  }, [mediaUrl, activeSrc, usedFallback]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to mediaUrl; activeSrc is transition state
+  }, [mediaUrl]);
+
+  // Pulse ring when energy band changes (reactivity feedback without clip thrash).
+  useEffect(() => {
+    if (!avatar) return;
+    if (prevBandRef.current === null) {
+      prevBandRef.current = band;
+      return;
+    }
+    if (prevBandRef.current === band) return;
+    prevBandRef.current = band;
+    setBandPulse(true);
+    const t = setTimeout(() => setBandPulse(false), 700);
+    return () => clearTimeout(t);
+  }, [band, avatar]);
 
   const onMediaError = () => {
     if (fallbackUrl && !usedFallback && activeSrc !== fallbackUrl) {
@@ -101,9 +130,14 @@ export function AvatarVideo({
       ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4] rounded-xl"
       : "aspect-[3/4] rounded-xl";
 
+  const isVideoSrc = (src: string | null) =>
+    !!src && (src.endsWith(".mp4") || src.endsWith(".webm"));
+
   return (
     <div
-      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-500 ${frameClass} ${energyBandRingClass(band)} ${visual.glow}`}
+      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-500 ${frameClass} ${energyBandRingClass(band)} ${visual.glow} ${
+        bandPulse ? "avatar-band-pulse" : ""
+      }`}
     >
       {!activeSrc && (
         <div
@@ -127,9 +161,7 @@ export function AvatarVideo({
       {activeSrc && (
         <MediaLayer
           src={activeSrc}
-          isVideo={
-            !!activeSrc.endsWith(".mp4") || !!activeSrc.endsWith(".webm") || !!isVideo
-          }
+          isVideo={isVideoSrc(activeSrc)}
           visible={!showIncoming}
           label={pip ? undefined : avatar ? formatLabel(avatar.emotion) : undefined}
           onError={onMediaError}
@@ -141,7 +173,7 @@ export function AvatarVideo({
       {incomingSrc && (
         <MediaLayer
           src={incomingSrc}
-          isVideo={incomingSrc.endsWith(".mp4") || incomingSrc.endsWith(".webm")}
+          isVideo={isVideoSrc(incomingSrc)}
           visible={showIncoming}
           label={pip ? undefined : avatar ? formatLabel(avatar.emotion) : undefined}
           onError={onMediaError}
@@ -165,9 +197,9 @@ export function AvatarVideo({
           }`}
         >
           <div
-            className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur-sm ${energyBandBadgeClass(band)} ${
+            className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur-sm transition-transform duration-300 ${energyBandBadgeClass(band)} ${
               pip ? "px-1.5 text-[8px]" : ""
-            }`}
+            } ${bandPulse ? "scale-110" : "scale-100"}`}
           >
             {energyBandLabel(band)}
             {!pip && <span className="ml-1 opacity-80">{arousalPct}%</span>}

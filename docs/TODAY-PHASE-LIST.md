@@ -1,4 +1,4 @@
-# Today’s phase list — 2026-07-17
+# Today’s phase list — 2026-07-18
 
 **Owner:** King Grok CEO (final say on eng)  
 **Boss Sr.:** Gary (phone smoke, footage, Stripe keys)  
@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrate**, polish rate-limit UX. Content/Stripe still human-gated.
+Keep **return loop + push** airtight. Gary confirmed **phone push**. Ship **LiveKit avatar reactivity polish**. Content/Stripe still human-gated.
 
 ---
 
@@ -28,6 +28,7 @@ Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrat
 | 10 | **Phase 5 anti-loop + memory rehydrate** — unchained continuity, session restore scene blurb | ✅ `f4218eb` live |
 | 11 | **429 UX** on chat/account Send test — “try again in Ns” from Retry-After | ✅ |
 | 12 | **CharacterSession Prisma** — durable summary + kink + history; forget-me clears both | ✅ |
+| 13 | **LiveKit avatar reactivity polish** — sticky energy bands, updatedAt merge, crossfade fix, band pulse | ✅ |
 
 ---
 
@@ -35,14 +36,14 @@ Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrat
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | LiveKit avatar reactivity polish | M | Badge already ready |
-| B | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
+| A | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
+| B | Optional ops: `ERROR_WEBHOOK_URL` | S | Gary sets on Railway |
 
 ---
 
 ## Gary (human) — not eng blockers
 
-1. **Phone push smoke** (1 min): Install → `/chat` Enable alerts → Send test  
+1. ~~**Phone push smoke**~~ ✅ Gary confirmed (2026-07-18)  
 2. Optional: `ERROR_WEBHOOK_URL` on Railway API  
 3. Optional: Stripe keys when ready to charge  
 4. Optional: drop 4K MP4 packs per `DROP_IN.md`
@@ -63,7 +64,8 @@ Keep **return loop + push** airtight, ship **Phase 5 anti-loop / memory rehydrat
 - [x] Push can be enabled + tested **without** hunting Account  
 - [x] Gallery doesn’t fat-finger **new chat** over **continue**  
 - [x] Ops can see deploy SHA + expiry cron heartbeat  
-- [ ] Gary confirms one real notification on a phone (only open Phase 1 checkbox)
+- [x] Gary confirms one real notification on a phone  
+- [x] Avatar loops react smoothly (no band thrash; LiveKit/WS merge)
 
 ---
 

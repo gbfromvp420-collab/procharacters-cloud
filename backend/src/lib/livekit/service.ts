@@ -110,9 +110,11 @@ export class LiveKitService {
   async syncAvatarState(roomName: string, avatar: AvatarState): Promise<void> {
     if (!this.client) return;
 
+    const updatedAt = avatar.updatedAt ?? Date.now();
+    const stamped: AvatarState = { ...avatar, updatedAt };
     const metadata: LiveKitRoomMetadata = {
-      avatar,
-      updatedAt: Date.now(),
+      avatar: stamped,
+      updatedAt,
     };
 
     try {

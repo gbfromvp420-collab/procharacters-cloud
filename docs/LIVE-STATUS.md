@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-17  
+**Updated:** 2026-07-18  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -30,9 +30,11 @@
 | Phase 5 anti-loop + restore rehydrate | ✅ `f4218eb` |
 | CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
+| Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |
 | Send test **429 UX** (retry-after copy) | ✅ |
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
+| LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; checkout waits for keys |
 | Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
@@ -42,7 +44,7 @@
 
 ## Your quick wins (no engineer needed)
 
-1. **Phone push (top priority):** Install app / Add to Home Screen → Account → Enable push → **Send test**  
+1. ~~**Phone push**~~ ✅ done  
 2. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
 3. **Stripe (optional):** when you want money, follow [ops-billing-stripe.md](./ops-billing-stripe.md)  
 4. **Avatar pack (optional):** drop 4 MP4s per [DROP_IN.md](../frontend/public/avatar/packs/DROP_IN.md)
@@ -51,10 +53,11 @@
 
 ## CEO sprint order (eng + human)
 
-1. Gary: phone push smoke  
+1. ~~Gary: phone push smoke~~ ✅  
 2. Eng: keep return loop + ops healthy (deploy fingerprint on `/health`)  
 3. Content: dedicated packs when footage exists  
 4. Optional: `ERROR_WEBHOOK_URL`, Stripe keys  
+5. Housekeeping: close/ignore stale PRs `#2` `#3` `#4` when ready  
 
 ---
 

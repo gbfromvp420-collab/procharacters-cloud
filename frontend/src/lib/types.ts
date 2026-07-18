@@ -149,6 +149,8 @@ export interface AvatarState {
   mediaFallbackUrl?: string;
   /** Presence grade for client atmosphere (twink_gym, female_goth, …) */
   presenceSkin?: string;
+  /** Epoch ms — prefer fresher LiveKit/WS updates */
+  updatedAt?: number;
 }
 
 export interface ServerWsEvent {

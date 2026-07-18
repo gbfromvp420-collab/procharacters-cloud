@@ -9,6 +9,7 @@ import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
 import { LiveKitBadge } from "@/components/LiveKitBadge";
 import { TypingIndicator } from "@/components/TypingIndicator";
+import { mergeAvatarState } from "@/lib/avatar-merge";
 import {
   claimSession,
   createCustomCharacter,
@@ -214,7 +215,7 @@ export function ChatApp() {
   const [importOpenIndex, setImportOpenIndex] = useState<number | null>(null);
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
-    setAvatarState(avatar);
+    setAvatarState((prev) => mergeAvatarState(prev, avatar) ?? avatar);
   }, []);
 
   const setAvatarCollapsedPersist = useCallback((next: boolean) => {
@@ -589,7 +590,7 @@ export function ChatApp() {
             setIsTyping(false);
 
             if (avatarIntent) {
-              setAvatarState(avatarIntent);
+              setAvatarState((prev) => mergeAvatarState(prev, avatarIntent) ?? avatarIntent);
             }
             if (notes?.trim()) {
               setSessionNotes(notes.trim());
@@ -618,7 +619,10 @@ export function ChatApp() {
           }
 
           case "avatar_update":
-            setAvatarState(data.avatarState as AvatarState);
+            setAvatarState((prev) => {
+              const next = data.avatarState as AvatarState;
+              return mergeAvatarState(prev, next) ?? next;
+            });
             break;
 
           case "session_ended": {

@@ -19,6 +19,11 @@ export interface AvatarState {
    * e.g. twink_gym | female_goth | twink_shy
    */
   presenceSkin?: string;
+  /**
+   * Epoch ms when this avatar body was last published (WS + LiveKit).
+   * Clients use it so LiveKit metadata cannot stomp a fresher WebSocket update.
+   */
+  updatedAt?: number;
 }
 
 export type SessionMode = "normal" | "edge_pace";
