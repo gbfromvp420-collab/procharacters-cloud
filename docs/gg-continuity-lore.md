@@ -93,6 +93,7 @@ When cold: rehydrate from this file → LIVE-STATUS → roadmap → code. Then s
 - [x] Free path forever; Stripe Checkout ready when keys land  
 - [ ] Gary phone push smoke (Enable → Send test)  
 - [ ] Dedicated 4K packs dropped  
+- [x] Stale PR hygiene + split CI (2026-07-18)  
 - [ ] Optional ERROR_WEBHOOK / Stripe live  
 
 ---

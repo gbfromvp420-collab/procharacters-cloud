@@ -30,6 +30,7 @@ Keep **return loop + push** airtight. Gary confirmed **phone push**. Ship **Live
 | 12 | **CharacterSession Prisma** — durable summary + kink + history; forget-me clears both | ✅ |
 | 13 | **LiveKit avatar reactivity polish** — sticky energy bands, updatedAt merge, crossfade fix, band pulse | ✅ |
 | 14 | **Memory stickiness pass** — scene lock every turn, prior seed, resume dossier refresh, sticky default Remember, strip chips | ✅ |
+| 15 | **Repo hygiene** — close stale PRs `#1` `#2` `#3` `#4` `#29`; ship split CI + PR template (salvage from `#4`) | ✅ |
 
 ---
 
@@ -37,7 +38,7 @@ Keep **return loop + push** airtight. Gary confirmed **phone push**. Ship **Live
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Close/ignore stale open PRs `#2` `#3` `#4` (legacy / WIP) | S | Don’t merge without review |
+| A | ~~Close/ignore stale open PRs `#1` `#2` `#3` `#4` `#29`~~ | S | ✅ closed 2026-07-18 — do not merge; CI salvaged from `#4` |
 | B | Optional ops: `ERROR_WEBHOOK_URL` | S | Gary sets on Railway |
 
 ---
