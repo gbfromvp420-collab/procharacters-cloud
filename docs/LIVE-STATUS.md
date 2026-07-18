@@ -36,6 +36,8 @@
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
 | LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse |
+| Account **System pulse** | ✅ live `/health` chips (deploy SHA, push, DB, Stripe, webhook) |
+| Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; checkout waits for keys |
 | Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
@@ -57,8 +59,9 @@
 1. ~~Gary: phone push smoke~~ ✅  
 2. Eng: keep return loop + ops healthy (deploy fingerprint on `/health`)  
 3. ~~Housekeeping: close stale PRs `#1` `#2` `#3` `#4` `#29`~~ ✅ + CI workflows on `main`  
-4. Content: dedicated packs when footage exists  
-5. Optional: `ERROR_WEBHOOK_URL`, Stripe keys  
+4. ~~Ops noise: Azure workflow manual-only + Account System pulse~~ ✅  
+5. Content: dedicated packs when footage exists  
+6. Optional: `ERROR_WEBHOOK_URL`, Stripe keys  
 
 ---
 

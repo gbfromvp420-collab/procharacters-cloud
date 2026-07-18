@@ -51,6 +51,7 @@ import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import { InstallAppHint } from "@/components/InstallAppHint";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
+import { SystemPulse } from "@/components/SystemPulse";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -1225,6 +1226,10 @@ export function AccountSettings() {
         />
 
         <InstallAppHint className="mb-4" />
+
+        <div className="mb-4">
+          <SystemPulse />
+        </div>
 
         {(error || notice) && (
           <div

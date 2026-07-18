@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import {
   buildResumeChatPath,
@@ -24,6 +25,35 @@ export function ContinueBanner({
   const href = buildResumeChatPath(continueTarget);
   const expiryLabel = formatResumeExpiryShort(continueTarget.resumeExpiresAt);
   const urgent = isResumeExpiryUrgent(continueTarget.resumeExpiresAt);
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = async () => {
+    const code = continueTarget.resumeCode?.trim();
+    if (!code) return;
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      // Fallback for older mobile webviews
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = code;
+        ta.setAttribute("readonly", "");
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1600);
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
   return (
     <section
       className={`mb-6 animate-rise-in overflow-hidden rounded-2xl border bg-gradient-to-r via-brand-panel to-brand-panel shadow-glow-sm sm:mb-8 ${
@@ -66,6 +96,14 @@ export function ContinueBanner({
           >
             {urgent && expiryLabel === "expired" ? "Reclaim chat" : "Continue"}
           </Link>
+          <button
+            type="button"
+            onClick={() => void copyCode()}
+            className="btn-ghost min-h-0 flex-1 px-3 py-2 text-xs text-amber-100/90 sm:flex-none"
+            title="Copy resume code for another device"
+          >
+            {copied ? "Copied!" : "Copy code"}
+          </button>
           {resumeCount > 1 && (
             <button type="button" onClick={onShowAllMyChats} className="btn-ghost min-h-0 flex-1 px-3 py-2 text-xs text-amber-100/90 sm:flex-none">
               All my chats
