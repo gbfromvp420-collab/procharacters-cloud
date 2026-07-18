@@ -11,7 +11,7 @@
 |-------|--------|-----------------|
 | Eng day | Mostly shipped (`main` includes billing confirm-on-return `b10c416`, pack docs `68c4560`) | — |
 | Stripe | Eng ready; **prod keys not on Railway yet** | Gary: Railway API vars when ready |
-| Railway CLI + MCP | CLI + MCP ready · **last token rejected** (Not Authorized) | Gary: fresh **Account** token from railway.app/account/tokens → paste in chat |
+| Railway CLI + MCP | ✅ **Authed** (token UUID) · project `captivating-vision` · services web/api/Postgres | Stripe vars still missing on API — Gary can paste keys here or set in dashboard |
 | 4K packs | 6 Phase 4 folders empty (interim only) · guide `docs/GARY-PACK-EDITING.md` | Gary: edit 4 clips × 6 models first |
 
 ---
