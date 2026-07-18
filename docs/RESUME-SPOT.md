@@ -11,7 +11,7 @@
 |-------|--------|-----------------|
 | Eng day | Mostly shipped (`main` includes billing confirm-on-return `b10c416`, pack docs `68c4560`) | — |
 | Stripe | Eng ready; **prod keys not on Railway yet** | Gary: Railway API vars when ready |
-| Railway CLI + MCP | CLI at `/root/.local/bin/railway` · MCP `railway` installed (38 tools) · **not authorized** | Gary: API token → paste **in this Grok chat** |
+| Railway CLI + MCP | CLI + MCP ready · **last token rejected** (Not Authorized) | Gary: fresh **Account** token from railway.app/account/tokens → paste in chat |
 | 4K packs | 6 Phase 4 folders empty (interim only) · guide `docs/GARY-PACK-EDITING.md` | Gary: edit 4 clips × 6 models first |
 
 ---
