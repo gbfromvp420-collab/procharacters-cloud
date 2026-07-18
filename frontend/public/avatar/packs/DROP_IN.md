@@ -1,5 +1,8 @@
 # Avatar pack drop-in (Phase 4)
 
+**Human-friendly guide:** [docs/GARY-PACK-EDITING.md](../../../../docs/GARY-PACK-EDITING.md)  
+(how to cut long takes → 4 loops; ship order for 500-video libraries)
+
 ## How to add dedicated clips
 
 For each model folder, add **four seamless loops** (4–8s, 9:16 preferred):
@@ -12,7 +15,7 @@ frontend/public/avatar/<model-id>/
   aroused.mp4
 ```
 
-### Model IDs
+### Model IDs (ship these first)
 
 | Folder | Interim base until ready |
 |--------|---------------------------|

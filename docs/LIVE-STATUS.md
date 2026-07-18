@@ -50,7 +50,7 @@
 1. ~~**Phone push**~~ ✅ done  
 2. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
 3. **Stripe (when ready):** paste keys on Railway API per [ops-billing-stripe.md](./ops-billing-stripe.md) — eng confirm-on-return already shipped  
-4. **Avatar pack (optional, content):** drop 4 loop MP4s per model in `frontend/public/avatar/<id>/` — see [DROP_IN.md](../frontend/public/avatar/packs/DROP_IN.md)
+4. **Avatar packs (content):** cut your library into 4 loops — start with 6 featured models → [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
 
 ---
 
