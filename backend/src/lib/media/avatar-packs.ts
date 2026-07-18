@@ -57,15 +57,10 @@ function packDir(root: string, id: string): string {
   return join(root, id);
 }
 
-function scanPackReady(id: string): boolean {
+/** True only when all four clip files exist under a discovered avatar root. */
+function scanPackFilesReady(id: string): boolean {
   const root = findAvatarRoot();
-  if (!root) {
-    // Env override: comma list of ready pack ids
-    const envList = process.env.AVATAR_PACKS_READY?.split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    return !!envList?.includes(id);
-  }
+  if (!root) return false;
   const dir = packDir(root, id);
   if (!existsSync(dir)) return false;
   return CLIP_KEYS.every((clip) => {
@@ -75,13 +70,8 @@ function scanPackReady(id: string): boolean {
   });
 }
 
-function loadReadyMap(): Map<string, boolean> {
-  const now = Date.now();
-  if (cache && now - cacheLoadedAt < CACHE_MS) return cache;
-
+function readStatusJsonReady(): Map<string, boolean> {
   const map = new Map<string, boolean>();
-
-  // Optional committed status file (CI / deploy can refresh it)
   for (const root of avatarRootCandidates()) {
     const statusPath = join(root, "packs", "status.json");
     if (!existsSync(statusPath)) continue;
@@ -103,13 +93,28 @@ function loadReadyMap(): Map<string, boolean> {
       /* ignore bad status */
     }
   }
+  return map;
+}
 
-  // Filesystem wins when present
-  for (const id of Object.keys(LIVE_CHARACTER_CATALOG)) {
-    map.set(id, scanPackReady(id));
-  }
-  for (const id of PHASE4_IDS) {
-    if (!map.has(id)) map.set(id, scanPackReady(id));
+/**
+ * API images often ship without MP4s (web serves them). Readiness is:
+ * status.json OR files on disk OR AVATAR_PACKS_READY env.
+ * Files on disk still win for true; never clear a true from status/env just
+ * because the API container has no avatar binary tree.
+ */
+function loadReadyMap(): Map<string, boolean> {
+  const now = Date.now();
+  if (cache && now - cacheLoadedAt < CACHE_MS) return cache;
+
+  const map = readStatusJsonReady();
+
+  const ids = new Set([
+    ...Object.keys(LIVE_CHARACTER_CATALOG),
+    ...PHASE4_IDS,
+  ]);
+  for (const id of ids) {
+    if (scanPackFilesReady(id)) map.set(id, true);
+    else if (!map.has(id)) map.set(id, false);
   }
 
   const envList = process.env.AVATAR_PACKS_READY?.split(",")
@@ -156,6 +161,7 @@ export function resolvePackMediaIds(characterId: string): {
 
 export function listPackStatuses(): PackStatus[] {
   const root = findAvatarRoot() ?? "(not found)";
+  const readyMap = loadReadyMap();
   const ids = new Set([
     ...Object.keys(LIVE_CHARACTER_CATALOG),
     ...PHASE4_IDS,
@@ -180,9 +186,14 @@ export function listPackStatuses(): PackStatus[] {
     } else {
       missing.push(...CLIP_KEYS);
     }
+    // Prefer unified readiness (status.json / files / env) so API health matches
+    // gallery badges even when this container does not ship MP4 binaries.
+    const ready =
+      readyMap.get(id) === true ||
+      (missing.length === 0 && present.length === CLIP_KEYS.length);
     return {
       id,
-      ready: missing.length === 0 && present.length === CLIP_KEYS.length,
+      ready,
       missing,
       present,
       avatarBase,

@@ -43,6 +43,8 @@ COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY prompts ./prompts
 COPY characters ./characters
+# Pack readiness without shipping MP4s on the API image (web serves /avatar/*).
+COPY frontend/public/avatar/packs/status.json ./public/avatar/packs/status.json
 
 RUN mkdir -p /data
 

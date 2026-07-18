@@ -12,7 +12,7 @@
 | Eng day | Mostly shipped (`main` includes billing confirm-on-return `b10c416`, pack docs `68c4560`) | — |
 | Stripe | ✅ **LIVE** on API (`billing.mode=live`, webhook on) · Day Pass $4.99 / Supporter $9.99 | Gary: smoke checkout carefully — **real money** |
 | Railway CLI + MCP | ✅ Authed · project `captivating-vision` · Stripe vars upserted + API redeployed | — |
-| 4K packs | 6 Phase 4 folders empty (interim only) · guide `docs/GARY-PACK-EDITING.md` | Gary: edit 4 clips × 6 models first |
+| 4K packs | ✅ 6 Phase 4 packs on GitHub `main` (web 200) · `status.json` + API badge fix shipping | Open gallery → green **4K pack** after API redeploy |
 
 ---
 

@@ -40,8 +40,8 @@
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; checkout waits for Railway keys |
-| Phase 4 models (6) | ✅ minds live; **interim** avatar footage |
-| Dedicated 4K avatar packs | ⏳ drop MP4s when ready |
+| Phase 4 models (6) | ✅ minds live |
+| Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 
 ---
 
