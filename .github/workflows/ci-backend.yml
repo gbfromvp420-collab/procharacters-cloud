@@ -31,7 +31,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
@@ -39,6 +39,12 @@ jobs:
         run: npm ci
         env:
           # Prisma generate may read config; no real DB in CI
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+
+      # Client is gitignored — typecheck needs generate before tsc
+      - name: Prisma generate
+        run: npm run prisma:generate
+        env:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
 
       - name: Typecheck
