@@ -148,6 +148,20 @@ body {
   }
 }
 
+/* Edge Pace strip — almost phase shell throb */
+@keyframes edge-almost-shell {
+  0%,
+  100% {
+    box-shadow: 0 0 22px -6px rgba(244, 63, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 36px -4px rgba(244, 63, 94, 0.7);
+  }
+}
+.edge-almost-pulse {
+  animation: edge-almost-shell 1.2s ease-in-out infinite;
+}
+
 /* Glass panels / sticky chrome */
 @layer components {
   .glass-bar {

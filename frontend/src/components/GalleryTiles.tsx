@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
@@ -12,6 +12,7 @@ import {
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
 import { canNativeShare } from "@/lib/share-links";
+import type { MediaClipKey } from "@/lib/types";
 
 export function posterUrl(card: CharacterCard): string {
   const poster = card.posterClip;
@@ -19,10 +20,81 @@ export function posterUrl(card: CharacterCard): string {
   return `/${poster}`;
 }
 
+function clipUrl(path: string | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("/")) return path;
+  return `/${path}`;
+}
+
+/** Cycle idle → teasing → playful for “live now” feel when multiple clips exist. */
+function useClipRotation(
+  card: CharacterCard,
+  enabled: boolean,
+): { src: string; bandLabel: string | null } {
+  const sequence = useMemo(() => {
+    const keys: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
+    const out: Array<{ key: MediaClipKey; url: string }> = [];
+    for (const k of keys) {
+      const url = clipUrl(card.clips?.[k]);
+      if (url) out.push({ key: k, url });
+    }
+    // Dedupe identical URLs (interim packs often share one file)
+    const seen = new Set<string>();
+    const unique = out.filter((c) => {
+      if (seen.has(c.url)) return false;
+      seen.add(c.url);
+      return true;
+    });
+    if (unique.length === 0) {
+      const p = posterUrl(card);
+      return p ? [{ key: "teasing" as MediaClipKey, url: p }] : [];
+    }
+    return unique;
+  }, [card]);
+
+  // Stagger start so featured strip doesn’t sync-march
+  const [index, setIndex] = useState(() => {
+    if (typeof window === "undefined" || sequence.length < 2) return 0;
+    let h = 0;
+    for (const ch of card.id) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    return h % sequence.length;
+  });
+
+  useEffect(() => {
+    if (!enabled || sequence.length < 2) return;
+    // Featured / dedicated: rotate a bit faster for “alive” gallery energy
+    const ms = card.featured || card.dedicatedPack ? 7800 : 11000;
+    const t = window.setInterval(() => {
+      setIndex((i) => (i + 1) % sequence.length);
+    }, ms);
+    return () => window.clearInterval(t);
+  }, [enabled, sequence.length, card.featured, card.dedicatedPack]);
+
+  const current = sequence[Math.min(index, sequence.length - 1)];
+  const bandLabel =
+    sequence.length > 1 && current
+      ? current.key === "idle"
+        ? "idle"
+        : current.key === "teasing"
+          ? "tease"
+          : current.key === "playful"
+            ? "play"
+            : current.key === "aroused"
+              ? "edge"
+              : null
+      : null;
+
+  return {
+    src: current?.url || posterUrl(card),
+    bandLabel,
+  };
+}
+
 /** Play video only while mostly on-screen — saves battery when scrolling a full roster. */
 function useVisibleVideo(enabled = true) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     if (!enabled) return;
@@ -30,11 +102,12 @@ function useVisibleVideo(enabled = true) {
     const video = videoRef.current;
     if (!root || !video) return;
 
-    let visible = false;
+    let isVisible = false;
     const io = new IntersectionObserver(
       ([entry]) => {
-        visible = !!entry?.isIntersecting && (entry.intersectionRatio ?? 0) > 0.12;
-        if (visible) {
+        isVisible = !!entry?.isIntersecting && (entry.intersectionRatio ?? 0) > 0.12;
+        setVisible(isVisible);
+        if (isVisible) {
           void video.play().catch(() => {
             /* autoplay policy — ignore */
           });
@@ -46,10 +119,9 @@ function useVisibleVideo(enabled = true) {
     );
     io.observe(root);
 
-    // Pause when tab is hidden
     const onVis = () => {
       if (document.hidden) video.pause();
-      else if (visible) void video.play().catch(() => {});
+      else if (isVisible) void video.play().catch(() => {});
     };
     document.addEventListener("visibilitychange", onVis);
 
@@ -59,7 +131,7 @@ function useVisibleVideo(enabled = true) {
     };
   }, [enabled]);
 
-  return { containerRef, videoRef };
+  return { containerRef, videoRef, visible };
 }
 
 export function CharacterTile({
@@ -75,14 +147,27 @@ export function CharacterTile({
   resume: ResumeCacheEntry | null;
   compact?: boolean;
 }) {
-  const poster = posterUrl(card);
   const skin = resolvePresenceSkin(undefined, card.id);
   const visual = presenceVisual(skin);
   const expiryLabel = formatResumeExpiryShort(resume?.resumeExpiresAt);
   const urgent = isResumeExpiryUrgent(resume?.resumeExpiresAt);
-  const { containerRef, videoRef } = useVisibleVideo(true);
+  const { containerRef, videoRef, visible } = useVisibleVideo(true);
+  const { src, bandLabel } = useClipRotation(card, visible);
   const first = card.displayName.trim().split(/\s+/)[0] || card.displayName;
   const mind = mindFingerprint(card.id);
+
+  // Smooth src swap without blank frame
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !src) return;
+    if (video.getAttribute("src") === src) return;
+    const wasPlaying = !video.paused;
+    video.src = src;
+    video.load();
+    if (wasPlaying || visible) {
+      void video.play().catch(() => {});
+    }
+  }, [src, videoRef, visible]);
 
   return (
     <article
@@ -98,7 +183,6 @@ export function CharacterTile({
           ref={videoRef}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           style={{ filter: visual.filter }}
-          src={poster}
           muted
           loop
           playsInline
@@ -114,6 +198,11 @@ export function CharacterTile({
             title="Dedicated 4K pack live"
             aria-hidden
           />
+        )}
+        {bandLabel && (
+          <span className="absolute left-2 bottom-[4.5rem] z-10 rounded-full border border-white/20 bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur sm:bottom-20">
+            Live · {bandLabel}
+          </span>
         )}
         {resume?.resumeCode && (
           <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">

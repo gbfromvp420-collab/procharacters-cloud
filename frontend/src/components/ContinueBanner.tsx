@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import QRCode from "qrcode";
 import type { CharacterCard } from "@/lib/character-card";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
@@ -10,6 +11,7 @@ import {
   isResumeExpiryUrgent,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
+import { buildResumeCodeShareUrl } from "@/lib/share-links";
 import { posterUrl } from "./GalleryTiles";
 
 export function ContinueBanner({
@@ -27,6 +29,9 @@ export function ContinueBanner({
   const expiryLabel = formatResumeExpiryShort(continueTarget.resumeExpiresAt);
   const urgent = isResumeExpiryUrgent(continueTarget.resumeExpiresAt);
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [qrError, setQrError] = useState<string | null>(null);
   const mind = mindFingerprint(continueTarget.characterId);
   const recap =
     continueTarget.recapLine?.trim() ||
@@ -36,6 +41,30 @@ export function ContinueBanner({
   const displayName =
     continueCard?.displayName || continueTarget.characterName || "Your last chat";
   const nick = displayName.trim().split(/\s+/)[0] || displayName;
+  const resumeUrl = buildResumeCodeShareUrl(continueTarget.resumeCode, {
+    characterId: continueTarget.characterId,
+  });
+
+  useEffect(() => {
+    if (!showQr) return;
+    let cancelled = false;
+    setQrError(null);
+    void QRCode.toDataURL(resumeUrl, {
+      width: 200,
+      margin: 2,
+      color: { dark: "#0a0a0a", light: "#ffffff" },
+      errorCorrectionLevel: "M",
+    })
+      .then((url) => {
+        if (!cancelled) setQrDataUrl(url);
+      })
+      .catch(() => {
+        if (!cancelled) setQrError("Could not render QR");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showQr, resumeUrl]);
 
   const copyCode = async () => {
     const code = continueTarget.resumeCode?.trim();
@@ -141,6 +170,15 @@ export function ContinueBanner({
           </Link>
           <button
             type="button"
+            onClick={() => setShowQr((v) => !v)}
+            className="btn-ghost min-h-0 flex-1 border-amber-500/35 px-3 py-2 text-xs text-amber-100/90 sm:flex-none"
+            title="Show QR to open this resume on another phone"
+            aria-expanded={showQr}
+          >
+            {showQr ? "Hide QR" : "QR · other phone"}
+          </button>
+          <button
+            type="button"
             onClick={() => void copyCode()}
             className="btn-ghost min-h-0 flex-1 px-3 py-2 text-xs text-amber-100/90 sm:flex-none"
             title="Copy resume code for another device"
@@ -158,6 +196,34 @@ export function ContinueBanner({
           )}
         </div>
       </div>
+
+      {showQr && (
+        <div className="flex flex-col items-center gap-2 border-t border-amber-500/20 bg-black/25 px-4 py-4 sm:flex-row sm:items-center sm:justify-center sm:gap-5">
+          {qrDataUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={qrDataUrl}
+              alt={`QR code to resume chat with ${displayName}`}
+              className="h-40 w-40 rounded-xl border border-white/20 bg-white p-2 shadow-card"
+            />
+          ) : (
+            <div className="flex h-40 w-40 items-center justify-center rounded-xl border border-brand-border bg-brand-panel text-xs text-brand-muted">
+              {qrError ?? "Generating QR…"}
+            </div>
+          )}
+          <div className="max-w-xs text-center text-[11px] leading-relaxed text-amber-100/85 sm:text-left">
+            <p className="font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+              Scan to continue · {nick}
+            </p>
+            <p className="mt-1 text-brand-muted">
+              Point another phone’s camera here — opens the same resume without typing the code.
+            </p>
+            <p className="mt-1.5 font-mono text-[10px] text-amber-100/70">
+              {continueTarget.resumeCode}
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
