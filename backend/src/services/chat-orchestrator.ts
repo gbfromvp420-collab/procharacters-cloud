@@ -234,6 +234,10 @@ export class ChatOrchestrator {
       },
     );
 
+    if (dnaTreeStep?.advanced) {
+      bump("dnaTreeAdvances");
+    }
+
     this.sessions.updateSession(sessionId, {
       memory: memory.toData(),
       avatarState: avatarIntent,

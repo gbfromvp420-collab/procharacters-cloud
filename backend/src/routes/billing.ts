@@ -73,7 +73,7 @@ export const createBillingRoutes = (): FastifyPluginAsync => {
           product: body.product,
           email: account.email,
         });
-        bump("httpRequests"); // already counted by hook
+        bump("checkoutStarts");
         return { url: session.url, sessionId: session.sessionId };
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -111,6 +111,7 @@ export const createBillingRoutes = (): FastifyPluginAsync => {
             paymentStatus: result.paymentStatus,
           });
         }
+        bump("checkoutConfirms");
         // Re-resolve after grant for fresh plan fields
         const refreshed = await resolveAccountToken(bearerToken(request));
         const summary = refreshed

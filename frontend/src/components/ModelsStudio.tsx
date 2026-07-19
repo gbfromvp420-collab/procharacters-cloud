@@ -163,6 +163,8 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     id: string;
     name: string;
     starter?: string;
+    forged?: boolean;
+    forgeSource?: string | null;
   } | null>(null);
   const [showPromptSim, setShowPromptSim] = useState(true);
 
@@ -750,9 +752,15 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
       setJustCreated({
         id: id!,
         name: displayName,
-        starter: smartStarter,
+        starter: smartStarter || dna?.starterLine || undefined,
+        forged: !!dna,
+        forgeSource: dna?.source ?? forgeSource,
       });
-      showFlash(`${displayName} · ready`);
+      showFlash(
+        dna
+          ? `${displayName} · DNA forged · Edge Pace ready`
+          : `${displayName} · ready`,
+      );
       if (id && wasCreate) {
         router.replace(`/models/studio/edit/${encodeURIComponent(id)}`);
       }
@@ -876,6 +884,8 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             characterName={justCreated.name}
             customsLimit={customsLimit}
             starterHint={justCreated.starter}
+            forged={justCreated.forged === true}
+            forgeSource={justCreated.forgeSource}
             onStart={() => startHeat()}
             onStartEdge={() => startHeat("edge_pace")}
             onDismiss={() => setJustCreated(null)}

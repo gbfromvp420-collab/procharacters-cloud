@@ -13,7 +13,17 @@ export type MetricCounters = {
   chatTurns: number;
   chatLlmErrors: number;
   customCharactersCreated: number;
+  /** Studio Forge DNA saves (custom-v3). */
+  customV3Created: number;
   forgeExpands: number;
+  /** Edge Pace sessions created. */
+  sessionsEdgePace: number;
+  /** Soft DNA tree node advances mid-session. */
+  dnaTreeAdvances: number;
+  /** Stripe checkout sessions opened. */
+  checkoutStarts: number;
+  /** Stripe checkout confirms (return path). */
+  checkoutConfirms: number;
   authRegister: number;
   authLogin: number;
   authFailures: number;
@@ -35,7 +45,12 @@ const counters: MetricCounters = {
   chatTurns: 0,
   chatLlmErrors: 0,
   customCharactersCreated: 0,
+  customV3Created: 0,
   forgeExpands: 0,
+  sessionsEdgePace: 0,
+  dnaTreeAdvances: 0,
+  checkoutStarts: 0,
+  checkoutConfirms: 0,
   authRegister: 0,
   authLogin: 0,
   authFailures: 0,

@@ -40,9 +40,15 @@ type MetricsPayload = {
   httpErrors4xx?: number;
   wsConnections?: number;
   sessionsCreated?: number;
+  sessionsEdgePace?: number;
   chatTurns?: number;
   chatLlmErrors?: number;
   customCharactersCreated?: number;
+  customV3Created?: number;
+  forgeExpands?: number;
+  dnaTreeAdvances?: number;
+  checkoutStarts?: number;
+  checkoutConfirms?: number;
   authLogin?: number;
   authFailures?: number;
   pushTestSent?: number;
@@ -285,6 +291,50 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         ok: true,
         title: "My Characters created this process",
       });
+    }
+    // Funnel: expand → DNA save → edge sessions → tree climb → checkout
+    if (
+      (metrics.forgeExpands ?? 0) +
+        (metrics.customV3Created ?? 0) +
+        (metrics.sessionsEdgePace ?? 0) +
+        (metrics.dnaTreeAdvances ?? 0) +
+        (metrics.checkoutStarts ?? 0) +
+        (metrics.checkoutConfirms ?? 0) >
+      0
+    ) {
+      chips.push({
+        key: "funnel",
+        label: `Forge ${formatCount(metrics.forgeExpands)} · DNA ${formatCount(
+          metrics.customV3Created,
+        )} · Edge ${formatCount(metrics.sessionsEdgePace)}`,
+        ok: true,
+        title: [
+          `forge expands ${metrics.forgeExpands ?? 0}`,
+          `custom-v3 saves ${metrics.customV3Created ?? 0}`,
+          `edge pace sessions ${metrics.sessionsEdgePace ?? 0}`,
+          `DNA tree advances ${metrics.dnaTreeAdvances ?? 0}`,
+          `checkout starts ${metrics.checkoutStarts ?? 0}`,
+          `checkout confirms ${metrics.checkoutConfirms ?? 0}`,
+        ].join(" · "),
+      });
+      if ((metrics.dnaTreeAdvances ?? 0) > 0) {
+        chips.push({
+          key: "dnaTree",
+          label: `${formatCount(metrics.dnaTreeAdvances)} DNA climbs`,
+          ok: "info",
+          title: "Soft behavior-tree node advances mid-session",
+        });
+      }
+      if ((metrics.checkoutStarts ?? 0) + (metrics.checkoutConfirms ?? 0) > 0) {
+        chips.push({
+          key: "checkout",
+          label: `Pay ${formatCount(metrics.checkoutStarts)}→${formatCount(
+            metrics.checkoutConfirms,
+          )}`,
+          ok: (metrics.checkoutConfirms ?? 0) > 0 ? true : "info",
+          title: "Stripe checkout starts → return confirms this process",
+        });
+      }
     }
     if ((metrics.pushSubscribe ?? 0) + (metrics.pushTestSent ?? 0) > 0) {
       chips.push({

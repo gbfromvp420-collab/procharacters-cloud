@@ -402,6 +402,9 @@ export const createSessionRoutes = (
           visibility: "private",
         });
         bump("customCharactersCreated");
+        if (created.dna || created.defaultVersion === "custom-v3") {
+          bump("customV3Created");
+        }
         return reply.code(201).send({
           id: created.id,
           displayName: created.displayName,
@@ -643,6 +646,9 @@ export const createSessionRoutes = (
         }
 
         bump("sessionsCreated");
+        if ((session.sessionMode ?? body.sessionMode) === "edge_pace") {
+          bump("sessionsEdgePace");
+        }
         return reply.code(201).send({
           ...session,
           avatarState,
