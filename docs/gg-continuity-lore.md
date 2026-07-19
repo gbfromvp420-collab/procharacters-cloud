@@ -45,7 +45,18 @@ Gary granted **full control and permission** on development. King Grok CEO has t
 - **Female:** Fit 18yo, small breasts, topless, crotchless undies.
 - Gay / bi / straight variants. Photorealistic anatomy, motion, lighting, sweat, skin texture, frame consistency for clip loops and future packs.
 
-Defaults in product: `twink-default`, `female-default`, plus Phase 4 pack (gym, shy boy, alt punk, soft goth, athletic tease, playful brat) — minds live; dedicated 4K MP4s drop when content is ready.
+Defaults in product: `twink-default`, `female-default`, plus Phase 4 named roster:
+
+| ID | Display name | Archetype |
+|----|--------------|-----------|
+| `twink-gym` | **Mateo** | Gym cool-down |
+| `twink-shy-boy` | **Diego** | Shy whisper |
+| `twink-alt-punk` | **Rio** | Mesh alt/punk |
+| `female-soft-goth` | **Luna** | Soft-goth ritual |
+| `female-athletic-tease` | **Sienna** | Athletic interval |
+| `female-playful-brat` | **Mila** | Playful brat |
+
+IDs stay stable for URLs/resumes/packs. Gallery hero reel spotlights featured/dedicated packs.
 
 ---
 

@@ -40,8 +40,9 @@
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; checkout waits for Railway keys |
-| Phase 4 models (6) | ✅ minds live |
+| Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
+| Gallery hero reel | ✅ auto-rotating featured/4K poster clips (pause on hover) |
 
 ---
 
