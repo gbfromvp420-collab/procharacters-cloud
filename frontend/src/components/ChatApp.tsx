@@ -58,6 +58,7 @@ import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
+import { AfterglowChips } from "@/components/AfterglowChips";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
@@ -3295,10 +3296,17 @@ export function ChatApp() {
                   msg.role === "assistant" &&
                   !!headerMind &&
                   (!prev || prev.role === "user" || !!msg.streaming);
+                const showAfterglow =
+                  isLast &&
+                  msg.role === "assistant" &&
+                  !msg.streaming &&
+                  status === "ready" &&
+                  !sending &&
+                  !isTyping;
                 return (
                 <div
                   key={msg.id}
-                  className={`flex animate-rise-in ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex flex-col animate-rise-in ${msg.role === "user" ? "items-end" : "items-start"}`}
                 >
                   <div
                     className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed transition-[box-shadow,ring] duration-500 sm:max-w-[80%] sm:px-4 ${
@@ -3325,6 +3333,22 @@ export function ChatApp() {
                       <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-brand-accent align-middle" />
                     )}
                   </div>
+                  {showAfterglow && (
+                    <div className="max-w-[90%] sm:max-w-[80%]">
+                      <AfterglowChips
+                        characterId={activeCharacterId ?? character}
+                        disabled={sending}
+                        onPick={(text) => {
+                          setInput((prev) => {
+                            const p = prev.trim();
+                            if (!p) return text;
+                            return `${p} ${text}`;
+                          });
+                          window.setTimeout(() => inputRef.current?.focus(), 40);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 );
               })}
@@ -3365,7 +3389,7 @@ export function ChatApp() {
                 tickOffset={modeTick}
                 status={status}
               />
-              {status === "ready" && messages.length <= 4 && !sending && (
+              {status === "ready" && messages.length <= 4 && !sending && !isTyping && (
                 <QuickReplyChips
                   characterId={activeCharacterId ?? character}
                   characterName={characterName ?? headerCharacterName}

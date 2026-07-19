@@ -133,9 +133,19 @@ export function AvatarVideo({
   const isVideoSrc = (src: string | null) =>
     !!src && (src.endsWith(".mp4") || src.endsWith(".webm"));
 
+  // Deeper heat → richer outer glow (arousal drives intensity, band drives color)
+  const arousalGlow =
+    arousalPct >= 75
+      ? "shadow-[0_0_36px_-4px_rgba(251,113,133,0.55)]"
+      : arousalPct >= 50
+        ? "shadow-[0_0_28px_-6px_rgba(225,29,143,0.4)]"
+        : arousalPct >= 30
+          ? "shadow-[0_0_20px_-8px_rgba(225,29,143,0.28)]"
+          : "";
+
   return (
     <div
-      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-500 ${frameClass} ${energyBandRingClass(band)} ${visual.glow} ${
+      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-700 ${frameClass} ${energyBandRingClass(band)} ${visual.glow} ${arousalGlow} ${
         bandPulse ? "avatar-band-pulse" : ""
       }`}
     >
@@ -219,9 +229,13 @@ export function AvatarVideo({
             {formatLabel(avatar.emotion)} · {formatLabel(avatar.pose)}
             {avatar.action ? ` · ${formatLabel(avatar.action)}` : ""}
           </p>
-          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-white/15">
+          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-brand-accentDim to-rose-400 transition-all duration-700"
+              className={`h-full rounded-full bg-gradient-to-r transition-all duration-700 ${
+                arousalPct >= 72
+                  ? "from-rose-400 via-fuchsia-400 to-amber-300"
+                  : "from-brand-accentDim to-rose-400"
+              }`}
               style={{ width: `${arousalPct}%` }}
             />
           </div>

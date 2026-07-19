@@ -179,6 +179,24 @@ export function CharacterTile({
         ref={containerRef}
         className={`relative aspect-[3/4] overflow-hidden bg-black ${visual.glow}`}
       >
+        {/* Poster is the primary path: continue when resume exists, else chat */}
+        <Link
+          href={
+            resume?.resumeCode
+              ? buildResumeChatPath(resume)
+              : card.ctaPath
+          }
+          className="absolute inset-0 z-[2] block"
+          aria-label={
+            resume?.resumeCode
+              ? `Continue chat with ${card.displayName}`
+              : `Chat with ${card.displayName}`
+          }
+        >
+          <span className="sr-only">
+            {resume?.resumeCode ? "Continue" : "Chat"} {card.displayName}
+          </span>
+        </Link>
         <video
           ref={videoRef}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
@@ -200,12 +218,12 @@ export function CharacterTile({
           />
         )}
         {bandLabel && (
-          <span className="absolute left-2 bottom-[4.5rem] z-10 rounded-full border border-white/20 bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur sm:bottom-20">
+          <span className="pointer-events-none absolute left-2 bottom-[4.5rem] z-10 rounded-full border border-white/20 bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur sm:bottom-20">
             Live · {bandLabel}
           </span>
         )}
         {resume?.resumeCode && (
-          <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
+          <div className="pointer-events-none absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
             <span
               className={`rounded-full border bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
                 urgent
@@ -233,7 +251,7 @@ export function CharacterTile({
             )}
           </div>
         )}
-        <div className="absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
               {card.kind === "custom" ? "Custom" : "Signature"}
@@ -271,6 +289,11 @@ export function CharacterTile({
           <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
             {card.displayName}
           </h2>
+          {resume?.resumeCode && (
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
+              {urgent ? "Tap to reclaim →" : "Tap to continue →"}
+            </p>
+          )}
         </div>
       </div>
       <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
