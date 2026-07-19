@@ -276,7 +276,22 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           <div className="flex shrink-0 items-center gap-2">
             <Link href="/account" className="btn-ghost min-h-0 px-3 py-2 text-xs sm:text-sm">Account</Link>
             {continueHref ? (
-              <Link href={continueHref} className="btn-primary min-h-0 px-3 py-2 text-xs sm:px-4 sm:text-sm" title="Continue your last chat">Continue</Link>
+              <Link
+                href={continueHref}
+                className={`btn-primary min-h-0 px-3 py-2 text-xs sm:px-4 sm:text-sm ${
+                  continueUrgent ? "ring-2 ring-rose-400/55 animate-pulse" : ""
+                }`}
+                title={
+                  continueUrgent
+                    ? "Resume expiring soon — reclaim chat"
+                    : "Continue your last chat"
+                }
+              >
+                {continueUrgent ? "Reclaim" : "Continue"}
+                {continueCard?.displayName
+                  ? ` · ${continueCard.displayName.split(" ")[0]}`
+                  : ""}
+              </Link>
             ) : (
               <Link href="/chat" className="btn-primary min-h-0 px-3 py-2 text-xs sm:px-4 sm:text-sm">Live chat</Link>
             )}
@@ -435,7 +450,37 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               </>
             ) : (
               <>
-                <p className="text-brand-text">No characters match this search.</p>
+                <p className="text-brand-text">
+                  {query.trim()
+                    ? `No minds match “${query.trim()}”.`
+                    : "No characters match this filter."}
+                </p>
+                {query.trim() && (
+                  <div className="mx-auto mt-4 flex max-w-md flex-wrap justify-center gap-2">
+                    {(
+                      [
+                        "post-set",
+                        "shy heat",
+                        "mesh brat",
+                        "soft goth",
+                        "brat game",
+                        "cool-down",
+                      ] as const
+                    ).map((hint) => (
+                      <button
+                        key={hint}
+                        type="button"
+                        onClick={() => {
+                          setQuery(hint);
+                          setFilter("all");
+                        }}
+                        className="rounded-full border border-brand-accent/35 bg-brand-accent/10 px-3 py-1 text-[11px] text-brand-accent hover:border-brand-accent/60"
+                      >
+                        {hint}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="mt-4 flex flex-wrap justify-center gap-3">
                   <button
                     type="button"

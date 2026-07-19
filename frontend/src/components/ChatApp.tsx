@@ -2006,6 +2006,8 @@ export function ChatApp() {
 
     setSendPulse(true);
     window.setTimeout(() => setSendPulse(false), 420);
+    // Soft “it landed” cue without noise
+    flashCopy(text.length <= 24 ? `Sent · ${text}` : "Sent · heat delivered");
 
     const userMessage: ChatMessage = {
       id: makeId(),
