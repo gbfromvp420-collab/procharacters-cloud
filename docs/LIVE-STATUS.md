@@ -11,6 +11,7 @@
 | | URL |
 |--|-----|
 | **Gallery** | https://procharacters-web-production-7288.up.railway.app |
+| **My Models Studio** | https://procharacters-web-production-7288.up.railway.app/models/studio |
 | **Account** | https://procharacters-web-production-7288.up.railway.app/account |
 | **Chat** | https://procharacters-web-production-7288.up.railway.app/chat |
 | API health | https://procharacters-api-production-0417.up.railway.app/health |
