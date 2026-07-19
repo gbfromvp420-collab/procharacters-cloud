@@ -60,6 +60,7 @@ import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
 import { AfterglowChips } from "@/components/AfterglowChips";
 import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
+import { LastBeatEcho } from "@/components/LastBeatEcho";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
@@ -2024,8 +2025,26 @@ export function ChatApp() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+      return;
+    }
+    // Esc clears draft without killing the session
+    if (e.key === "Escape" && input.trim()) {
+      e.preventDefault();
+      setInput("");
+      clearComposerDraft(character);
+      return;
     }
   };
+
+  const lastAssistantBeat = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m?.role === "assistant" && m.content?.trim() && !m.streaming) {
+        return m.content;
+      }
+    }
+    return null;
+  })();
 
   const sessionActive = status === "ready" || status === "connecting" || restarting;
   const canSend = status === "ready" && !sending && input.trim().length > 0;
@@ -3153,6 +3172,16 @@ export function ChatApp() {
                     {energyBandLabel(bandFlash)} heat
                   </span>
                 )}
+                {status === "ready" && messages.length > 0 && sessionId && wsToken && (
+                  <button
+                    type="button"
+                    onClick={() => void exportChat("md")}
+                    className="text-[11px] text-brand-muted hover:text-brand-accent"
+                    title="Download this heat as Markdown"
+                  >
+                    Export MD
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
@@ -3407,6 +3436,27 @@ export function ChatApp() {
                   tickOffset={modeTick}
                 />
               )}
+              {status === "ready" &&
+                lastAssistantBeat &&
+                messages.length >= 2 &&
+                !isTyping && (
+                  <LastBeatEcho
+                    text={lastAssistantBeat}
+                    name={characterName ?? headerCharacterName}
+                    onQuote={() => {
+                      const q =
+                        lastAssistantBeat.length > 120
+                          ? `${lastAssistantBeat.slice(0, 117).trim()}…`
+                          : lastAssistantBeat;
+                      setInput((prev) => {
+                        const base = prev.trim();
+                        const quote = `> ${q}\n\n`;
+                        return base ? `${quote}${base}` : quote;
+                      });
+                      window.setTimeout(() => inputRef.current?.focus(), 40);
+                    }}
+                  />
+                )}
               {status === "ready" && messages.length <= 4 && !sending && !isTyping && (
                 <QuickReplyChips
                   characterId={activeCharacterId ?? character}
@@ -3479,6 +3529,12 @@ export function ChatApp() {
                   {sending ? "…" : "Send"}
                 </button>
               </div>
+              {status === "ready" && (
+                <p className="mt-1.5 text-[9px] text-brand-soft">
+                  Enter send · Shift+Enter line · Esc clear draft
+                  {input.trim() ? " · draft auto-saves" : ""}
+                </p>
+              )}
             </div>
           </section>
           </div>

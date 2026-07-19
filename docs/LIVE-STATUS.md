@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-18  
+**Updated:** 2026-07-19 (night cook stack)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -43,7 +43,7 @@
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
-| Chat continuity pack | ✅ heat whisper strip · % heat chip · gallery hover veil · fire chips · afterglow |
+| Chat continuity pack | ✅ full night stack — whisper · % heat · fire/afterglow · depth meter · last-beat quote · Esc draft · Export MD · mine urgent badge |
 
 ---
 

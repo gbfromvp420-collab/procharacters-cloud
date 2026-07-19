@@ -139,6 +139,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     }),
     [characters, resumes],
   );
+  const urgentMineCount = useMemo(
+    () =>
+      Object.values(resumes).filter((r) =>
+        isResumeExpiryUrgent(r.resumeExpiresAt),
+      ).length,
+    [resumes],
+  );
 
   const featuredRow = useMemo(() => {
     if (filter === "mine") return [];
@@ -339,8 +346,25 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </div>
           <div className="scroll-strip flex gap-2 overflow-x-auto pb-0.5">
             {([["all", "All"], ["mine", "My chats"], ["featured", "Featured"], ["default", "Signature"], ["custom", "Custom"]] as const).map(([key, label]) => (
-              <button key={key} type="button" onClick={() => setFilter(key)} className={`chip ${filter === key ? "chip-active" : "chip-idle"} ${key === "mine" && counts.mine > 0 ? "border-amber-500/40 text-amber-100/90" : ""}`}>
-                {label}<span className="ml-1 opacity-70">({counts[key]})</span>
+              <button
+                key={key}
+                type="button"
+                onClick={() => setFilter(key)}
+                className={`chip ${filter === key ? "chip-active" : "chip-idle"} ${
+                  key === "mine" && counts.mine > 0
+                    ? urgentMineCount > 0
+                      ? "border-rose-400/50 text-rose-100"
+                      : "border-amber-500/40 text-amber-100/90"
+                    : ""
+                }`}
+              >
+                {label}
+                <span className="ml-1 opacity-70">({counts[key]})</span>
+                {key === "mine" && urgentMineCount > 0 && (
+                  <span className="ml-1 rounded-full bg-rose-500/30 px-1.5 py-0.5 text-[9px] font-semibold text-rose-50">
+                    {urgentMineCount} urgent
+                  </span>
+                )}
               </button>
             ))}
           </div>

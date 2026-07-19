@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-18  
+**Updated:** 2026-07-19 (night cook closed after 5 hard rounds)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,12 +9,12 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| Eng day | Mostly shipped (`main` includes billing confirm-on-return `b10c416`, pack docs `68c4560`) | — |
+| Eng night cook | ✅ Massive UI/continuity stack on `main` (return loop, heat UX, growth dignity) | Hard refresh web after Railway deploy |
 | Stripe | ✅ **LIVE** on API (`billing.mode=live`, webhook on) · Day Pass $4.99 / Supporter $9.99 | Gary: smoke checkout carefully — **real money** |
-| Railway CLI + MCP | ✅ Authed · project `captivating-vision` · Stripe vars upserted + API redeployed | — |
-| 4K packs | ✅ 6 Phase 4 packs on GitHub `main` (web 200) · `status.json` + API badge fix shipping | Open gallery → green **4K pack** after API redeploy |
-| Hero reel + names | ✅ Gallery big reel · Phase 4 display names (Mateo/Diego/Rio/Luna/Sienna/Mila) | Live after web deploy |
-| Gallery immersion | ✅ Hero crossfade/swipe/progress · resume Continue on hero/card · tile play-on-visible | Redeploy **web** |
+| Railway | ✅ project `captivating-vision` | Optional: confirm web SHA matches latest `main` |
+| 4K packs | ✅ all 6 Phase 4 dedicated packs | Open gallery → green **4K pack** |
+| Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
+| Next eng (morning) | Soft: phone smoke of Continue / fire chips / Export MD | Say `next` or `cook` |
 
 ---
 
