@@ -313,7 +313,7 @@ export class SessionManager {
     const opening = getOpeningMessage(promptSnapshot.characterId);
     if (opening) {
       let line = opening;
-      const returnHint = returnGreetingHint(priorNotes);
+      const returnHint = returnGreetingHint(priorNotes, promptSnapshot.characterId);
       if (returnHint) {
         line = `${opening}\n\n${returnHint}`;
       }

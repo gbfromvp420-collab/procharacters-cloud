@@ -221,6 +221,11 @@ function parseDossier(raw: string): { sections: Array<{ title: string; items: st
       sections.push(current);
       continue;
     }
+    if (/^Last scene lock/i.test(t)) {
+      current = { title: "Last scene", items: [] };
+      sections.push(current);
+      continue;
+    }
     if (/^Recent sessions/i.test(t)) {
       current = { title: "Recent", items: [] };
       sections.push(current);

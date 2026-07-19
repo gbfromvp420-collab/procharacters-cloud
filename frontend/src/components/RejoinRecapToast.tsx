@@ -82,11 +82,23 @@ export function RejoinRecapToast({
 
 function extractPriorHeat(prior?: string | null): string | null {
   if (!prior?.trim()) return null;
+  const name = prior.match(/(?:Called|call(?:ed)? me)\s*[:\s]+([A-Za-z][\w.-]{1,24})/i)?.[1];
+  const scene = prior.match(/Last scene lock[\s\S]*?\n-\s*(.+)/i)?.[1]?.trim();
   const heat = prior.match(/Recurring heat[\s\S]*?\n-\s*(.+)/i)?.[1]?.trim();
-  if (heat) return heat.length > 120 ? `${heat.slice(0, 117)}…` : heat;
   const recent = prior.match(/Recent sessions[\s\S]*?\n-\s*(.+)/i)?.[1]?.trim();
-  if (recent) return recent.length > 120 ? `${recent.slice(0, 117)}…` : recent;
   const wants = prior.match(/What they want[\s\S]*?\n-\s*(.+)/i)?.[1]?.trim();
+
+  if (name && scene) {
+    const line = `${name} · last: ${scene}`;
+    return line.length > 120 ? `${line.slice(0, 117)}…` : line;
+  }
+  if (name && heat) {
+    const line = `${name} · ${heat}`;
+    return line.length > 120 ? `${line.slice(0, 117)}…` : line;
+  }
+  if (scene) return scene.length > 120 ? `${scene.slice(0, 117)}…` : scene;
+  if (heat) return heat.length > 120 ? `${heat.slice(0, 117)}…` : heat;
+  if (recent) return recent.length > 120 ? `${recent.slice(0, 117)}…` : recent;
   if (wants) return wants.length > 120 ? `${wants.slice(0, 117)}…` : wants;
   return null;
 }

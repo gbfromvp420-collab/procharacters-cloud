@@ -144,7 +144,7 @@ export function buildSessionNotes(
 
 /**
  * Compact seed for a *new* session that inherits prior dossier.
- * Prefer name + wants + heat over dumping raw dossier text.
+ * Prefer name + wants + heat + last scene over dumping raw dossier text.
  */
 export function buildPriorContinuitySeed(
   priorNotes: string,
@@ -162,19 +162,21 @@ export function buildPriorContinuitySeed(
 
   const wants = bulletSection(prior, "What they want").slice(0, 2);
   const heat = bulletSection(prior, "Recurring heat").slice(0, 2);
+  const lastScene = bulletSection(prior, "Last scene lock").slice(0, 3);
   const lastSession = bulletSection(prior, "Recent sessions")[0];
 
   const bits: string[] = [];
   if (called) bits.push(`they go by ${called}`);
   if (wants.length) bits.push(`wants: ${wants.join("; ")}`);
   if (heat.length) bits.push(`heat: ${heat.join("; ")}`);
+  if (lastScene.length) bits.push(`last scene: ${lastScene.join("; ")}`);
   if (lastSession) bits.push(`last: ${compactLine(lastSession, 80)}`);
 
   if (!bits.length) {
     return `Continuing with ${name}. Prior vibe: ${compactLine(prior, 220)}`;
   }
 
-  return `Continuing with ${name} (${bits.join(" · ")}). Soft recognition — pick up heat, don’t monologue the dossier.`;
+  return `Continuing with ${name} (${bits.join(" · ")}). Soft recognition — pick up heat and last scene, don’t monologue the dossier.`;
 }
 
 function bulletSection(dossier: string, heading: string): string[] {
@@ -184,7 +186,11 @@ function bulletSection(dossier: string, heading: string): string[] {
   const headRe = new RegExp(`^${heading}`, "i");
   for (const raw of lines) {
     const line = raw.trim();
-    if (/^Who they are|^What they want|^Recurring heat|^Recent sessions/i.test(line)) {
+    if (
+      /^Who they are|^What they want|^Recurring heat|^Last scene lock|^Recent sessions/i.test(
+        line,
+      )
+    ) {
       inSection = headRe.test(line);
       continue;
     }

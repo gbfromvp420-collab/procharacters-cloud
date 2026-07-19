@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Edge Pace feel)  
-**Session:** King Grok + Gary — Gary on phone until ~5:30 CST (Railway vars at desk).
+**Updated:** 2026-07-19 (**cook** — Return Intelligence)  
+**Session:** King Grok + Gary — ntfy soon; keep cooking innovation.
 
 ---
 
@@ -9,22 +9,22 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Error alerts** | ✅ eng: **ntfy phone** · [ops-error-webhook.md](./ops-error-webhook.md) | **You @5:30:** `ERROR_WEBHOOK_URL` on **procharacters-api** → ntfy → Send test alert |
-| **Heat Arc** | ✅ live (`96a7370`) | Long session smoke anytime |
-| **Edge Pace feel** | ✅ round-aware coach · Seed/Fire on strip · phase chips · urgency | Start Edge Pace → ride a full cycle |
-| **Conversion Close** | ✅ | — |
+| **Error alerts** | ✅ eng ready | **You:** ntfy → `ERROR_WEBHOOK_URL` on **procharacters-api** → Send test alert |
+| **Heat Arc** | ✅ live | Long session smoke |
+| **Edge Pace feel** | ✅ | Full cycle smoke |
+| **Return Intelligence** | ✅ dossier last-scene · smart return greetings · **They remember you** card | Sign in + Remember → leave heat → new chat with same model |
 | Railway | ✅ `captivating-vision` | Confirm SHA after push |
-| Stripe | ✅ LIVE | Careful charge smoke if desired |
-| **Next** | Webhook @ desk · content packs | `resume` / `spot` / `next` / `cook` |
+| Stripe | ✅ LIVE | Optional careful charge |
+| **Next** | Webhook green · content packs | `resume` / `spot` / `next` / `cook` |
 
 ---
 
-## What shipped this cook (Edge Pace feel)
+## What shipped this cook (Return Intelligence)
 
-1. **Round-aware coach cues** — R2+ denser multi-cycle denial language
-2. **Phase rules in prompt** — build/hold/almost/breathe explicit for the model
-3. **EdgePaceStrip** — Seed/Fire + phase micro-chips + last-8s urgency + phase-shift flash
-4. **fireLine / phaseChips** on modeState WS payload
+1. **Dossier v2** — Last scene lock section (pose/act/clothing) + richer heat extractors  
+2. **returnGreetingHint** — name + scene/heat-specific openers, mind-flavored  
+3. **Prior continuity seed** carries last scene into new sessions  
+4. **ReturnHeatCard** UI — “They remember you” chips + one-tap pick-up seeds  
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 

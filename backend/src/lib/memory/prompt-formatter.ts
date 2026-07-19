@@ -87,8 +87,9 @@ export function formatMemoryBlock(
       "",
       "### From earlier sessions (opt-in dossier)",
       context.priorNotes.trim(),
-      "Use lightly — reference their name/wants/heat if natural. Don't dump the whole dossier as monologue.",
-      "If they return, a soft recognition beat is good; never invent facts not in this block.",
+      "Use lightly — reference their name/wants/heat/last scene if natural. Don't dump the whole dossier as monologue.",
+      "If they return, a soft recognition beat is good (name + one heat or last-scene beat); never invent facts not in this block.",
+      "Last scene lock (if present) is the strongest re-entry hook — clothing/pose/act they left in.",
     );
   }
 

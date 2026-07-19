@@ -56,6 +56,7 @@ import {
 import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
+import { ReturnHeatCard } from "@/components/ReturnHeatCard";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
@@ -3891,6 +3892,26 @@ export function ChatApp() {
                 priorNotes={priorNotes}
                 onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
               />
+              {/* Return Intelligence — opt-in dossier at session open */}
+              {status === "ready" &&
+                !!priorNotes?.trim() &&
+                messages.length <= 4 && (
+                  <ReturnHeatCard
+                    priorNotes={priorNotes}
+                    characterId={activeCharacterId ?? character}
+                    characterName={characterName ?? headerCharacterName}
+                    canFire={!sending && !isTyping}
+                    onSeed={(text) => {
+                      setInput((prev) => {
+                        const p = prev.trim();
+                        if (!p) return text;
+                        return `${p} ${text}`;
+                      });
+                      window.setTimeout(() => inputRef.current?.focus(), 40);
+                    }}
+                    onFire={(text) => sendMessage(text)}
+                  />
+                )}
               <SessionWinToast
                 show={status === "ready"}
                 characterId={activeCharacterId ?? character}
