@@ -55,6 +55,7 @@ import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
+import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
@@ -2455,8 +2456,20 @@ export function ChatApp() {
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
+            {!sessionActive && savedSession && !pauseSnapshot && (
+              <ChatResumeHero
+                saved={savedSession}
+                busy={restarting}
+                onResume={() => void resumeLastSession()}
+                onStartFresh={() => {
+                  setCharacter(savedSession.characterId);
+                  void startSession();
+                }}
+              />
+            )}
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-2">
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex min-w-0 items-center gap-2">
               <label className="shrink-0 text-xs text-brand-muted sm:text-sm" htmlFor="character">
                 Character
               </label>
@@ -2475,10 +2488,19 @@ export function ChatApp() {
                   <option key={opt.id} value={opt.id}>
                     {opt.kind === "custom" ? "✦ " : ""}
                     {opt.displayName}
+                    {mindFingerprint(opt.id) ? ` · ${mindFingerprint(opt.id)!.tag}` : ""}
                     {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
                   </option>
                 ))}
               </select>
+              </div>
+              {headerMind && !sessionActive && (
+                <p className="pl-0 text-[10px] leading-snug text-brand-muted sm:pl-[4.5rem]">
+                  <span className="font-semibold text-brand-accent">Mind · {headerMind.tag}</span>
+                  {" · "}
+                  {headerMind.blurb}
+                </p>
+              )}
               </div>
 
               {!sessionActive && (
@@ -2565,18 +2587,20 @@ export function ChatApp() {
                   <button
                     type="button"
                     onClick={() => void startSession()}
-                    className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                    className={`min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm ${
+                      savedSession ? "btn-ghost" : "btn-primary"
+                    }`}
                   >
-                    Start
+                    {savedSession ? "Start new" : "Start"}
                   </button>
-                  {savedSession && (
+                  {savedSession && !pauseSnapshot && (
                     <button
                       type="button"
                       onClick={() => void resumeLastSession()}
-                      className="btn-ghost min-h-0 shrink-0 border-brand-accent/50 bg-brand-accent/10 px-3 py-2 text-xs sm:text-sm"
+                      className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
                       title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
                     >
-                      Resume last
+                      Resume
                     </button>
                   )}
                   <label

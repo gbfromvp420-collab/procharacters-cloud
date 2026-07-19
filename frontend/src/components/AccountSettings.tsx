@@ -67,6 +67,11 @@ import {
   shareResultLabel,
   shareUrlResultLabel,
 } from "@/lib/share-links";
+import {
+  formatResumeExpiryShort,
+  isResumeExpiryUrgent,
+} from "@/lib/resume-cache";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type { LiveCharacterOption } from "@/lib/types";
 import {
   disableWebPush,
@@ -1918,20 +1923,46 @@ export function AccountSettings() {
                 </p>
               ) : (
                 <ul className="space-y-2">
-                  {sessions.map((s) => (
+                  {sessions.map((s) => {
+                    const urgent = isResumeExpiryUrgent(s.resumeExpiresAt);
+                    const expiryShort = formatResumeExpiryShort(s.resumeExpiresAt);
+                    const mind = mindFingerprint(s.characterId);
+                    const nick =
+                      s.characterName?.trim().split(/\s+/)[0] || s.characterName || "chat";
+                    return (
                     <li
                       key={s.sessionId}
-                      className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-border/70 bg-brand-bg px-3 py-2 text-xs"
+                      className={`flex flex-wrap items-center gap-2 rounded-xl border bg-brand-bg px-3 py-2 text-xs ${
+                        urgent
+                          ? "border-rose-400/45"
+                          : "border-brand-border/70"
+                      }`}
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-brand-text">{s.characterName}</p>
+                        <p className="font-medium text-brand-text">
+                          {s.characterName}
+                          {mind ? (
+                            <span className="ml-1.5 text-[10px] font-normal text-brand-accent">
+                              · {mind.tag}
+                            </span>
+                          ) : null}
+                        </p>
                         <p className="text-brand-muted">
                           {s.messageCount} msgs · {s.status}
                           {s.resumeCode ? (
                             <>
                               {" · "}
                               <span className="font-mono text-amber-200/90">{s.resumeCode}</span>
-                              {s.resumeExpiresAt ? (
+                              {expiryShort ? (
+                                <span
+                                  className={
+                                    urgent ? "text-rose-200/90" : "text-brand-soft"
+                                  }
+                                >
+                                  {" "}
+                                  · {expiryShort}
+                                </span>
+                              ) : s.resumeExpiresAt ? (
                                 <span className="text-brand-soft">
                                   {" "}
                                   ({formatExpiry(s.resumeExpiresAt)})
@@ -1941,6 +1972,16 @@ export function AccountSettings() {
                           ) : null}
                         </p>
                       </div>
+                      {s.resumeCode && (
+                        <Link
+                          href={`/chat?resume=${encodeURIComponent(s.resumeCode)}&character=${encodeURIComponent(s.characterId)}&rehydrate=1`}
+                          className={`btn-primary min-h-0 px-3 py-1.5 text-[11px] ${
+                            urgent ? "ring-1 ring-rose-400/60" : ""
+                          }`}
+                        >
+                          Continue · {nick}
+                        </Link>
+                      )}
                       <button
                         type="button"
                         disabled={busy}
@@ -2018,15 +2059,9 @@ export function AccountSettings() {
                       >
                         Delete
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => void onResumeSession(s.sessionId)}
-                        className="rounded-lg bg-brand-accent px-3 py-1.5 font-medium text-white"
-                      >
-                        Resume
-                      </button>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               )}
             </section>
