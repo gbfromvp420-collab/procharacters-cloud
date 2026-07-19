@@ -377,7 +377,32 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-brand-bg to-transparent sm:w-10"
                 aria-hidden
               />
-              <div className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0">
+              <button
+                type="button"
+                className="absolute left-1 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border/80 bg-brand-bg/90 text-brand-text shadow-card backdrop-blur sm:flex"
+                aria-label="Scroll featured left"
+                onClick={() => {
+                  const el = document.getElementById("gallery-featured-strip");
+                  el?.scrollBy({ left: -280, behavior: "smooth" });
+                }}
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="absolute right-1 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border/80 bg-brand-bg/90 text-brand-text shadow-card backdrop-blur sm:flex"
+                aria-label="Scroll featured right"
+                onClick={() => {
+                  const el = document.getElementById("gallery-featured-strip");
+                  el?.scrollBy({ left: 280, behavior: "smooth" });
+                }}
+              >
+                ›
+              </button>
+              <div
+                id="gallery-featured-strip"
+                className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0"
+              >
                 {featuredRow.map((card) => (
                   <CharacterTile key={`feat-${card.id}`} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} compact />
                 ))}

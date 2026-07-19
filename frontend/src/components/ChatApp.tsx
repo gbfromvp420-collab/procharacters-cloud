@@ -2132,7 +2132,7 @@ export function ChatApp() {
                   () => flashCopy(resumeCode),
                 );
               }}
-              className="hidden max-w-[7.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 font-mono text-[10px] text-amber-100 sm:inline-flex"
+              className="max-w-[5.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] text-amber-100 sm:max-w-[7.5rem] sm:px-2.5"
               title="Copy resume code"
             >
               {resumeCode}
@@ -2149,7 +2149,7 @@ export function ChatApp() {
           <a href="/" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
             Gallery
           </a>
-          <a href="/account" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
+          <a href="/account" className="hidden btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:inline-flex sm:px-3 sm:text-sm">
             Settings
           </a>
           <button
@@ -2162,6 +2162,24 @@ export function ChatApp() {
             {account ? `@${account.handle}` : "Account"}
           </button>
         </div>
+        {status === "ready" && resumeCode && (
+          <p className="border-t border-amber-500/20 px-3 py-1 text-center text-[10px] text-amber-100/85 sm:hidden">
+            Resume{" "}
+            <button
+              type="button"
+              className="font-mono font-semibold text-amber-50 underline-offset-2 hover:underline"
+              onClick={() => {
+                void navigator.clipboard?.writeText(resumeCode).then(
+                  () => flashCopy(`Code ${resumeCode}`),
+                  () => flashCopy(resumeCode),
+                );
+              }}
+            >
+              {resumeCode}
+            </button>
+            {" · tap to copy"}
+          </p>
+        )}
         {copyNotice && (
           <p className="border-t border-brand-border/50 px-3 py-1 text-center text-[11px] text-brand-accent sm:hidden" role="status">
             {copyNotice}
@@ -2284,26 +2302,40 @@ export function ChatApp() {
                   </p>
                 ) : (
                   <ul className="max-h-40 space-y-1 overflow-y-auto text-xs">
-                    {accountSessions.map((s) => (
+                    {accountSessions.map((s) => {
+                      const mind = mindFingerprint(s.characterId);
+                      const nick =
+                        s.characterName?.trim().split(/\s+/)[0] || "chat";
+                      return (
                       <li
                         key={s.sessionId}
                         className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-border/60 bg-brand-bg px-2 py-1.5"
                       >
-                        <span className="text-brand-text">
-                          {s.characterName} · {s.messageCount} msgs · {s.status}
+                        <span className="min-w-0 flex-1 text-brand-text">
+                          {s.characterName}
+                          {mind ? (
+                            <span className="text-brand-accent"> · {mind.tag}</span>
+                          ) : null}
+                          <span className="text-brand-muted">
+                            {" "}
+                            · {s.messageCount} msgs
+                          </span>
+                          {s.resumeCode && (
+                            <span className="ml-1 font-mono text-amber-200/80">
+                              {s.resumeCode}
+                            </span>
+                          )}
                         </span>
-                        {s.resumeCode && (
-                          <span className="font-mono text-brand-muted">{s.resumeCode}</span>
-                        )}
                         <button
                           type="button"
                           onClick={() => void handleAccountSessionResume(s.sessionId)}
-                          className="ml-auto text-brand-accent hover:underline"
+                          className="btn-primary ml-auto min-h-0 px-2.5 py-1 text-[10px]"
                         >
-                          Resume
+                          Continue · {nick}
                         </button>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 )}
               </div>
@@ -2457,12 +2489,17 @@ export function ChatApp() {
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-brand-text">
                   {characterName ?? headerCharacterName ?? "Avatar hidden"}
+                  {headerMind ? (
+                    <span className="ml-1.5 text-[10px] font-normal text-brand-accent">
+                      · {headerMind.tag}
+                    </span>
+                  ) : null}
                 </p>
                 <p className="truncate text-[11px] text-brand-muted">
                   {avatarState
-                    ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}%`
-                    : headerMind
-                      ? `Mind · ${headerMind.tag}`
+                    ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}% heat`
+                    : headerMind?.blurb
+                      ? headerMind.blurb
                       : "Video collapsed for more chat space"}
                   {avatarPip ? " · PiP on" : " · PiP off"}
                 </p>
