@@ -1,14 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { loadStoredAccount } from "@/lib/account-storage";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { buildResumeChatPath } from "@/lib/resume-cache";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
+import {
+  getLocalPushSubscription,
+  isPushSupported,
+} from "@/lib/web-push-client";
 
 /**
  * After End — heat is saved, path back is one tap. Morph the goodbye into return.
  * Mine models get Edit + My models so ownership loop stays closed.
+ * Deep sessions get a return seed: hold heat + optional push nudge.
  */
 export function SessionPausedBanner({
   characterId,
@@ -29,13 +35,50 @@ export function SessionPausedBanner({
   onDismiss: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [pushSeed, setPushSeed] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const mind = mindFingerprint(characterId, {
     displayName: characterName,
   });
   const nick = characterName?.trim().split(/\s+/)[0] || characterName || "them";
+  const deep = (messageCount ?? 0) >= 3;
   const href = resumeCode
     ? buildResumeChatPath({ characterId, resumeCode })
     : `/chat?character=${encodeURIComponent(characterId)}&autostart=1`;
+
+  useEffect(() => {
+    let cancelled = false;
+    async function probe() {
+      if (!deep) {
+        if (!cancelled) {
+          setPushSeed(false);
+          setSignedIn(false);
+        }
+        return;
+      }
+      try {
+        const account = loadStoredAccount();
+        if (!cancelled) setSignedIn(!!account);
+        if (!isPushSupported()) {
+          // Still seed sign-in for guests with heat
+          if (!cancelled) setPushSeed(!account);
+          return;
+        }
+        if (!account) {
+          if (!cancelled) setPushSeed(true);
+          return;
+        }
+        const sub = await getLocalPushSubscription();
+        if (!cancelled) setPushSeed(!sub);
+      } catch {
+        if (!cancelled) setPushSeed(false);
+      }
+    }
+    void probe();
+    return () => {
+      cancelled = true;
+    };
+  }, [deep]);
 
   const copyCode = async () => {
     if (!resumeCode) return;
@@ -74,6 +117,14 @@ export function SessionPausedBanner({
           " Start again anytime — free path stays open."
         )}
       </p>
+      {deep && (
+        <p className="mt-1.5 text-[11px] text-brand-muted">
+          We&apos;ll hold this heat
+          {resumeCode ? " on your code" : ""}
+          {" — "}
+          one tap Continue when you&apos;re ready. Free path stays open.
+        </p>
+      )}
       <div className="mt-3 flex flex-wrap gap-2">
         {onResume ? (
           <button type="button" onClick={onResume} className="btn-primary min-h-0 px-4 py-2 text-xs">
@@ -113,6 +164,16 @@ export function SessionPausedBanner({
           >
             {copied ? "Copied!" : canNativeShare() ? "Share code" : "Copy code"}
           </button>
+        )}
+        {pushSeed && (
+          <Link
+            href="/account"
+            className="btn-ghost min-h-0 border-emerald-400/40 px-3 py-2 text-xs text-emerald-100"
+            onClick={onDismiss}
+            title="Optional — never required for free chat"
+          >
+            {signedIn ? "Enable alerts · hold heat" : "Sign in · hold heat"}
+          </Link>
         )}
         <button
           type="button"

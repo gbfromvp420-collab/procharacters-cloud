@@ -10,12 +10,16 @@ import {
   type BillingCatalogProduct,
 } from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
+import {
+  isSessionWinActive,
+  isSoftSupportInCooldown,
+} from "@/lib/conversion-flags";
 
 const DISMISS_KEY = "procharacters.softSupport.dismissed.v1";
 
 /**
  * Optional support path — only after real engagement, never blocks free chat.
- * Cashflow with dignity: free forever, one-tap Day Pass / Supporter when Stripe is live.
+ * Yields while SessionWinToast owns the heat→Day Pass moment (no double-ask).
  */
 export function SoftSupportHint({
   hasEngagement,
@@ -34,9 +38,16 @@ export function SoftSupportHint({
 
   useEffect(() => {
     let cancelled = false;
+    let poll: number | undefined;
+
     async function run() {
       try {
         if (!hasEngagement) {
+          if (!cancelled) setShow(false);
+          return;
+        }
+        // Heat-win toast owns conversion while visible
+        if (isSessionWinActive() || isSoftSupportInCooldown()) {
           if (!cancelled) setShow(false);
           return;
         }
@@ -64,21 +75,35 @@ export function SoftSupportHint({
             setShow(false);
             return;
           }
+          // Re-check yield flags after async (win toast may have opened)
+          if (isSessionWinActive() || isSoftSupportInCooldown()) {
+            setShow(false);
+            return;
+          }
           setCheckoutReady(!!status.configured);
           if (catalog?.products?.length) {
             setProducts(catalog.products);
           }
           setShow(true);
         } catch {
-          if (!cancelled) setShow(true);
+          if (!cancelled && !isSessionWinActive()) setShow(true);
         }
       } catch {
         if (!cancelled) setShow(false);
       }
     }
+
     void run();
+    // Poll lightly so we hide when SessionWin opens mid-session
+    poll = window.setInterval(() => {
+      if (isSessionWinActive() || isSoftSupportInCooldown()) {
+        setShow(false);
+      }
+    }, 1200);
+
     return () => {
       cancelled = true;
+      if (poll != null) window.clearInterval(poll);
     };
   }, [hasEngagement]);
 

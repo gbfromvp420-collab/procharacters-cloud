@@ -123,7 +123,7 @@ export async function createCheckoutSession(options: {
         },
       },
     ],
-    success_url: `${base}/account?billing=success&session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${base}/account?billing=success&session_id={CHECKOUT_SESSION_ID}#premium-unlocked`,
     cancel_url: `${base}/account?billing=cancel`,
   });
 

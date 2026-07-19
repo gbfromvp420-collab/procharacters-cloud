@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   fetchBillingCatalog,
   fetchBillingStatus,
@@ -9,6 +9,10 @@ import {
   startBillingCheckout,
 } from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
+import {
+  markSoftSupportCooldownAfterWin,
+  setSessionWinActive,
+} from "@/lib/conversion-flags";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
 
@@ -18,6 +22,7 @@ const SEEN_KEY = "procharacters.sessionWin.seen.v1";
  * First “this is sticky” win — resume code landed + real chat heat.
  * Celebrates, copies code, points at push/install without blocking free chat.
  * Soft Day Pass CTA only when signed in + Stripe ready + not already premium.
+ * Owns the heat→pay moment — Soft Support yields while this is visible.
  */
 export function SessionWinToast({
   show,
@@ -38,6 +43,7 @@ export function SessionWinToast({
   const [dayPrice, setDayPrice] = useState("$4.99");
   const [busy, setBusy] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const offeredCheckoutRef = useRef(false);
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "them";
 
@@ -62,8 +68,16 @@ export function SessionWinToast({
   }, [show, resumeCode, messageCount, characterId]);
 
   useEffect(() => {
+    setSessionWinActive(visible);
+    return () => {
+      setSessionWinActive(false);
+    };
+  }, [visible]);
+
+  useEffect(() => {
     if (!visible) {
       setOfferCheckout(false);
+      offeredCheckoutRef.current = false;
       return;
     }
     let cancelled = false;
@@ -81,6 +95,7 @@ export function SessionWinToast({
           return;
         }
         setOfferCheckout(true);
+        offeredCheckoutRef.current = true;
         try {
           const cat = await fetchBillingCatalog();
           const day = cat.products?.find((p) => p.id === "day_pass");
@@ -113,6 +128,11 @@ export function SessionWinToast({
         /* ignore */
       }
     }
+    // Heat-win owned the Day Pass ask — Soft Support cools down so no double-stack
+    if (offeredCheckoutRef.current || offerCheckout) {
+      markSoftSupportCooldownAfterWin();
+    }
+    setSessionWinActive(false);
     setVisible(false);
   };
 
@@ -136,6 +156,8 @@ export function SessionWinToast({
     setCheckoutError(null);
     try {
       const { url } = await startBillingCheckout(account.token, "day_pass");
+      // Persist seen so we don't re-ask heat-win after Stripe return
+      dismiss(true);
       window.location.href = url;
     } catch (err) {
       setCheckoutError(
@@ -161,6 +183,13 @@ export function SessionWinToast({
             You’re in with <strong className="text-brand-text">{nick}</strong>. Resume code{" "}
             <span className="font-mono text-emerald-100">{resumeCode}</span> saves this chat —
             come back anytime{messageCount >= 3 ? ` · ${messageCount} messages deep` : ""}.
+            {offerCheckout ? (
+              <>
+                {" "}
+                Optional <strong className="text-amber-100">Day Pass</strong> unlocks more My
+                Characters — free chat never paywalls.
+              </>
+            ) : null}
           </p>
           {checkoutError && (
             <p className="mt-1.5 text-[10px] text-rose-300/90" role="alert">
@@ -175,6 +204,17 @@ export function SessionWinToast({
             >
               {copied ? "Copied!" : canNativeShare() ? "Share code" : "Copy code"}
             </button>
+            {offerCheckout && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onDayPass()}
+                className="btn-ghost min-h-0 border-amber-400/55 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-100 disabled:opacity-60"
+                title="Optional — free chat never paywalls"
+              >
+                {busy ? "Opening…" : `Day Pass · ${dayPrice}`}
+              </button>
+            )}
             <Link
               href="/"
               className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
@@ -189,17 +229,6 @@ export function SessionWinToast({
             >
               Push · Account
             </Link>
-            {offerCheckout && (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void onDayPass()}
-                className="btn-ghost min-h-0 border-amber-400/45 px-3 py-1.5 text-xs text-amber-100 disabled:opacity-60"
-                title="Optional — free chat never paywalls"
-              >
-                {busy ? "Opening…" : `Day Pass · ${dayPrice}`}
-              </button>
-            )}
             <button
               type="button"
               onClick={() => dismiss(true)}

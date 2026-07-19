@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Duplicate My Character + private share guard)  
+**Updated:** 2026-07-19 (**cook** — Conversion Close)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,17 +9,22 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **My Character loop** | ✅ create · edit · **duplicate** · delete · clips · hub · private share → resume | Hard refresh **web** |
+| **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass owns ask · Soft Support yields · return seed on End | Hard refresh **web** after deploy |
+| **My Character loop** | ✅ create · edit · **duplicate** · delete · clips · hub · private share → resume | — |
 | **System pulse + chrome + offline** | ✅ shipped | — |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| **Next** | Ops webhook optional / heat / content | Say `resume` / `spot` / `next` / `cook` |
+| Stripe | ✅ LIVE + webhook (prod health) | Careful real charge smoke if desired |
+| **Next** | Content packs polish / heat quality / ops webhook optional | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 
-## What shipped this cook marathon (highlights)
+## What shipped this cook (Conversion Close)
 
-Return loop · mind fingerprints · hero reel · heat stack · one-tap Stripe · **premium payoff** (My models + Create deep-link + Account use-the-headroom) · free forever path · Edge Pace · memory stickiness · …
+1. **PremiumUnlockCeremony** — after Stripe return, Account shows “You’re unlocked” with Create My Character · My models · Models hub · Live chat; scrolls to `#premium-unlocked`
+2. **Heat-win owns pay** — SessionWin Day Pass primary when eligible; Soft Support hides while win active + 6h cooldown after win offered checkout
+3. **Return seed** — SessionPausedBanner deep sessions: “We’ll hold this heat” + Enable alerts / Sign in CTA
+4. Checkout success URL hash `#premium-unlocked`
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 
@@ -41,6 +46,7 @@ Tip: `git log --oneline -25` on `main` for the full plate list.
 - Gallery: https://procharacters-web-production-7288.up.railway.app  
 - My models: https://procharacters-web-production-7288.up.railway.app/?filter=owned  
 - Create: https://procharacters-web-production-7288.up.railway.app/chat?create=1  
+- Account unlock: https://procharacters-web-production-7288.up.railway.app/account#premium-unlocked  
 - API health: https://procharacters-api-production-0417.up.railway.app/health  
 
 ---

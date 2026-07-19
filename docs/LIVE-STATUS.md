@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — Duplicate My Character + private share)  
+**Updated:** 2026-07-19 (**cook** — Conversion Close: unlock ceremony + heat→pay + return seed)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -41,6 +41,9 @@
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
 | Soft Day Pass after heat win | ✅ Session win toast offers Day Pass when signed-in + not premium (never blocks) |
+| **Post-checkout unlock ceremony** | ✅ Account `#premium-unlocked` · Create / My models / hub · cap headroom |
+| **Heat→pay no double-ask** | ✅ Session win owns Day Pass; Soft Support yields + 6h cooldown after win |
+| **Return seed after End** | ✅ “We’ll hold this heat” + Enable alerts / Sign in when deep session |
 | **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
 | Create My Character deep-link | ✅ `/chat?create=1` opens form; Account premium CTAs |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |

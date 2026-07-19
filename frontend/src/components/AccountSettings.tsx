@@ -56,6 +56,7 @@ import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import { SystemPulse } from "@/components/SystemPulse";
 import { SiteChrome } from "@/components/SiteChrome";
+import { PremiumUnlockCeremony } from "@/components/PremiumUnlockCeremony";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -75,6 +76,11 @@ import {
   isResumeExpiryUrgent,
 } from "@/lib/resume-cache";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
+import {
+  clearPremiumUnlockFlash,
+  consumePremiumUnlockFlash,
+  setPremiumUnlockFlash,
+} from "@/lib/conversion-flags";
 import type { LiveCharacterOption } from "@/lib/types";
 import {
   disableWebPush,
@@ -141,6 +147,12 @@ export function AccountSettings() {
   const [premiumCustomsLimit, setPremiumCustomsLimit] = useState(40);
   /** Private My Characters for this account (from authenticated catalog). */
   const [myModels, setMyModels] = useState<LiveCharacterOption[]>([]);
+  /** Post-checkout unlock ceremony — primary CTAs into Create / My models. */
+  const [unlockCeremony, setUnlockCeremony] = useState<{
+    plan: string;
+    customsLimit: number;
+    planExpiresAt?: string | null;
+  } | null>(null);
 
   const EXPIRY_WARN_DAYS = 3;
 
@@ -282,6 +294,10 @@ export function AccountSettings() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    // Restore ceremony if user refreshed mid-return
+    const flash = consumePremiumUnlockFlash();
+    if (flash) setUnlockCeremony(flash);
+
     const params = new URLSearchParams(window.location.search);
     const billing = params.get("billing");
     if (billing === "success") {
@@ -292,12 +308,31 @@ export function AccountSettings() {
       let tries = 0;
       let done = false;
       let poll: number | undefined;
-      const finish = (msg: string) => {
+      const openCeremony = (payload: {
+        plan: string;
+        customsLimit: number;
+        planExpiresAt?: string | null;
+      }) => {
+        setUnlockCeremony(payload);
+        setPremiumUnlockFlash(payload);
+        window.setTimeout(() => {
+          document.getElementById("premium-unlocked")?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }, 80);
+      };
+      const finish = (msg: string, ceremony?: {
+        plan: string;
+        customsLimit: number;
+        planExpiresAt?: string | null;
+      }) => {
         if (done) return;
         done = true;
         if (poll != null) window.clearInterval(poll);
         setNotice(msg);
-        window.history.replaceState({}, "", "/account");
+        if (ceremony) openCeremony(ceremony);
+        window.history.replaceState({}, "", "/account#premium-unlocked");
       };
       const applyStatus = (b: {
         plan: string;
@@ -323,9 +358,11 @@ export function AccountSettings() {
             if (c.planExpiresAt) setPlanExpiresAt(c.planExpiresAt);
             if (c.customsLimit != null) setCustomsLimit(c.customsLimit);
             if (c.ok || c.activePremium) {
-              finish(
-                "Premium unlocked — thank you. Create a My Character or browse My models next.",
-              );
+              finish("Premium unlocked — thank you. Use the headroom below.", {
+                plan: c.plan || "day_pass",
+                customsLimit: c.customsLimit ?? 40,
+                planExpiresAt: c.planExpiresAt ?? null,
+              });
             }
           })
           .catch(() => {
@@ -338,9 +375,11 @@ export function AccountSettings() {
           .then((b) => {
             applyStatus(b);
             if (b.activePremium) {
-              finish(
-                "Premium unlocked — thank you. Create a My Character or browse My models next.",
-              );
+              finish("Premium unlocked — thank you. Use the headroom below.", {
+                plan: b.plan || "day_pass",
+                customsLimit: b.customsLimit,
+                planExpiresAt: b.planExpiresAt ?? null,
+              });
             } else if (tries >= 8) {
               finish(
                 "Payment received — if premium isn’t showing yet, refresh in a moment (webhook may still be landing).",
@@ -1297,6 +1336,18 @@ export function AccountSettings() {
           >
             {error || notice}
           </div>
+        )}
+
+        {unlockCeremony && account && (
+          <PremiumUnlockCeremony
+            plan={unlockCeremony.plan}
+            customsLimit={unlockCeremony.customsLimit}
+            planExpiresAt={unlockCeremony.planExpiresAt}
+            onDismiss={() => {
+              clearPremiumUnlockFlash();
+              setUnlockCeremony(null);
+            }}
+          />
         )}
 
         {!account ? (
