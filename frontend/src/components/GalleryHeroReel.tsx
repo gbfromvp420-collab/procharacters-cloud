@@ -300,6 +300,11 @@ export function GalleryHeroReel({
                   {resume.heatDepth ? `Heat trail · ${resume.heatDepth}` : "Your chat"}
                 </span>
               )}
+              {(resume?.dnaTreeLabel || resume?.dnaTreeNodeId) && (
+                <span className="rounded-full border border-violet-300/55 bg-violet-500/35 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-50 shadow-[0_0_14px_-2px_rgba(167,139,250,0.65)]">
+                  DNA · {resume.dnaTreeLabel || resume.dnaTreeNodeId}
+                </span>
+              )}
               {mind && (
                 <span className="rounded-full border border-white/25 bg-brand-accent/25 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
                   {resume?.mindTag || mind.tag}

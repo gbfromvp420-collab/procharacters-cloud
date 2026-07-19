@@ -60,6 +60,7 @@
 | **DNA runtime (live chat)** | ✅ custom-v3: memory seeds → prior/session notes · DNA starter opening · presence from LiveKit meta · clip intensity map · evolution bias in session mode · richer adaptive prompt |
 | **DNA behavior-tree stepper** | ✅ soft spark→tease→edge→deny/release mid-session · prompt + avatar floors · whisper strip DNA node · Seed/Fire chips |
 | **DNA chip bar + Heat Trail** | ✅ 6-node path strip · one-tap Fire chips · climb flash · gallery/Continue/resume hero show DNA node |
+| **DNA gallery badges** | ✅ gallery tiles + hero reel + End pause banner · DNA · node violet · return loop stamps node every turn |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |

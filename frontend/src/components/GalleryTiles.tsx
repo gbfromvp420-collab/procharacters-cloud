@@ -314,9 +314,18 @@ export function CharacterTile({
           <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
             {card.displayName}
           </h2>
-          {resume?.resumeCode && (resume.heatDepth || resume.heatChips?.length) ? (
+          {resume?.resumeCode &&
+          (resume.heatDepth ||
+            resume.heatChips?.length ||
+            resume.dnaTreeLabel ||
+            resume.dnaTreeNodeId) ? (
             <div className="mt-1 space-y-1">
               <div className="flex flex-wrap items-center gap-1.5">
+                {(resume.dnaTreeLabel || resume.dnaTreeNodeId) && (
+                  <span className="rounded-full border border-violet-300/55 bg-violet-500/35 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50 shadow-[0_0_12px_-2px_rgba(167,139,250,0.7)]">
+                    DNA · {resume.dnaTreeLabel || resume.dnaTreeNodeId}
+                  </span>
+                )}
                 {resume.heatDepth && (
                   <span className="rounded-full border border-rose-400/40 bg-rose-500/25 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-50">
                     {resume.heatDepth}
@@ -344,7 +353,11 @@ export function CharacterTile({
                 </p>
               )}
               <p className="text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
-                {urgent ? "Tap to reclaim →" : "Heat trail · continue →"}
+                {urgent
+                  ? "Tap to reclaim →"
+                  : resume.dnaTreeLabel || resume.dnaTreeNodeId
+                    ? "DNA trail · continue →"
+                    : "Heat trail · continue →"}
               </p>
             </div>
           ) : resume?.resumeCode ? (

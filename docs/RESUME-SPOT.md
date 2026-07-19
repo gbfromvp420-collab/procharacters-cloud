@@ -13,6 +13,7 @@
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |
+| **DNA gallery badges** | ✅ tiles + hero reel + pause banner | End heat → gallery shows **DNA · Edge** violet badge |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Redeploy API after DNA runtime push |

@@ -331,6 +331,8 @@ export function ChatApp() {
     heatDepth?: import("@/lib/resume-cache").HeatTrailDepth | null;
     heatChips?: string[] | null;
     recapLine?: string | null;
+    dnaTreeLabel?: string | null;
+    dnaTreeNodeId?: string | null;
   } | null>(null);
   /** Live session stopwatch (seconds) while status === ready. */
   const [liveSeconds, setLiveSeconds] = useState(0);
@@ -530,6 +532,8 @@ export function ChatApp() {
               sessionNotes: info.sessionNotes ?? sessionNotes,
               messageCount: info.messageCount ?? messages.length,
               mindTag: mind?.tag,
+              dnaTreeNodeId: modeState?.dnaTreeNodeId,
+              dnaTreeLabel: modeState?.dnaTreeLabel,
             });
             rememberLocalResume({
               characterId: info.characterId,
@@ -542,12 +546,14 @@ export function ChatApp() {
               heatChips: trail.heatChips,
               messageCount: trail.messageCount,
               mindTag: trail.mindTag,
+              dnaTreeNodeId: trail.dnaTreeNodeId,
+              dnaTreeLabel: trail.dnaTreeLabel,
             });
           },
         );
       }
     },
-    [messages.length, sessionNotes],
+    [messages.length, sessionNotes, modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel],
   );
 
   const endSession = useCallback(() => {
@@ -560,6 +566,8 @@ export function ChatApp() {
       sessionNotes,
       messageCount: messages.length,
       mindTag: mind?.tag,
+      dnaTreeNodeId: modeState?.dnaTreeNodeId,
+      dnaTreeLabel: modeState?.dnaTreeLabel,
     });
     setPauseSnapshot({
       characterId: cid,
@@ -569,6 +577,8 @@ export function ChatApp() {
       heatDepth: trail.heatDepth,
       heatChips: trail.heatChips,
       recapLine: trail.recapLine,
+      dnaTreeLabel: trail.dnaTreeLabel ?? modeState?.dnaTreeLabel,
+      dnaTreeNodeId: trail.dnaTreeNodeId ?? modeState?.dnaTreeNodeId,
     });
     closeSocket(true);
     if (sessionId && wsToken && cid) {
@@ -594,6 +604,8 @@ export function ChatApp() {
     clearSessionState,
     closeSocket,
     messages.length,
+    modeState?.dnaTreeLabel,
+    modeState?.dnaTreeNodeId,
     rememberSession,
     resumeCode,
     savedSession?.resumeCode,
@@ -901,6 +913,10 @@ export function ChatApp() {
             if (avatarIntent) {
               setAvatarState((prev) => mergeAvatarState(prev, avatarIntent) ?? avatarIntent);
             }
+            const nextMode =
+              data.modeState && typeof data.modeState === "object"
+                ? (data.modeState as SessionModeUiState)
+                : null;
             if (notes?.trim()) {
               const trimmed = notes.trim();
               setSessionNotes(trimmed);
@@ -911,6 +927,8 @@ export function ChatApp() {
                 sessionNotes: trimmed,
                 messageCount: turns > 0 ? turns * 2 : undefined,
                 mindTag: mind?.tag,
+                dnaTreeNodeId: nextMode?.dnaTreeNodeId,
+                dnaTreeLabel: nextMode?.dnaTreeLabel,
               });
               rememberResumeRecap(
                 session.characterId,
@@ -921,8 +939,8 @@ export function ChatApp() {
             if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
               setPriorNotes(data.priorNotes.trim());
             }
-            if (data.modeState && typeof data.modeState === "object") {
-              setModeState(data.modeState as SessionModeUiState);
+            if (nextMode) {
+              setModeState(nextMode);
               setModeTick(0);
             }
 
@@ -2647,6 +2665,8 @@ export function ChatApp() {
             heatDepth={pauseSnapshot.heatDepth}
             heatChips={pauseSnapshot.heatChips}
             recapLine={pauseSnapshot.recapLine}
+            dnaTreeLabel={pauseSnapshot.dnaTreeLabel}
+            dnaTreeNodeId={pauseSnapshot.dnaTreeNodeId}
             isMine={
               characters.find((c) => c.id === pauseSnapshot.characterId)?.mine === true ||
               pauseSnapshot.characterId.startsWith("custom-")

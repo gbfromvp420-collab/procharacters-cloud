@@ -27,6 +27,8 @@ export function SessionPausedBanner({
   heatDepth,
   heatChips,
   recapLine,
+  dnaTreeLabel,
+  dnaTreeNodeId,
   isMine = false,
   onResume,
   onDismiss,
@@ -38,6 +40,8 @@ export function SessionPausedBanner({
   heatDepth?: HeatTrailDepth | null;
   heatChips?: string[] | null;
   recapLine?: string | null;
+  dnaTreeLabel?: string | null;
+  dnaTreeNodeId?: string | null;
   /** Private My Character — show ownership CTAs */
   isMine?: boolean;
   onResume?: () => void;
@@ -68,6 +72,7 @@ export function SessionPausedBanner({
               ? 0
               : null;
   const chips = heatChips?.slice(0, 4) ?? [];
+  const dnaLabel = dnaTreeLabel?.trim() || dnaTreeNodeId?.trim() || null;
 
   useEffect(() => {
     let cancelled = false;
@@ -132,10 +137,20 @@ export function SessionPausedBanner({
         Session paused · heat trail saved
         {isMine ? " · my model" : mind ? ` · ${mind.tag}` : ""}
         {heatDepth ? ` · ${heatDepth}` : ""}
+        {dnaLabel ? ` · DNA ${dnaLabel}` : ""}
       </p>
       <p className="mt-1.5 text-sm text-brand-text">
         You left <strong>{nick}</strong> mid-flow
-        {messageCount && messageCount > 0 ? ` · ${messageCount} messages deep` : ""}.
+        {messageCount && messageCount > 0 ? ` · ${messageCount} messages deep` : ""}
+        {dnaLabel ? (
+          <>
+            {" "}
+            on <span className="font-semibold text-violet-200">DNA · {dnaLabel}</span>
+          </>
+        ) : (
+          ""
+        )}
+        .
         {resumeCode ? (
           <>
             {" "}
@@ -147,7 +162,7 @@ export function SessionPausedBanner({
         )}
       </p>
 
-      {(depthLevel != null || chips.length > 0) && (
+      {(depthLevel != null || chips.length > 0 || dnaLabel) && (
         <div className="mt-2 space-y-1.5">
           {depthLevel != null && (
             <div className="flex flex-wrap items-center gap-2">
@@ -170,7 +185,17 @@ export function SessionPausedBanner({
                   {heatDepth}
                 </span>
               )}
+              {dnaLabel && (
+                <span className="rounded-full border border-violet-400/45 bg-violet-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-100">
+                  DNA · {dnaLabel}
+                </span>
+              )}
             </div>
+          )}
+          {depthLevel == null && dnaLabel && (
+            <span className="inline-flex rounded-full border border-violet-400/45 bg-violet-500/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-100">
+              DNA · {dnaLabel}
+            </span>
           )}
           {chips.length > 0 && (
             <div className="flex flex-wrap gap-1">
@@ -197,6 +222,7 @@ export function SessionPausedBanner({
           We&apos;ll hold this heat
           {resumeCode ? " on your code" : ""}
           {heatDepth ? ` at ${heatDepth}` : ""}
+          {dnaLabel ? ` · DNA ${dnaLabel}` : ""}
           {" — "}
           one tap Continue when you&apos;re ready. Free path stays open.
         </p>

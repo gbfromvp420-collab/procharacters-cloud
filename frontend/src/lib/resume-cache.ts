@@ -136,6 +136,8 @@ export function syncResumeCacheFromAccountSessions(
       heatChips: prev?.sessionId === s.sessionId ? prev.heatChips : undefined,
       messageCount: prev?.sessionId === s.sessionId ? prev.messageCount : undefined,
       mindTag: prev?.sessionId === s.sessionId ? prev.mindTag : undefined,
+      dnaTreeNodeId: prev?.sessionId === s.sessionId ? prev.dnaTreeNodeId : undefined,
+      dnaTreeLabel: prev?.sessionId === s.sessionId ? prev.dnaTreeLabel : undefined,
     };
   }
   writeCache(file);
@@ -153,6 +155,8 @@ export function rememberLocalResume(options: {
   heatChips?: string[] | null;
   messageCount?: number | null;
   mindTag?: string | null;
+  dnaTreeNodeId?: string | null;
+  dnaTreeLabel?: string | null;
 }): void {
   if (!options.resumeCode?.trim()) return;
   const file = readCache();
@@ -191,6 +195,12 @@ export function rememberLocalResume(options: {
         : undefined;
   const nextMind =
     options.mindTag?.trim() || (sameSession ? prev?.mindTag : undefined);
+  const nextDnaNode =
+    options.dnaTreeNodeId?.trim() ||
+    (sameSession ? prev?.dnaTreeNodeId : undefined);
+  const nextDnaLabel =
+    options.dnaTreeLabel?.trim() ||
+    (sameSession ? prev?.dnaTreeLabel : undefined);
 
   file.byCharacter[characterId] = {
     characterId,
@@ -205,6 +215,8 @@ export function rememberLocalResume(options: {
     heatChips: nextChips,
     messageCount: nextCount,
     mindTag: nextMind,
+    dnaTreeNodeId: nextDnaNode,
+    dnaTreeLabel: nextDnaLabel,
   };
   // Prefer account source when we already had account for this character
   if (prev?.source === "account") {
