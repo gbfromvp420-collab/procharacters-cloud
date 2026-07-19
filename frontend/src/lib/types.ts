@@ -12,6 +12,9 @@ export interface LiveCharacterOption {
   kind: "default" | "custom";
   avatarBase?: string;
   energyLabel?: string;
+  teaser?: string;
+  /** Signature first assistant line — for pre-start preview continuity. */
+  openingMessage?: string;
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
   clips?: Record<MediaClipKey, string>;

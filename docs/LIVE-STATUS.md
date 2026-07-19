@@ -43,6 +43,7 @@
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
+| Chat continuity pack | ✅ composer vibe chip (mind + Edge Pace) · opening-line preview · Continue “left on edge” recap from session notes |
 
 ---
 

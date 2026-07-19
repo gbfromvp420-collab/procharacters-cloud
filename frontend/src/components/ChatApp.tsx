@@ -47,7 +47,9 @@ import {
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import { InstallAppHint } from "@/components/InstallAppHint";
 import { SessionDropRescue } from "@/components/SessionDropRescue";
+import { ComposerVibeChip } from "@/components/ComposerVibeChip";
 import { EdgePaceStrip } from "@/components/EdgePaceStrip";
+import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import {
   collectExportCharacters,
@@ -82,6 +84,10 @@ import {
   shareUrlResultLabel,
 } from "@/lib/share-links";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
+import {
+  recapFromSessionNotes,
+  rememberResumeRecap,
+} from "@/lib/resume-cache";
 import type {
   AvatarState,
   CharacterId,
@@ -96,14 +102,81 @@ import type {
 } from "@/lib/types";
 
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
-  { id: "twink-default", displayName: "Twink Default", defaultVersion: "v1.3.1", kind: "default", featured: true },
-  { id: "female-default", displayName: "Female Default", defaultVersion: "v1.3.1", kind: "default", featured: true },
-  { id: "twink-shy-boy", displayName: "Diego", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
-  { id: "twink-gym", displayName: "Mateo", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default", featured: true },
-  { id: "twink-alt-punk", displayName: "Rio", defaultVersion: "v1.1.0", kind: "default", avatarBase: "twink-default" },
-  { id: "female-soft-goth", displayName: "Luna", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default", featured: true },
-  { id: "female-athletic-tease", displayName: "Sienna", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default" },
-  { id: "female-playful-brat", displayName: "Mila", defaultVersion: "v1.1.0", kind: "default", avatarBase: "female-default", featured: true },
+  {
+    id: "twink-default",
+    displayName: "Twink Default",
+    defaultVersion: "v1.3.1",
+    kind: "default",
+    featured: true,
+    openingMessage:
+      "mmm hey… sheer thong already on, and i’m not rushing. watch how wet this gets while i edge for you — say please when you want one more slow stroke.",
+  },
+  {
+    id: "female-default",
+    displayName: "Female Default",
+    defaultVersion: "v1.3.1",
+    kind: "default",
+    featured: true,
+    openingMessage:
+      "there you are… crotchless on purpose, already a little shiny. don’t rush me — watch first, then maybe i’ll touch for you.",
+  },
+  {
+    id: "twink-shy-boy",
+    displayName: "Diego",
+    defaultVersion: "v1.1.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    openingMessage:
+      "hi… um. it’s diego. i left the sheer thong on so you can see everything if you want. i’m already a little hard. don’t make me go fast… just watch me for a second?",
+  },
+  {
+    id: "twink-gym",
+    displayName: "Mateo",
+    defaultVersion: "v1.1.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: true,
+    openingMessage:
+      "mateo. just finished my set… shorts off, sheer thong still on, and i’m already tenting. you watching the cool-down? keep your eyes on the pouch — we’re edging this burn, not finishing it yet.",
+  },
+  {
+    id: "twink-alt-punk",
+    displayName: "Rio",
+    defaultVersion: "v1.1.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    openingMessage:
+      "rio. lights low, sheer mesh on, already wet at the tip. don’t ask if i’m hard — look. we’re not finishing. we’re playing with it until you get desperate.",
+  },
+  {
+    id: "female-soft-goth",
+    displayName: "Luna",
+    defaultVersion: "v1.1.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: true,
+    openingMessage:
+      "luna… lights low. black crotchless lace on, already a little shiny for you. don’t rush me. just look at the open panel and breathe with me.",
+  },
+  {
+    id: "female-athletic-tease",
+    displayName: "Sienna",
+    defaultVersion: "v1.1.0",
+    kind: "default",
+    avatarBase: "female-default",
+    openingMessage:
+      "sienna. workout done, sports bra off, crotchless still on — and yeah, i’m already wet in the open panel. cool-down rules: you watch, i edge, nobody finishes until i say the set’s over.",
+  },
+  {
+    id: "female-playful-brat",
+    displayName: "Mila",
+    defaultVersion: "v1.1.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: true,
+    openingMessage:
+      "hi hi~ mila. crotchless on, already a little wet, and no — you don’t get to rush. look at the open panel and ask nicely. maybe i’ll edge for you… if you’re fun.",
+  },
 ];
 
 function makeId(): string {
@@ -528,7 +601,9 @@ export function ChatApp() {
               setModeTick(0);
             }
             if (typeof data.sessionNotes === "string" && data.sessionNotes.trim()) {
-              setSessionNotes(data.sessionNotes.trim());
+              const notes = data.sessionNotes.trim();
+              setSessionNotes(notes);
+              rememberResumeRecap(session.characterId, recapFromSessionNotes(notes));
             }
             if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
               setPriorNotes(data.priorNotes.trim());
@@ -593,7 +668,12 @@ export function ChatApp() {
               setAvatarState((prev) => mergeAvatarState(prev, avatarIntent) ?? avatarIntent);
             }
             if (notes?.trim()) {
-              setSessionNotes(notes.trim());
+              const trimmed = notes.trim();
+              setSessionNotes(trimmed);
+              rememberResumeRecap(
+                session.characterId,
+                recapFromSessionNotes(trimmed),
+              );
             }
             if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
               setPriorNotes(data.priorNotes.trim());
@@ -1805,12 +1885,21 @@ export function ChatApp() {
 
   const sessionActive = status === "ready" || status === "connecting" || restarting;
   const canSend = status === "ready" && !sending && input.trim().length > 0;
+  const selectedLive =
+    characters.find((c) => c.id === (activeCharacterId ?? character)) ??
+    characters.find((c) => c.id === character) ??
+    null;
   const headerCharacterName =
     characterName ??
     savedSession?.characterName ??
-    characters.find((c) => c.id === character)?.displayName ??
+    selectedLive?.displayName ??
     null;
   const headerMind = mindFingerprint(activeCharacterId ?? character);
+  const selectedOpening =
+    selectedLive?.openingMessage?.trim() ||
+    FALLBACK_CHARACTERS.find((c) => c.id === (activeCharacterId ?? character))
+      ?.openingMessage ||
+    null;
   const statusLabel =
     status === "ready"
       ? headerCharacterName
@@ -2851,6 +2940,19 @@ export function ChatApp() {
                 (!!priorNotes && status !== "connecting")) && (
                 <SessionMemoryStrip priorNotes={priorNotes} sessionNotes={sessionNotes} />
               )}
+              {/* Opening continuity before first message lands */}
+              {messages.length === 0 &&
+                !isTyping &&
+                selectedOpening &&
+                status !== "connecting" &&
+                !restarting && (
+                  <OpeningLinePreview
+                    characterId={activeCharacterId ?? character}
+                    characterName={headerCharacterName}
+                    openingMessage={selectedOpening}
+                    variant={status === "ready" ? "live" : "idle"}
+                  />
+                )}
               {messages.length === 0 && !isTyping && (
                 <div className="px-2 py-10 text-center sm:py-14">
                   {(status === "connecting" || restarting) && (
@@ -2868,6 +2970,11 @@ export function ChatApp() {
                           <span className="font-semibold text-brand-accent">{headerMind.tag}</span>
                           {" · "}
                           {headerMind.blurb}
+                        </p>
+                      )}
+                      {selectedOpening && (
+                        <p className="mt-2 line-clamp-3 text-[11px] italic leading-relaxed text-brand-muted/90">
+                          “{selectedOpening}”
                         </p>
                       )}
                       <p className="mt-3 text-xs text-brand-muted animate-pulse">
@@ -2892,7 +2999,7 @@ export function ChatApp() {
                               : "Pick a character, choose Normal or Edge Pace, then Start."}
                   </p>
                   )}
-                  {status !== "ready" && status !== "connecting" && !restarting && (
+                  {status !== "ready" && status !== "connecting" && !restarting && !selectedOpening && (
                     <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
                       {headerMind
                         ? `${headerMind.tag} · ${headerMind.blurb}`
@@ -2928,6 +3035,14 @@ export function ChatApp() {
 
             {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
             <div className="sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:p-4 sm:pb-4">
+              <ComposerVibeChip
+                characterId={activeCharacterId ?? character}
+                characterName={headerCharacterName}
+                sessionMode={sessionMode}
+                modeState={modeState}
+                tickOffset={modeTick}
+                status={status}
+              />
               <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
@@ -2953,7 +3068,11 @@ export function ChatApp() {
                   }}
                   placeholder={
                     status === "ready"
-                      ? "Message… (Enter to send)"
+                      ? modeState?.mode === "edge_pace" && modeState.phase
+                        ? `Reply in ${modeState.phase}… (Enter to send)`
+                        : headerCharacterName
+                          ? `Message ${headerCharacterName.split(/\s+/)[0]}… (Enter to send)`
+                          : "Message… (Enter to send)"
                       : connectionDropped
                         ? "Rejoin to keep chatting"
                         : "Start a session first"

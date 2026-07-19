@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
   buildResumeChatPath,
   formatResumeExpiryShort,
@@ -26,6 +27,15 @@ export function ContinueBanner({
   const expiryLabel = formatResumeExpiryShort(continueTarget.resumeExpiresAt);
   const urgent = isResumeExpiryUrgent(continueTarget.resumeExpiresAt);
   const [copied, setCopied] = useState(false);
+  const mind = mindFingerprint(continueTarget.characterId);
+  const recap =
+    continueTarget.recapLine?.trim() ||
+    continueCard?.teaser?.trim() ||
+    mind?.blurb ||
+    null;
+  const displayName =
+    continueCard?.displayName || continueTarget.characterName || "Your last chat";
+  const nick = displayName.trim().split(/\s+/)[0] || displayName;
 
   const copyCode = async () => {
     const code = continueTarget.resumeCode?.trim();
@@ -35,7 +45,6 @@ export function ContinueBanner({
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1600);
     } catch {
-      // Fallback for older mobile webviews
       try {
         const ta = document.createElement("textarea");
         ta.value = code;
@@ -67,19 +76,53 @@ export function ContinueBanner({
         <div className="flex min-w-0 flex-1 items-center gap-3">
           {continueCard ? (
             <div className="relative h-16 w-12 shrink-0 overflow-hidden rounded-lg border border-brand-border bg-black sm:h-20 sm:w-14">
-              <video className="h-full w-full object-cover" src={posterUrl(continueCard)} autoPlay muted loop playsInline preload="metadata" />
+              <video
+                className="h-full w-full object-cover"
+                src={posterUrl(continueCard)}
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
             </div>
           ) : (
-            <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-black/50 text-lg sm:h-20 sm:w-14">▶</div>
+            <div className="flex h-16 w-12 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-black/50 text-lg sm:h-20 sm:w-14">
+              ▶
+            </div>
           )}
           <div className="min-w-0">
-            <p className={`text-[10px] uppercase tracking-[0.28em] ${urgent ? "text-rose-200/90" : "text-amber-200/90"}`}>
-              Continue where you left off
+            <p
+              className={`text-[10px] uppercase tracking-[0.28em] ${
+                urgent ? "text-rose-200/90" : "text-amber-200/90"
+              }`}
+            >
+              {continueTarget.recapLine
+                ? `Who you left on edge · ${nick}`
+                : "Continue where you left off"}
             </p>
             <p className="truncate text-base font-semibold text-brand-text sm:text-lg">
-              {continueCard?.displayName || continueTarget.characterName || "Your last chat"}
+              {displayName}
+              {mind ? (
+                <span className="ml-2 text-xs font-normal text-brand-muted">
+                  · {mind.tag}
+                </span>
+              ) : null}
             </p>
-            <p className={`mt-0.5 truncate font-mono text-[11px] ${urgent ? "text-rose-100/85" : "text-amber-100/80"}`}>
+            {recap && (
+              <p
+                className={`mt-0.5 line-clamp-2 text-[11px] leading-snug ${
+                  urgent ? "text-rose-100/85" : "text-amber-100/85"
+                }`}
+              >
+                {continueTarget.recapLine ? `“${recap}”` : recap}
+              </p>
+            )}
+            <p
+              className={`mt-0.5 truncate font-mono text-[11px] ${
+                urgent ? "text-rose-100/70" : "text-amber-100/70"
+              }`}
+            >
               Code {continueTarget.resumeCode}
               {continueTarget.source === "account" ? " · synced" : " · this device"}
               {expiryLabel ? ` · ${expiryLabel}` : ""}
@@ -94,7 +137,7 @@ export function ContinueBanner({
               urgent ? "ring-2 ring-rose-400/60" : ""
             }`}
           >
-            {urgent && expiryLabel === "expired" ? "Reclaim chat" : "Continue"}
+            {urgent && expiryLabel === "expired" ? "Reclaim chat" : `Continue · ${nick}`}
           </Link>
           <button
             type="button"
@@ -105,7 +148,11 @@ export function ContinueBanner({
             {copied ? "Copied!" : "Copy code"}
           </button>
           {resumeCount > 1 && (
-            <button type="button" onClick={onShowAllMyChats} className="btn-ghost min-h-0 flex-1 px-3 py-2 text-xs text-amber-100/90 sm:flex-none">
+            <button
+              type="button"
+              onClick={onShowAllMyChats}
+              className="btn-ghost min-h-0 flex-1 px-3 py-2 text-xs text-amber-100/90 sm:flex-none"
+            >
               All my chats
             </button>
           )}

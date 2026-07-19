@@ -17,6 +17,8 @@ export type ResumeCacheEntry = {
   source: "account" | "local";
   /** ISO when the resume code expires (for urgency on Continue UI). */
   resumeExpiresAt?: string;
+  /** Short “who you left on edge” line for Continue banner / recap. */
+  recapLine?: string;
 };
 
 /** Short urgency label for gallery / banner (e.g. "expires in 2d"). */
@@ -114,6 +116,7 @@ export function rememberLocalResume(options: {
   sessionId: string;
   resumeCode: string;
   resumeExpiresAt?: string | null;
+  recapLine?: string | null;
 }): void {
   if (!options.resumeCode?.trim()) return;
   const file = readCache();
@@ -133,6 +136,9 @@ export function rememberLocalResume(options: {
   const nextExpiry =
     options.resumeExpiresAt?.trim() ||
     (prev?.sessionId === options.sessionId ? prev.resumeExpiresAt : undefined);
+  const nextRecap =
+    options.recapLine?.trim() ||
+    (prev?.sessionId === options.sessionId ? prev.recapLine : undefined);
   file.byCharacter[characterId] = {
     characterId,
     characterName: options.characterName ?? prev?.characterName,
@@ -141,11 +147,43 @@ export function rememberLocalResume(options: {
     updatedAt: new Date().toISOString(),
     source: prev?.source === "account" || !options.characterName ? prev?.source ?? "local" : "local",
     resumeExpiresAt: nextExpiry,
+    recapLine: nextRecap,
   };
   // Prefer account source when we already had account for this character
   if (prev?.source === "account") {
     file.byCharacter[characterId]!.source = "account";
   }
+  writeCache(file);
+}
+
+/** Pull a short human recap from session notes (“Last character beat”, vibe, etc.). */
+export function recapFromSessionNotes(notes?: string | null): string | null {
+  if (!notes?.trim()) return null;
+  const text = notes.replace(/\s+/g, " ").trim();
+  const lastBeat = text.match(/Last character beat:\s*[“"](.+?)[”"]/i)?.[1]?.trim();
+  if (lastBeat) {
+    return lastBeat.length > 110 ? `${lastBeat.slice(0, 107).trim()}…` : lastBeat;
+  }
+  const vibe = text.match(/Ongoing vibe:\s*([^.]+)/i)?.[1]?.trim();
+  if (vibe) {
+    return vibe.length > 90 ? `${vibe.slice(0, 87).trim()}…` : vibe;
+  }
+  const scene = text.match(/Scene lock:\s*([^.]{8,90})/i)?.[1]?.trim();
+  if (scene) return scene;
+  return null;
+}
+
+/** Patch only the recap line for an existing resume entry (by character or session). */
+export function rememberResumeRecap(
+  characterId: string,
+  recapLine: string | null | undefined,
+): void {
+  const line = recapLine?.trim();
+  if (!line || !characterId) return;
+  const file = readCache();
+  const prev = file.byCharacter[characterId];
+  if (!prev?.resumeCode) return;
+  file.byCharacter[characterId] = { ...prev, recapLine: line, updatedAt: new Date().toISOString() };
   writeCache(file);
 }
 

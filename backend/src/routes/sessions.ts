@@ -262,6 +262,8 @@ export const createSessionRoutes = (
             energyLabel: profile.energyLabel,
             teaser: profile.teaser,
             featured: profile.featured === true,
+            openingMessage:
+              profile.openingMessage ?? getOpeningMessage(profile.id) ?? undefined,
             clips: listClipUrls(profile.avatarBase ?? profile.id),
           })),
           ...custom,
