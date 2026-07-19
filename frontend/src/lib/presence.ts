@@ -152,3 +152,28 @@ export function presenceBubbleClass(skin: PresenceSkin): string {
       return "border-rose-400/35 bg-gradient-to-br from-rose-500/8 to-brand-bg shadow-[inset_3px_0_0_0_rgba(244,63,94,0.45)]";
   }
 }
+
+/** Soft ambient wash behind chat transcript — room atmosphere per mind. */
+export function presenceAmbientClass(skin: PresenceSkin): string {
+  switch (skin) {
+    case "twink_shy":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(244,114,182,0.12),transparent_55%)]";
+    case "twink_gym":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(251,191,36,0.12),transparent_55%)]";
+    case "twink_punk":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(217,70,239,0.12),transparent_55%)]";
+    case "female_goth":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(109,40,217,0.16),transparent_55%)]";
+    case "female_athletic":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(56,189,248,0.12),transparent_55%)]";
+    case "female_brat":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(251,113,133,0.12),transparent_55%)]";
+    case "female_default":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(251,113,133,0.1),transparent_55%)]";
+    case "custom":
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(225,29,143,0.12),transparent_55%)]";
+    case "twink_default":
+    default:
+      return "bg-[radial-gradient(ellipse_at_20%_0%,rgba(244,63,94,0.1),transparent_55%)]";
+  }
+}

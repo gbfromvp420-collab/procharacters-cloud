@@ -162,6 +162,13 @@ body {
   animation: edge-almost-shell 1.2s ease-in-out infinite;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .edge-almost-pulse,
+  .composer-edge-almost {
+    animation: none !important;
+  }
+}
+
 /* Glass panels / sticky chrome */
 @layer components {
   .glass-bar {

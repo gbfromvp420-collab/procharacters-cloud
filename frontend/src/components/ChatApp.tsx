@@ -89,6 +89,13 @@ import {
 } from "@/lib/share-links";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
+  energyBandBadgeClass,
+  energyBandFromAvatar,
+  energyBandLabel,
+  type EnergyBand,
+} from "@/lib/energy";
+import {
+  presenceAmbientClass,
   presenceBubbleClass,
   resolvePresenceSkin,
 } from "@/lib/presence";
@@ -271,6 +278,12 @@ export function ChatApp() {
   }>({ line: null, show: false });
   /** Brief send-button heat feedback. */
   const [sendPulse, setSendPulse] = useState(false);
+  /** User scrolled up — pause pin-to-bottom, show jump pill. */
+  const [stickToBottom, setStickToBottom] = useState(true);
+  const [showJumpLatest, setShowJumpLatest] = useState(false);
+  const [bandFlash, setBandFlash] = useState<EnergyBand | null>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const prevEnergyBandRef = useRef<EnergyBand | null>(null);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
@@ -482,8 +495,28 @@ export function ChatApp() {
   ]);
 
   useEffect(() => {
+    if (!stickToBottom) {
+      setShowJumpLatest(true);
+      return;
+    }
+    setShowJumpLatest(false);
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  }, [messages, isTyping, stickToBottom]);
+
+  // Energy band flash in transcript chrome when avatar heat shifts
+  useEffect(() => {
+    if (!avatarState) return;
+    const band = energyBandFromAvatar(avatarState);
+    if (prevEnergyBandRef.current === null) {
+      prevEnergyBandRef.current = band;
+      return;
+    }
+    if (prevEnergyBandRef.current === band) return;
+    prevEnergyBandRef.current = band;
+    setBandFlash(band);
+    const t = window.setTimeout(() => setBandFlash(null), 2200);
+    return () => window.clearTimeout(t);
+  }, [avatarState]);
 
   useEffect(() => {
     sessionIdRef.current = sessionId;
@@ -1940,6 +1973,22 @@ export function ChatApp() {
     activeCharacterId ?? character,
   );
   const assistantBubbleClass = presenceBubbleClass(chatPresenceSkin);
+  const transcriptAmbient = presenceAmbientClass(chatPresenceSkin);
+
+  const onMessagesScroll = () => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    const dist = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const nearBottom = dist < 80;
+    setStickToBottom(nearBottom);
+    if (nearBottom) setShowJumpLatest(false);
+  };
+
+  const jumpToLatest = () => {
+    setStickToBottom(true);
+    setShowJumpLatest(false);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
   const statusLabel =
     status === "ready"
       ? headerCharacterName
@@ -2926,7 +2975,7 @@ export function ChatApp() {
           </section>
 
           <section
-            className={`flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
+            className={`relative flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
               avatarCollapsed
                 ? "min-h-[min(70dvh,560px)] sm:min-h-[480px]"
                 : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
@@ -2936,21 +2985,35 @@ export function ChatApp() {
               <p className="text-[11px] text-brand-muted">
                 {messages.length > 0 ? `${messages.length} messages` : "Transcript"}
                 {avatarCollapsed ? " · avatar hidden" : ""}
+                {headerMind ? ` · ${headerMind.tag}` : ""}
               </p>
-              <button
-                type="button"
-                onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
-                className="text-[11px] text-brand-accent hover:underline"
-                title={
-                  avatarCollapsed
-                    ? "Show avatar video and status"
-                    : "Hide avatar for more chat space"
-                }
-              >
-                {avatarCollapsed ? "Show avatar" : "Hide avatar"}
-              </button>
+              <div className="flex items-center gap-2">
+                {bandFlash && (
+                  <span
+                    className={`animate-fade-in rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(bandFlash)}`}
+                  >
+                    {energyBandLabel(bandFlash)} heat
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
+                  className="text-[11px] text-brand-accent hover:underline"
+                  title={
+                    avatarCollapsed
+                      ? "Show avatar video and status"
+                      : "Hide avatar for more chat space"
+                  }
+                >
+                  {avatarCollapsed ? "Show avatar" : "Hide avatar"}
+                </button>
+              </div>
             </div>
-            <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4">
+            <div
+              ref={messagesScrollRef}
+              onScroll={onMessagesScroll}
+              className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
+            >
               {(() => {
                 const mind = mindFingerprint(activeCharacterId ?? character);
                 if (!mind) return null;
@@ -3103,6 +3166,19 @@ export function ChatApp() {
               )}
               <div ref={messagesEndRef} />
             </div>
+
+            {showJumpLatest && messages.length > 0 && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-10 flex justify-center sm:bottom-[6.25rem]">
+                <button
+                  type="button"
+                  onClick={jumpToLatest}
+                  className="pointer-events-auto btn-primary min-h-0 animate-rise-in rounded-full px-4 py-1.5 text-xs shadow-glow"
+                >
+                  Jump to latest
+                  {isTyping ? " · typing" : ""}
+                </button>
+              </div>
+            )}
 
             {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
             <div

@@ -277,14 +277,29 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Spotlight</p>
-                <h2 className="text-base font-semibold text-brand-text sm:text-lg">Featured</h2>
+                <h2 className="text-base font-semibold text-brand-text sm:text-lg">
+                  Featured
+                  <span className="ml-2 text-xs font-normal text-brand-muted">
+                    · swipe · live packs
+                  </span>
+                </h2>
               </div>
               <button type="button" onClick={() => setFilter("featured")} className="min-h-touch text-xs text-brand-muted hover:text-brand-accent">View all →</button>
             </div>
-            <div className="scroll-strip -mx-4 flex gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:gap-4 sm:px-0">
-              {featuredRow.map((card) => (
-                <CharacterTile key={`feat-${card.id}`} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} compact />
-              ))}
+            <div className="relative -mx-4 sm:mx-0">
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-brand-bg to-transparent sm:w-8"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-brand-bg to-transparent sm:w-10"
+                aria-hidden
+              />
+              <div className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0">
+                {featuredRow.map((card) => (
+                  <CharacterTile key={`feat-${card.id}`} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} compact />
+                ))}
+              </div>
             </div>
           </section>
         )}
