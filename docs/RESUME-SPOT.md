@@ -20,6 +20,7 @@
 | **Sexy first open + pay funnel** | ✅ DNA starter auto-seeds composer · webhook checkout bump · ratio chips | Forge→Edge→Fire prefilled starter |
 | **DNA climb motion + funnel UI** | ✅ node pulse · shell throb · Account funnel dashboard | Climb feels alive; ops sees expand→pay |
 | **DNA power reclaim** | ✅ Continue → Edge Pace + tree hard rehydrate | Gallery **DNA power · Edge reclaim** is the real climb |
+| **Reclaim everywhere** | ✅ offline · pause · Account hub · hero reel | Ruby token: DNA power on every surface |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Redeploy API after DNA runtime push |

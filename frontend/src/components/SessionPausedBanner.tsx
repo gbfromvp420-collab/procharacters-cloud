@@ -56,7 +56,13 @@ export function SessionPausedBanner({
   const nick = characterName?.trim().split(/\s+/)[0] || characterName || "them";
   const deep = (messageCount ?? 0) >= 3;
   const href = resumeCode
-    ? buildResumeChatPath({ characterId, resumeCode })
+    ? buildResumeChatPath({
+        characterId,
+        resumeCode,
+        dnaTreeLabel: dnaTreeLabel ?? undefined,
+        dnaTreeNodeId: dnaTreeNodeId ?? undefined,
+        heatDepth: heatDepth ?? undefined,
+      })
     : `/chat?character=${encodeURIComponent(characterId)}&autostart=1`;
 
   const depthLevel =
@@ -224,17 +230,29 @@ export function SessionPausedBanner({
           {heatDepth ? ` at ${heatDepth}` : ""}
           {dnaLabel ? ` · DNA ${dnaLabel}` : ""}
           {" — "}
-          one tap Continue when you&apos;re ready. Free path stays open.
+          one tap {dnaLabel ? "DNA power reclaim" : "Continue"} when you&apos;re ready. Free path
+          stays open.
         </p>
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {onResume ? (
-          <button type="button" onClick={onResume} className="btn-primary min-h-0 px-4 py-2 text-xs">
-            Continue · {nick}
+          <button
+            type="button"
+            onClick={onResume}
+            className={`btn-primary min-h-0 px-4 py-2 text-xs ${
+              dnaLabel ? "ring-1 ring-violet-300/50" : ""
+            }`}
+          >
+            {dnaLabel ? `DNA power · ${nick}` : `Continue · ${nick}`}
           </button>
         ) : (
-          <Link href={href} className="btn-primary min-h-0 px-4 py-2 text-xs">
-            Continue · {nick}
+          <Link
+            href={href}
+            className={`btn-primary min-h-0 px-4 py-2 text-xs ${
+              dnaLabel ? "ring-1 ring-violet-300/50" : ""
+            }`}
+          >
+            {dnaLabel ? `DNA power · ${nick}` : `Continue · ${nick}`}
           </Link>
         )}
         {isMine && (

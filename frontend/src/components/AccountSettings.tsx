@@ -72,6 +72,7 @@ import {
   shareUrlResultLabel,
 } from "@/lib/share-links";
 import {
+  buildResumeChatPath,
   formatResumeExpiryShort,
   getResumeForCharacter,
   isResumeExpiryUrgent,
@@ -1580,14 +1581,22 @@ export function AccountSettings() {
                           <div className="flex flex-wrap gap-1.5">
                             {session?.resumeCode ? (
                               <Link
-                                href={`/chat?resume=${encodeURIComponent(session.resumeCode)}&rehydrate=1`}
+                                href={buildResumeChatPath({
+                                  characterId: m.id,
+                                  resumeCode: session.resumeCode,
+                                  dnaTreeLabel: localTrail?.dnaTreeLabel,
+                                  dnaTreeNodeId: localTrail?.dnaTreeNodeId,
+                                  heatDepth: localTrail?.heatDepth,
+                                })}
                                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-white ${
                                   urgent
                                     ? "bg-rose-500/90 ring-1 ring-rose-300/50"
-                                    : "bg-brand-accent"
+                                    : dnaLabel
+                                      ? "bg-violet-500 ring-1 ring-violet-300/50"
+                                      : "bg-brand-accent"
                                 }`}
                               >
-                                Continue
+                                {dnaLabel ? "DNA power" : "Continue"}
                               </Link>
                             ) : (
                               <Link

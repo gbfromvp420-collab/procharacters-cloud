@@ -279,17 +279,23 @@
             var li = document.createElement("li");
             var n = nick(e);
             var code = e.resumeCode;
-            var href =
-              "/chat?resume=" +
-              encodeURIComponent(code) +
-              "&rehydrate=1" +
-              (e.characterId ? "&character=" + encodeURIComponent(e.characterId) : "");
-            var isUrgent = urgent(e.resumeExpiresAt);
             var dna =
               (e.dnaTreeLabel && String(e.dnaTreeLabel).trim()) ||
               (e.dnaTreeNodeId && String(e.dnaTreeNodeId).trim()) ||
               "";
             var heat = e.heatDepth ? String(e.heatDepth) : "";
+            var dnaPower =
+              /edge|deny|release|gate|tease/i.test(dna) ||
+              heat === "edge" ||
+              heat === "deep" ||
+              heat === "locked";
+            var href =
+              "/chat?resume=" +
+              encodeURIComponent(code) +
+              "&rehydrate=1" +
+              (e.characterId ? "&character=" + encodeURIComponent(e.characterId) : "") +
+              (dnaPower ? "&mode=edge_pace" : "");
+            var isUrgent = urgent(e.resumeExpiresAt);
             li.innerHTML =
               '<div class="name">' +
               escapeHtml(n) +
@@ -301,16 +307,21 @@
               '<div class="meta">' +
               escapeHtml(code) +
               (heat ? " · heat " + escapeHtml(heat) : "") +
+              (dnaPower ? " · Edge reclaim" : "") +
               "</div>" +
               '<div class="row">' +
               '<a class="btn ' +
-              (isUrgent ? "btn-primary" : "btn-amber") +
+              (isUrgent || dnaPower ? "btn-primary" : "btn-amber") +
               '" href="' +
               href +
               '">' +
-              (isUrgent ? "Reclaim · " : "Continue · ") +
+              (isUrgent
+                ? "Reclaim · "
+                : dnaPower
+                  ? "DNA power · "
+                  : "Continue · ") +
               escapeHtml(n) +
-              (dna ? " · DNA" : "") +
+              (dna && !dnaPower ? " · DNA" : "") +
               "</a>" +
               "</div>";
             list.appendChild(li);

@@ -2733,9 +2733,39 @@ export function ChatApp() {
               const snap = pauseSnapshot;
               setPauseSnapshot(null);
               setCharacter(snap.characterId);
-              void resumeLastSession().catch(() => {
-                void startSession();
-              });
+              const dnaPower =
+                !!(snap.dnaTreeLabel || snap.dnaTreeNodeId) ||
+                snap.heatDepth === "edge" ||
+                snap.heatDepth === "deep" ||
+                snap.heatDepth === "locked";
+              void (async () => {
+                try {
+                  if (snap.resumeCode) {
+                    if (dnaPower) setSessionMode("edge_pace");
+                    const session = await resumeByCode(snap.resumeCode, {
+                      sessionMode: dnaPower ? "edge_pace" : undefined,
+                    });
+                    if (
+                      session.sessionMode === "edge_pace" ||
+                      session.sessionMode === "normal"
+                    ) {
+                      setSessionMode(session.sessionMode);
+                    }
+                    await openLiveSession(session, { forceRehydrate: true });
+                    if (dnaPower) {
+                      setCopyNotice("DNA power reclaim · Edge Pace + heat restored");
+                      window.setTimeout(() => setCopyNotice(null), 3200);
+                    }
+                    return;
+                  }
+                  await resumeLastSession();
+                } catch {
+                  void startSession(
+                    snap.characterId,
+                    dnaPower ? { sessionMode: "edge_pace" } : undefined,
+                  );
+                }
+              })();
             }}
             onDismiss={() => setPauseSnapshot(null)}
           />

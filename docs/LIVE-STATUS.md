@@ -67,6 +67,7 @@
 | **Sexy first open + pay funnel** | ✅ Studio starter auto-seeds chat composer on session_ready · Stripe webhook bumps checkoutConfirms · pulse conversion % ratios |
 | **DNA climb motion + funnel UI** | ✅ `dna-climb-node` / shell animations on whisper + Edge×DNA · System pulse funnel dashboard strip |
 | **DNA power reclaim** | ✅ Continue deep-link `mode=edge_pace` on DNA trails · resume API mode switch · tree node stamped on rehydrate · gallery **DNA power · Edge reclaim** |
+| **Reclaim everywhere** | ✅ offline shell Edge reclaim · End pause DNA power CTA · Account My models DNA power · hero reel DNA power button |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |

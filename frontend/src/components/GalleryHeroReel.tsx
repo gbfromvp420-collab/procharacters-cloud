@@ -336,9 +336,15 @@ export function GalleryHeroReel({
               {continueHref ? (
                 <Link
                   href={continueHref}
-                  className="btn-primary min-h-0 px-5 py-2.5 text-sm ring-1 ring-amber-400/50"
+                  className={`btn-primary min-h-0 px-5 py-2.5 text-sm ring-1 ${
+                    resume?.dnaTreeLabel || resume?.dnaTreeNodeId
+                      ? "ring-violet-400/55"
+                      : "ring-amber-400/50"
+                  }`}
                 >
-                  Continue with {nick}
+                  {resume?.dnaTreeLabel || resume?.dnaTreeNodeId
+                    ? `DNA power · ${nick}`
+                    : `Continue with ${nick}`}
                 </Link>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary min-h-0 px-5 py-2.5 text-sm">
