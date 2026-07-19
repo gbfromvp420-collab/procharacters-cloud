@@ -140,12 +140,15 @@ export function CharacterTile({
   onShareResume,
   resume,
   compact = false,
+  searchHighlight = false,
 }: {
   card: CharacterCard;
   onShareCard: (card: CharacterCard) => void;
   onShareResume: (card: CharacterCard, resume: ResumeCacheEntry) => void;
   resume: ResumeCacheEntry | null;
   compact?: boolean;
+  /** Soft pulse when this tile matched a mind search */
+  searchHighlight?: boolean;
 }) {
   const skin = resolvePresenceSkin(undefined, card.id);
   const visual = presenceVisual(skin);
@@ -173,7 +176,9 @@ export function CharacterTile({
     <article
       className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
         compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
-      } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""}`}
+      } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""} ${
+        searchHighlight ? "ring-2 ring-brand-accent/50 shadow-glow-sm" : ""
+      }`}
     >
       <div
         ref={containerRef}

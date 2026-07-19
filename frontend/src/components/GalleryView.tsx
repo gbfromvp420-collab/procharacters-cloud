@@ -575,7 +575,14 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
             {visible.map((card) => (
-              <CharacterTile key={card.id} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} />
+              <CharacterTile
+                key={card.id}
+                card={card}
+                onShareCard={shareCard}
+                onShareResume={shareResume}
+                resume={resumes[card.id] ?? null}
+                searchHighlight={!!query.trim() && matchesQuery(card, query.trim().toLowerCase())}
+              />
             ))}
           </div>
         )}

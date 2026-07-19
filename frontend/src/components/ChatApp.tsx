@@ -3229,14 +3229,24 @@ export function ChatApp() {
                   </span>
                 )}
                 {status === "ready" && messages.length > 0 && sessionId && wsToken && (
-                  <button
-                    type="button"
-                    onClick={() => void exportChat("md")}
-                    className="text-[11px] text-brand-muted hover:text-brand-accent"
-                    title="Download this heat as Markdown"
-                  >
-                    Export MD
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => void exportChat("md")}
+                      className="text-[11px] text-brand-muted hover:text-brand-accent"
+                      title="Download this heat as Markdown"
+                    >
+                      Export MD
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void shareChatMarkdown()}
+                      className="text-[11px] text-brand-muted hover:text-brand-accent"
+                      title="Share a heat snippet"
+                    >
+                      Share heat
+                    </button>
+                  </>
                 )}
                 <button
                   type="button"
@@ -3595,9 +3605,17 @@ export function ChatApp() {
                   disabled={!canSend}
                   className={`btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5 ${
                     sendPulse ? "scale-95 ring-2 ring-white/40 shadow-glow" : ""
-                  } ${sending ? "opacity-80" : ""}`}
+                  } ${sending ? "opacity-80" : ""} ${
+                    modeState?.mode === "edge_pace" && modeState.phase === "almost"
+                      ? "ring-2 ring-rose-300/50"
+                      : ""
+                  }`}
                 >
-                  {sending ? "…" : "Send"}
+                  {sending
+                    ? "…"
+                    : modeState?.mode === "edge_pace" && modeState.phase === "almost"
+                      ? "Hold…"
+                      : "Send"}
                 </button>
               </div>
               {status === "ready" && (
