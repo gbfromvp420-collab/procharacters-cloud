@@ -30,6 +30,8 @@ import { InstallAppHint } from "./InstallAppHint";
 import { PushEnableHint } from "./PushEnableHint";
 import { SoftSupportHint } from "./SoftSupportHint";
 import { GalleryLiveStrip } from "./GalleryLiveStrip";
+import { NetworkOfflineBanner } from "./NetworkOfflineBanner";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -147,13 +149,31 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     [resumes],
   );
 
+  const matchesQuery = (c: (typeof characters)[0], q: string) => {
+    if (!q) return true;
+    const mind = mindFingerprint(c.id);
+    const hay = [
+      c.displayName,
+      c.teaser,
+      c.energyLabel,
+      c.kind,
+      c.vibeTag,
+      mind?.tag,
+      mind?.blurb,
+      ...(c.tags ?? []),
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return hay.includes(q);
+  };
+
   const featuredRow = useMemo(() => {
     if (filter === "mine") return [];
     const q = query.trim().toLowerCase();
     return characters.filter((c) => {
       if (!c.featured) return false;
-      if (!q) return true;
-      return [c.displayName, c.teaser, c.energyLabel, ...(c.tags ?? [])].join(" ").toLowerCase().includes(q);
+      return matchesQuery(c, q);
     });
   }, [characters, query, filter]);
 
@@ -164,8 +184,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       if (filter === "featured" && !c.featured) return false;
       if (filter === "default" && c.kind !== "default") return false;
       if (filter === "custom" && c.kind !== "custom") return false;
-      if (!q) return true;
-      return [c.displayName, c.teaser, c.energyLabel, c.kind, ...(c.tags ?? [])].join(" ").toLowerCase().includes(q);
+      return matchesQuery(c, q);
     });
     const byRecent = (a: CharacterCard, b: CharacterCard) => {
       const ra = resumes[a.id];
@@ -269,6 +288,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           onInvalidated={() => setSignedInHandle(null)}
         />
         <InstallAppHint className="mb-4" />
+        <NetworkOfflineBanner className="mb-4" />
         <PushEnableHint className="mb-4" />
         <SoftSupportHint className="mb-4" hasEngagement={resumeCount > 0} />
         <header className="mb-5 animate-fade-in sm:mb-6">
@@ -278,6 +298,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               ? "Your last chats first — then the rest of the catalog."
               : "Tonight’s cast up top — mind fingerprints on every tile, then the full roster."}
             {resumeCount > 0 ? " Amber codes are saved chats." : signedInHandle ? " Chat while signed in for multi-device codes." : " Sign in to sync resumes."}
+            {" Search minds too (e.g. post-set, shy heat, brat)."}
           </p>
           {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}
         </header>
@@ -332,7 +353,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-5 space-y-3 border-b border-brand-border/50 bg-brand-bg/90 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, energy, tags…" enterKeyHint="search" autoComplete="off" className="field min-h-touch flex-1" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, mind, energy, tags…" enterKeyHint="search" autoComplete="off" className="field min-h-touch flex-1" />
             <label className="flex min-h-touch items-center gap-2 text-xs text-brand-muted">
               <span className="shrink-0">Sort</span>
               <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className="field min-h-touch w-full sm:w-auto">

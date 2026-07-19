@@ -61,6 +61,7 @@ import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
 import { AfterglowChips } from "@/components/AfterglowChips";
 import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
 import { LastBeatEcho } from "@/components/LastBeatEcho";
+import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
@@ -2161,6 +2162,7 @@ export function ChatApp() {
           }}
         />
         <InstallAppHint className="mb-3" />
+        <NetworkOfflineBanner className="mb-3" />
         <SoftSupportHint
           className="mb-3"
           hasEngagement={
