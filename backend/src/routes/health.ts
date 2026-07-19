@@ -11,10 +11,18 @@ import {
   listPackStatuses,
   phase4PackIds,
 } from "../lib/media/avatar-packs.js";
-import { isErrorReportingConfigured } from "../lib/observability/error-reporter.js";
+import {
+  isErrorReportingConfigured,
+  isErrorWebhookUrlConfigured,
+  sendErrorWebhookTest,
+} from "../lib/observability/error-reporter.js";
 import { getLastExpiryCron, getMetrics } from "../lib/observability/metrics.js";
 import { pingPrisma } from "../lib/prisma.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
+
+/** Global cooldown so the public smoke endpoint can't spam Gary's channel. */
+let lastErrorWebhookTestAt = 0;
+const ERROR_WEBHOOK_TEST_COOLDOWN_MS = 60_000;
 
 /** Railway / CI inject these so ops can see which commit is live. */
 function deployFingerprint(): {
@@ -84,6 +92,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
         },
         observability: {
           errorWebhook: isErrorReportingConfigured(),
+          errorWebhookUrl: isErrorWebhookUrlConfigured(),
           webPush: isWebPushConfigured(),
           logLevel: process.env.LOG_LEVEL?.trim() || "info",
           /** Resume-expiry push cron last tick (null until first run). */
@@ -111,5 +120,46 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
       ...buildPackStatusFile(),
       packs: listPackStatuses(),
     }));
+
+    /**
+     * Ops smoke — POST a green test message to ERROR_WEBHOOK_URL.
+     * Rate-limited (1/min process-wide). No auth so Account System pulse can fire it;
+     * only posts to *your* configured webhook.
+     */
+    app.post("/api/v1/ops/error-webhook/test", async (request, reply) => {
+      if (!isErrorWebhookUrlConfigured()) {
+        return reply.code(503).send({
+          ok: false,
+          configured: false,
+          error:
+            "ERROR_WEBHOOK_URL not set on procharacters-api. See docs/ops-error-webhook.md",
+        });
+      }
+
+      const now = Date.now();
+      const waitMs = ERROR_WEBHOOK_TEST_COOLDOWN_MS - (now - lastErrorWebhookTestAt);
+      if (waitMs > 0) {
+        return reply
+          .code(429)
+          .header("Retry-After", String(Math.ceil(waitMs / 1000)))
+          .send({
+            ok: false,
+            configured: true,
+            error: `Try again in ${Math.ceil(waitMs / 1000)}s`,
+            retryAfterSec: Math.ceil(waitMs / 1000),
+          });
+      }
+
+      const result = await sendErrorWebhookTest(request.log);
+      if (result.sent) {
+        lastErrorWebhookTestAt = now;
+      }
+      return reply.code(result.sent ? 200 : 502).send({
+        ok: result.sent,
+        configured: result.configured,
+        status: result.status,
+        error: result.error,
+      });
+    });
   };
 };

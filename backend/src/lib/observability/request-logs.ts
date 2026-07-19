@@ -7,6 +7,8 @@ declare module "fastify" {
   interface FastifyRequest {
     requestId?: string;
     _startedAt?: number;
+    /** Set when reportError already ran for this request (avoid double webhook). */
+    _errorReported?: boolean;
   }
 }
 
@@ -53,6 +55,21 @@ export function registerObservability(app: FastifyInstance): void {
 
     if (statusCode >= 500) {
       app.log.error(line, "http_request");
+      // Catch reply.code(500) paths that never hit setErrorHandler
+      if (!request._errorReported) {
+        request._errorReported = true;
+        await reportError(
+          {
+            message: `HTTP ${statusCode} (no thrown error)`,
+            name: "Http5xx",
+            statusCode,
+            requestId: request.requestId,
+            path,
+            method: request.method,
+          },
+          app.log,
+        );
+      }
     } else if (statusCode >= 400) {
       app.log.warn(line, "http_request");
     } else {
@@ -73,6 +90,7 @@ export function registerObservability(app: FastifyInstance): void {
       error instanceof Error ? error.message : "Internal Server Error";
 
     if (statusCode >= 500) {
+      request._errorReported = true;
       await reportError(
         {
           message,

@@ -90,7 +90,8 @@ Without a volume, custom characters still save to `/data` inside the container b
 
 **Ops / Phase 8:**
 - Structured request logs (JSON) — set `LOG_LEVEL=info` or `debug`
-- Optional `ERROR_WEBHOOK_URL` for 5xx alerts (Slack/Discord webhook)
+- Optional `ERROR_WEBHOOK_URL` for 5xx alerts (Slack/Discord webhook) — **setup:** [`ops-error-webhook.md`](ops-error-webhook.md)
+- `POST /api/v1/ops/error-webhook/test` — smoke ping (1/min)
 - `GET /metrics` — in-process counters (sessions, chat turns, errors)
 - Full volume backup guide: [`docs/ops-data-backup.md`](ops-data-backup.md)
 

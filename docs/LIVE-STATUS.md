@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — Conversion Close: unlock ceremony + heat→pay + return seed)  
+**Updated:** 2026-07-19 (**cook** — ERROR_WEBHOOK ops + Conversion Close)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -36,7 +36,8 @@
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
 | LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse |
-| Account **System pulse** | ✅ `/health` + `/metrics` — deploy, DB, push, Stripe, uptime, sessions, turns, WS, 5xx |
+| Account **System pulse** | ✅ `/health` + `/metrics` — deploy, DB, push, Stripe, uptime, sessions, turns, WS, 5xx · **Send test alert** |
+| **Error webhook (5xx)** | 🟡 eng ready · set `ERROR_WEBHOOK_URL` on API — [ops-error-webhook.md](./ops-error-webhook.md) |
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
@@ -82,7 +83,8 @@
 3. ~~Housekeeping: close stale PRs `#1` `#2` `#3` `#4` `#29`~~ ✅ + CI workflows on `main`  
 4. ~~Ops noise: Azure workflow manual-only + Account System pulse~~ ✅  
 5. Content: dedicated packs when footage exists  
-6. Optional: `ERROR_WEBHOOK_URL`, Stripe keys  
+6. Optional: **`ERROR_WEBHOOK_URL`** — Discord/Slack → [ops-error-webhook.md](./ops-error-webhook.md) · then Account **Send test alert**  
+7. Optional: more footage packs when ready
 
 ---
 

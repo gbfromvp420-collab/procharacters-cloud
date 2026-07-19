@@ -18,6 +18,7 @@ type HealthPayload = {
   livekit?: { configured?: boolean; badge?: string };
   observability?: {
     errorWebhook?: boolean;
+    errorWebhookUrl?: boolean;
     webPush?: boolean;
     lastExpiryCron?: { at?: string; accounts?: number; sent?: number } | null;
   };
@@ -95,6 +96,8 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
   const [metrics, setMetrics] = useState<MetricsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alertBusy, setAlertBusy] = useState(false);
+  const [alertNotice, setAlertNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -208,11 +211,16 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       });
     }
 
+    const alertsOn =
+      health.observability?.errorWebhookUrl === true ||
+      health.observability?.errorWebhook === true;
     chips.push({
       key: "webhook",
-      label: health.observability?.errorWebhook ? "Alerts on" : "No error webhook",
-      ok: health.observability?.errorWebhook ? true : "info",
-      title: "Set ERROR_WEBHOOK_URL on Railway API for Slack/Discord 5xx pings",
+      label: alertsOn ? "Alerts on" : "No error webhook",
+      ok: alertsOn ? true : "info",
+      title: alertsOn
+        ? "ERROR_WEBHOOK_URL live — 5xx pings Slack/Discord. Use Send test alert."
+        : "Set ERROR_WEBHOOK_URL on Railway → procharacters-api (see docs/ops-error-webhook.md)",
     });
 
     const ready = health.avatar?.dedicatedReady?.length ?? 0;
@@ -289,6 +297,49 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         ? "border-amber-400/40 bg-amber-500/10 text-amber-100"
         : "border-brand-border bg-brand-bg/60 text-brand-muted";
 
+  const alertsConfigured =
+    health?.observability?.errorWebhookUrl === true ||
+    health?.observability?.errorWebhook === true;
+
+  const onTestAlert = async () => {
+    setAlertBusy(true);
+    setAlertNotice(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/ops/error-webhook/test`, {
+        method: "POST",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        retryAfterSec?: number;
+        configured?: boolean;
+      };
+      if (res.status === 429) {
+        setAlertNotice(
+          data.error ||
+            `Slow down — try again in ${data.retryAfterSec ?? 60}s`,
+        );
+        return;
+      }
+      if (res.status === 503 || data.configured === false) {
+        setAlertNotice(
+          "Not configured — set ERROR_WEBHOOK_URL on Railway procharacters-api (docs/ops-error-webhook.md)",
+        );
+        return;
+      }
+      if (!res.ok || !data.ok) {
+        setAlertNotice(data.error || `Test failed (HTTP ${res.status})`);
+        return;
+      }
+      setAlertNotice("Test alert sent — check Slack/Discord");
+      window.setTimeout(() => setAlertNotice(null), 4000);
+    } catch {
+      setAlertNotice("Could not reach API for test alert");
+    } finally {
+      setAlertBusy(false);
+    }
+  };
+
   return (
     <section
       className={`rounded-2xl border border-brand-border/80 bg-brand-panel/60 ${
@@ -311,18 +362,45 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
                   : "Check status"}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => void load()}
-          className="btn-ghost min-h-0 px-2.5 py-1 text-[11px]"
-          disabled={loading}
-        >
-          {loading ? "…" : "Refresh"}
-        </button>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => void onTestAlert()}
+            className="btn-ghost min-h-0 border-amber-500/30 px-2.5 py-1 text-[11px] text-amber-100"
+            disabled={alertBusy || loading}
+            title={
+              alertsConfigured
+                ? "POST a green test message to ERROR_WEBHOOK_URL"
+                : "Will fail until ERROR_WEBHOOK_URL is set on the API"
+            }
+          >
+            {alertBusy ? "Sending…" : "Send test alert"}
+          </button>
+          <button
+            type="button"
+            onClick={() => void load()}
+            className="btn-ghost min-h-0 px-2.5 py-1 text-[11px]"
+            disabled={loading}
+          >
+            {loading ? "…" : "Refresh"}
+          </button>
+        </div>
       </div>
       {error && (
         <p className="mt-2 text-xs text-rose-200/90" role="status">
           {error}
+        </p>
+      )}
+      {alertNotice && (
+        <p
+          className={`mt-2 text-xs ${
+            alertNotice.startsWith("Test alert")
+              ? "text-emerald-200/90"
+              : "text-amber-100/90"
+          }`}
+          role="status"
+        >
+          {alertNotice}
         </p>
       )}
       {chips.length > 0 && (
@@ -349,6 +427,14 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
             </li>
           ))}
         </ul>
+      )}
+      {!alertsConfigured && !loading && health && (
+        <p className="mt-2 text-[10px] text-brand-muted">
+          Sleep-at-night: set{" "}
+          <code className="text-brand-muted/90">ERROR_WEBHOOK_URL</code> on Railway{" "}
+          <strong className="text-brand-text/80">procharacters-api</strong> to a Discord or
+          Slack webhook URL — then <strong className="text-brand-text/80">Send test alert</strong>.
+        </p>
       )}
       <p className="mt-2 text-[10px] text-brand-muted">
         Live from API <code className="text-brand-muted/90">/health</code>

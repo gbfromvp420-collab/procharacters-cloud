@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Conversion Close)  
+**Updated:** 2026-07-19 (**cook** — ERROR_WEBHOOK fix + test)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,13 +9,11 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass owns ask · Soft Support yields · return seed on End | Hard refresh **web** after deploy |
-| **My Character loop** | ✅ create · edit · **duplicate** · delete · clips · hub · private share → resume | — |
-| **System pulse + chrome + offline** | ✅ shipped | — |
+| **Error webhook** | ✅ eng: Discord/Slack dual payload · test endpoint · System pulse **Send test alert** · [ops-error-webhook.md](./ops-error-webhook.md) | **You:** set `ERROR_WEBHOOK_URL` on Railway **procharacters-api** → Send test alert |
+| **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass · return seed | Hard refresh web after deploy |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
-| Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| Stripe | ✅ LIVE + webhook (prod health) | Careful real charge smoke if desired |
-| **Next** | Content packs polish / heat quality / ops webhook optional | Say `resume` / `spot` / `next` / `cook` |
+| Stripe | ✅ LIVE + webhook | Careful real charge smoke if desired |
+| **Next** | After webhook green: heat quality / content | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 
