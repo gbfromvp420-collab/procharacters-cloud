@@ -3518,7 +3518,8 @@ export function ChatApp() {
                   characterId={activeCharacterId ?? character}
                   modeState={modeState}
                   tickOffset={modeTick}
-                  onSeedFire={(text) => {
+                  canFire={!sending && !isTyping}
+                  onSeed={(text) => {
                     setInput((prev) => {
                       const p = prev.trim();
                       if (!p) return text;
@@ -3526,6 +3527,7 @@ export function ChatApp() {
                     });
                     window.setTimeout(() => inputRef.current?.focus(), 40);
                   }}
+                  onFire={(text) => sendMessage(text)}
                 />
               )}
               {status === "ready" &&
@@ -3668,9 +3670,21 @@ export function ChatApp() {
             <StatusDot status={status} />
             {statusLabel}
           </span>
-          <span className="hidden sm:inline">Uncensored 18+ · Procharacters.cloud</span>
+          <span className="hidden min-w-0 truncate sm:inline">
+            {status === "ready" && headerMind ? (
+              <>
+                <span className="text-brand-accent">{headerMind.tag}</span>
+                {" · "}
+                <span className="text-brand-muted">{headerMind.blurb}</span>
+              </>
+            ) : (
+              "Uncensored 18+ · Procharacters.cloud"
+            )}
+          </span>
           {sessionId && <span className="font-mono">#{sessionId.slice(0, 8)}</span>}
-          <span className="sm:hidden">18+ · KGC</span>
+          <span className="sm:hidden">
+            {status === "ready" && headerMind ? headerMind.tag : "18+ · KGC"}
+          </span>
         </footer>
       </div>
 

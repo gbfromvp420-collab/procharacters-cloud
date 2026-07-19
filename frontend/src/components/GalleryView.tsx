@@ -38,7 +38,7 @@ interface GalleryViewProps {
   siteOrigin: string;
 }
 
-type SortMode = "name" | "kind" | "energy" | "featured" | "recent";
+type SortMode = "name" | "kind" | "energy" | "featured" | "recent" | "packs";
 type GalleryFilter = "all" | "default" | "custom" | "featured" | "mine" | "packs";
 
 export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
@@ -216,6 +216,11 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       }
       if (sort === "name") return a.displayName.localeCompare(b.displayName);
       if (sort === "energy") return a.energyLabel.localeCompare(b.energyLabel) || a.displayName.localeCompare(b.displayName);
+      if (sort === "packs") {
+        if (!!a.dedicatedPack !== !!b.dedicatedPack) return a.dedicatedPack ? -1 : 1;
+        if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
+        return a.displayName.localeCompare(b.displayName);
+      }
       if (a.kind !== b.kind) return a.kind === "default" ? -1 : 1;
       return a.displayName.localeCompare(b.displayName);
     });
@@ -419,6 +424,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className="field min-h-touch w-full sm:w-auto">
                 <option value="featured">Featured first</option>
                 <option value="recent">Last chat</option>
+                <option value="packs">4K packs first</option>
                 <option value="kind">Signature first</option>
                 <option value="name">Name A–Z</option>
                 <option value="energy">Energy</option>

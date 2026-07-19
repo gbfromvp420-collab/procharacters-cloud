@@ -58,18 +58,22 @@ function fireLineFor(characterId?: string | null, edgePhase?: string | null): st
 
 /**
  * Soft erotic coach line under the composer — Edge Pace cue or mind whisper.
- * Tap seeds a short fire line into the composer.
+ * Seed = composer; Fire = instant send.
  */
 export function HeatWhisperStrip({
   characterId,
   modeState,
   tickOffset = 0,
-  onSeedFire,
+  onSeed,
+  onFire,
+  canFire,
 }: {
   characterId?: string | null;
   modeState?: SessionModeUiState | null;
   tickOffset?: number;
-  onSeedFire?: (text: string) => void;
+  onSeed?: (text: string) => void;
+  onFire?: (text: string) => void;
+  canFire?: boolean;
 }) {
   const mind = mindFingerprint(characterId);
   const edge = modeState?.mode === "edge_pace";
@@ -80,9 +84,19 @@ export function HeatWhisperStrip({
       : null;
   const line = cue || whisperForMind(characterId);
   const fire = fireLineFor(characterId, edge ? modeState?.phase : null);
+  const almost = edge && modeState?.phase === "almost";
 
-  const body = (
-    <>
+  return (
+    <div
+      className={`mb-2 rounded-lg border px-2.5 py-1.5 text-[10px] leading-snug ${
+        almost
+          ? "border-rose-400/40 bg-rose-500/10 text-rose-50"
+          : edge
+            ? "border-rose-400/25 bg-rose-500/5 text-rose-100/90"
+            : "border-brand-border/60 bg-brand-bg/50 text-brand-muted"
+      }`}
+      role="note"
+    >
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span
           className={`font-semibold uppercase tracking-[0.16em] ${
@@ -99,40 +113,36 @@ export function HeatWhisperStrip({
             ES
           </span>
         )}
-        {onSeedFire && (
-          <span className="ml-auto text-[9px] uppercase tracking-wide opacity-70">
-            tap to seed ↵
-          </span>
-        )}
       </div>
-      <p className="mt-0.5 line-clamp-2 text-left">{line}</p>
-    </>
-  );
-
-  const shell = `mb-2 w-full rounded-lg border px-2.5 py-1.5 text-[10px] leading-snug ${
-    edge && modeState?.phase === "almost"
-      ? "border-rose-400/40 bg-rose-500/10 text-rose-50"
-      : edge
-        ? "border-rose-400/25 bg-rose-500/5 text-rose-100/90"
-        : "border-brand-border/60 bg-brand-bg/50 text-brand-muted"
-  }`;
-
-  if (onSeedFire) {
-    return (
-      <button
-        type="button"
-        onClick={() => onSeedFire(fire)}
-        className={`${shell} transition hover:brightness-110 active:scale-[0.99]`}
-        title={`Seed: ${fire}`}
-      >
-        {body}
-      </button>
-    );
-  }
-
-  return (
-    <div className={shell} role="note">
-      {body}
+      <p className="mt-0.5 line-clamp-2">{line}</p>
+      {(onSeed || onFire) && (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {onSeed && (
+            <button
+              type="button"
+              onClick={() => onSeed(fire)}
+              className="rounded-full border border-brand-border/80 bg-black/20 px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-brand-muted hover:border-brand-accent/50 hover:text-brand-text"
+            >
+              Seed
+            </button>
+          )}
+          {onFire && (
+            <button
+              type="button"
+              disabled={canFire === false}
+              onClick={() => onFire(fire)}
+              className={`rounded-full border px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide disabled:opacity-40 ${
+                almost
+                  ? "border-rose-300/60 bg-rose-500/30 text-rose-50"
+                  : "border-brand-accent/45 bg-brand-accent/20 text-brand-accent"
+              }`}
+            >
+              Fire ↵
+            </button>
+          )}
+          <span className="self-center font-mono text-[9px] opacity-60">“{fire}”</span>
+        </div>
+      )}
     </div>
   );
 }
