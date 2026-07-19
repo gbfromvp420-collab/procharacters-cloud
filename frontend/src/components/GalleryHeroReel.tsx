@@ -297,12 +297,12 @@ export function GalleryHeroReel({
               )}
               {resume?.resumeCode && (
                 <span className="rounded-full border border-amber-400/50 bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-50">
-                  Your chat
+                  {resume.heatDepth ? `Heat trail · ${resume.heatDepth}` : "Your chat"}
                 </span>
               )}
               {mind && (
                 <span className="rounded-full border border-white/25 bg-brand-accent/25 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
-                  {mind.tag}
+                  {resume?.mindTag || mind.tag}
                 </span>
               )}
               {vibe && (
@@ -311,6 +311,16 @@ export function GalleryHeroReel({
                 </span>
               )}
             </div>
+            {resume?.heatChips && resume.heatChips.length > 0 && (
+              <p className="mt-2 line-clamp-1 text-[11px] text-amber-100/85">
+                Left at · {resume.heatChips.slice(0, 3).join(" · ")}
+              </p>
+            )}
+            {resume?.recapLine && (
+              <p className="mt-1 line-clamp-2 text-[12px] italic leading-snug text-white/75">
+                “{resume.recapLine}”
+              </p>
+            )}
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {card.displayName}
             </h2>

@@ -125,6 +125,7 @@ import {
 } from "@/lib/presence";
 import {
   getResumeForCharacter,
+  heatTrailFromSession,
   recapFromSessionNotes,
   rememberResumeRecap,
 } from "@/lib/resume-cache";
@@ -476,6 +477,24 @@ export function ChatApp() {
     }
   }, []);
 
+  const stampHeatTrail = useCallback(
+    (characterId: string, notes?: string | null, count?: number) => {
+      if (!characterId) return;
+      void import("@/lib/resume-cache").then(
+        ({ heatTrailFromSession, rememberHeatTrail }) => {
+          const mind = mindFingerprint(characterId);
+          const trail = heatTrailFromSession({
+            sessionNotes: notes ?? sessionNotes,
+            messageCount: count ?? messages.length,
+            mindTag: mind?.tag,
+          });
+          rememberHeatTrail(characterId, trail);
+        },
+      );
+    },
+    [messages.length, sessionNotes],
+  );
+
   const rememberSession = useCallback(
     (info: {
       sessionId: string;
@@ -484,6 +503,8 @@ export function ChatApp() {
       characterName?: string | null;
       resumeCode?: string | null;
       resumeExpiresAt?: string | null;
+      sessionNotes?: string | null;
+      messageCount?: number;
     }) => {
       const stored: StoredSession = {
         sessionId: info.sessionId,
@@ -497,18 +518,31 @@ export function ChatApp() {
       saveStoredSession(stored);
       setSavedSession(stored);
       if (info.resumeCode) {
-        void import("@/lib/resume-cache").then(({ rememberLocalResume }) => {
-          rememberLocalResume({
-            characterId: info.characterId,
-            characterName: info.characterName,
-            sessionId: info.sessionId,
-            resumeCode: info.resumeCode!,
-            resumeExpiresAt: info.resumeExpiresAt,
-          });
-        });
+        void import("@/lib/resume-cache").then(
+          ({ rememberLocalResume, heatTrailFromSession }) => {
+            const mind = mindFingerprint(info.characterId);
+            const trail = heatTrailFromSession({
+              sessionNotes: info.sessionNotes ?? sessionNotes,
+              messageCount: info.messageCount ?? messages.length,
+              mindTag: mind?.tag,
+            });
+            rememberLocalResume({
+              characterId: info.characterId,
+              characterName: info.characterName,
+              sessionId: info.sessionId,
+              resumeCode: info.resumeCode!,
+              resumeExpiresAt: info.resumeExpiresAt,
+              recapLine: trail.recapLine,
+              heatDepth: trail.heatDepth,
+              heatChips: trail.heatChips,
+              messageCount: trail.messageCount,
+              mindTag: trail.mindTag,
+            });
+          },
+        );
       }
     },
-    [],
+    [messages.length, sessionNotes],
   );
 
   const endSession = useCallback(() => {
@@ -530,7 +564,10 @@ export function ChatApp() {
         characterId: cid,
         characterName,
         resumeCode,
+        sessionNotes,
+        messageCount: messages.length,
       });
+      stampHeatTrail(cid, sessionNotes, messages.length);
     }
     clearSessionState();
     setStatus("idle");
@@ -547,6 +584,8 @@ export function ChatApp() {
     resumeCode,
     savedSession?.resumeCode,
     sessionId,
+    sessionNotes,
+    stampHeatTrail,
     wsToken,
   ]);
 
@@ -851,9 +890,18 @@ export function ChatApp() {
             if (notes?.trim()) {
               const trimmed = notes.trim();
               setSessionNotes(trimmed);
+              const mind = mindFingerprint(session.characterId);
+              const turns =
+                Number(trimmed.match(/~(\d+)\s*turn/i)?.[1]) || 0;
+              const trail = heatTrailFromSession({
+                sessionNotes: trimmed,
+                messageCount: turns > 0 ? turns * 2 : undefined,
+                mindTag: mind?.tag,
+              });
               rememberResumeRecap(
                 session.characterId,
-                recapFromSessionNotes(trimmed),
+                trail.recapLine ?? recapFromSessionNotes(trimmed),
+                trail,
               );
             }
             if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {

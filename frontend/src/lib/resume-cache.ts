@@ -8,6 +8,18 @@ import { loadStoredSession } from "./session-storage";
 
 const CACHE_KEY = "procharacters.resumeByCharacter.v1";
 
+/** Soft heat depth labels — mirror chat SessionDepthMeter. */
+export type HeatTrailDepth = "spark" | "warm" | "edge" | "deep" | "locked";
+
+/** Local heat trail stamped on resume so gallery return shows where you left off. */
+export type HeatTrail = {
+  recapLine?: string;
+  heatDepth?: HeatTrailDepth;
+  heatChips?: string[];
+  messageCount?: number;
+  mindTag?: string;
+};
+
 export type ResumeCacheEntry = {
   characterId: string;
   characterName?: string;
@@ -19,6 +31,14 @@ export type ResumeCacheEntry = {
   resumeExpiresAt?: string;
   /** Short “who you left on edge” line for Continue banner / recap. */
   recapLine?: string;
+  /** Heat Arc depth at last stamp (spark→locked). */
+  heatDepth?: HeatTrailDepth;
+  /** Compact scene/heat chips for gallery tiles. */
+  heatChips?: string[];
+  /** Message count when trail was stamped. */
+  messageCount?: number;
+  /** Mind fingerprint tag (Post-set, Shy heat, …). */
+  mindTag?: string;
 };
 
 /** Short urgency label for gallery / banner (e.g. "expires in 2d"). */
@@ -104,6 +124,12 @@ export function syncResumeCacheFromAccountSessions(
       updatedAt: nextUpdated || new Date().toISOString(),
       source: "account",
       resumeExpiresAt: s.resumeExpiresAt || prev?.resumeExpiresAt,
+      // Preserve local heat trail when re-syncing the same session
+      recapLine: prev?.sessionId === s.sessionId ? prev.recapLine : prev?.recapLine,
+      heatDepth: prev?.sessionId === s.sessionId ? prev.heatDepth : undefined,
+      heatChips: prev?.sessionId === s.sessionId ? prev.heatChips : undefined,
+      messageCount: prev?.sessionId === s.sessionId ? prev.messageCount : undefined,
+      mindTag: prev?.sessionId === s.sessionId ? prev.mindTag : undefined,
     };
   }
   writeCache(file);
@@ -117,6 +143,10 @@ export function rememberLocalResume(options: {
   resumeCode: string;
   resumeExpiresAt?: string | null;
   recapLine?: string | null;
+  heatDepth?: HeatTrailDepth | null;
+  heatChips?: string[] | null;
+  messageCount?: number | null;
+  mindTag?: string | null;
 }): void {
   if (!options.resumeCode?.trim()) return;
   const file = readCache();
@@ -133,12 +163,29 @@ export function rememberLocalResume(options: {
   if (prev?.source === "account" && prev.resumeCode && prev.sessionId !== options.sessionId) {
     return;
   }
+  const sameSession = prev?.sessionId === options.sessionId;
   const nextExpiry =
     options.resumeExpiresAt?.trim() ||
-    (prev?.sessionId === options.sessionId ? prev.resumeExpiresAt : undefined);
+    (sameSession ? prev.resumeExpiresAt : undefined);
   const nextRecap =
-    options.recapLine?.trim() ||
-    (prev?.sessionId === options.sessionId ? prev.recapLine : undefined);
+    options.recapLine?.trim() || (sameSession ? prev?.recapLine : undefined);
+  const nextDepth =
+    options.heatDepth || (sameSession ? prev?.heatDepth : undefined);
+  const nextChips =
+    options.heatChips?.length
+      ? options.heatChips.slice(0, 5)
+      : sameSession
+        ? prev?.heatChips
+        : undefined;
+  const nextCount =
+    typeof options.messageCount === "number"
+      ? options.messageCount
+      : sameSession
+        ? prev?.messageCount
+        : undefined;
+  const nextMind =
+    options.mindTag?.trim() || (sameSession ? prev?.mindTag : undefined);
+
   file.byCharacter[characterId] = {
     characterId,
     characterName: options.characterName ?? prev?.characterName,
@@ -148,6 +195,10 @@ export function rememberLocalResume(options: {
     source: prev?.source === "account" || !options.characterName ? prev?.source ?? "local" : "local",
     resumeExpiresAt: nextExpiry,
     recapLine: nextRecap,
+    heatDepth: nextDepth,
+    heatChips: nextChips,
+    messageCount: nextCount,
+    mindTag: nextMind,
   };
   // Prefer account source when we already had account for this character
   if (prev?.source === "account") {
@@ -156,7 +207,16 @@ export function rememberLocalResume(options: {
   writeCache(file);
 }
 
-/** Pull a short human recap from session notes (“Last character beat”, vibe, etc.). */
+/** Map message count → heat depth label. */
+export function heatDepthFromCount(messageCount: number): HeatTrailDepth {
+  if (messageCount >= 20) return "locked";
+  if (messageCount >= 12) return "deep";
+  if (messageCount >= 6) return "edge";
+  if (messageCount >= 2) return "warm";
+  return "spark";
+}
+
+/** Pull a short human recap from session notes (“Last character beat”, pose, vibe). */
 export function recapFromSessionNotes(notes?: string | null): string | null {
   if (!notes?.trim()) return null;
   const text = notes.replace(/\s+/g, " ").trim();
@@ -164,26 +224,128 @@ export function recapFromSessionNotes(notes?: string | null): string | null {
   if (lastBeat) {
     return lastBeat.length > 110 ? `${lastBeat.slice(0, 107).trim()}…` : lastBeat;
   }
+  // Prefer spoken scene bits over raw lock dump
+  const scene = text.match(/Scene lock:\s*([^.]{8,140})/i)?.[1] ?? "";
+  const pose = scene.match(/pose=([^;]+)/i)?.[1]?.trim();
+  const act = scene.match(/act=([^;]+)/i)?.[1]?.trim();
+  const clothing = scene.match(/clothing="([^"]+)"/i)?.[1]?.trim();
+  const spoken = [pose, act, clothing]
+    .filter((x) => x && !/live cam presence|^tease \/ escalate$/i.test(x))
+    .slice(0, 2);
+  if (spoken.length) {
+    const line = spoken.join(" · ");
+    return line.length > 90 ? `${line.slice(0, 87).trim()}…` : line;
+  }
   const vibe = text.match(/Ongoing vibe:\s*([^.]+)/i)?.[1]?.trim();
   if (vibe) {
-    return vibe.length > 90 ? `${vibe.slice(0, 87).trim()}…` : vibe;
+    const clean = vibe.replace(/heat · \w+;?\s*/i, "").trim();
+    if (clean) return clean.length > 90 ? `${clean.slice(0, 87).trim()}…` : clean;
   }
-  const scene = text.match(/Scene lock:\s*([^.]{8,90})/i)?.[1]?.trim();
-  if (scene) return scene;
+  if (scene) return scene.length > 90 ? `${scene.slice(0, 87).trim()}…` : scene;
   return null;
 }
 
-/** Patch only the recap line for an existing resume entry (by character or session). */
+/** Build full heat trail for gallery / Continue from live session notes. */
+export function heatTrailFromSession(options: {
+  sessionNotes?: string | null;
+  messageCount?: number;
+  mindTag?: string | null;
+}): HeatTrail {
+  const notes = options.sessionNotes ?? "";
+  const messageCount = options.messageCount ?? 0;
+  const chips: string[] = [];
+  const text = notes.replace(/\s+/g, " ").trim();
+
+  const scene = text.match(/Scene lock:\s*([^.]{0,160})/i)?.[1] ?? "";
+  const clothing = scene.match(/clothing="([^"]+)"/i)?.[1]?.trim();
+  const pose = scene.match(/pose=([^;]+)/i)?.[1]?.trim();
+  const act = scene.match(/act=([^;]+)/i)?.[1]?.trim();
+  const arousal = scene.match(/arousal=([^;]+)/i)?.[1]?.trim();
+  if (pose && !/live cam presence/i.test(pose)) chips.push(pose);
+  if (act && !/^tease \/ escalate$/i.test(act)) chips.push(act);
+  if (clothing) chips.push(clothing);
+  if (arousal && /edge|peak|high|denial|aroused/i.test(arousal)) {
+    chips.push(arousal.length > 22 ? `${arousal.slice(0, 20)}…` : arousal);
+  }
+
+  const vibe = text.match(/Ongoing vibe:\s*([^.]+)/i)?.[1] ?? "";
+  for (const part of vibe.split(";")) {
+    const p = part.trim();
+    if (
+      p &&
+      chips.length < 5 &&
+      /edge|denial|sheer|crotchless|gym|shy|brat|goth|kiss|hand|pace/i.test(p) &&
+      !/^heat ·/i.test(p)
+    ) {
+      chips.push(p.length > 24 ? `${p.slice(0, 22)}…` : p);
+    }
+  }
+
+  // Depth from notes label or message count
+  const fromNotes = text.match(/heat · (spark|warm|edge|deep|locked)/i)?.[1]?.toLowerCase() as
+    | HeatTrailDepth
+    | undefined;
+  const heatDepth = fromNotes || heatDepthFromCount(messageCount);
+
+  return {
+    recapLine: recapFromSessionNotes(notes) ?? undefined,
+    heatDepth,
+    heatChips: uniqueChips(chips).slice(0, 4),
+    messageCount: messageCount > 0 ? messageCount : undefined,
+    mindTag: options.mindTag?.trim() || undefined,
+  };
+}
+
+function uniqueChips(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of items) {
+    const key = raw.toLowerCase().replace(/\s+/g, " ").trim();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(raw.trim());
+  }
+  return out;
+}
+
+/** Patch recap + heat trail on an existing resume entry. */
 export function rememberResumeRecap(
   characterId: string,
   recapLine: string | null | undefined,
+  trail?: HeatTrail | null,
 ): void {
-  const line = recapLine?.trim();
-  if (!line || !characterId) return;
+  if (!characterId) return;
   const file = readCache();
   const prev = file.byCharacter[characterId];
   if (!prev?.resumeCode) return;
-  file.byCharacter[characterId] = { ...prev, recapLine: line, updatedAt: new Date().toISOString() };
+  const line = recapLine?.trim() || trail?.recapLine?.trim() || prev.recapLine;
+  file.byCharacter[characterId] = {
+    ...prev,
+    recapLine: line,
+    heatDepth: trail?.heatDepth ?? prev.heatDepth,
+    heatChips: trail?.heatChips?.length ? trail.heatChips : prev.heatChips,
+    messageCount: trail?.messageCount ?? prev.messageCount,
+    mindTag: trail?.mindTag ?? prev.mindTag,
+    updatedAt: new Date().toISOString(),
+  };
+  writeCache(file);
+}
+
+/** Stamp heat trail onto resume for a character (keeps code/session). */
+export function rememberHeatTrail(characterId: string, trail: HeatTrail): void {
+  if (!characterId) return;
+  const file = readCache();
+  const prev = file.byCharacter[characterId];
+  if (!prev?.resumeCode) return;
+  file.byCharacter[characterId] = {
+    ...prev,
+    recapLine: trail.recapLine?.trim() || prev.recapLine,
+    heatDepth: trail.heatDepth ?? prev.heatDepth,
+    heatChips: trail.heatChips?.length ? trail.heatChips.slice(0, 4) : prev.heatChips,
+    messageCount: trail.messageCount ?? prev.messageCount,
+    mindTag: trail.mindTag ?? prev.mindTag,
+    updatedAt: new Date().toISOString(),
+  };
   writeCache(file);
 }
 

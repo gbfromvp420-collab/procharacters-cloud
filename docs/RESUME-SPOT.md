@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Return Intelligence)  
-**Session:** King Grok + Gary — ntfy soon; keep cooking innovation.
+**Updated:** 2026-07-19 (**cook** — Heat Trail)  
+**Session:** King Grok + Gary — ntfy when ready; innovation keeps shipping.
 
 ---
 
@@ -9,22 +9,23 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Error alerts** | ✅ eng ready | **You:** ntfy → `ERROR_WEBHOOK_URL` on **procharacters-api** → Send test alert |
-| **Heat Arc** | ✅ live | Long session smoke |
-| **Edge Pace feel** | ✅ | Full cycle smoke |
-| **Return Intelligence** | ✅ dossier last-scene · smart return greetings · **They remember you** card | Sign in + Remember → leave heat → new chat with same model |
-| Railway | ✅ `captivating-vision` | Confirm SHA after push |
-| Stripe | ✅ LIVE | Optional careful charge |
-| **Next** | Webhook green · content packs | `resume` / `spot` / `next` / `cook` |
+| **Error alerts** | ✅ eng ready | **You:** ntfy → `ERROR_WEBHOOK_URL` on **procharacters-api** |
+| **Heat Arc** | ✅ | Long session |
+| **Edge Pace feel** | ✅ | Full cycle |
+| **Return Intelligence** | ✅ | Sign-in remember return |
+| **Heat Trail** | ✅ resume cache stamps depth/chips · gallery + Continue + hero show where you left | Heat → End → Gallery glance |
+| Railway | ✅ | Confirm SHA after push |
+| Stripe | ✅ LIVE | Optional |
+| **Next** | Webhook · content packs | `resume` / `spot` / `next` / `cook` |
 
 ---
 
-## What shipped this cook (Return Intelligence)
+## What shipped this cook (Heat Trail)
 
-1. **Dossier v2** — Last scene lock section (pose/act/clothing) + richer heat extractors  
-2. **returnGreetingHint** — name + scene/heat-specific openers, mind-flavored  
-3. **Prior continuity seed** carries last scene into new sessions  
-4. **ReturnHeatCard** UI — “They remember you” chips + one-tap pick-up seeds  
+1. **Resume cache trail** — heatDepth, heatChips, messageCount, mindTag, smarter recap  
+2. **Stamp on every turn + End** so gallery always knows last pose/heat  
+3. **Continue banner** depth dots + chips  
+4. **Gallery tiles + hero reel** show “Heat trail · continue” with left-at chips  
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 

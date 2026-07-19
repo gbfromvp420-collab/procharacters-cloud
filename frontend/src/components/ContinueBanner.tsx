@@ -41,6 +41,21 @@ export function ContinueBanner({
   const displayName =
     continueCard?.displayName || continueTarget.characterName || "Your last chat";
   const nick = displayName.trim().split(/\s+/)[0] || displayName;
+  const trailDepth = continueTarget.heatDepth;
+  const trailChips = continueTarget.heatChips?.slice(0, 4) ?? [];
+  const trailMind = continueTarget.mindTag || mind?.tag;
+  const depthLevel =
+    trailDepth === "locked"
+      ? 4
+      : trailDepth === "deep"
+        ? 3
+        : trailDepth === "edge"
+          ? 2
+          : trailDepth === "warm"
+            ? 1
+            : trailDepth === "spark"
+              ? 0
+              : null;
   const resumeUrl = buildResumeCodeShareUrl(continueTarget.resumeCode, {
     characterId: continueTarget.characterId,
   });
@@ -126,18 +141,61 @@ export function ContinueBanner({
                 urgent ? "text-rose-200/90" : "text-amber-200/90"
               }`}
             >
-              {continueTarget.recapLine
-                ? `Who you left on edge · ${nick}`
+              {continueTarget.recapLine || trailDepth
+                ? `Heat trail · ${nick}`
                 : "Continue where you left off"}
             </p>
             <p className="truncate text-base font-semibold text-brand-text sm:text-lg">
               {displayName}
-              {mind ? (
+              {trailMind ? (
                 <span className="ml-2 text-xs font-normal text-brand-muted">
-                  · {mind.tag}
+                  · {trailMind}
                 </span>
               ) : null}
             </p>
+            {(trailDepth || depthLevel != null) && (
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                {depthLevel != null && (
+                  <div className="flex items-center gap-0.5" aria-hidden>
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span
+                        key={i}
+                        className={`h-1.5 w-2.5 rounded-full ${
+                          i <= depthLevel
+                            ? i >= 3
+                              ? "bg-rose-400"
+                              : "bg-amber-300"
+                            : "bg-brand-border/80"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+                {trailDepth && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-100/90">
+                    {trailDepth}
+                  </span>
+                )}
+                {typeof continueTarget.messageCount === "number" &&
+                  continueTarget.messageCount > 0 && (
+                    <span className="font-mono text-[10px] text-brand-soft">
+                      {continueTarget.messageCount} msgs
+                    </span>
+                  )}
+              </div>
+            )}
+            {trailChips.length > 0 && (
+              <div className="mt-1 flex flex-wrap gap-1">
+                {trailChips.map((chip) => (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-rose-400/30 bg-rose-500/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-rose-100/90"
+                  >
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            )}
             {recap && (
               <p
                 className={`mt-0.5 line-clamp-2 text-[11px] leading-snug ${

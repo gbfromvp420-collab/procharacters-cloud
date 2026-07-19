@@ -314,7 +314,40 @@ export function CharacterTile({
           <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
             {card.displayName}
           </h2>
-          {resume?.resumeCode ? (
+          {resume?.resumeCode && (resume.heatDepth || resume.heatChips?.length) ? (
+            <div className="mt-1 space-y-1">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {resume.heatDepth && (
+                  <span className="rounded-full border border-rose-400/40 bg-rose-500/25 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-50">
+                    {resume.heatDepth}
+                  </span>
+                )}
+                {resume.mindTag && (
+                  <span className="rounded-full border border-white/20 bg-black/45 px-1.5 py-0.5 text-[9px] text-white/85">
+                    {resume.mindTag}
+                  </span>
+                )}
+                {typeof resume.messageCount === "number" && resume.messageCount > 0 && (
+                  <span className="font-mono text-[9px] text-white/70">
+                    {resume.messageCount}m
+                  </span>
+                )}
+              </div>
+              {resume.heatChips && resume.heatChips.length > 0 && (
+                <p className="line-clamp-1 text-[10px] text-amber-100/85">
+                  {resume.heatChips.slice(0, 3).join(" · ")}
+                </p>
+              )}
+              {resume.recapLine && (
+                <p className="line-clamp-1 text-[10px] italic text-white/75">
+                  “{resume.recapLine}”
+                </p>
+              )}
+              <p className="text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
+                {urgent ? "Tap to reclaim →" : "Heat trail · continue →"}
+              </p>
+            </div>
+          ) : resume?.resumeCode ? (
             <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
               {urgent ? "Tap to reclaim →" : "Tap to continue →"}
             </p>
