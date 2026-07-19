@@ -157,7 +157,7 @@ export function HeatWhisperStrip({
             : dnaGlow
               ? `border-violet-400/40 bg-violet-500/10 text-violet-50/95 ${
                   climbFlash || modeState?.dnaTreeAdvanced
-                    ? "ring-1 ring-violet-300/40 shadow-[0_0_20px_-6px_rgba(167,139,250,0.55)]"
+                    ? "ring-1 ring-violet-300/40 shadow-[0_0_20px_-6px_rgba(167,139,250,0.55)] dna-climb-shell"
                     : ""
                 }`
               : "border-brand-border/60 bg-brand-bg/50 text-brand-muted"
@@ -210,9 +210,13 @@ export function HeatWhisperStrip({
             return (
               <div
                 key={n.id}
-                className={`rounded px-0.5 py-1 text-center text-[8px] font-semibold uppercase tracking-wide ${
+                className={`rounded px-0.5 py-1 text-center text-[8px] font-semibold uppercase tracking-wide transition ${
                   active
-                    ? "bg-violet-400/45 text-white ring-1 ring-violet-200/60"
+                    ? `bg-violet-400/45 text-white ring-1 ring-violet-200/60 ${
+                        climbFlash || modeState?.dnaTreeAdvanced
+                          ? "dna-climb-node"
+                          : "dna-climb-node-live"
+                      }`
                     : done
                       ? "bg-violet-500/20 text-violet-100/80"
                       : "bg-black/20 text-violet-100/40"

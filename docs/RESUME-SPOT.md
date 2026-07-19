@@ -18,6 +18,7 @@
 | **Unlock → Forge + Edge×DNA** | ✅ Day Pass ceremony forge CTA · Edge Pace dual DNA path | Pay → Studio; Edge Pace + DNA tree coexist |
 | **Post-forge Edge + funnel** | ✅ win toast Edge Pace primary · System pulse funnel chips | Forge → Edge Pace · climb DNA; Account pulse shows funnel |
 | **Sexy first open + pay funnel** | ✅ DNA starter auto-seeds composer · webhook checkout bump · ratio chips | Forge→Edge→Fire prefilled starter |
+| **DNA climb motion + funnel UI** | ✅ node pulse · shell throb · Account funnel dashboard | Climb feels alive; ops sees expand→pay |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Redeploy API after DNA runtime push |

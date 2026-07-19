@@ -410,6 +410,17 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
     }
   };
 
+  const expands = metrics?.forgeExpands ?? 0;
+  const dnaSaves = metrics?.customV3Created ?? 0;
+  const edgeSessions = metrics?.sessionsEdgePace ?? 0;
+  const climbs = metrics?.dnaTreeAdvances ?? 0;
+  const payStarts = metrics?.checkoutStarts ?? 0;
+  const payConfirms = metrics?.checkoutConfirms ?? 0;
+  const funnelActive =
+    expands + dnaSaves + edgeSessions + climbs + payStarts + payConfirms > 0;
+  const funnelPct = (num: number, den: number) =>
+    den > 0 ? Math.min(999, Math.round((num / den) * 100)) : null;
+
   return (
     <section
       className={`rounded-2xl border border-brand-border/80 bg-brand-panel/60 ${
@@ -498,6 +509,89 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
           ))}
         </ul>
       )}
+
+      {/* Conversion funnel dashboard — forge → DNA → edge → climb → pay */}
+      {funnelActive && metrics && !compact && (
+        <div
+          className="mt-3 rounded-xl border border-violet-400/30 bg-gradient-to-r from-violet-500/10 via-brand-bg/40 to-amber-500/10 px-3 py-2.5"
+          aria-label="Conversion funnel"
+        >
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/90">
+            Funnel · this process
+          </p>
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
+            {(
+              [
+                { key: "expand", label: "Expand", n: expands, tip: "Studio forge expands" },
+                { key: "dna", label: "DNA save", n: dnaSaves, tip: "custom-v3 created" },
+                { key: "edge", label: "Edge", n: edgeSessions, tip: "Edge Pace sessions" },
+                { key: "climb", label: "Climbs", n: climbs, tip: "DNA tree advances" },
+                {
+                  key: "pay",
+                  label: "Pay",
+                  n: payConfirms,
+                  tip: `starts ${payStarts} → confirms ${payConfirms}`,
+                },
+              ] as const
+            ).map((step, i, arr) => {
+              const prev = i > 0 ? arr[i - 1]!.n : 0;
+              // Pay confirms convert from starts, not from DNA climbs
+              const rate =
+                step.key === "pay"
+                  ? funnelPct(payConfirms, payStarts)
+                  : i > 0
+                    ? funnelPct(step.n, prev)
+                    : null;
+              return (
+                <div
+                  key={step.key}
+                  className="rounded-lg border border-white/10 bg-black/25 px-2 py-1.5 text-center"
+                  title={step.tip}
+                >
+                  <p className="text-[9px] uppercase tracking-wide text-brand-muted">
+                    {step.label}
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm font-semibold text-brand-text">
+                    {step.key === "pay"
+                      ? `${formatCount(payStarts)}→${formatCount(payConfirms)}`
+                      : formatCount(step.n)}
+                  </p>
+                  {rate != null && (
+                    <p
+                      className={`text-[9px] font-medium ${
+                        rate >= 40
+                          ? "text-emerald-200/90"
+                          : rate >= 15
+                            ? "text-amber-100/90"
+                            : "text-brand-muted"
+                      }`}
+                    >
+                      {step.key === "pay" ? `${rate}% confirm` : `${rate}% from prev`}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[10px] text-brand-muted">
+            Expand→save{" "}
+            <strong className="text-violet-100/90">
+              {funnelPct(dnaSaves, expands) ?? "—"}%
+            </strong>
+            {" · "}
+            Pay{" "}
+            <strong className="text-amber-100/90">
+              {formatCount(payStarts)}→{formatCount(payConfirms)}
+              {funnelPct(payConfirms, payStarts) != null
+                ? ` (${funnelPct(payConfirms, payStarts)}%)`
+                : ""}
+            </strong>
+            {" · "}
+            process lifetime only
+          </p>
+        </div>
+      )}
+
       {!alertsConfigured && !loading && health && (
         <p className="mt-2 text-[10px] text-brand-muted">
           Sleep-at-night (no Discord needed): Railway{" "}

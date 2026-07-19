@@ -169,7 +169,7 @@ export function EdgePaceStrip({
         flash ? "ring-2 ring-white/30 scale-[1.01]" : ""
       } ${urgent && !isBreathe ? "ring-1 ring-amber-200/40" : ""} ${
         dnaLabel ? "ring-1 ring-violet-400/25" : ""
-      }`}
+      } ${dnaFlash || modeState.dnaTreeAdvanced ? "dna-climb-shell" : ""}`}
       role="status"
       aria-live="polite"
     >
@@ -250,9 +250,13 @@ export function EdgePaceStrip({
               return (
                 <div
                   key={n.id}
-                  className={`rounded px-0.5 py-1 text-center text-[8px] font-semibold uppercase tracking-wide ${
+                  className={`rounded px-0.5 py-1 text-center text-[8px] font-semibold uppercase tracking-wide transition ${
                     active
-                      ? "bg-violet-400/50 text-white ring-1 ring-violet-200/60"
+                      ? `bg-violet-400/50 text-white ring-1 ring-violet-200/60 ${
+                          dnaFlash || modeState.dnaTreeAdvanced
+                            ? "dna-climb-node"
+                            : "dna-climb-node-live"
+                        }`
                       : done
                         ? "bg-violet-500/25 text-violet-100/85"
                         : "bg-black/25 text-violet-100/35"
