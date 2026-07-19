@@ -3294,13 +3294,20 @@ export function ChatApp() {
                       </p>
                     </div>
                   )}
+                  {status === "ready" && isTyping && (
+                    <p className="mt-2 text-xs text-brand-accent animate-pulse">
+                      {headerCharacterName?.split(/\s+/)[0] || "They"}’s opening for you…
+                    </p>
+                  )}
                   {status !== "connecting" && !restarting && (
                   <p className="text-sm text-brand-muted">
                     {status === "ready"
                       ? priorNotes
                         ? "Session live — they still remember you. Heat continues from the strip above."
                         : headerCharacterName
-                          ? `${headerCharacterName} is live — they should greet you first.`
+                          ? isTyping
+                            ? "Live — first line loading. Stay with them."
+                            : `${headerCharacterName} is live — they should greet you first.`
                           : "Session live — they should greet you first. Memory saves as you go."
                       : savedSession
                           ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
@@ -3532,10 +3539,30 @@ export function ChatApp() {
                 </button>
               </div>
               {status === "ready" && (
-                <p className="mt-1.5 text-[9px] text-brand-soft">
-                  Enter send · Shift+Enter line · Esc clear draft
-                  {input.trim() ? " · draft auto-saves" : ""}
-                </p>
+                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[9px] text-brand-soft">
+                  <p>
+                    Enter send · Shift+Enter line · Esc clear draft
+                    {input.trim() ? " · draft auto-saves" : ""}
+                  </p>
+                  {input.trim().length > 0 && (
+                    <p
+                      className={`font-mono tabular-nums ${
+                        input.trim().length > 400
+                          ? "text-rose-200/90"
+                          : input.trim().length > 180
+                            ? "text-amber-200/80"
+                            : "text-brand-soft"
+                      }`}
+                    >
+                      {input.trim().length}
+                      {input.trim().length > 180
+                        ? input.trim().length > 400
+                          ? " · novel heat"
+                          : " · long pour"
+                        : " · short & filthy ok"}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </section>

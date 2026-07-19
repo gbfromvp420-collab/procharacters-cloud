@@ -39,7 +39,7 @@ interface GalleryViewProps {
 }
 
 type SortMode = "name" | "kind" | "energy" | "featured" | "recent";
-type GalleryFilter = "all" | "default" | "custom" | "featured" | "mine";
+type GalleryFilter = "all" | "default" | "custom" | "featured" | "mine" | "packs";
 
 export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [filter, setFilter] = useState<GalleryFilter>("all");
@@ -138,6 +138,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       default: characters.filter((c) => c.kind === "default").length,
       custom: characters.filter((c) => c.kind === "custom").length,
       mine: characters.filter((c) => !!resumes[c.id]).length,
+      packs: characters.filter((c) => c.dedicatedPack).length,
     }),
     [characters, resumes],
   );
@@ -182,6 +183,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     let list = characters.filter((c) => {
       if (filter === "mine" && !resumes[c.id]) return false;
       if (filter === "featured" && !c.featured) return false;
+      if (filter === "packs" && !c.dedicatedPack) return false;
       if (filter === "default" && c.kind !== "default") return false;
       if (filter === "custom" && c.kind !== "custom") return false;
       return matchesQuery(c, q);
@@ -366,7 +368,16 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </label>
           </div>
           <div className="scroll-strip flex gap-2 overflow-x-auto pb-0.5">
-            {([["all", "All"], ["mine", "My chats"], ["featured", "Featured"], ["default", "Signature"], ["custom", "Custom"]] as const).map(([key, label]) => (
+            {(
+              [
+                ["all", "All"],
+                ["mine", "My chats"],
+                ["featured", "Featured"],
+                ["packs", "4K packs"],
+                ["default", "Signature"],
+                ["custom", "Custom"],
+              ] as const
+            ).map(([key, label]) => (
               <button
                 key={key}
                 type="button"
@@ -376,7 +387,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                     ? urgentMineCount > 0
                       ? "border-rose-400/50 text-rose-100"
                       : "border-amber-500/40 text-amber-100/90"
-                    : ""
+                    : key === "packs"
+                      ? "border-emerald-400/35 text-emerald-100/90"
+                      : ""
                 }`}
               >
                 {label}
