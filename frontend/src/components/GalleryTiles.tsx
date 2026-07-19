@@ -289,12 +289,21 @@ export function CharacterTile({
           <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
             {card.displayName}
           </h2>
-          {resume?.resumeCode && (
+          {resume?.resumeCode ? (
             <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
               {urgent ? "Tap to reclaim →" : "Tap to continue →"}
             </p>
+          ) : (
+            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-white/0 transition group-hover:text-white/80">
+              Tap to heat →
+            </p>
           )}
         </div>
+        {/* Sexy hover veil */}
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-brand-accent/25 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100"
+          aria-hidden
+        />
       </div>
       <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
         {mind && (

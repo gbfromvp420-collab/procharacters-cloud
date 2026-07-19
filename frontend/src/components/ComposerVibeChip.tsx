@@ -40,6 +40,7 @@ export function ComposerVibeChip({
   modeState,
   tickOffset = 0,
   status,
+  arousalPct,
 }: {
   characterId?: string | null;
   characterName?: string | null;
@@ -47,6 +48,8 @@ export function ComposerVibeChip({
   modeState?: SessionModeUiState | null;
   tickOffset?: number;
   status: "idle" | "connecting" | "ready" | "error" | "ended";
+  /** 0–100 live arousal for sexy depth cue */
+  arousalPct?: number | null;
 }) {
   const mind = mindFingerprint(characterId);
   const edgeLive = modeState?.mode === "edge_pace" && status === "ready";
@@ -56,8 +59,9 @@ export function ComposerVibeChip({
     edgeLive && modeState
       ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
       : null;
+  const hot = typeof arousalPct === "number" && arousalPct >= 55;
 
-  if (!mind && !edgeLive && !edgePending) return null;
+  if (!mind && !edgeLive && !edgePending && !(status === "ready" && hot)) return null;
 
   const nick = characterName?.trim().split(/\s+/)[0] || null;
 
@@ -77,6 +81,19 @@ export function ComposerVibeChip({
               ES
             </span>
           )}
+        </span>
+      )}
+      {status === "ready" && typeof arousalPct === "number" && arousalPct > 0 && (
+        <span
+          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-semibold tabular-nums ${
+            arousalPct >= 72
+              ? "border-rose-400/50 bg-rose-500/20 text-rose-50"
+              : arousalPct >= 45
+                ? "border-brand-accent/40 bg-brand-accent/15 text-brand-accent"
+                : "border-brand-border bg-brand-bg/80 text-brand-muted"
+          }`}
+        >
+          {arousalPct}% heat
         </span>
       )}
       {edgeLive && phase && (

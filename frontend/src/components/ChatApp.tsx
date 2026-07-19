@@ -59,6 +59,7 @@ import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
 import { AfterglowChips } from "@/components/AfterglowChips";
+import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
@@ -3393,7 +3394,19 @@ export function ChatApp() {
                 modeState={modeState}
                 tickOffset={modeTick}
                 status={status}
+                arousalPct={
+                  avatarState
+                    ? Math.round((avatarState.arousalLevel ?? 0) * 100)
+                    : null
+                }
               />
+              {status === "ready" && (
+                <HeatWhisperStrip
+                  characterId={activeCharacterId ?? character}
+                  modeState={modeState}
+                  tickOffset={modeTick}
+                />
+              )}
               {status === "ready" && messages.length <= 4 && !sending && !isTyping && (
                 <QuickReplyChips
                   characterId={activeCharacterId ?? character}
