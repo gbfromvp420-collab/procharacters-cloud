@@ -19,6 +19,7 @@ import {
   shareOrCopyUrl,
   shareUrlResultLabel,
 } from "@/lib/share-links";
+import { SiteChrome } from "@/components/SiteChrome";
 
 interface CharacterCardViewProps {
   card: CharacterCard;
@@ -164,19 +165,12 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] sm:pb-8">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
 
-      <div className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <Link
-            href="/"
-            className="min-h-touch inline-flex items-center text-sm text-brand-muted transition hover:text-brand-text"
-          >
-            ← Gallery
-          </Link>
-          <span className="rounded-full border border-brand-border bg-brand-panel/80 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-brand-muted sm:text-xs">
-            {card.brand}
-          </span>
-        </div>
-      </div>
+      <SiteChrome
+        active="card"
+        title={card.displayName}
+        subtitle={`${card.brand} · ${card.kind === "custom" ? "Custom" : "Signature"}`}
+        className="pt-[env(safe-area-inset-top,0px)]"
+      />
 
       <div className="relative mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl flex-col px-4 py-6 sm:py-12">
         <section className="grid flex-1 items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">

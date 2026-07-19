@@ -54,6 +54,7 @@ import { InstallAppHint } from "@/components/InstallAppHint";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import { SystemPulse } from "@/components/SystemPulse";
+import { SiteChrome } from "@/components/SiteChrome";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -1251,20 +1252,22 @@ export function AccountSettings() {
   return (
     <main className="relative min-h-dvh pb-[env(safe-area-inset-bottom)]">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
+      <SiteChrome
+        active="account"
+        title="Account"
+        subtitle={
+          account
+            ? `My models ${myModels.length}/${customsLimit} · saved chats ${sessions.length}`
+            : "Sign in · profile · push · Day Pass"
+        }
+        className="pt-[env(safe-area-inset-top,0px)]"
+      />
       <div className="relative mx-auto max-w-2xl px-4 py-8 sm:py-12">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <Link href="/" className="text-xs text-brand-muted hover:text-brand-accent">
-              ← Gallery
-            </Link>
-            <h1 className="mt-2 text-3xl font-semibold text-brand-text">Account settings</h1>
-            <p className="mt-1 text-sm text-brand-muted">
-              Profile, email magic link, passphrase, and saved chats.
-            </p>
-          </div>
-          <Link href="/chat" className="btn-primary min-h-0 px-4 py-2 text-sm">
-            Live chat
-          </Link>
+        <header className="mb-8">
+          <h1 className="text-3xl font-semibold text-brand-text">Account settings</h1>
+          <p className="mt-1 text-sm text-brand-muted">
+            Profile, My models, email magic link, passphrase, push, and saved chats.
+          </p>
         </header>
 
         <SessionAuthBanner
@@ -1273,6 +1276,7 @@ export function AccountSettings() {
             setAccount(null);
             setEmail(null);
             setSessions([]);
+            setMyModels([]);
           }}
         />
 

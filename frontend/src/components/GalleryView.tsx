@@ -32,6 +32,7 @@ import { PushEnableHint } from "./PushEnableHint";
 import { SoftSupportHint } from "./SoftSupportHint";
 import { GalleryLiveStrip } from "./GalleryLiveStrip";
 import { NetworkOfflineBanner } from "./NetworkOfflineBanner";
+import { SiteChrome } from "./SiteChrome";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 
 interface GalleryViewProps {
@@ -366,44 +367,18 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(225,29,143,0.06),transparent_40%)]" />
-      <div className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
-            <p className="truncate text-sm font-semibold text-brand-text sm:text-base">
-              Live gallery
-              {signedInHandle ? (
-                <span className="ml-2 text-xs font-normal text-brand-muted">
-                  · @{signedInHandle}{resumeCount > 0 ? ` · ${resumeCount} resume` : ""}
-                </span>
-              ) : null}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Link href="/account" className="btn-ghost min-h-0 px-3 py-2 text-xs sm:text-sm">Account</Link>
-            {continueHref ? (
-              <Link
-                href={continueHref}
-                className={`btn-primary min-h-0 px-3 py-2 text-xs sm:px-4 sm:text-sm ${
-                  continueUrgent ? "ring-2 ring-rose-400/55 animate-pulse" : ""
-                }`}
-                title={
-                  continueUrgent
-                    ? "Resume expiring soon — reclaim chat"
-                    : "Continue your last chat"
-                }
-              >
-                {continueUrgent ? "Reclaim" : "Continue"}
-                {continueCard?.displayName
-                  ? ` · ${continueCard.displayName.split(" ")[0]}`
-                  : ""}
-              </Link>
-            ) : (
-              <Link href="/chat" className="btn-primary min-h-0 px-3 py-2 text-xs sm:px-4 sm:text-sm">Live chat</Link>
-            )}
-          </div>
-        </div>
-      </div>
+      <SiteChrome
+        active="gallery"
+        title="Live gallery"
+        subtitle={
+          signedInHandle
+            ? resumeCount > 0
+              ? `${resumeCount} resume${resumeCount === 1 ? "" : "s"} on this device`
+              : "Signed in · sync resumes across phones"
+            : "Browse minds · sign in to save multi-device codes"
+        }
+        className="pt-[env(safe-area-inset-top,0px)]"
+      />
 
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
         <SessionAuthBanner

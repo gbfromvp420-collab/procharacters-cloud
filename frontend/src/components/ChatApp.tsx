@@ -70,6 +70,7 @@ import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
+import { SiteChrome } from "@/components/SiteChrome";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -2374,9 +2375,19 @@ export function ChatApp() {
         className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${roomWash}`}
       />
 
-      {/* Sticky glass top chrome */}
-      <header
-        className={`glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)] transition-[box-shadow,border-color] duration-500 ${
+      <SiteChrome
+        active="chat"
+        title={headerCharacterName ? `Chat · ${headerCharacterName}` : "Live chat"}
+        subtitle={
+          [
+            headerMind?.tag,
+            status === "ready" && liveBand !== "idle" ? liveBand : null,
+            statusLabel,
+          ]
+            .filter(Boolean)
+            .join(" · ") || null
+        }
+        className={`pt-[env(safe-area-inset-top,0px)] transition-[box-shadow,border-color] duration-500 ${
           status === "ready" && liveBand === "edge"
             ? "border-b-rose-400/40 shadow-[0_8px_28px_-12px_rgba(244,63,94,0.35)]"
             : status === "ready" && liveBand === "play"
@@ -2385,85 +2396,76 @@ export function ChatApp() {
                 ? "border-b-brand-accent/35"
                 : ""
         }`}
-      >
-        <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
-              Naughty Syntax
-              {headerMind ? ` · ${headerMind.tag}` : ""}
-              {status === "ready" && liveBand !== "idle" ? ` · ${liveBand}` : ""}
-            </p>
-            <h1 className="truncate bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-base font-semibold tracking-tight text-transparent sm:text-xl">
-              {headerCharacterName ? `Chat · ${headerCharacterName}` : "Live chat"}
-            </h1>
-          </div>
-          <span className="hidden items-center gap-1.5 rounded-full border border-brand-border bg-brand-panel/80 px-2.5 py-1 text-[11px] text-brand-muted sm:inline-flex">
-            <StatusDot status={status} />
-            {statusLabel}
-          </span>
-          {status === "ready" && resumeCode && (
+        trailing={
+          <>
+            <span className="hidden items-center gap-1.5 rounded-full border border-brand-border bg-brand-panel/80 px-2.5 py-1 text-[11px] text-brand-muted sm:inline-flex">
+              <StatusDot status={status} />
+              {statusLabel}
+            </span>
+            {status === "ready" && resumeCode && (
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(resumeCode).then(
+                    () => flashCopy(`Code ${resumeCode}`),
+                    () => flashCopy(resumeCode),
+                  );
+                }}
+                className="max-w-[5.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] text-amber-100 sm:max-w-[7.5rem] sm:px-2.5"
+                title="Copy resume code"
+              >
+                {resumeCode}
+              </button>
+            )}
+            <span className="hidden sm:inline-flex">
+              <LiveKitBadge roomStatus={livekitRoomStatus} compact />
+            </span>
+            {copyNotice && (
+              <span
+                className="hidden max-w-[8rem] truncate text-[11px] text-brand-accent sm:inline"
+                role="status"
+              >
+                {copyNotice}
+              </span>
+            )}
             <button
               type="button"
-              onClick={() => {
-                void navigator.clipboard?.writeText(resumeCode).then(
-                  () => flashCopy(`Code ${resumeCode}`),
-                  () => flashCopy(resumeCode),
-                );
-              }}
-              className="max-w-[5.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] text-amber-100 sm:max-w-[7.5rem] sm:px-2.5"
-              title="Copy resume code"
+              onClick={() => setShowAccount((v) => !v)}
+              className={`btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
+                showAccount ? "border-brand-accent text-brand-accent" : ""
+              }`}
             >
-              {resumeCode}
+              {account ? `@${account.handle}` : "Sign in"}
             </button>
-          )}
-          <span className="hidden sm:inline-flex">
-            <LiveKitBadge roomStatus={livekitRoomStatus} compact />
-          </span>
-          {copyNotice && (
-            <span className="hidden max-w-[10rem] truncate text-[11px] text-brand-accent sm:inline" role="status">
-              {copyNotice}
-            </span>
-          )}
-          <a href="/" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
-            Gallery
-          </a>
-          <a href="/account" className="hidden btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:inline-flex sm:px-3 sm:text-sm">
-            Settings
-          </a>
+          </>
+        }
+      />
+      {status === "ready" && resumeCode && (
+        <p className="border-b border-amber-500/20 bg-brand-bg/80 px-3 py-1 text-center text-[10px] text-amber-100/85 sm:hidden">
+          Resume{" "}
           <button
             type="button"
-            onClick={() => setShowAccount((v) => !v)}
-            className={`btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-              showAccount ? "border-brand-accent text-brand-accent" : ""
-            }`}
+            className="font-mono font-semibold text-amber-50 underline-offset-2 hover:underline"
+            onClick={() => {
+              void navigator.clipboard?.writeText(resumeCode).then(
+                () => flashCopy(`Code ${resumeCode}`),
+                () => flashCopy(resumeCode),
+              );
+            }}
           >
-            {account ? `@${account.handle}` : "Account"}
+            {resumeCode}
           </button>
-        </div>
-        {status === "ready" && resumeCode && (
-          <p className="border-t border-amber-500/20 px-3 py-1 text-center text-[10px] text-amber-100/85 sm:hidden">
-            Resume{" "}
-            <button
-              type="button"
-              className="font-mono font-semibold text-amber-50 underline-offset-2 hover:underline"
-              onClick={() => {
-                void navigator.clipboard?.writeText(resumeCode).then(
-                  () => flashCopy(`Code ${resumeCode}`),
-                  () => flashCopy(resumeCode),
-                );
-              }}
-            >
-              {resumeCode}
-            </button>
-            {" · tap to copy"}
-          </p>
-        )}
-        {copyNotice && (
-          <p className="border-t border-brand-border/50 px-3 py-1 text-center text-[11px] text-brand-accent sm:hidden" role="status">
-            {copyNotice}
-          </p>
-        )}
-      </header>
+          {" · tap to copy"}
+        </p>
+      )}
+      {copyNotice && (
+        <p
+          className="border-b border-brand-border/50 bg-brand-bg/80 px-3 py-1 text-center text-[11px] text-brand-accent sm:hidden"
+          role="status"
+        >
+          {copyNotice}
+        </p>
+      )}
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
         <SessionAuthBanner
