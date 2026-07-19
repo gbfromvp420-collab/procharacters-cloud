@@ -17,13 +17,20 @@ const SWIPE_PX = 48;
 /**
  * Prefer featured dedicated packs, then any featured, then rest with posters.
  * Order is seeded by UTC calendar day so “tonight’s cast” rotates without jitter mid-day.
+ * When the user has resumes, those minds lead the reel (return loop first).
  */
 export function pickHeroCast(
   characters: CharacterCard[],
   daySeed = calendarDaySeed(),
+  resumeIds?: Set<string> | string[],
 ): CharacterCard[] {
   const withPoster = characters.filter((c) => !!c.posterClip);
   if (withPoster.length === 0) return [];
+
+  const resumeSet =
+    resumeIds instanceof Set
+      ? resumeIds
+      : new Set((resumeIds ?? []).filter(Boolean));
 
   const featuredDedicated = withPoster.filter((c) => c.featured && c.dedicatedPack);
   const featured = withPoster.filter((c) => c.featured);
@@ -40,10 +47,18 @@ export function pickHeroCast(
   // Featured stay in the front half; each tier shuffles with the day seed.
   const featuredPool = pool.filter((c) => c.featured);
   const restPool = pool.filter((c) => !c.featured);
-  return [
+  let ordered = [
     ...seededShuffle(featuredPool, daySeed),
     ...seededShuffle(restPool, daySeed + 17),
   ];
+
+  // Personalize: your chats first, then the nightly cast order
+  if (resumeSet.size > 0) {
+    const yours = ordered.filter((c) => resumeSet.has(c.id));
+    const rest = ordered.filter((c) => !resumeSet.has(c.id));
+    ordered = [...yours, ...rest];
+  }
+  return ordered;
 }
 
 function firstName(name: string): string {
@@ -58,7 +73,10 @@ export function GalleryHeroReel({
   /** When set for the active hero, primary CTA becomes Continue. */
   resumes?: Record<string, ResumeCacheEntry>;
 }) {
-  const cast = useMemo(() => pickHeroCast(characters), [characters]);
+  const cast = useMemo(() => {
+    const resumeIds = Object.keys(resumes).filter((id) => !!resumes[id]?.resumeCode);
+    return pickHeroCast(characters, calendarDaySeed(), resumeIds);
+  }, [characters, resumes]);
   const [index, setIndex] = useState(0);
   const [outgoing, setOutgoing] = useState<CharacterCard | null>(null);
   const [paused, setPaused] = useState(false);

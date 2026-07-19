@@ -58,6 +58,7 @@ import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
+import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { SessionWinToast } from "@/components/SessionWinToast";
@@ -3352,7 +3353,9 @@ export function ChatApp() {
 
             {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
             <div
-              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-4 sm:pb-4 ${edgePaceComposerClass(modeState, status)}`}
+              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-4 sm:pb-4 ${edgePaceComposerClass(modeState, status)} ${
+                sendPulse ? "ring-1 ring-inset ring-brand-accent/40" : ""
+              } ${arrivalId ? "ring-1 ring-inset ring-brand-accent/25" : ""}`}
             >
               <ComposerVibeChip
                 characterId={activeCharacterId ?? character}
@@ -3362,6 +3365,22 @@ export function ChatApp() {
                 tickOffset={modeTick}
                 status={status}
               />
+              {status === "ready" && messages.length <= 4 && !sending && (
+                <QuickReplyChips
+                  characterId={activeCharacterId ?? character}
+                  characterName={characterName ?? headerCharacterName}
+                  disabled={status !== "ready"}
+                  onPick={(text) => {
+                    setInput((prev) => {
+                      const p = prev.trim();
+                      if (!p) return text;
+                      if (p.endsWith(text)) return prev;
+                      return `${p} ${text}`;
+                    });
+                    window.setTimeout(() => inputRef.current?.focus(), 40);
+                  }}
+                />
+              )}
               <div className="flex items-end gap-2">
                 <textarea
                   ref={inputRef}
