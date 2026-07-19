@@ -1996,9 +1996,9 @@ export function ChatApp() {
     }
   };
 
-  const sendMessage = () => {
+  const sendMessage = (overrideText?: string) => {
     const ws = wsRef.current;
-    const text = input.trim();
+    const text = (overrideText ?? input).trim();
     if (!ws || ws.readyState !== WebSocket.OPEN || !text || sending) return;
 
     setSendPulse(true);
@@ -3338,6 +3338,11 @@ export function ChatApp() {
                       <AfterglowChips
                         characterId={activeCharacterId ?? character}
                         disabled={sending}
+                        intense={
+                          modeState?.mode === "edge_pace" &&
+                          modeState.phase === "almost"
+                        }
+                        onFire={(text) => sendMessage(text)}
                         onPick={(text) => {
                           setInput((prev) => {
                             const p = prev.trim();
@@ -3394,6 +3399,7 @@ export function ChatApp() {
                   characterId={activeCharacterId ?? character}
                   characterName={characterName ?? headerCharacterName}
                   disabled={status !== "ready"}
+                  onFire={(text) => sendMessage(text)}
                   onPick={(text) => {
                     setInput((prev) => {
                       const p = prev.trim();
@@ -3451,7 +3457,7 @@ export function ChatApp() {
                 />
                 <button
                   type="button"
-                  onClick={sendMessage}
+                  onClick={() => sendMessage()}
                   disabled={!canSend}
                   className={`btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5 ${
                     sendPulse ? "scale-95 ring-2 ring-white/40 shadow-glow" : ""

@@ -297,13 +297,13 @@ export function CharacterTile({
         </div>
       </div>
       <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
-        {mind && !compact && (
+        {mind && (
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-accent">
             Mind · {mind.tag}
             {mind.bilingual ? " · ES" : ""}
           </p>
         )}
-        <p className="line-clamp-2 text-xs text-brand-muted sm:text-sm">
+        <p className={`text-xs text-brand-muted sm:text-sm ${compact ? "line-clamp-1" : "line-clamp-2"}`}>
           {mind?.blurb || card.teaser}
         </p>
         {!compact && card.tags?.length > 0 && (

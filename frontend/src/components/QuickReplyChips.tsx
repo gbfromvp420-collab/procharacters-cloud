@@ -40,11 +40,14 @@ export function QuickReplyChips({
   characterId,
   characterName,
   onPick,
+  onFire,
   disabled,
 }: {
   characterId?: string | null;
   characterName?: string | null;
   onPick: (text: string) => void;
+  /** Optional instant send for short chips */
+  onFire?: (text: string) => void;
   disabled?: boolean;
 }) {
   const nick = characterName?.trim().split(/\s+/)[0] || undefined;
@@ -52,17 +55,26 @@ export function QuickReplyChips({
 
   return (
     <div className="mb-2 flex flex-wrap gap-1.5" role="group" aria-label="Quick replies">
-      {chips.map((chip) => (
-        <button
-          key={chip}
-          type="button"
-          disabled={disabled}
-          onClick={() => onPick(chip)}
-          className="rounded-full border border-brand-border/80 bg-brand-bg/80 px-2.5 py-1 text-[10px] text-brand-muted transition hover:border-brand-accent/50 hover:text-brand-text disabled:opacity-40"
-        >
-          {chip}
-        </button>
-      ))}
+      {chips.map((chip, i) => {
+        const fire = !!onFire && chip.length <= 14 && i < 3;
+        return (
+          <button
+            key={chip}
+            type="button"
+            disabled={disabled}
+            onClick={() => (fire ? onFire!(chip) : onPick(chip))}
+            title={fire ? "Send now" : "Add to composer"}
+            className={`rounded-full border px-2.5 py-1 text-[10px] transition disabled:opacity-40 ${
+              fire
+                ? "border-brand-accent/40 bg-brand-accent/12 text-brand-text hover:border-brand-accent/60"
+                : "border-brand-border/80 bg-brand-bg/80 text-brand-muted hover:border-brand-accent/50 hover:text-brand-text"
+            }`}
+          >
+            {chip}
+            {fire ? " ↵" : ""}
+          </button>
+        );
+      })}
     </div>
   );
 }
