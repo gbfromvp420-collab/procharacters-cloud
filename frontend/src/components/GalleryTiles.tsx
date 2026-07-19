@@ -177,8 +177,8 @@ export function CharacterTile({
       className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
         compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
       } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""} ${
-        searchHighlight ? "ring-2 ring-brand-accent/50 shadow-glow-sm" : ""
-      }`}
+        card.mine ? "ring-1 ring-violet-400/25" : ""
+      } ${searchHighlight ? "ring-2 ring-brand-accent/50 shadow-glow-sm" : ""}`}
     >
       <div
         ref={containerRef}
@@ -222,6 +222,14 @@ export function CharacterTile({
             aria-hidden
           />
         )}
+        {card.mine && (
+          <span
+            className="pointer-events-none absolute right-2 top-2 z-10 rounded-full border border-violet-300/50 bg-violet-600/85 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur"
+            title="Private My Character — only you"
+          >
+            Mine
+          </span>
+        )}
         {bandLabel && (
           <span className="pointer-events-none absolute left-2 bottom-[4.5rem] z-10 rounded-full border border-white/20 bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur sm:bottom-20">
             Live · {bandLabel}
@@ -259,8 +267,17 @@ export function CharacterTile({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
-              {card.kind === "custom" ? "Custom" : "Signature"}
+              {card.mine
+                ? "My model"
+                : card.kind === "custom"
+                  ? "Custom"
+                  : "Signature"}
             </p>
+            {card.mine && (
+              <span className="rounded-full border border-violet-300/50 bg-violet-500/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+                Private
+              </span>
+            )}
             {card.featured && (
               <span className="rounded-full bg-brand-accent/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
                 Featured

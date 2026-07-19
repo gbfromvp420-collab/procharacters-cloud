@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AvatarPanel } from "@/components/AvatarPanel";
 import { AvatarPip } from "@/components/AvatarPip";
@@ -66,6 +67,7 @@ import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
+import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
 import {
@@ -249,6 +251,11 @@ export function ChatApp() {
   /** Soft cap for My Characters (free 10 / premium higher). */
   const [customsLimit, setCustomsLimit] = useState(10);
   const [activePremium, setActivePremium] = useState(false);
+  /** Post-create celebration — Start heat / Edge / My models. */
+  const [justCreated, setJustCreated] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [customName, setCustomName] = useState("");
   const [customAppearance, setCustomAppearance] = useState("");
   const [customEnergy, setCustomEnergy] = useState("");
@@ -649,13 +656,20 @@ export function ChatApp() {
     listLiveCharacters(account?.token)
       .then((list) => {
         if (cancelled || list.length === 0) return;
-        setCharacters(list);
+        // Mine first → signatures → other customs (picker + default select)
+        const ordered = [...list].sort((a, b) => {
+          const am = a.mine ? 0 : a.kind === "default" ? 1 : 2;
+          const bm = b.mine ? 0 : b.kind === "default" ? 1 : 2;
+          if (am !== bm) return am - bm;
+          return a.displayName.localeCompare(b.displayName);
+        });
+        setCharacters(ordered);
         const query = parseShareQuery(window.location.search);
         setCharacter((current) => {
-          if (query.characterId && list.some((c) => c.id === query.characterId)) {
+          if (query.characterId && ordered.some((c) => c.id === query.characterId)) {
             return query.characterId!;
           }
-          return list.some((c) => c.id === current) ? current : list[0]!.id;
+          return ordered.some((c) => c.id === current) ? current : ordered[0]!.id;
         });
       })
       .catch(() => {
@@ -1900,14 +1914,21 @@ export function ChatApp() {
         mediaBase: created.mediaBase,
         mediaOverrides: created.mediaOverrides,
         clips: created.clips,
+        mine: true,
+        visibility: created.visibility ?? "private",
+        baseModelId: created.baseModelId,
       };
       setCharacters((prev) => {
-        if (prev.some((c) => c.id === option.id)) return prev;
-        return [...prev, option];
+        if (prev.some((c) => c.id === option.id)) {
+          return prev.map((c) => (c.id === option.id ? { ...c, ...option } : c));
+        }
+        // Mine first so the picker lands on the new model
+        return [option, ...prev];
       });
       setCharacter(created.id);
       replaceCharacterInUrl(created.id);
       setShowCreate(false);
+      setJustCreated({ id: created.id, name: created.displayName });
       setCustomName("");
       setCustomAppearance("");
       setCustomEnergy("");
@@ -1927,7 +1948,7 @@ export function ChatApp() {
       setClipPlayful("");
       setClipAroused("");
       setShowMediaAdvanced(false);
-      flashCopy("My Character saved (private) — ready to chat");
+      flashCopy(`${created.displayName} saved · private My Character`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create My Character");
     } finally {
@@ -2282,6 +2303,24 @@ export function ChatApp() {
           hasEngagement={
             messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
           }
+        />
+        <MyCharacterWinToast
+          show={!!justCreated && status === "idle" && !sessionActive}
+          characterId={justCreated?.id}
+          characterName={justCreated?.name}
+          customsLimit={customsLimit}
+          onStart={() => {
+            if (!justCreated) return;
+            setCharacter(justCreated.id);
+            void startSession(justCreated.id);
+          }}
+          onStartEdge={() => {
+            if (!justCreated) return;
+            setCharacter(justCreated.id);
+            setSessionMode("edge_pace");
+            void startSession(justCreated.id, { sessionMode: "edge_pace" });
+          }}
+          onDismiss={() => setJustCreated(null)}
         />
         {pauseSnapshot && status === "idle" && (
           <SessionPausedBanner
@@ -2687,20 +2726,50 @@ export function ChatApp() {
                 disabled={status === "connecting" || restarting}
                 className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
               >
-                {characters.map((opt) => {
-                  const mind = mindFingerprint(opt.id);
-                  return (
-                  <option key={opt.id} value={opt.id}>
-                    {opt.kind === "custom" ? "✦ " : ""}
-                    {opt.displayName}
-                    {mind ? ` · ${mind.tag}` : ""}
-                    {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
-                  </option>
+                {(() => {
+                  const mine = characters.filter((c) => c.mine === true);
+                  const signatures = characters.filter((c) => c.kind === "default");
+                  const otherCustom = characters.filter(
+                    (c) => c.kind === "custom" && c.mine !== true,
                   );
-                })}
+                  const renderOpt = (opt: (typeof characters)[0]) => {
+                    const mind = mindFingerprint(opt.id);
+                    return (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.mine ? "◆ " : opt.kind === "custom" ? "✦ " : ""}
+                        {opt.displayName}
+                        {opt.mine ? " · mine" : ""}
+                        {mind ? ` · ${mind.tag}` : ""}
+                        {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
+                      </option>
+                    );
+                  };
+                  return (
+                    <>
+                      {mine.length > 0 && (
+                        <optgroup label="My models">{mine.map(renderOpt)}</optgroup>
+                      )}
+                      {signatures.length > 0 && (
+                        <optgroup label="Signature">{signatures.map(renderOpt)}</optgroup>
+                      )}
+                      {otherCustom.length > 0 && (
+                        <optgroup label="Custom">{otherCustom.map(renderOpt)}</optgroup>
+                      )}
+                    </>
+                  );
+                })()}
               </select>
               </div>
-              {headerMind && !sessionActive && (
+              {characters.find((c) => c.id === character)?.mine && !sessionActive && (
+                <p className="pl-0 text-[10px] leading-snug text-violet-200/90 sm:pl-[4.5rem]">
+                  <span className="font-semibold">My model · private</span>
+                  {" · only on your account · "}
+                  <Link href="/?filter=owned" className="underline-offset-2 hover:underline">
+                    all My models
+                  </Link>
+                </p>
+              )}
+              {headerMind && !sessionActive && !characters.find((c) => c.id === character)?.mine && (
                 <p className="pl-0 text-[10px] leading-snug text-brand-muted sm:pl-[4.5rem]">
                   <span className="font-semibold text-brand-accent">Mind · {headerMind.tag}</span>
                   {" · "}

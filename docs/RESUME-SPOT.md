@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — premium payoff + My models)  
+**Updated:** 2026-07-19 (**cook** — post-create win for My Character)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -10,12 +10,12 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **Morning conversion** | ✅ One-tap Day Pass / Supporter | — |
-| **Stripe smoke** | ✅ Gary complete | Optional extend / create customs |
-| **Premium payoff cook** | ✅ My models gallery filter · `?create=1` · Account CTAs · real soft caps | Hard refresh **web** after Railway deploy |
+| **Stripe smoke** | ✅ Gary complete | — |
+| **Premium payoff** | ✅ My models · create deep-link · caps | — |
+| **Post-create cook** | ✅ Win toast Start/Edge · Mine badges · picker groups | Hard refresh **web**; Start heat on your new model |
 | Railway | ✅ project `captivating-vision` | Confirm web SHA ≈ latest `main` |
-| 4K packs | ✅ all 6 Phase 4 dedicated packs | — |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| **Next** | Ops optional / more heat / content | Say `resume` / `spot` / `next` / `cook` |
+| **Next** | Ops optional / edit My Character / content | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 

@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — premium payoff: My models + Create deep-link)  
+**Updated:** 2026-07-19 (**cook** — post-create My Character win loop)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -44,6 +44,7 @@
 | **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
 | Create My Character deep-link | ✅ `/chat?create=1` opens form; Account premium CTAs |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
+| Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
