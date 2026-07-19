@@ -13,6 +13,7 @@ import {
   buildResumeChatPath,
   getMostRecentResume,
   getResumeForCharacter,
+  isResumeExpiryUrgent,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
 import {
@@ -156,10 +157,16 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       return [c.displayName, c.teaser, c.energyLabel, c.kind, ...(c.tags ?? [])].join(" ").toLowerCase().includes(q);
     });
     const byRecent = (a: CharacterCard, b: CharacterCard) => {
-      const ra = resumes[a.id]?.updatedAt ?? "";
-      const rb = resumes[b.id]?.updatedAt ?? "";
-      if (!!ra !== !!rb) return ra ? -1 : 1;
-      if (ra !== rb) return rb.localeCompare(ra);
+      const ra = resumes[a.id];
+      const rb = resumes[b.id];
+      // Urgent expiring codes float first — reclaim heat before it dies
+      const ua = isResumeExpiryUrgent(ra?.resumeExpiresAt);
+      const ub = isResumeExpiryUrgent(rb?.resumeExpiresAt);
+      if (ua !== ub) return ua ? -1 : 1;
+      const ta = ra?.updatedAt ?? "";
+      const tb = rb?.updatedAt ?? "";
+      if (!!ta !== !!tb) return ta ? -1 : 1;
+      if (ta !== tb) return tb.localeCompare(ta);
       return a.displayName.localeCompare(b.displayName);
     };
     list = [...list].sort((a, b) => {
@@ -168,6 +175,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
         if (resumes[a.id] || resumes[b.id]) {
           if (!!resumes[a.id] !== !!resumes[b.id]) return resumes[a.id] ? -1 : 1;
+          const ua = isResumeExpiryUrgent(resumes[a.id]?.resumeExpiresAt);
+          const ub = isResumeExpiryUrgent(resumes[b.id]?.resumeExpiresAt);
+          if (ua !== ub) return ua ? -1 : 1;
         }
         if (a.kind !== b.kind) return a.kind === "default" ? -1 : 1;
         return a.displayName.localeCompare(b.displayName);

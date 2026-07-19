@@ -56,6 +56,8 @@ import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import { ChatResumeHero } from "@/components/ChatResumeHero";
+import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
+import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
@@ -2467,6 +2469,29 @@ export function ChatApp() {
                 }}
               />
             )}
+            {!sessionActive && sessionMode === "edge_pace" && (
+              <EdgePaceStartHint
+                characterId={character}
+                characterName={
+                  characters.find((c) => c.id === character)?.displayName ?? headerCharacterName
+                }
+                busy={restarting}
+                onStart={() => void startSession(character, { sessionMode: "edge_pace" })}
+              />
+            )}
+            {!sessionActive && input.trim().length >= 8 && (
+              <DraftRecoveryHint
+                characterId={character}
+                characterName={
+                  characters.find((c) => c.id === character)?.displayName ?? null
+                }
+                draftPreview={input.trim()}
+                onClear={() => {
+                  setInput("");
+                  clearComposerDraft(character);
+                }}
+              />
+            )}
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex min-w-0 items-center gap-2">
@@ -2484,14 +2509,17 @@ export function ChatApp() {
                 disabled={status === "connecting" || restarting}
                 className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
               >
-                {characters.map((opt) => (
+                {characters.map((opt) => {
+                  const mind = mindFingerprint(opt.id);
+                  return (
                   <option key={opt.id} value={opt.id}>
                     {opt.kind === "custom" ? "✦ " : ""}
                     {opt.displayName}
-                    {mindFingerprint(opt.id) ? ` · ${mindFingerprint(opt.id)!.tag}` : ""}
+                    {mind ? ` · ${mind.tag}` : ""}
                     {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
                   </option>
-                ))}
+                  );
+                })}
               </select>
               </div>
               {headerMind && !sessionActive && (
@@ -3079,7 +3107,13 @@ export function ChatApp() {
           >
             <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
               <p className="text-[11px] text-brand-muted">
-                {messages.length > 0 ? `${messages.length} messages` : "Transcript"}
+                {messages.length > 0
+                  ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
+                  : "Transcript"}
+                {status === "ready" && messages.length >= 6 ? " · deep heat" : ""}
+                {status === "ready" && messages.length > 0 && messages.length < 6
+                  ? " · warming up"
+                  : ""}
                 {avatarCollapsed ? " · avatar hidden" : ""}
                 {headerMind ? ` · ${headerMind.tag}` : ""}
               </p>
