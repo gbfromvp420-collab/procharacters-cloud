@@ -8,12 +8,14 @@ import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-l
 
 /**
  * After End — heat is saved, path back is one tap. Morph the goodbye into return.
+ * Mine models get Edit + My models so ownership loop stays closed.
  */
 export function SessionPausedBanner({
   characterId,
   characterName,
   resumeCode,
   messageCount,
+  isMine = false,
   onResume,
   onDismiss,
 }: {
@@ -21,11 +23,15 @@ export function SessionPausedBanner({
   characterName?: string | null;
   resumeCode?: string | null;
   messageCount?: number;
+  /** Private My Character — show ownership CTAs */
+  isMine?: boolean;
   onResume?: () => void;
   onDismiss: () => void;
 }) {
   const [copied, setCopied] = useState(false);
-  const mind = mindFingerprint(characterId);
+  const mind = mindFingerprint(characterId, {
+    displayName: characterName,
+  });
   const nick = characterName?.trim().split(/\s+/)[0] || characterName || "them";
   const href = resumeCode
     ? buildResumeChatPath({ characterId, resumeCode })
@@ -40,12 +46,20 @@ export function SessionPausedBanner({
 
   return (
     <div
-      className="mb-3 animate-rise-in rounded-xl border border-brand-accent/35 bg-gradient-to-r from-brand-accent/10 via-brand-panel to-brand-panel px-3 py-3 text-[11px] leading-relaxed shadow-glow-sm"
+      className={`mb-3 animate-rise-in rounded-xl border bg-gradient-to-r px-3 py-3 text-[11px] leading-relaxed shadow-glow-sm ${
+        isMine
+          ? "border-violet-400/40 from-violet-500/15 via-brand-panel to-brand-panel"
+          : "border-brand-accent/35 from-brand-accent/10 via-brand-panel to-brand-panel"
+      }`}
       role="status"
     >
-      <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-accent">
+      <p
+        className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${
+          isMine ? "text-violet-200/90" : "text-brand-accent"
+        }`}
+      >
         Session paused · heat saved
-        {mind ? ` · ${mind.tag}` : ""}
+        {isMine ? " · my model" : mind ? ` · ${mind.tag}` : ""}
       </p>
       <p className="mt-1.5 text-sm text-brand-text">
         You left <strong>{nick}</strong> mid-flow
@@ -69,6 +83,24 @@ export function SessionPausedBanner({
           <Link href={href} className="btn-primary min-h-0 px-4 py-2 text-xs">
             Continue · {nick}
           </Link>
+        )}
+        {isMine && (
+          <>
+            <Link
+              href={`/chat?character=${encodeURIComponent(characterId)}&edit=1`}
+              className="btn-ghost min-h-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100"
+              onClick={onDismiss}
+            >
+              Edit model
+            </Link>
+            <Link
+              href="/account#my-models"
+              className="btn-ghost min-h-0 border-violet-400/30 px-3 py-2 text-xs text-violet-100/90"
+              onClick={onDismiss}
+            >
+              My models
+            </Link>
+          </>
         )}
         <Link href="/" className="btn-ghost min-h-0 px-4 py-2 text-xs">
           Gallery

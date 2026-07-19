@@ -11,6 +11,7 @@ import {
   fetchAccountSessionMarkdown,
   fetchAllAccountSessionsMarkdown,
   confirmBillingCheckout,
+  deleteCustomCharacter,
   fetchBillingCatalog,
   fetchBillingStatus,
   formatUsdCents,
@@ -1421,7 +1422,10 @@ export function AccountSettings() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-violet-400/35 bg-violet-500/5 p-5">
+            <section
+              id="my-models"
+              className="scroll-mt-20 rounded-2xl border border-violet-400/35 bg-violet-500/5 p-5"
+            >
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-brand-text">My models</h2>
@@ -1539,6 +1543,40 @@ export function AccountSettings() {
                                 Edge
                               </Link>
                             )}
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => {
+                                if (
+                                  !window.confirm(
+                                    `Delete private model “${m.displayName}”? This can’t be undone.`,
+                                  )
+                                ) {
+                                  return;
+                                }
+                                if (!account) return;
+                                void (async () => {
+                                  setBusy(true);
+                                  setError(null);
+                                  try {
+                                    await deleteCustomCharacter(m.id, account.token);
+                                    setMyModels((prev) => prev.filter((x) => x.id !== m.id));
+                                    flash(`Deleted ${m.displayName}`);
+                                  } catch (err) {
+                                    setError(
+                                      err instanceof Error
+                                        ? err.message
+                                        : "Could not delete model",
+                                    );
+                                  } finally {
+                                    setBusy(false);
+                                  }
+                                })();
+                              }}
+                              className="rounded-lg border border-red-500/35 px-2.5 py-1.5 text-[11px] text-red-300 hover:border-red-400/50 disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
                           </div>
                         </div>
                       </li>

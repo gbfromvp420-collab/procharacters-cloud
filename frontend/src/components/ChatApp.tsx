@@ -2506,6 +2506,10 @@ export function ChatApp() {
             characterName={pauseSnapshot.characterName}
             resumeCode={pauseSnapshot.resumeCode}
             messageCount={pauseSnapshot.messageCount}
+            isMine={
+              characters.find((c) => c.id === pauseSnapshot.characterId)?.mine === true ||
+              pauseSnapshot.characterId.startsWith("custom-")
+            }
             onResume={() => {
               const snap = pauseSnapshot;
               setPauseSnapshot(null);
@@ -2559,6 +2563,18 @@ export function ChatApp() {
                   >
                     Refresh chats
                   </button>
+                  <Link
+                    href="/account#my-models"
+                    className="rounded-lg border border-violet-400/40 px-3 py-1 text-xs text-violet-100 hover:border-violet-300/55"
+                  >
+                    My models
+                  </Link>
+                  <Link
+                    href="/?filter=owned"
+                    className="rounded-lg border border-brand-border px-3 py-1 text-xs text-brand-muted hover:border-brand-accent"
+                  >
+                    Gallery models
+                  </Link>
                 </div>
                 <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
                   <input
@@ -3233,10 +3249,46 @@ export function ChatApp() {
                     : " — private to your account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save."}
                   {!account
                     ? " Sign in required."
-                    : activePremium
-                      ? ` Premium soft cap: ${customsLimit} My Characters.`
-                      : ` Soft cap: ${customsLimit} per account (Day Pass unlocks more).`}
+                    : (() => {
+                        const used = characters.filter((c) => c.mine === true).length;
+                        const near = !editingCustomId && used >= customsLimit - 1;
+                        const full = !editingCustomId && used >= customsLimit;
+                        return (
+                          <>
+                            {" "}
+                            Using{" "}
+                            <strong className="text-brand-text">
+                              {used}/{customsLimit}
+                            </strong>
+                            {activePremium ? " premium" : " free"}
+                            {full
+                              ? " — cap full; delete one on Account to add more."
+                              : near
+                                ? " — almost full."
+                                : "."}
+                          </>
+                        );
+                      })()}
                 </p>
+                {!editingCustomId &&
+                  account &&
+                  characters.filter((c) => c.mine === true).length >= customsLimit && (
+                    <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-2.5 py-1.5 text-[11px] text-amber-100/90">
+                      Cap reached.{" "}
+                      <Link href="/account#my-models" className="underline-offset-2 hover:underline">
+                        Manage My models
+                      </Link>{" "}
+                      or{" "}
+                      {!activePremium ? (
+                        <Link href="/account" className="underline-offset-2 hover:underline">
+                          Day Pass
+                        </Link>
+                      ) : (
+                        "free a slot"
+                      )}
+                      .
+                    </p>
+                  )}
                 <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
                   Base model{editingCustomId ? " (locked on edit)" : ""}
                 </label>
@@ -3347,7 +3399,11 @@ export function ChatApp() {
                     type="button"
                     onClick={handleCreateCustom}
                     disabled={
-                      creating || customName.trim().length < 2 || customAppearance.trim().length < 12
+                      creating ||
+                      customName.trim().length < 2 ||
+                      customAppearance.trim().length < 12 ||
+                      (!editingCustomId &&
+                        characters.filter((c) => c.mine === true).length >= customsLimit)
                     }
                     className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
                   >
@@ -3359,7 +3415,9 @@ export function ChatApp() {
                         ? "Sign in to save"
                         : editingCustomId
                           ? "Save changes"
-                          : "Save My Character"}
+                          : characters.filter((c) => c.mine === true).length >= customsLimit
+                            ? "Cap full"
+                            : "Save My Character"}
                   </button>
                 </div>
 
