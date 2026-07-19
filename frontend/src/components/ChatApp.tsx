@@ -573,6 +573,28 @@ export function ChatApp() {
     setLiveSeconds(0);
   }, [status]);
 
+  // First assistant line landed — soft celebration (once per session open)
+  const firstOpenFlashedRef = useRef(false);
+  useEffect(() => {
+    if (status !== "ready") {
+      firstOpenFlashedRef.current = false;
+      return;
+    }
+    if (firstOpenFlashedRef.current) return;
+    const firstAssistant = messages.find(
+      (m) => m.role === "assistant" && !m.streaming && m.content?.trim(),
+    );
+    if (!firstAssistant) return;
+    firstOpenFlashedRef.current = true;
+    const nick =
+      characterName?.split(/\s+/)[0] ||
+      characters.find((c) => c.id === (activeCharacterId ?? character))
+        ?.displayName?.split(/\s+/)[0] ||
+      "They";
+    setCopyNotice(`${nick} is live · heat on`);
+    window.setTimeout(() => setCopyNotice(null), 2200);
+  }, [status, messages, characterName, characters, activeCharacterId, character]);
+
   // Per-character composer drafts — swap brains without losing unsent heat
   useEffect(() => {
     skipDraftSaveRef.current = true;

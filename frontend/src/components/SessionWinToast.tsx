@@ -101,18 +101,25 @@ export function SessionWinToast({
               {copied ? "Copied!" : canNativeShare() ? "Share code" : "Copy code"}
             </button>
             <Link
-              href="/account"
+              href="/"
               className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
               onClick={() => dismiss(true)}
             >
-              Enable push
+              Gallery
+            </Link>
+            <Link
+              href="/account"
+              className="btn-ghost min-h-0 border-amber-500/35 px-3 py-1.5 text-xs text-amber-100"
+              onClick={() => dismiss(true)}
+            >
+              Push · Account
             </Link>
             <button
               type="button"
               onClick={() => dismiss(true)}
               className="min-h-0 px-2 py-1.5 text-[10px] text-brand-muted hover:text-brand-text"
             >
-              Got it
+              Keep chatting
             </button>
           </div>
         </div>
