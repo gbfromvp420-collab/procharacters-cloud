@@ -2123,6 +2123,21 @@ export function ChatApp() {
             <StatusDot status={status} />
             {statusLabel}
           </span>
+          {status === "ready" && resumeCode && (
+            <button
+              type="button"
+              onClick={() => {
+                void navigator.clipboard?.writeText(resumeCode).then(
+                  () => flashCopy(`Code ${resumeCode}`),
+                  () => flashCopy(resumeCode),
+                );
+              }}
+              className="hidden max-w-[7.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 font-mono text-[10px] text-amber-100 sm:inline-flex"
+              title="Copy resume code"
+            >
+              {resumeCode}
+            </button>
+          )}
           <span className="hidden sm:inline-flex">
             <LiveKitBadge roomStatus={livekitRoomStatus} compact />
           </span>
@@ -3445,6 +3460,14 @@ export function ChatApp() {
                   characterId={activeCharacterId ?? character}
                   modeState={modeState}
                   tickOffset={modeTick}
+                  onSeedFire={(text) => {
+                    setInput((prev) => {
+                      const p = prev.trim();
+                      if (!p) return text;
+                      return `${p} ${text}`;
+                    });
+                    window.setTimeout(() => inputRef.current?.focus(), 40);
+                  }}
                 />
               )}
               {status === "ready" &&

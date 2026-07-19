@@ -320,7 +320,25 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}
         </header>
 
-        <GalleryLiveStrip characters={characters} resumeCount={resumeCount} />
+        <GalleryLiveStrip
+          characters={characters}
+          resumeCount={resumeCount}
+          onPacks={() => {
+            setFilter("packs");
+            setSort("featured");
+            setQuery("");
+          }}
+          onMine={() => {
+            setFilter("mine");
+            setSort("recent");
+            setQuery("");
+          }}
+          onFeatured={() => {
+            setFilter("featured");
+            setSort("featured");
+            setQuery("");
+          }}
+        />
 
         {/* Hero reel only on main browse (not “my chats” / search clutter) */}
         {filter === "all" && !query.trim() && (
@@ -421,7 +439,37 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-brand-border bg-gradient-to-b from-brand-panel to-brand-bg p-8 text-center sm:p-10">
-            {filter === "mine" ? (
+            {filter === "packs" ? (
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-200/80">
+                  4K packs
+                </p>
+                <p className="mt-2 text-lg font-semibold text-brand-text">No dedicated packs here</p>
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-brand-muted">
+                  Dedicated 4-clip loops show a green 4K badge when live. Browse signature minds
+                  meanwhile — interim footage still heats.
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("featured");
+                    }}
+                    className="btn-primary min-h-0 px-5 py-2.5 text-sm"
+                  >
+                    Featured
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFilter("all")}
+                    className="btn-ghost min-h-0 px-5 py-2.5 text-sm"
+                  >
+                    All minds
+                  </button>
+                </div>
+              </>
+            ) : filter === "mine" ? (
               <>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">
                   My chats
