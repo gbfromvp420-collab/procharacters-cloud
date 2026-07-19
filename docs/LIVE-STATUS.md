@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**morning cook** — one-tap Day Pass / Supporter on Soft Support)  
+**Updated:** 2026-07-19 (**cook** — premium payoff: My models + Create deep-link)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -41,6 +41,9 @@
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
 | Soft Day Pass after heat win | ✅ Session win toast offers Day Pass when signed-in + not premium (never blocks) |
+| **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
+| Create My Character deep-link | ✅ `/chat?create=1` opens form; Account premium CTAs |
+| Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |

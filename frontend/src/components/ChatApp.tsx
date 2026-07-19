@@ -26,6 +26,7 @@ import {
   setCrossSessionMemoryOptIn,
   clearCrossSessionMemory,
   fetchAccountMe,
+  fetchBillingStatus,
   linkEmailToAccount,
   loginAccount,
   logoutAccount,
@@ -245,6 +246,9 @@ export function ChatApp() {
   const [restarting, setRestarting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
+  /** Soft cap for My Characters (free 10 / premium higher). */
+  const [customsLimit, setCustomsLimit] = useState(10);
+  const [activePremium, setActivePremium] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customAppearance, setCustomAppearance] = useState("");
   const [customEnergy, setCustomEnergy] = useState("");
@@ -1363,6 +1367,37 @@ export function ChatApp() {
       setStatus("error");
     }
   };
+
+  // Soft cap for create form (premium payoff after Day Pass)
+  useEffect(() => {
+    if (!account?.token) {
+      setCustomsLimit(10);
+      setActivePremium(false);
+      return;
+    }
+    let cancelled = false;
+    void fetchBillingStatus(account.token)
+      .then((b) => {
+        if (cancelled) return;
+        setCustomsLimit(b.customsLimit ?? 10);
+        setActivePremium(!!b.activePremium);
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [account?.token]);
+
+  // Deep-link: ?create=1 → open My Character form (sign-in if needed)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const query = parseShareQuery(window.location.search);
+    if (!query.create) return;
+    setShowCreate(true);
+    if (!loadStoredAccount()) setShowAccount(true);
+  }, []);
 
   // Deep-links: ?magic=  ?character=  ?resume=  or legacy ?session=&token=
   useEffect(() => {
@@ -2925,7 +2960,11 @@ export function ChatApp() {
                 <p className="text-xs text-brand-muted">
                   <strong className="text-brand-text">My Character (v2)</strong> — private to your
                   account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save.
-                  {!account ? " Sign in required." : " Soft cap: 10 per account."}
+                  {!account
+                    ? " Sign in required."
+                    : activePremium
+                      ? ` Premium soft cap: ${customsLimit} My Characters.`
+                      : ` Soft cap: ${customsLimit} per account (Day Pass unlocks more).`}
                 </p>
                 <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
                   Base model

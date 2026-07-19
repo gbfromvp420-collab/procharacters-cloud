@@ -26,6 +26,9 @@ export interface CharacterCard {
   openingMessage?: string;
   /** Deep-link into Edge Pace mode */
   edgePacePath?: string;
+  /** Signed-in owner’s private My Character */
+  mine?: boolean;
+  visibility?: string;
 }
 
 export async function fetchCharacterCard(characterId: string): Promise<CharacterCard | null> {

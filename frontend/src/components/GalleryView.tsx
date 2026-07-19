@@ -8,7 +8,7 @@ import {
   invalidateStoredAccount,
   loadStoredAccount,
 } from "@/lib/account-storage";
-import { isAccountAuthError, listAccountSessions } from "@/lib/api";
+import { isAccountAuthError, listAccountSessions, listLiveCharacters } from "@/lib/api";
 import {
   buildResumeChatPath,
   getMostRecentResume,
@@ -22,6 +22,7 @@ import {
   shareOrCopyUrl,
   shareUrlResultLabel,
 } from "@/lib/share-links";
+import type { LiveCharacterOption, MediaClipKey } from "@/lib/types";
 import { CharacterTile } from "./GalleryTiles";
 import { GalleryHeroReel } from "./GalleryHeroReel";
 import { ContinueBanner } from "./ContinueBanner";
@@ -39,7 +40,49 @@ interface GalleryViewProps {
 }
 
 type SortMode = "name" | "kind" | "energy" | "featured" | "recent" | "packs";
-type GalleryFilter = "all" | "default" | "custom" | "featured" | "mine" | "packs";
+type GalleryFilter =
+  | "all"
+  | "default"
+  | "custom"
+  | "featured"
+  | "mine"
+  | "owned"
+  | "packs";
+
+const EMPTY_CLIPS: Record<MediaClipKey, string> = {
+  idle: "",
+  teasing: "",
+  playful: "",
+  aroused: "",
+};
+
+/** Map authenticated live custom → gallery card (private My Characters). */
+function liveCustomToCard(c: LiveCharacterOption): CharacterCard {
+  const clips = { ...EMPTY_CLIPS, ...(c.clips ?? {}) };
+  const poster =
+    clips.teasing || clips.idle || clips.playful || clips.aroused || "";
+  return {
+    id: c.id,
+    displayName: c.displayName,
+    kind: "custom",
+    brand: "Naughty Syntax",
+    energyLabel: c.energyLabel ?? "My Character",
+    teaser: c.teaser ?? c.energyLabel ?? "Private My Character",
+    tags: c.mine ? ["mine", "private"] : ["custom"],
+    avatarBase: c.avatarBase ?? c.id,
+    posterClip: poster,
+    clips,
+    ctaPath: `/chat?character=${encodeURIComponent(c.id)}&autostart=1`,
+    cardPath: `/character/${encodeURIComponent(c.id)}`,
+    featured: c.featured === true,
+    dedicatedPack: false,
+    mediaLabel: "custom",
+    vibeTag: "My Character",
+    openingMessage: c.openingMessage,
+    mine: c.mine === true,
+    visibility: c.visibility,
+  };
+}
 
 export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [filter, setFilter] = useState<GalleryFilter>("all");
@@ -48,10 +91,31 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const [resumes, setResumes] = useState<Record<string, ResumeCacheEntry>>({});
   const [signedInHandle, setSignedInHandle] = useState<string | null>(null);
+  const [ownedCards, setOwnedCards] = useState<CharacterCard[]>([]);
   const appliedSignedInDefaults = useRef(false);
 
   useEffect(() => {
     if (loadStoredAccount()) setSort("recent");
+  }, []);
+
+  // Deep-link ?filter=owned | mine | packs | …
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const raw = new URLSearchParams(window.location.search).get("filter")?.trim().toLowerCase();
+    if (!raw) return;
+    const allowed: GalleryFilter[] = [
+      "all",
+      "default",
+      "custom",
+      "featured",
+      "mine",
+      "owned",
+      "packs",
+    ];
+    if (allowed.includes(raw as GalleryFilter)) {
+      setFilter(raw as GalleryFilter);
+      appliedSignedInDefaults.current = true;
+    }
   }, []);
 
   // Packs filter pairs with packs-first sort for a cleaner feast
@@ -70,6 +134,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     const account = loadStoredAccount();
     if (!account) {
       setSignedInHandle(null);
+      setOwnedCards([]);
       return;
     }
     setSignedInHandle(account.handle);
@@ -110,12 +175,41 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         if (isAccountAuthError(err)) {
           invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
           setSignedInHandle(null);
+          setOwnedCards([]);
+        }
+      });
+    // Private My Characters never hit public /gallery — merge from auth list
+    void listLiveCharacters(account.token)
+      .then((live) => {
+        if (cancelled) return;
+        const owned = live
+          .filter((c) => c.kind === "custom" && c.mine === true)
+          .map(liveCustomToCard);
+        setOwnedCards(owned);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (isAccountAuthError(err)) {
+          invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
+          setSignedInHandle(null);
+          setOwnedCards([]);
         }
       });
     return () => {
       cancelled = true;
     };
   }, [characters]);
+
+  /** Public gallery + private owned customs (deduped). */
+  const catalog = useMemo(() => {
+    const map = new Map<string, CharacterCard>();
+    for (const c of characters) map.set(c.id, c);
+    for (const o of ownedCards) {
+      const prev = map.get(o.id);
+      map.set(o.id, prev ? { ...prev, mine: true, visibility: o.visibility ?? prev.visibility } : o);
+    }
+    return [...map.values()];
+  }, [characters, ownedCards]);
 
   const resumeCount = useMemo(() => Object.keys(resumes).length, [resumes]);
   const continueTarget = useMemo(() => {
@@ -125,8 +219,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   }, [resumes]);
   const continueCard = useMemo(() => {
     if (!continueTarget) return null;
-    return characters.find((c) => c.id === continueTarget.characterId) ?? null;
-  }, [characters, continueTarget]);
+    return catalog.find((c) => c.id === continueTarget.characterId) ?? null;
+  }, [catalog, continueTarget]);
   const continueHref = useMemo(() => {
     if (!continueTarget?.resumeCode) return null;
     return buildResumeChatPath(continueTarget);
@@ -138,14 +232,15 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
   const counts = useMemo(
     () => ({
-      all: characters.length,
-      featured: characters.filter((c) => c.featured).length,
-      default: characters.filter((c) => c.kind === "default").length,
-      custom: characters.filter((c) => c.kind === "custom").length,
-      mine: characters.filter((c) => !!resumes[c.id]).length,
-      packs: characters.filter((c) => c.dedicatedPack).length,
+      all: catalog.length,
+      featured: catalog.filter((c) => c.featured).length,
+      default: catalog.filter((c) => c.kind === "default").length,
+      custom: catalog.filter((c) => c.kind === "custom").length,
+      mine: catalog.filter((c) => !!resumes[c.id]).length,
+      owned: catalog.filter((c) => c.mine === true).length,
+      packs: catalog.filter((c) => c.dedicatedPack).length,
     }),
-    [characters, resumes],
+    [catalog, resumes],
   );
   const urgentMineCount = useMemo(
     () =>
@@ -175,18 +270,19 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   };
 
   const featuredRow = useMemo(() => {
-    if (filter === "mine") return [];
+    if (filter === "mine" || filter === "owned") return [];
     const q = query.trim().toLowerCase();
-    return characters.filter((c) => {
+    return catalog.filter((c) => {
       if (!c.featured) return false;
       return matchesQuery(c, q);
     });
-  }, [characters, query, filter]);
+  }, [catalog, query, filter]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = characters.filter((c) => {
+    let list = catalog.filter((c) => {
       if (filter === "mine" && !resumes[c.id]) return false;
+      if (filter === "owned" && c.mine !== true) return false;
       if (filter === "featured" && !c.featured) return false;
       if (filter === "packs" && !c.dedicatedPack) return false;
       if (filter === "default" && c.kind !== "default") return false;
@@ -207,7 +303,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       return a.displayName.localeCompare(b.displayName);
     };
     list = [...list].sort((a, b) => {
-      if (sort === "recent" || filter === "mine") return byRecent(a, b);
+      if (sort === "recent" || filter === "mine" || filter === "owned") return byRecent(a, b);
       if (sort === "featured") {
         if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
         if (resumes[a.id] || resumes[b.id]) {
@@ -230,7 +326,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       return a.displayName.localeCompare(b.displayName);
     });
     return list;
-  }, [characters, filter, query, sort, resumes]);
+  }, [catalog, filter, query, sort, resumes]);
 
   const flash = (label: string | null) => {
     if (!label) return;
@@ -331,7 +427,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         </header>
 
         <GalleryLiveStrip
-          characters={characters}
+          characters={catalog}
           resumeCount={resumeCount}
           onPacks={() => {
             setFilter("packs");
@@ -352,7 +448,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         {/* Hero reel only on main browse (not “my chats” / search clutter) */}
         {filter === "all" && !query.trim() && (
-          <GalleryHeroReel characters={characters} resumes={resumes} />
+          <GalleryHeroReel characters={catalog} resumes={resumes} />
         )}
 
         {continueTarget && continueHref && (
@@ -441,6 +537,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               [
                 ["all", "All"],
                 ["mine", "My chats"],
+                ["owned", "My models"],
                 ["featured", "Featured"],
                 ["packs", "4K packs"],
                 ["default", "Signature"],
@@ -456,6 +553,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                     ? urgentMineCount > 0
                       ? "border-rose-400/50 text-rose-100"
                       : "border-amber-500/40 text-amber-100/90"
+                    : key === "owned" && counts.owned > 0
+                      ? "border-violet-400/45 text-violet-100/90"
                     : key === "packs"
                       ? "border-emerald-400/35 text-emerald-100/90"
                       : ""
@@ -545,6 +644,36 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                   <Link href="/chat" className="btn-ghost min-h-0 px-5 py-2.5 text-sm">
                     Open live chat
                   </Link>
+                </div>
+              </>
+            ) : filter === "owned" ? (
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-200/85">
+                  My models
+                </p>
+                <p className="mt-2 text-lg font-semibold text-brand-text">No private My Characters yet</p>
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-brand-muted">
+                  {signedInHandle
+                    ? "Craft a private mind from a signature base — only you see them here."
+                    : "Sign in to save private My Characters. Free path holds 10; Day Pass / Supporter unlocks more."}
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <Link
+                    href={signedInHandle ? "/chat?create=1" : "/account"}
+                    className="btn-primary min-h-0 px-5 py-2.5 text-sm"
+                  >
+                    {signedInHandle ? "Create My Character" : "Sign in · Account"}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("featured");
+                    }}
+                    className="btn-ghost min-h-0 px-5 py-2.5 text-sm"
+                  >
+                    Browse featured
+                  </button>
                 </div>
               </>
             ) : (

@@ -19,6 +19,10 @@ export interface LiveCharacterOption {
   mediaOverrides?: MediaOverrides;
   clips?: Record<MediaClipKey, string>;
   featured?: boolean;
+  /** Account-owned My Character (private). */
+  mine?: boolean;
+  visibility?: string;
+  baseModelId?: string;
 }
 
 export interface LiveKitJoinInfo {

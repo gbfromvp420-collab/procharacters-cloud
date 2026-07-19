@@ -14,6 +14,8 @@ export interface ShareQuery {
   sessionMode?: "normal" | "edge_pace";
   /** Force full memory re-injection after resume (Continue links set this). */
   rehydrate?: boolean;
+  /** Open My Character create panel (?create=1). */
+  create?: boolean;
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -40,6 +42,13 @@ export function parseShareQuery(search: string): ShareQuery {
     autostartRaw === "yes" ||
     !!resumeCode ||
     (!!sessionId && !!token);
+  const createRaw = params.get("create")?.trim().toLowerCase();
+  const create =
+    createRaw === "1" ||
+    createRaw === "true" ||
+    createRaw === "yes" ||
+    createRaw === "my" ||
+    createRaw === "character";
 
   return {
     characterId,
@@ -50,6 +59,7 @@ export function parseShareQuery(search: string): ShareQuery {
     token,
     sessionMode,
     rehydrate,
+    create,
   };
 }
 

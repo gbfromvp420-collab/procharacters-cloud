@@ -127,6 +127,7 @@ export function AccountSettings() {
   const [activePremium, setActivePremium] = useState(false);
   const [planExpiresAt, setPlanExpiresAt] = useState<string | null>(null);
   const [customsLimit, setCustomsLimit] = useState(10);
+  const [freeCustomsLimit, setFreeCustomsLimit] = useState(10);
   const [billingConfigured, setBillingConfigured] = useState(false);
   const [billingBusy, setBillingBusy] = useState(false);
   const [billingProducts, setBillingProducts] = useState<BillingCatalogProduct[]>([]);
@@ -232,6 +233,7 @@ export function AccountSettings() {
         setFreeBenefitLabel(billing.benefits.free.label);
         setPremiumBenefitLabel(billing.benefits.premium.label);
         setPremiumCustomsLimit(billing.benefits.premium.customsLimit);
+        setFreeCustomsLimit(billing.benefits.free.customsLimit);
       } else if (me.plan) {
         setPlan(me.plan);
         setActivePremium(me.activePremium === true);
@@ -310,7 +312,9 @@ export function AccountSettings() {
             if (c.planExpiresAt) setPlanExpiresAt(c.planExpiresAt);
             if (c.customsLimit != null) setCustomsLimit(c.customsLimit);
             if (c.ok || c.activePremium) {
-              finish("Premium unlocked — thank you for supporting Naughty Syntax.");
+              finish(
+                "Premium unlocked — thank you. Create a My Character or browse My models next.",
+              );
             }
           })
           .catch(() => {
@@ -323,7 +327,9 @@ export function AccountSettings() {
           .then((b) => {
             applyStatus(b);
             if (b.activePremium) {
-              finish("Premium unlocked — thank you for supporting Naughty Syntax.");
+              finish(
+                "Premium unlocked — thank you. Create a My Character or browse My models next.",
+              );
             } else if (tries >= 8) {
               finish(
                 "Payment received — if premium isn’t showing yet, refresh in a moment (webhook may still be landing).",
@@ -1438,7 +1444,7 @@ export function AccountSettings() {
                     Free · forever
                   </p>
                   <p className="mt-1 text-sm text-brand-text">
-                    {customsLimit} My Characters
+                    {freeCustomsLimit} My Characters
                   </p>
                   <p className="mt-0.5 text-[11px] text-brand-muted">{freeBenefitLabel}</p>
                 </div>
@@ -1452,6 +1458,42 @@ export function AccountSettings() {
                   <p className="mt-0.5 text-[11px] text-brand-muted">{premiumBenefitLabel}</p>
                 </div>
               </div>
+
+              {activePremium && (
+                <div className="mt-4 rounded-xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-brand-bg/50 to-brand-bg/40 px-3 py-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-100/90">
+                    Premium active · use the headroom
+                  </p>
+                  <p className="mt-1 text-xs text-brand-muted">
+                    You’re at{" "}
+                    <strong className="text-brand-text">{customsLimit} My Characters</strong>
+                    {planExpiresAt
+                      ? ` · until ${new Date(planExpiresAt).toLocaleString()}`
+                      : ""}
+                    . Private models only you can see.
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <Link
+                      href="/chat?create=1"
+                      className="rounded-lg bg-brand-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
+                    >
+                      Create My Character
+                    </Link>
+                    <Link
+                      href="/?filter=owned"
+                      className="rounded-lg border border-violet-400/45 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-100 hover:border-violet-300/60"
+                    >
+                      My models
+                    </Link>
+                    <Link
+                      href="/chat"
+                      className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-muted hover:border-brand-accent"
+                    >
+                      Live chat
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
                 {(billingProducts.length
@@ -1494,9 +1536,11 @@ export function AccountSettings() {
                     <p className="mt-2 text-[10px] font-semibold uppercase tracking-wide opacity-90">
                       {billingBusy
                         ? "Redirecting…"
-                        : billingConfigured
-                          ? "Checkout →"
-                          : "Not live yet"}
+                        : !billingConfigured
+                          ? "Not live yet"
+                          : activePremium
+                            ? "Extend →"
+                            : "Checkout →"}
                     </p>
                   </button>
                 ))}

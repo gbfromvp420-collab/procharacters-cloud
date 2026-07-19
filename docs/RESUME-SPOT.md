@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**morning cook** — one-tap checkout live surface)  
+**Updated:** 2026-07-19 (**cook** — premium payoff + My models)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,19 +9,19 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Eng night cook** | ✅ **CLOSED** — continuity/heat/growth stack on `main` | — |
-| **Morning cook** | ✅ One-tap **Day Pass / Supporter** from Soft Support + soft CTA on Heat locked in | Hard refresh **web** after Railway deploy |
-| Stripe | ✅ **LIVE** · one-tap from chat/gallery (signed-in) | Gary: smoke checkout carefully — **real money** |
-| Railway | ✅ project `captivating-vision` | Optional: confirm web SHA ≈ latest `main` |
-| 4K packs | ✅ all 6 Phase 4 dedicated packs | Gallery → green **4K pack** badges |
+| **Morning conversion** | ✅ One-tap Day Pass / Supporter | — |
+| **Stripe smoke** | ✅ Gary complete | Optional extend / create customs |
+| **Premium payoff cook** | ✅ My models gallery filter · `?create=1` · Account CTAs · real soft caps | Hard refresh **web** after Railway deploy |
+| Railway | ✅ project `captivating-vision` | Confirm web SHA ≈ latest `main` |
+| 4K packs | ✅ all 6 Phase 4 dedicated packs | — |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| **Next** | Ops optional / content packs / more conversion polish | Say `resume` / `spot` / `next` / `cook` |
+| **Next** | Ops optional / more heat / content | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 
 ## What shipped this cook marathon (highlights)
 
-Return loop · mind fingerprints · hero reel · drafts · fire/afterglow chips · Edge Pace superheat · whisper Seed/Fire · offline banner · soft support (free forever) · **one-tap Stripe checkout** · session win + soft Day Pass · pause→continue · Export MD · Share heat · depth meter · room wash · Reclaim · 4K filter/sort · Use again · first-live flash · …
+Return loop · mind fingerprints · hero reel · heat stack · one-tap Stripe · **premium payoff** (My models + Create deep-link + Account use-the-headroom) · free forever path · Edge Pace · memory stickiness · …
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 
@@ -41,6 +41,8 @@ Tip: `git log --oneline -25` on `main` for the full plate list.
 ## Live URLs
 
 - Gallery: https://procharacters-web-production-7288.up.railway.app  
+- My models: https://procharacters-web-production-7288.up.railway.app/?filter=owned  
+- Create: https://procharacters-web-production-7288.up.railway.app/chat?create=1  
 - API health: https://procharacters-api-production-0417.up.railway.app/health  
 
 ---
@@ -52,4 +54,4 @@ Tip: `git log --oneline -25` on `main` for the full plate list.
 - [ops-billing-stripe.md](./ops-billing-stripe.md)  
 - [RAILWAY.md](../RAILWAY.md)  
 
-*Morning knives out for cashflow with dignity. Free path forever.*
+*Premium should feel usable the second after pay. Free path forever.*
