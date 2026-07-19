@@ -70,8 +70,11 @@ import {
   type StoredAccount,
 } from "@/lib/account-storage";
 import {
+  clearComposerDraft,
   clearStoredSession,
+  loadComposerDraft,
   loadStoredSession,
+  saveComposerDraft,
   saveStoredSession,
   type StoredSession,
 } from "@/lib/session-storage";
@@ -278,12 +281,15 @@ export function ChatApp() {
   }>({ line: null, show: false });
   /** Brief send-button heat feedback. */
   const [sendPulse, setSendPulse] = useState(false);
+  /** Soft glow when a full assistant message lands. */
+  const [arrivalId, setArrivalId] = useState<string | null>(null);
   /** User scrolled up — pause pin-to-bottom, show jump pill. */
   const [stickToBottom, setStickToBottom] = useState(true);
   const [showJumpLatest, setShowJumpLatest] = useState(false);
   const [bandFlash, setBandFlash] = useState<EnergyBand | null>(null);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const prevEnergyBandRef = useRef<EnergyBand | null>(null);
+  const skipDraftSaveRef = useRef(false);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
@@ -518,6 +524,24 @@ export function ChatApp() {
     return () => window.clearTimeout(t);
   }, [avatarState]);
 
+  // Per-character composer drafts — swap brains without losing unsent heat
+  useEffect(() => {
+    skipDraftSaveRef.current = true;
+    setInput(loadComposerDraft(character));
+  }, [character]);
+
+  useEffect(() => {
+    if (!character) return;
+    if (skipDraftSaveRef.current) {
+      skipDraftSaveRef.current = false;
+      return;
+    }
+    const t = window.setTimeout(() => {
+      saveComposerDraft(character, input);
+    }, 280);
+    return () => window.clearTimeout(t);
+  }, [input, character]);
+
   useEffect(() => {
     sessionIdRef.current = sessionId;
   }, [sessionId]);
@@ -742,6 +766,11 @@ export function ChatApp() {
               setModeState(data.modeState as SessionModeUiState);
               setModeTick(0);
             }
+
+            setArrivalId(messageId);
+            window.setTimeout(() => {
+              setArrivalId((cur) => (cur === messageId ? null : cur));
+            }, 900);
 
             setMessages((prev) => {
               const exists = prev.some((msg) => msg.id === messageId);
@@ -1938,6 +1967,7 @@ export function ChatApp() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    clearComposerDraft(character);
     setSending(true);
     setIsTyping(true);
 
@@ -3134,11 +3164,15 @@ export function ChatApp() {
                   className={`flex animate-rise-in ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
-                    className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[80%] sm:px-4 ${
+                    className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed transition-[box-shadow,ring] duration-500 sm:max-w-[80%] sm:px-4 ${
                       msg.role === "user"
                         ? `bg-brand-accent text-white shadow-glow-sm ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
                         : `border text-brand-text ${assistantBubbleClass} ${
-                            msg.streaming ? "ring-1 ring-brand-accent/30" : ""
+                            msg.streaming
+                              ? "ring-1 ring-brand-accent/30"
+                              : arrivalId === msg.id
+                                ? "ring-2 ring-brand-accent/50 shadow-glow-sm"
+                                : ""
                           }`
                     }`}
                   >
@@ -3220,17 +3254,21 @@ export function ChatApp() {
                       ? modeState?.mode === "edge_pace" && modeState.phase
                         ? `Reply in ${modeState.phase}… (Enter to send)`
                         : headerCharacterName
-                          ? `Message ${headerCharacterName.split(/\s+/)[0]}… (Enter to send)`
-                          : "Message… (Enter to send)"
+                          ? `Message ${headerCharacterName.split(/\s+/)[0]}… (draft saves)`
+                          : "Message… (draft saves)"
                       : connectionDropped
                         ? "Rejoin to keep chatting"
-                        : "Start a session first"
+                        : input.trim()
+                          ? "Draft saved — Start to send"
+                          : "Start a session first"
                   }
                   disabled={status !== "ready" || sending}
                   rows={avatarCollapsed ? 3 : 2}
                   enterKeyHint="send"
                   autoComplete="off"
-                  className="field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm"
+                  className={`field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm ${
+                    input.trim() && status !== "ready" ? "field-has-draft" : ""
+                  }`}
                 />
                 <button
                   type="button"

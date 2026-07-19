@@ -169,6 +169,12 @@ body {
   }
 }
 
+/* Composer has unsent draft — soft amber cue */
+.field-has-draft {
+  border-color: rgba(251, 191, 36, 0.35);
+  box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.12);
+}
+
 /* Glass panels / sticky chrome */
 @layer components {
   .glass-bar {

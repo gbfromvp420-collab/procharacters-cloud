@@ -322,6 +322,15 @@ export function CharacterTile({
               Chat{!compact ? ` · ${first}` : ""}
             </Link>
           )}
+          {card.edgePacePath && !resume?.resumeCode && (
+            <Link
+              href={card.edgePacePath}
+              className="btn-ghost min-h-0 border-rose-400/40 px-3 py-2 text-xs text-rose-100"
+              title="Start Edge Pace with this model"
+            >
+              Edge
+            </Link>
+          )}
           <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">
             Card
           </Link>
