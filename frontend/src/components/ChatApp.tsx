@@ -2637,6 +2637,12 @@ export function ChatApp() {
           hasEngagement={
             messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
           }
+          dnaHeat={
+            !!modeState?.dnaTreeNodeId &&
+            /edge|deny|release|gate|tease/i.test(
+              modeState.dnaTreeLabel || modeState.dnaTreeNodeId || "",
+            )
+          }
         />
         <MyCharacterWinToast
           show={!!justCreated && status === "idle" && !sessionActive}
@@ -3986,6 +3992,8 @@ export function ChatApp() {
                 characterName={characterName ?? headerCharacterName}
                 resumeCode={resumeCode}
                 messageCount={messages.length}
+                dnaTreeLabel={modeState?.dnaTreeLabel}
+                dnaTreeNodeId={modeState?.dnaTreeNodeId}
               />
               {(status === "ready" ||
                 messages.length > 0 ||

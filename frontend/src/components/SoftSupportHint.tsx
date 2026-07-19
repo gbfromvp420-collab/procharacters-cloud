@@ -24,10 +24,13 @@ const DISMISS_KEY = "procharacters.softSupport.dismissed.v1";
 export function SoftSupportHint({
   hasEngagement,
   className = "",
+  dnaHeat = false,
 }: {
   /** True when user has resume(s) or is mid-session with messages. */
   hasEngagement: boolean;
   className?: string;
+  /** Mid-session DNA tree climb — frame support as more forge headroom. */
+  dnaHeat?: boolean;
 }) {
   const [show, setShow] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -143,22 +146,39 @@ export function SoftSupportHint({
 
   return (
     <div
-      className={`rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-brand-panel/80 to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed ${className}`}
+      className={`rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed ${className} ${
+        dnaHeat
+          ? "border-violet-400/35 bg-gradient-to-r from-violet-500/12 via-amber-500/8 to-brand-panel/80"
+          : "border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-brand-panel/80 to-brand-panel"
+      }`}
       role="note"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/90">
-            Free forever · optional support
+          <p
+            className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+              dnaHeat ? "text-violet-200/95" : "text-amber-200/90"
+            }`}
+          >
+            {dnaHeat ? "Forge heat · optional headroom" : "Free forever · optional support"}
           </p>
           <p className="mt-1 text-brand-muted">
             {signedIn ? (
-              <>
-                Chat stays free. Optional{" "}
-                <strong className="text-brand-text">Day Pass</strong> /{" "}
-                <strong className="text-brand-text">Supporter</strong> unlocks more My Characters
-                {checkoutReady ? " — one tap when you’re ready." : "."}
-              </>
+              dnaHeat ? (
+                <>
+                  You climbed DNA heat. Chat stays free. Optional{" "}
+                  <strong className="text-brand-text">Day Pass</strong> unlocks more forged My
+                  Characters
+                  {checkoutReady ? " — one tap, no pressure." : "."}
+                </>
+              ) : (
+                <>
+                  Chat stays free. Optional{" "}
+                  <strong className="text-brand-text">Day Pass</strong> /{" "}
+                  <strong className="text-brand-text">Supporter</strong> unlocks more My Characters
+                  {checkoutReady ? " — one tap when you’re ready." : "."}
+                </>
+              )
             ) : (
               <>
                 Sign in once to sync resume codes across phones. Support is optional —

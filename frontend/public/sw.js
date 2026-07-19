@@ -3,7 +3,7 @@
 
 const OFFLINE_URL = "/offline.html";
 /** Bump when offline shell / icons change so clients re-cache. */
-const SHELL_CACHE = "procharacters-shell-v2";
+const SHELL_CACHE = "procharacters-shell-v3-dna";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

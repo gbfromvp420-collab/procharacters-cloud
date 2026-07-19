@@ -285,13 +285,22 @@
               "&rehydrate=1" +
               (e.characterId ? "&character=" + encodeURIComponent(e.characterId) : "");
             var isUrgent = urgent(e.resumeExpiresAt);
+            var dna =
+              (e.dnaTreeLabel && String(e.dnaTreeLabel).trim()) ||
+              (e.dnaTreeNodeId && String(e.dnaTreeNodeId).trim()) ||
+              "";
+            var heat = e.heatDepth ? String(e.heatDepth) : "";
             li.innerHTML =
               '<div class="name">' +
               escapeHtml(n) +
               (isUrgent ? ' · <span style="color:var(--rose)">reclaim soon</span>' : "") +
+              (dna
+                ? ' · <span style="color:#c4b5fd">DNA · ' + escapeHtml(dna) + "</span>"
+                : "") +
               "</div>" +
               '<div class="meta">' +
               escapeHtml(code) +
+              (heat ? " · heat " + escapeHtml(heat) : "") +
               "</div>" +
               '<div class="row">' +
               '<a class="btn ' +
@@ -301,6 +310,7 @@
               '">' +
               (isUrgent ? "Reclaim · " : "Continue · ") +
               escapeHtml(n) +
+              (dna ? " · DNA" : "") +
               "</a>" +
               "</div>";
             list.appendChild(li);

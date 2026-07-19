@@ -30,12 +30,17 @@ export function SessionWinToast({
   characterName,
   resumeCode,
   messageCount,
+  dnaTreeLabel,
+  dnaTreeNodeId,
 }: {
   show: boolean;
   characterId?: string | null;
   characterName?: string | null;
   resumeCode?: string | null;
   messageCount: number;
+  /** Studio Forge DNA node when heat climbed mid-session. */
+  dnaTreeLabel?: string | null;
+  dnaTreeNodeId?: string | null;
 }) {
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -46,9 +51,15 @@ export function SessionWinToast({
   const offeredCheckoutRef = useRef(false);
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "them";
+  const dnaLabel = dnaTreeLabel?.trim() || dnaTreeNodeId?.trim() || null;
+  const deepDna =
+    !!dnaLabel &&
+    /edge|deny|release|gate|tease/i.test(dnaLabel);
 
   useEffect(() => {
-    if (!show || !resumeCode || messageCount < 3) {
+    // DNA climbs count as heat faster — unlock win toast at 2 msgs if tree is deep
+    const minMsgs = deepDna ? 2 : 3;
+    if (!show || !resumeCode || messageCount < minMsgs) {
       setVisible(false);
       return;
     }
@@ -65,7 +76,7 @@ export function SessionWinToast({
       /* show anyway */
     }
     setVisible(true);
-  }, [show, resumeCode, messageCount, characterId]);
+  }, [show, resumeCode, messageCount, characterId, deepDna]);
 
   useEffect(() => {
     setSessionWinActive(visible);
@@ -169,25 +180,42 @@ export function SessionWinToast({
 
   return (
     <div
-      className="mb-3 animate-rise-in rounded-xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/15 via-brand-panel to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm"
+      className={`mb-3 animate-rise-in rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm ${
+        deepDna
+          ? "border-violet-400/45 bg-gradient-to-r from-violet-500/15 via-emerald-500/10 to-brand-panel"
+          : "border-emerald-400/40 bg-gradient-to-r from-emerald-500/15 via-brand-panel to-brand-panel"
+      }`}
       role="status"
       aria-live="polite"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200/90">
-            Heat locked in
+          <p
+            className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+              deepDna ? "text-violet-200/95" : "text-emerald-200/90"
+            }`}
+          >
+            {deepDna ? "DNA heat locked in" : "Heat locked in"}
             {mind ? ` · ${mind.tag}` : ""}
+            {dnaLabel ? ` · DNA ${dnaLabel}` : ""}
           </p>
           <p className="mt-1 text-brand-muted">
-            You’re in with <strong className="text-brand-text">{nick}</strong>. Resume code{" "}
-            <span className="font-mono text-emerald-100">{resumeCode}</span> saves this chat —
+            You’re in with <strong className="text-brand-text">{nick}</strong>
+            {dnaLabel ? (
+              <>
+                {" "}
+                on{" "}
+                <strong className="text-violet-200">DNA · {dnaLabel}</strong>
+              </>
+            ) : null}
+            . Resume code{" "}
+            <span className="font-mono text-emerald-100">{resumeCode}</span> saves this climb —
             come back anytime{messageCount >= 3 ? ` · ${messageCount} messages deep` : ""}.
             {offerCheckout ? (
               <>
                 {" "}
-                Optional <strong className="text-amber-100">Day Pass</strong> unlocks more My
-                Characters — free chat never paywalls.
+                Optional <strong className="text-amber-100">Day Pass</strong> unlocks more forged
+                My Characters — free chat never paywalls.
               </>
             ) : null}
           </p>
@@ -209,10 +237,18 @@ export function SessionWinToast({
                 type="button"
                 disabled={busy}
                 onClick={() => void onDayPass()}
-                className="btn-ghost min-h-0 border-amber-400/55 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-100 disabled:opacity-60"
+                className={`btn-ghost min-h-0 px-3 py-1.5 text-xs font-semibold disabled:opacity-60 ${
+                  deepDna
+                    ? "border-violet-400/55 bg-violet-500/20 text-violet-50"
+                    : "border-amber-400/55 bg-amber-500/15 text-amber-100"
+                }`}
                 title="Optional — free chat never paywalls"
               >
-                {busy ? "Opening…" : `Day Pass · ${dayPrice}`}
+                {busy
+                  ? "Opening…"
+                  : deepDna
+                    ? `Keep forging · Day Pass · ${dayPrice}`
+                    : `Day Pass · ${dayPrice}`}
               </button>
             )}
             <Link

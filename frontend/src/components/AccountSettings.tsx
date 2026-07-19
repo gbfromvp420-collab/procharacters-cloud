@@ -73,6 +73,7 @@ import {
 } from "@/lib/share-links";
 import {
   formatResumeExpiryShort,
+  getResumeForCharacter,
   isResumeExpiryUrgent,
 } from "@/lib/resume-cache";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
@@ -1537,6 +1538,11 @@ export function AccountSettings() {
                     });
                     const urgent = isResumeExpiryUrgent(session?.resumeExpiresAt);
                     const expiry = formatResumeExpiryShort(session?.resumeExpiresAt);
+                    const localTrail = getResumeForCharacter(m.id);
+                    const dnaLabel =
+                      localTrail?.dnaTreeLabel?.trim() ||
+                      localTrail?.dnaTreeNodeId?.trim() ||
+                      null;
                     return (
                       <li
                         key={m.id}
@@ -1549,10 +1555,16 @@ export function AccountSettings() {
                               <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide text-violet-200/90">
                                 private
                               </span>
+                              {dnaLabel ? (
+                                <span className="ml-1.5 rounded-full border border-violet-400/45 bg-violet-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-100">
+                                  DNA · {dnaLabel}
+                                </span>
+                              ) : null}
                             </p>
                             <p className="mt-0.5 line-clamp-1 text-[11px] text-brand-muted">
                               {mind?.blurb || m.energyLabel || "My Character"}
                               {packFilled > 0 ? ` · clips ${packFilled}/4` : " · base clips"}
+                              {localTrail?.heatDepth ? ` · heat ${localTrail.heatDepth}` : ""}
                             </p>
                             {session?.resumeCode && (
                               <p
