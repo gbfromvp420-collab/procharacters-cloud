@@ -1,9 +1,13 @@
 "use client";
 
+import { mindFingerprint } from "@/lib/mind-fingerprint";
+
 type Props = {
   show: boolean;
   resumeCode: string | null;
   characterName: string | null;
+  /** Optional character id for mind tag on the rescue strip. */
+  characterId?: string | null;
   busy: boolean;
   onRejoin: () => void;
   onDismiss: () => void;
@@ -18,6 +22,7 @@ export function SessionDropRescue({
   show,
   resumeCode,
   characterName,
+  characterId,
   busy,
   onRejoin,
   onDismiss,
@@ -26,32 +31,31 @@ export function SessionDropRescue({
   if (!show) return null;
 
   const who = characterName?.trim() || "your character";
-  const via = resumeCode
-    ? (
-        <>
-          resume code{" "}
-          <span className="font-mono text-amber-100">{resumeCode}</span>
-        </>
-      )
-    : (
-        "your last session"
-      );
+  const nick = who.split(/\s+/)[0] || who;
+  const mind = mindFingerprint(characterId);
+  const via = resumeCode ? (
+    <>
+      resume code <span className="font-mono text-amber-100">{resumeCode}</span>
+    </>
+  ) : (
+    "your last session"
+  );
 
   return (
     <div
-      className={`rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-brand-panel to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm ${className}`}
+      className={`animate-rise-in rounded-xl border border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-brand-panel to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm ${className}`}
       role="status"
-      aria-live="polite"
+      aria-live="assertive"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/90">
             Connection dropped
+            {mind ? ` · ${mind.tag}` : ""}
           </p>
           <p className="mt-1 text-brand-muted">
             Link to <strong className="text-brand-text">{who}</strong> cut out.
-            Rejoin with {via} to keep chatting — your memory is still on the
-            server.
+            Rejoin with {via} to keep chatting — memory stays on the server.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -59,9 +63,9 @@ export function SessionDropRescue({
             type="button"
             disabled={busy}
             onClick={onRejoin}
-            className="btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50"
+            className="btn-primary min-h-0 px-3 py-1.5 text-xs ring-1 ring-amber-400/40 disabled:opacity-50"
           >
-            {busy ? "Rejoining…" : "Rejoin"}
+            {busy ? "Rejoining…" : `Rejoin · ${nick}`}
           </button>
           <button
             type="button"

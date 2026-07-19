@@ -313,12 +313,54 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         </div>
 
         {visible.length === 0 ? (
-          <div className="rounded-2xl border border-brand-border bg-brand-panel p-8 text-center sm:p-10">
-            <p className="text-brand-text">{filter === "mine" ? "No saved chats yet" : "No characters match this search."}</p>
-            <div className="mt-4 flex flex-wrap justify-center gap-3">
-              <button type="button" onClick={() => { setQuery(""); setFilter("all"); }} className="text-sm text-brand-accent hover:underline">Browse all</button>
-              <Link href="/chat" className="text-sm text-brand-accent hover:underline">Go to chat →</Link>
-            </div>
+          <div className="rounded-2xl border border-brand-border bg-gradient-to-b from-brand-panel to-brand-bg p-8 text-center sm:p-10">
+            {filter === "mine" ? (
+              <>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-amber-200/80">
+                  My chats
+                </p>
+                <p className="mt-2 text-lg font-semibold text-brand-text">No saved heat yet</p>
+                <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-brand-muted">
+                  Start a live chat while signed in — resume codes land here so you can continue
+                  from any device.
+                </p>
+                <div className="mt-5 flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("featured");
+                      setSort("featured");
+                    }}
+                    className="btn-primary min-h-0 px-5 py-2.5 text-sm"
+                  >
+                    Meet tonight&apos;s cast
+                  </button>
+                  <Link href="/chat" className="btn-ghost min-h-0 px-5 py-2.5 text-sm">
+                    Open live chat
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-brand-text">No characters match this search.</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuery("");
+                      setFilter("all");
+                    }}
+                    className="text-sm text-brand-accent hover:underline"
+                  >
+                    Browse all
+                  </button>
+                  <Link href="/chat" className="text-sm text-brand-accent hover:underline">
+                    Go to chat →
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">

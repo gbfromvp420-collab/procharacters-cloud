@@ -89,6 +89,10 @@ import {
 } from "@/lib/share-links";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
+  presenceBubbleClass,
+  resolvePresenceSkin,
+} from "@/lib/presence";
+import {
   getResumeForCharacter,
   recapFromSessionNotes,
   rememberResumeRecap,
@@ -265,6 +269,8 @@ export function ChatApp() {
     line: string | null;
     show: boolean;
   }>({ line: null, show: false });
+  /** Brief send-button heat feedback. */
+  const [sendPulse, setSendPulse] = useState(false);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
@@ -1888,6 +1894,9 @@ export function ChatApp() {
     const text = input.trim();
     if (!ws || ws.readyState !== WebSocket.OPEN || !text || sending) return;
 
+    setSendPulse(true);
+    window.setTimeout(() => setSendPulse(false), 420);
+
     const userMessage: ChatMessage = {
       id: makeId(),
       role: "user",
@@ -1926,6 +1935,11 @@ export function ChatApp() {
     FALLBACK_CHARACTERS.find((c) => c.id === (activeCharacterId ?? character))
       ?.openingMessage ||
     null;
+  const chatPresenceSkin = resolvePresenceSkin(
+    avatarState?.presenceSkin,
+    activeCharacterId ?? character,
+  );
+  const assistantBubbleClass = presenceBubbleClass(chatPresenceSkin);
   const statusLabel =
     status === "ready"
       ? headerCharacterName
@@ -2015,6 +2029,7 @@ export function ChatApp() {
           characterName={
             characterName ?? savedSession?.characterName ?? null
           }
+          characterId={activeCharacterId ?? character}
           busy={restarting}
           onRejoin={() => void rejoinAfterDrop()}
           onDismiss={() => setConnectionDropped(false)}
@@ -3043,27 +3058,49 @@ export function ChatApp() {
                 </div>
               )}
 
-              {messages.map((msg) => (
+              {messages.map((msg, i) => {
+                const isLast = i === messages.length - 1;
+                const prev = i > 0 ? messages[i - 1] : null;
+                const showMindTag =
+                  msg.role === "assistant" &&
+                  !!headerMind &&
+                  (!prev || prev.role === "user" || !!msg.streaming);
+                return (
                 <div
                   key={msg.id}
-                  className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                  className={`flex animate-rise-in ${msg.role === "user" ? "justify-end" : "justify-start"}`}
                 >
                   <div
                     className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed sm:max-w-[80%] sm:px-4 ${
                       msg.role === "user"
-                        ? "bg-brand-accent text-white shadow-glow-sm"
-                        : "border border-brand-border bg-brand-bg text-brand-text"
+                        ? `bg-brand-accent text-white shadow-glow-sm ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
+                        : `border text-brand-text ${assistantBubbleClass} ${
+                            msg.streaming ? "ring-1 ring-brand-accent/30" : ""
+                          }`
                     }`}
                   >
+                    {showMindTag && (
+                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-accent/80">
+                        {headerCharacterName?.split(/\s+/)[0] || "Them"}
+                        {" · "}
+                        {headerMind!.tag}
+                      </p>
+                    )}
                     <span className="whitespace-pre-wrap break-words">{msg.content}</span>
                     {msg.streaming && (
                       <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-brand-accent align-middle" />
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
 
-              {isTyping && <TypingIndicator name={characterName} />}
+              {isTyping && (
+                <TypingIndicator
+                  name={characterName ?? headerCharacterName}
+                  characterId={activeCharacterId ?? character}
+                />
+              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -3123,9 +3160,11 @@ export function ChatApp() {
                   type="button"
                   onClick={sendMessage}
                   disabled={!canSend}
-                  className="btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5"
+                  className={`btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5 ${
+                    sendPulse ? "scale-95 ring-2 ring-white/40 shadow-glow" : ""
+                  } ${sending ? "opacity-80" : ""}`}
                 >
-                  Send
+                  {sending ? "…" : "Send"}
                 </button>
               </div>
             </div>

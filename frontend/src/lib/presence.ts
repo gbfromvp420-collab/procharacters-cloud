@@ -125,3 +125,30 @@ export function presenceMotionClass(band: "idle" | "tease" | "play" | "edge"): s
       return "scale-100 duration-1000";
   }
 }
+
+/**
+ * Chat bubble accent for assistant messages — mind identity, not shared video body.
+ */
+export function presenceBubbleClass(skin: PresenceSkin): string {
+  switch (skin) {
+    case "twink_shy":
+      return "border-pink-400/40 bg-gradient-to-br from-pink-500/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(244,114,182,0.55)]";
+    case "twink_gym":
+      return "border-amber-400/40 bg-gradient-to-br from-amber-500/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(251,191,36,0.55)]";
+    case "twink_punk":
+      return "border-fuchsia-400/40 bg-gradient-to-br from-fuchsia-500/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(217,70,239,0.55)]";
+    case "female_goth":
+      return "border-violet-400/45 bg-gradient-to-br from-violet-600/15 to-brand-bg shadow-[inset_3px_0_0_0_rgba(139,92,246,0.55)]";
+    case "female_athletic":
+      return "border-sky-400/40 bg-gradient-to-br from-sky-500/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(56,189,248,0.5)]";
+    case "female_brat":
+      return "border-pink-400/40 bg-gradient-to-br from-rose-500/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(251,113,133,0.55)]";
+    case "female_default":
+      return "border-rose-400/35 bg-gradient-to-br from-rose-500/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(251,113,133,0.45)]";
+    case "custom":
+      return "border-brand-accent/35 bg-gradient-to-br from-brand-accent/10 to-brand-bg shadow-[inset_3px_0_0_0_rgba(225,29,143,0.45)]";
+    case "twink_default":
+    default:
+      return "border-rose-400/35 bg-gradient-to-br from-rose-500/8 to-brand-bg shadow-[inset_3px_0_0_0_rgba(244,63,94,0.45)]";
+  }
+}
