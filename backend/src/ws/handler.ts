@@ -68,6 +68,7 @@ export function createWebSocketHandler(
         Date.now(),
         session.characterId,
       ),
+      session.characterId,
     );
 
     send(socket, {

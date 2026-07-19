@@ -4,7 +4,12 @@
  * Edge Pace coach language fuses with signature minds (edge-pace-minds).
  */
 
-import { edgePaceCoachCue, edgePaceMindLine } from "./edge-pace-minds.js";
+import {
+  edgePaceCoachCue,
+  edgePaceFireLine,
+  edgePaceMindLine,
+  edgePacePhaseChips,
+} from "./edge-pace-minds.js";
 
 export type SessionMode = "normal" | "edge_pace";
 
@@ -89,8 +94,8 @@ export function computeModeState(
   };
 
   const coachCue = characterId
-    ? edgePaceCoachCue(characterId, phase)
-    : edgePaceCoachCue("twink-default", phase);
+    ? edgePaceCoachCue(characterId, phase, round)
+    : edgePaceCoachCue("twink-default", phase, round);
 
   return {
     mode: "edge_pace",
@@ -129,16 +134,28 @@ export function buildSessionModeInstructions(
   };
 
   const mindLine = characterId
-    ? edgePaceMindLine(characterId, state.phase)
+    ? edgePaceMindLine(characterId, state.phase, state.round)
     : `Signature mind for this phase: ${state.coachCue}`;
+
+  const phaseRules: Record<EdgePhase, string> = {
+    build:
+      "BUILD now: rise heat without peak. Plant one physical detail for later rounds to callback.",
+    hold: "HOLD now: freeze / slow / deny. Count breaths or strokes. No finish language unless they demand release.",
+    almost:
+      "ALMOST now: peak tension for a few beats then pull back hard. Trophy denial — no climax.",
+    breathe:
+      "BREATHE now: soft cool-down, keep arousal charged, reset the game for the next round without cold-open.",
+  };
 
   return [
     "## Session mode: Edge Pace (v3 preview)",
     "You are co-piloting a paced edging session. Stay fully in THIS character’s mind.",
     `Current: ${state.label}`,
+    `Round: ${state.round + 1} (0-indexed internal: ${state.round})`,
     `Phase remaining: ~${state.phaseRemainingSec}s`,
     `Coach cue: ${state.coachCue}`,
     mindLine,
+    phaseRules[state.phase],
     `Body (avatar_intent): ${avatarByPhase[state.phase]}`,
     "",
     "Rules:",
@@ -146,12 +163,19 @@ export function buildSessionModeInstructions(
     "- Prefer denial / edge unless the user clearly asks to finish.",
     "- Keep signature clothing and photorealistic detail.",
     "- Match avatar_intent to the phase so the video body follows your words.",
+    "- Name the phase shift when it just changed (soft: “hold with me…” / “almost — not yet”).",
     "- This is NOT a separate AI product — you are still the same character model.",
     "- Optional soft Spanish only if this character’s prompt allows it (sparingly).",
+    state.round >= 1
+      ? "- Multi-round: they already survived a cycle — recognize that loyalty; denser sensory detail, not a new premise."
+      : "- First round: teach the game gently while staying filthy.",
   ].join("\n");
 }
 
-export function formatModeForUi(state: ModeRuntimeState): {
+export function formatModeForUi(
+  state: ModeRuntimeState,
+  characterId?: string,
+): {
   mode: SessionMode;
   label: string;
   phase: EdgePhase;
@@ -160,18 +184,25 @@ export function formatModeForUi(state: ModeRuntimeState): {
   phaseElapsedSec: number;
   phaseDurationSec: number;
   coachCue: string;
+  /** Short user fire line for Seed/Fire UI */
+  fireLine: string;
+  /** Micro chips for one-tap replies this phase */
+  phaseChips: string[];
 } {
   const phaseDurationSec =
     EDGE_PHASES.find((p) => p.phase === state.phase)?.seconds ??
     Math.max(1, state.phaseElapsedSec + state.phaseRemainingSec);
+  const phase = state.phase;
   return {
     mode: state.mode,
     label: state.label,
-    phase: state.phase,
+    phase,
     round: state.round,
     phaseRemainingSec: state.phaseRemainingSec,
     phaseElapsedSec: state.phaseElapsedSec,
     phaseDurationSec,
     coachCue: state.coachCue,
+    fireLine: edgePaceFireLine(characterId, phase),
+    phaseChips: edgePacePhaseChips(phase),
   };
 }

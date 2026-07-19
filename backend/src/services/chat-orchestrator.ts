@@ -215,7 +215,7 @@ export class ChatOrchestrator {
       usedLlm,
       sessionNotes: notes,
       ...(priorNotesOut ? { priorNotes: priorNotesOut } : {}),
-      modeState: formatModeForUi(modeState),
+      modeState: formatModeForUi(modeState, session.characterId),
     };
   }
 

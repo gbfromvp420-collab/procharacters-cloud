@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Heat Arc continuity)  
+**Updated:** 2026-07-19 (**cook** — Edge Pace feel)  
 **Session:** King Grok + Gary — Gary on phone until ~5:30 CST (Railway vars at desk).
 
 ---
@@ -9,20 +9,22 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Error alerts** | ✅ eng: **ntfy phone** (no Discord/Slack) · optional email · test button · [ops-error-webhook.md](./ops-error-webhook.md) | **You @5:30:** set `ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC` on **procharacters-api** → install ntfy → Send test alert |
-| **Heat Arc** | ✅ richer scene lock · model heat-arc pacing · tappable lock chips · mid-session chips | Hard refresh after deploy; long session smoke |
-| **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass · return seed | — |
-| Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` after push |
-| Stripe | ✅ LIVE + webhook | Careful real charge smoke if desired |
-| **Next** | Webhook green @ desk · content packs when ready | Say `resume` / `spot` / `next` / `cook` |
+| **Error alerts** | ✅ eng: **ntfy phone** · [ops-error-webhook.md](./ops-error-webhook.md) | **You @5:30:** `ERROR_WEBHOOK_URL` on **procharacters-api** → ntfy → Send test alert |
+| **Heat Arc** | ✅ live (`96a7370`) | Long session smoke anytime |
+| **Edge Pace feel** | ✅ round-aware coach · Seed/Fire on strip · phase chips · urgency | Start Edge Pace → ride a full cycle |
+| **Conversion Close** | ✅ | — |
+| Railway | ✅ `captivating-vision` | Confirm SHA after push |
+| Stripe | ✅ LIVE | Careful charge smoke if desired |
+| **Next** | Webhook @ desk · content packs | `resume` / `spot` / `next` / `cook` |
 
 ---
 
-## What shipped this cook (Heat Arc)
+## What shipped this cook (Edge Pace feel)
 
-1. **Scene lock v2** — clothing + pose + act + arousal + game (+ call name)
-2. **Heat arc directive** in every LLM turn — spark → warm → edge → deep → locked
-3. **UI** — memory chips tap-to-seed composer; quick replies stay mid-session; afterglow denser at deep/locked; Send label tracks depth
+1. **Round-aware coach cues** — R2+ denser multi-cycle denial language
+2. **Phase rules in prompt** — build/hold/almost/breathe explicit for the model
+3. **EdgePaceStrip** — Seed/Fire + phase micro-chips + last-8s urgency + phase-shift flash
+4. **fireLine / phaseChips** on modeState WS payload
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 

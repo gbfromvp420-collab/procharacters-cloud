@@ -37,17 +37,51 @@ function phaseBarClass(phase: string): string {
   }
 }
 
+function fallbackFire(phase: string): string {
+  switch (phase) {
+    case "hold":
+      return "hold it — don’t finish";
+    case "almost":
+      return "right there — pull back";
+    case "breathe":
+      return "breathe with me… again soon";
+    case "build":
+    default:
+      return "build it slower";
+  }
+}
+
+function fallbackChips(phase: string): string[] {
+  switch (phase) {
+    case "hold":
+      return ["hold it", "don’t finish", "stay…"];
+    case "almost":
+      return ["right there", "pull back", "don’t finish"];
+    case "breathe":
+      return ["breathe", "again soon", "still aching"];
+    case "build":
+    default:
+      return ["slower", "show me", "build it"];
+  }
+}
+
 /**
  * Phase 10 Edge Pace — visual phase strip + countdown (v3 preview).
- * Almost phase ramps visual heat; phase changes flash the coach cue.
+ * Phase changes flash coach cue; Seed/Fire + phase chips keep the game in your hands.
  */
 export function EdgePaceStrip({
   modeState,
   tickOffset = 0,
+  onSeed,
+  onFire,
+  canFire,
 }: {
   modeState: SessionModeUiState;
   /** Local seconds since last WS modeState (client countdown). */
   tickOffset?: number;
+  onSeed?: (text: string) => void;
+  onFire?: (text: string) => void;
+  canFire?: boolean;
 }) {
   const [flash, setFlash] = useState(false);
   const prevPhase = useRef(modeState.phase);
@@ -56,7 +90,7 @@ export function EdgePaceStrip({
     if (prevPhase.current !== modeState.phase) {
       prevPhase.current = modeState.phase;
       setFlash(true);
-      const t = window.setTimeout(() => setFlash(false), 900);
+      const t = window.setTimeout(() => setFlash(false), 1400);
       return () => window.clearTimeout(t);
     }
   }, [modeState.phase]);
@@ -81,12 +115,19 @@ export function EdgePaceStrip({
   const isAlmost = modeState.phase === "almost";
   const isHold = modeState.phase === "hold";
   const isBreathe = modeState.phase === "breathe";
+  const urgent = remaining > 0 && remaining <= 8;
+  const fire =
+    modeState.fireLine?.trim() || fallbackFire(modeState.phase);
+  const chips =
+    modeState.phaseChips?.length
+      ? modeState.phaseChips.slice(0, 3)
+      : fallbackChips(modeState.phase);
 
   return (
     <div
       className={`rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed text-rose-50 transition-[border-color,box-shadow,background] duration-500 ${phaseShellClass(modeState.phase)} ${
-        flash ? "ring-2 ring-white/25" : ""
-      }`}
+        flash ? "ring-2 ring-white/30 scale-[1.01]" : ""
+      } ${urgent && !isBreathe ? "ring-1 ring-amber-200/40" : ""}`}
       role="status"
       aria-live="polite"
     >
@@ -104,13 +145,17 @@ export function EdgePaceStrip({
         >
           {modeState.label}
           {isAlmost ? " · DON’T FINISH" : isBreathe ? " · soft" : ""}
+          {flash ? " · phase shift" : ""}
         </p>
         <p
           className={`font-mono text-xs tabular-nums ${
-            isAlmost ? "text-rose-50 font-semibold scale-105" : "text-rose-100/90"
+            isAlmost || urgent
+              ? "scale-105 font-semibold text-rose-50"
+              : "text-rose-100/90"
           }`}
         >
           {remaining}s
+          {urgent ? " · soon" : ""}
         </p>
       </div>
 
@@ -124,7 +169,7 @@ export function EdgePaceStrip({
               key={p.id}
               className={`rounded-md px-1 py-1.5 text-center text-[9px] font-semibold uppercase tracking-wide transition ${
                 almostActive
-                  ? "bg-rose-400/50 text-white ring-2 ring-rose-200/70 animate-pulse"
+                  ? "animate-pulse bg-rose-400/50 text-white ring-2 ring-rose-200/70"
                   : active
                     ? p.id === "hold"
                       ? "bg-amber-400/35 text-amber-50 ring-1 ring-amber-300/50"
@@ -152,7 +197,7 @@ export function EdgePaceStrip({
         <div
           className={`h-full rounded-full bg-gradient-to-r transition-[width] duration-1000 ease-linear ${phaseBarClass(modeState.phase)} ${
             isAlmost ? "shadow-[0_0_12px_rgba(251,113,133,0.8)]" : ""
-          }`}
+          } ${urgent ? "animate-pulse" : ""}`}
           style={{ width: `${Math.round(progress * 100)}%` }}
         />
       </div>
@@ -160,16 +205,73 @@ export function EdgePaceStrip({
       <p
         className={`mt-2 ${
           flash
-            ? "text-white font-medium"
+            ? "font-medium text-white"
             : isAlmost
-              ? "text-rose-50 font-medium"
+              ? "font-medium text-rose-50"
               : "text-brand-muted"
         }`}
       >
         {modeState.coachCue}
       </p>
-      <p className="mt-1 text-[10px] text-brand-soft">
-        Soft timers · round {modeState.round + 1} · not a full assistant product
+
+      {/* Phase action row — Seed/Fire + micro chips */}
+      {(onSeed || onFire) && (
+        <div className="mt-2 space-y-1.5 border-t border-white/10 pt-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {onSeed && (
+              <button
+                type="button"
+                onClick={() => onSeed(fire)}
+                className="rounded-full border border-white/20 bg-black/25 px-2.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-rose-50/90 hover:border-white/40"
+              >
+                Seed
+              </button>
+            )}
+            {onFire && (
+              <button
+                type="button"
+                disabled={canFire === false}
+                onClick={() => onFire(fire)}
+                className={`rounded-full border px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide disabled:opacity-40 ${
+                  isAlmost
+                    ? "border-rose-200/70 bg-rose-500/40 text-white"
+                    : isHold
+                      ? "border-amber-200/50 bg-amber-500/30 text-amber-50"
+                      : isBreathe
+                        ? "border-sky-200/50 bg-sky-500/30 text-sky-50"
+                        : "border-rose-300/50 bg-rose-500/25 text-rose-50"
+                }`}
+              >
+                Fire ↵
+              </button>
+            )}
+            <span className="line-clamp-1 max-w-[14rem] font-mono text-[9px] opacity-70">
+              “{fire}”
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1" role="group" aria-label="Phase quick replies">
+            {chips.map((chip) => (
+              <button
+                key={chip}
+                type="button"
+                disabled={canFire === false && !onSeed}
+                onClick={() => {
+                  if (onFire && chip.length <= 14) onFire(chip);
+                  else onSeed?.(chip);
+                }}
+                className="rounded-full border border-white/15 bg-black/20 px-2 py-0.5 text-[9px] text-rose-50/85 hover:border-white/35 disabled:opacity-40"
+              >
+                {chip}
+                {onFire && chip.length <= 14 ? " ↵" : ""}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="mt-1.5 text-[10px] text-brand-soft">
+        Soft timers · round {modeState.round + 1}
+        {modeState.round >= 1 ? " · multi-cycle" : ""} · not a full assistant product
       </p>
     </div>
   );

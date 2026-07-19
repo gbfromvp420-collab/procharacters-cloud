@@ -94,9 +94,139 @@ const MINDS: Record<string, PhaseCues> = {
 };
 
 /** Resolve character-flavored coach cue for an Edge Pace phase. */
-export function edgePaceCoachCue(characterId: string, phase: EdgePacePhase): string {
+export function edgePaceCoachCue(
+  characterId: string,
+  phase: EdgePacePhase,
+  round = 0,
+): string {
   const mind = MINDS[characterId] ?? pickByBase(characterId);
-  return (mind ?? GENERIC)[phase];
+  const base = (mind ?? GENERIC)[phase];
+  if (round <= 0) return base;
+  // Round 2+ (0-indexed round >= 1): denser multi-cycle language
+  const multi: Record<EdgePacePhase, string> = {
+    build: " They already held once — rebuild slower, call back the last edge.",
+    hold: " Second+ cycle — tighter denial, shorter freezes, more eye contact.",
+    almost: " Multi-round almost — reward loyalty with denser denial, still no finish.",
+    breathe: " Soft reset after a round they survived — praise, then re-arm the game.",
+  };
+  return `${base}${multi[phase]}`;
+}
+
+/**
+ * Short user-side fire line for Seed/Fire UI (not the full coach essay).
+ * Character-flavored where we have a mind; phase-first otherwise.
+ */
+export function edgePaceFireLine(
+  characterId: string | undefined | null,
+  phase: EdgePacePhase,
+): string {
+  const id = characterId || "twink-default";
+  const mind = MINDS[id] ?? pickByBase(id);
+  if (!mind) {
+    return (
+      {
+        build: "build it slower",
+        hold: "hold it — don’t finish",
+        almost: "right there — pull back",
+        breathe: "breathe with me… again soon",
+      } as const
+    )[phase];
+  }
+  // Prefer short lines from mind tags
+  if (id.includes("gym") || mind === MINDS["twink-gym"]) {
+    return (
+      {
+        build: "eyes on the pouch — slow reps",
+        hold: "hold that burn. no finish",
+        almost: "last rep — cool-down only",
+        breathe: "rest interval… still hard",
+      } as const
+    )[phase];
+  }
+  if (id.includes("shy")) {
+    return (
+      {
+        build: "peek for me… don’t hide",
+        hold: "hold it with me… please",
+        almost: "almost… snap it back",
+        breathe: "soft… still hard for me",
+      } as const
+    )[phase];
+  }
+  if (id.includes("punk") || id.includes("alt")) {
+    return (
+      {
+        build: "stare. i’m not shy",
+        hold: "beg pretty — freeze",
+        almost: "tip only — back in the net",
+        breathe: "mean grin… round two",
+      } as const
+    )[phase];
+  }
+  if (id.includes("goth") || id.includes("soft-goth")) {
+    return (
+      {
+        build: "ritual pace — almost-touch",
+        hold: "beg quieter… hands off",
+        almost: "three-count open — no finish",
+        breathe: "charged quiet… stay open",
+      } as const
+    )[phase];
+  }
+  if (id.includes("athletic")) {
+    return (
+      {
+        build: "cool-down starts with staring",
+        hold: "count of ten — stop",
+        almost: "almost-fill… empty on purpose",
+        breathe: "rest set. still wet",
+      } as const
+    )[phase];
+  }
+  if (id.includes("brat") || id.includes("playful")) {
+    return (
+      {
+        build: "look but don’t — hands up",
+        hold: "lost count. start over",
+        almost: "in… moan… out. not yet",
+        breathe: "dare you to beg again",
+      } as const
+    )[phase];
+  }
+  if (id.includes("female")) {
+    return (
+      {
+        build: "watch first — open panel",
+        hold: "stay with that ache",
+        almost: "open three counts — close",
+        breathe: "keep the panel framed",
+      } as const
+    )[phase];
+  }
+  return (
+    {
+      build: "slow over fabric… rising",
+      hold: "freeze — not yet… mírame",
+      almost: "tip only — snap back",
+      breathe: "leave the wet spot",
+    } as const
+  )[phase];
+}
+
+/** Phase micro-chips for one-tap user replies (3 max recommended). */
+export function edgePacePhaseChips(phase: EdgePacePhase): string[] {
+  switch (phase) {
+    case "build":
+      return ["slower", "show me", "build it"];
+    case "hold":
+      return ["hold it", "don’t finish", "stay…"];
+    case "almost":
+      return ["right there", "pull back", "don’t finish"];
+    case "breathe":
+      return ["breathe", "again soon", "still aching"];
+    default:
+      return ["keep going", "slower"];
+  }
 }
 
 function pickByBase(characterId: string): PhaseCues | null {
@@ -110,7 +240,11 @@ function pickByBase(characterId: string): PhaseCues | null {
 }
 
 /** Extra line for prompt: how THIS mind runs the current phase. */
-export function edgePaceMindLine(characterId: string, phase: EdgePacePhase): string {
-  const cue = edgePaceCoachCue(characterId, phase);
+export function edgePaceMindLine(
+  characterId: string,
+  phase: EdgePacePhase,
+  round = 0,
+): string {
+  const cue = edgePaceCoachCue(characterId, phase, round);
   return `Signature mind for this phase: ${cue}`;
 }

@@ -3868,7 +3868,20 @@ export function ChatApp() {
                 );
               })()}
               {modeState && modeState.mode === "edge_pace" && status === "ready" && (
-                <EdgePaceStrip modeState={modeState} tickOffset={modeTick} />
+                <EdgePaceStrip
+                  modeState={modeState}
+                  tickOffset={modeTick}
+                  canFire={!sending && !isTyping}
+                  onSeed={(text) => {
+                    setInput((prev) => {
+                      const p = prev.trim();
+                      if (!p) return text;
+                      return `${p} ${text}`;
+                    });
+                    window.setTimeout(() => inputRef.current?.focus(), 40);
+                  }}
+                  onFire={(text) => sendMessage(text)}
+                />
               )}
               <RejoinRecapToast
                 show={rejoinRecap.show && status === "ready"}

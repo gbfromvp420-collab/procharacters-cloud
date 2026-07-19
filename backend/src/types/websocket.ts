@@ -42,7 +42,11 @@ export interface SessionModeUiState {
   phase: string;
   round: number;
   phaseRemainingSec: number;
+  phaseElapsedSec?: number;
+  phaseDurationSec?: number;
   coachCue: string;
+  fireLine?: string;
+  phaseChips?: string[];
 }
 
 export interface SessionReadyEvent extends ServerEventBase {

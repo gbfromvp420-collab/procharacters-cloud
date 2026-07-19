@@ -57,6 +57,10 @@ export interface SessionModeUiState {
   /** Full length of current phase in seconds (optional). */
   phaseDurationSec?: number;
   coachCue: string;
+  /** Short user fire line for Seed/Fire (from API when present). */
+  fireLine?: string;
+  /** Micro chips for one-tap replies this phase. */
+  phaseChips?: string[];
 }
 
 export interface CreateSessionResponse {

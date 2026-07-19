@@ -28,7 +28,12 @@ function whisperForMind(characterId?: string | null): string {
 }
 
 /** Short fire line derived from whisper energy — not the full coach essay. */
-function fireLineFor(characterId?: string | null, edgePhase?: string | null): string {
+function fireLineFor(
+  characterId?: string | null,
+  edgePhase?: string | null,
+  serverFire?: string | null,
+): string {
+  if (serverFire?.trim()) return serverFire.trim();
   if (edgePhase === "almost") return "don’t finish — hold right there";
   if (edgePhase === "hold") return "stay… don’t move yet";
   if (edgePhase === "breathe") return "breathe with me — soft";
@@ -83,7 +88,11 @@ export function HeatWhisperStrip({
       ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
       : null;
   const line = cue || whisperForMind(characterId);
-  const fire = fireLineFor(characterId, edge ? modeState?.phase : null);
+  const fire = fireLineFor(
+    characterId,
+    edge ? modeState?.phase : null,
+    edge ? modeState?.fireLine : null,
+  );
   const almost = edge && modeState?.phase === "almost";
 
   return (
