@@ -30,6 +30,24 @@ type HealthPayload = {
   avatar?: { dedicatedReady?: string[] };
 };
 
+type MetricsPayload = {
+  uptimeSec?: number;
+  httpRequests?: number;
+  httpErrors5xx?: number;
+  httpErrors4xx?: number;
+  wsConnections?: number;
+  sessionsCreated?: number;
+  chatTurns?: number;
+  chatLlmErrors?: number;
+  customCharactersCreated?: number;
+  authLogin?: number;
+  authFailures?: number;
+  pushTestSent?: number;
+  pushSubscribe?: number;
+  pushExpirySent?: number;
+  startedAt?: string;
+};
+
 type Chip = {
   key: string;
   label: string;
@@ -49,12 +67,32 @@ function formatCronAge(iso: string | undefined): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function formatUptime(sec: number | undefined): string {
+  if (sec == null || !Number.isFinite(sec) || sec < 0) return "—";
+  if (sec < 60) return `${Math.floor(sec)}s`;
+  const mins = Math.floor(sec / 60);
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return `${hrs}h ${mins % 60}m`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ${hrs % 24}h`;
+}
+
+function formatCount(n: number | undefined): string {
+  if (n == null || !Number.isFinite(n)) return "0";
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 10_000) return `${Math.round(n / 1000)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
 /**
- * Compact live ops strip for Account — shows deploy SHA, push, DB, LiveKit, Stripe, webhook.
- * Read-only against public GET /health (no secrets).
+ * Compact live ops strip for Account — deploy SHA, push, DB, LiveKit, Stripe,
+ * plus product counters from /metrics (process lifetime).
  */
 export function SystemPulse({ compact = false }: { compact?: boolean }) {
   const [health, setHealth] = useState<HealthPayload | null>(null);
+  const [metrics, setMetrics] = useState<MetricsPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -62,12 +100,20 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/health`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`Health ${res.status}`);
-      const data = (await res.json()) as HealthPayload;
-      setHealth(data);
+      const [hRes, mRes] = await Promise.all([
+        fetch(`${API_BASE}/health`, { cache: "no-store" }),
+        fetch(`${API_BASE}/metrics`, { cache: "no-store" }).catch(() => null),
+      ]);
+      if (!hRes.ok) throw new Error(`Health ${hRes.status}`);
+      setHealth((await hRes.json()) as HealthPayload);
+      if (mRes?.ok) {
+        setMetrics((await mRes.json()) as MetricsPayload);
+      } else {
+        setMetrics(null);
+      }
     } catch (err) {
       setHealth(null);
+      setMetrics(null);
       setError(err instanceof Error ? err.message : "Could not reach API");
     } finally {
       setLoading(false);
@@ -96,12 +142,17 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         .join(" · "),
     });
 
-    const dbOk = health.accounts?.provider === "prisma" ? !!health.accounts.database?.ok : true;
+    const dbOk =
+      health.accounts?.provider === "prisma" ? !!health.accounts.database?.ok : true;
     chips.push({
       key: "db",
       label:
         health.accounts?.provider === "prisma"
-          ? `DB ${dbOk ? "ok" : "down"}${health.accounts.database?.latencyMs != null ? ` ${health.accounts.database.latencyMs}ms` : ""}`
+          ? `DB ${dbOk ? "ok" : "down"}${
+              health.accounts.database?.latencyMs != null
+                ? ` ${health.accounts.database.latencyMs}ms`
+                : ""
+            }`
           : "DB json",
       ok: dbOk,
       title: `Accounts provider: ${health.accounts?.provider ?? "?"}`,
@@ -142,7 +193,9 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         : "Stripe off",
       ok: stripeOn ? true : "info",
       title: health.billing?.freePath
-        ? `Free chat always works; mode=${stripeMode}; webhook=${health.billing?.webhook ? "on" : "off"}`
+        ? `Free chat always works; mode=${stripeMode}; webhook=${
+            health.billing?.webhook ? "on" : "off"
+          }`
         : "Billing",
     });
     if (stripeOn) {
@@ -150,7 +203,8 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         key: "stripeWebhook",
         label: health.billing?.webhook ? "Pay webhook on" : "Pay webhook off",
         ok: health.billing?.webhook ? true : "warn",
-        title: "STRIPE_WEBHOOK_SECRET — checkout.session.completed on API /billing/webhook",
+        title:
+          "STRIPE_WEBHOOK_SECRET — checkout.session.completed on API /billing/webhook",
       });
     }
 
@@ -170,6 +224,64 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
     });
   }
 
+  if (metrics) {
+    chips.push({
+      key: "uptime",
+      label: `Up ${formatUptime(metrics.uptimeSec)}`,
+      ok: true,
+      title: metrics.startedAt
+        ? `Process started ${metrics.startedAt}`
+        : "API process uptime",
+    });
+    chips.push({
+      key: "http",
+      label: `${formatCount(metrics.httpRequests)} req`,
+      ok:
+        (metrics.httpErrors5xx ?? 0) > 0
+          ? "warn"
+          : true,
+      title: `HTTP requests this process · 4xx ${metrics.httpErrors4xx ?? 0} · 5xx ${
+        metrics.httpErrors5xx ?? 0
+      }`,
+    });
+    chips.push({
+      key: "sessions",
+      label: `${formatCount(metrics.sessionsCreated)} sessions`,
+      ok: "info",
+      title: "Sessions created this process lifetime",
+    });
+    chips.push({
+      key: "turns",
+      label: `${formatCount(metrics.chatTurns)} turns`,
+      ok: (metrics.chatLlmErrors ?? 0) > 0 ? "warn" : "info",
+      title: `Chat turns · LLM errors ${metrics.chatLlmErrors ?? 0}`,
+    });
+    chips.push({
+      key: "ws",
+      label: `${formatCount(metrics.wsConnections)} WS`,
+      ok: "info",
+      title: "WebSocket connections opened this process",
+    });
+    if ((metrics.customCharactersCreated ?? 0) > 0) {
+      chips.push({
+        key: "customs",
+        label: `${formatCount(metrics.customCharactersCreated)} customs`,
+        ok: true,
+        title: "My Characters created this process",
+      });
+    }
+    if ((metrics.pushSubscribe ?? 0) + (metrics.pushTestSent ?? 0) > 0) {
+      chips.push({
+        key: "pushOps",
+        label: `Push sub ${formatCount(metrics.pushSubscribe)} · test ${formatCount(
+          metrics.pushTestSent,
+        )}`,
+        ok: "info",
+        title: "Push subscribe + test send counters",
+      });
+    }
+  }
+
   const chipCls = (ok: Chip["ok"]) =>
     ok === true
       ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-100"
@@ -179,12 +291,16 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
 
   return (
     <section
-      className={`rounded-2xl border border-brand-border/80 bg-brand-panel/60 ${compact ? "p-3" : "p-4"}`}
+      className={`rounded-2xl border border-brand-border/80 bg-brand-panel/60 ${
+        compact ? "p-3" : "p-4"
+      }`}
       aria-label="Live system status"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-brand-muted">System pulse</p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-brand-muted">
+            System pulse
+          </p>
           <p className="mt-0.5 text-sm font-medium text-brand-text">
             {loading && !health
               ? "Checking API…"
@@ -214,7 +330,9 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
           {chips.map((c) => (
             <li key={c.key}>
               <span
-                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${chipCls(c.ok)}`}
+                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${chipCls(
+                  c.ok,
+                )}`}
                 title={c.title}
               >
                 <span
@@ -233,7 +351,14 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         </ul>
       )}
       <p className="mt-2 text-[10px] text-brand-muted">
-        Live from API <code className="text-brand-muted/90">/health</code> · no secrets shown
+        Live from API <code className="text-brand-muted/90">/health</code>
+        {metrics ? (
+          <>
+            {" "}
+            + <code className="text-brand-muted/90">/metrics</code> (process lifetime)
+          </>
+        ) : null}{" "}
+        · no secrets shown
       </p>
     </section>
   );
