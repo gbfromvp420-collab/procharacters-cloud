@@ -12,6 +12,7 @@
 |--|-----|
 | **Gallery** | https://procharacters-web-production-7288.up.railway.app |
 | **My Models Studio** | https://procharacters-web-production-7288.up.railway.app/models/studio |
+| **Studio edit** | `/models/studio/edit/:id` (owned custom id) |
 | **Account** | https://procharacters-web-production-7288.up.railway.app/account |
 | **Chat** | https://procharacters-web-production-7288.up.railway.app/chat |
 | API health | https://procharacters-api-production-0417.up.railway.app/health |
@@ -53,8 +54,8 @@
 | **Heat→pay no double-ask** | ✅ Session win owns Day Pass; Soft Support yields + 6h cooldown after win |
 | **Return seed after End** | ✅ “We’ll hold this heat” + Enable alerts / Sign in when deep session |
 | **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
-| Create My Character deep-link | ✅ **`/models/studio`** dedicated Studio · `/chat?create=1` redirects there |
-| **My Models Studio** | ✅ immersive create/edit · base previews · phrases/scenes/clips · NS booster · live preview · caps · Start heat toast |
+| Create My Character deep-link | ✅ **`/models/studio`** create · **`/models/studio/edit/:id`** edit · `/chat?create=1` + `?edit=` redirect |
+| **My Models Studio** | ✅ epic Custom v2 forge · base previews · energy presets · phrase chips · scenes · clips · NS booster · live preview · caps · featured · Start heat toast |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |

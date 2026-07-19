@@ -19,7 +19,6 @@ import type {
   CustomSceneInput,
   LiveCharacterOption,
   MediaClipKey,
-  MediaOverrides,
 } from "@/lib/types";
 import { ClipPreview } from "@/components/ClipPreview";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
@@ -94,10 +93,20 @@ function clipUrlForBase(baseId: string, key: MediaClipKey): string {
   return `/avatar/${baseId}/${key}.mp4`;
 }
 
-function ModelsStudioInner() {
+function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   const router = useRouter();
   const search = useSearchParams();
-  const editId = search.get("edit")?.trim() || search.get("character")?.trim() || "";
+  // Prefer path param; fall back to legacy ?edit= / ?character=
+  const queryEdit =
+    search.get("edit")?.trim() || search.get("character")?.trim() || "";
+  const editId = (initialEditId || queryEdit).trim();
+
+  // Legacy query → canonical /models/studio/edit/:id
+  useEffect(() => {
+    if (initialEditId) return;
+    if (!queryEdit) return;
+    router.replace(`/models/studio/edit/${encodeURIComponent(queryEdit)}`);
+  }, [initialEditId, queryEdit, router]);
 
   const [account, setAccount] = useState<StoredAccount | null>(null);
   const [characters, setCharacters] = useState<LiveCharacterOption[]>([]);
@@ -204,13 +213,41 @@ function ModelsStudioInner() {
           setEditingId(target.id);
           setName(target.displayName || "");
           setBaseModelId(target.baseModelId || target.avatarBase || "twink-default");
-          setAppearance(target.appearance || "");
-          setEnergy(target.energy || target.energyLabel || "");
+          const rawApp = target.appearance || "";
+          const boostSplit = rawApp.split(/\n\n## Naughty Syntax booster\n/i);
+          setAppearance(boostSplit[0]?.trim() || rawApp);
+          setPromptBoost(boostSplit[1]?.trim() || "");
+          const rawEnergy = target.energy || target.energyLabel || "";
+          const archMatch = rawEnergy.match(/Archetype:\s*([^.]*)/i)?.[1]?.trim();
+          const tagsMatch = rawEnergy.match(/Tags:\s*([^.]+)/i)?.[1];
+          if (archMatch) setArchetype(archMatch);
+          if (tagsMatch) {
+            setVibeTags(
+              uniqueTags(
+                tagsMatch
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean),
+              ),
+            );
+          }
+          setEnergy(
+            rawEnergy
+              .replace(/\s*Archetype:\s*[^.]*\.?/gi, "")
+              .replace(/\s*Tags:\s*[^.]*\.?/gi, "")
+              .trim() || rawEnergy,
+          );
           setClothing(target.clothing || "");
           setPhrases(target.keyPhrases?.filter(Boolean) ?? []);
           setScenes(
             target.scenes?.length
-              ? target.scenes.slice(0, 4)
+              ? [
+                  ...target.scenes.slice(0, 4),
+                  ...Array.from(
+                    { length: Math.max(0, 2 - target.scenes.length) },
+                    () => ({ title: "", body: "" }),
+                  ),
+                ].slice(0, 4)
               : [
                   { title: "", body: "" },
                   { title: "", body: "" },
@@ -472,6 +509,10 @@ function ModelsStudioInner() {
       setCharacters(list);
       setJustCreated({ id: id!, name: displayName });
       showFlash(`${displayName} · private My Character`);
+      // Canonical edit URL after first save
+      if (id && !editingId) {
+        router.replace(`/models/studio/edit/${encodeURIComponent(id)}`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Save failed");
     } finally {
@@ -1158,7 +1199,7 @@ function uniqueTags(items: string[]): string[] {
 }
 
 /** Suspense boundary for useSearchParams */
-export function ModelsStudio() {
+export function ModelsStudio({ editId }: { editId?: string } = {}) {
   return (
     <Suspense
       fallback={
@@ -1167,7 +1208,7 @@ export function ModelsStudio() {
         </main>
       }
     >
-      <ModelsStudioInner />
+      <ModelsStudioInner initialEditId={editId} />
     </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — My Models Studio)  
-**Session:** King Grok CEO + KGC Delegate · Gary reviewing · ntfy ✅
+**Updated:** 2026-07-19 (**cook** — My Models Studio epic path routes)  
+**Session:** Prince GrokBuild + KGC Delegate · Gary reviewing · ntfy ✅
 
 ---
 
@@ -9,38 +9,41 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **My Models Studio** | ✅ `/models/studio` immersive Custom v2 | Sign in → Studio → forge mind → Start heat |
-| **Error alerts** | ✅ ntfy live | Optional re-test from System pulse |
-| **Return loop** | ✅ Heat Arc · Edge · Return Intel · Trail · End Ritual | Smoke full cycle |
-| Railway | ✅ | Confirm SHA after push |
-| Stripe | ✅ LIVE | Optional |
-| **Next** | Content packs / more studio polish | `resume` / `spot` / `next` / `cook` |
+| **My Models Studio** | ✅ `/models/studio` + `/models/studio/edit/:id` | Sign in → Studio → forge → Start heat |
+| **Error alerts** | ✅ ntfy | Optional System pulse re-test |
+| **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
+| Railway | ✅ | Confirm web SHA after deploy |
+| **Next** | content packs / studio list polish | `cook` / `spot` |
 
 ---
 
-## What shipped this cook (My Models Studio)
+## Studio routes (canonical)
 
-1. **Dedicated route** `/models/studio` (create) · `?edit=<id>` (edit)  
-2. **Base model picker** with live video previews  
-3. **Rich form** — name, archetype, photoreal visual lock, energy presets, vibe tags, clothing, audience  
-4. **Key phrases** as removable chips (max 6)  
-5. **Scenes** 2–4 slots (title + body, prompt-ready)  
-6. **Clip studio** — batch + per-band assign, previews, post-save upload  
-7. **Naughty Syntax booster** — optional overlay merged into identity on save  
-8. **Live preview pane** — energy band reactivity sim + phrase/energy readout  
-9. **Caps / sign-in / soft Featured** · **Start heat** toast after save  
-10. Deep-links: `/chat?create=1` and `?edit=1` redirect into Studio  
+| Path | Purpose |
+|------|---------|
+| `/models/studio` | Create |
+| `/models/studio/edit/:id` | Edit owned model |
+| `/models/studio?edit=id` | Legacy → redirects to edit path |
+| `/chat?create=1` | → Studio create |
+| `/chat?edit=1&character=id` | → Studio edit path |
 
-**Studio URL:** https://procharacters-web-production-7288.up.railway.app/models/studio  
+**Live:** https://procharacters-web-production-7288.up.railway.app/models/studio  
 
 ---
 
-## Magic words
+## Spec checklist (shipped)
 
-| Say | Meaning |
-|-----|---------|
-| `resume` / `spot` | Re-read this + LIVE-STATUS |
-| `next` / `cook` | Keep shipping |
-| `RAILWAY_API_TOKEN=…` | Auth Railway CLI/MCP (never commit) |
+1. Base model horizontal picker + live video previews  
+2. Identity: name, archetype, visual lock, clothing, energy presets, vibe tags  
+3. Key phrases chip UI (max 6)  
+4. Scenes 2–4 (title + body)  
+5. Clips batch + per-band + previews  
+6. NS booster auto-merge on save (re-split on edit)  
+7. Live preview sticky + band sim  
+8. Sign-in · caps · soft Featured  
+9. Start heat / Edge Pace toast  
+10. Nav / Account / Gallery / PWA / deep links  
 
-*Prince GrokBuild · full control · KGC Delegate fleet.*
+Typecheck clean · pushed main · v2.2 only.
+
+*Prince GrokBuild · 50/50 · ship it nasty.*

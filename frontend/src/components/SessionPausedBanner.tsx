@@ -214,7 +214,7 @@ export function SessionPausedBanner({
         {isMine && (
           <>
             <Link
-              href={`/models/studio?edit=${encodeURIComponent(characterId)}`}
+              href={`/models/studio/edit/${encodeURIComponent(characterId)}`}
               className="btn-ghost min-h-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100"
               onClick={onDismiss}
             >

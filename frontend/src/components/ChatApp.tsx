@@ -1472,13 +1472,13 @@ export function ChatApp() {
     };
   }, [account?.token]);
 
-  // Deep-link: ?create=1 → My Models Studio; ?edit=1&character= → studio edit
+  // Deep-link: ?create=1 → Studio; ?edit=1&character= → /models/studio/edit/:id
   useEffect(() => {
     if (typeof window === "undefined") return;
     const query = parseShareQuery(window.location.search);
     if (query.edit && query.characterId) {
       window.location.replace(
-        `/models/studio?edit=${encodeURIComponent(query.characterId)}`,
+        `/models/studio/edit/${encodeURIComponent(query.characterId)}`,
       );
       return;
     }
@@ -3672,7 +3672,7 @@ export function ChatApp() {
                         type="button"
                         onClick={() => {
                           const id = activeCharacterId ?? character;
-                          window.location.href = `/models/studio?edit=${encodeURIComponent(id)}`;
+                          window.location.href = `/models/studio/edit/${encodeURIComponent(id)}`;
                         }}
                         className="text-xs font-medium text-violet-200 hover:underline"
                       >

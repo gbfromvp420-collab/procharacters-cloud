@@ -1586,7 +1586,7 @@ export function AccountSettings() {
                               </Link>
                             )}
                             <Link
-                              href={`/models/studio?edit=${encodeURIComponent(m.id)}`}
+                              href={`/models/studio/edit/${encodeURIComponent(m.id)}`}
                               className="rounded-lg border border-violet-400/40 px-2.5 py-1.5 text-[11px] text-violet-100"
                             >
                               Edit
