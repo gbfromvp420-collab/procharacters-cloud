@@ -10,10 +10,11 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **Studio Forge v3** | ✅ Conversational forge + DNA + canvas + export | Sign in → Studio → type fantasy → **Forge model** → **Save · Chat Now** |
+| **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
-| Railway | ✅ | Deploy API + web after push; confirm forge expand |
-| **Next** | deploy forge · phone smoke forge path | `cook` / `spot` |
+| Railway | ✅ | Redeploy API after DNA runtime push |
+| **Next** | phone smoke forge→chat path | `cook` / `spot` |
 
 ---
 

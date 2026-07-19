@@ -4,6 +4,7 @@
  * Edge Pace coach language fuses with signature minds (edge-pace-minds).
  */
 
+import { getCustomCharacter } from "./custom-characters.js";
 import {
   edgePaceCoachCue,
   edgePaceFireLine,
@@ -114,13 +115,37 @@ export function buildSessionModeInstructions(
   state: ModeRuntimeState,
   characterId?: string,
 ): string {
+  const dna = characterId ? getCustomCharacter(characterId)?.dna : undefined;
+  const dnaModeBias = dna
+    ? [
+        `### Forge DNA evolution bias`,
+        `denial=${dna.evolution.denial.toFixed(2)} pace=${dna.evolution.pace.toFixed(2)} power=${dna.evolution.power.toFixed(2)} chaos=${dna.evolution.chaos.toFixed(2)}`,
+        dna.evolution.denial >= 0.6
+          ? "Lean denial/edging language; climax only on clear user ask."
+          : "",
+        dna.evolution.pace >= 0.65
+          ? "Climb heat a beat faster than default openers."
+          : dna.evolution.pace <= 0.35
+            ? "Slow-burn fabric/breath detail before peak heat."
+            : "",
+        dna.behaviorTree?.rootId
+          ? `Behavior root node: ${dna.behaviorTree.rootId} — use tree edges for escalate/deny/soft.`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
+
   if (state.mode === "normal") {
     return [
       "## Session mode: Normal",
       "Standard Naughty Syntax live chat. Tease-first pacing. No forced timer cycles.",
       "Still expert at edging when the user wants it — just not on a strict schedule.",
       "Stay in THIS character’s mind lock — never generic porn-bot.",
-    ].join("\n");
+      dnaModeBias,
+    ]
+      .filter(Boolean)
+      .join("\n");
   }
 
   const avatarByPhase: Record<EdgePhase, string> = {
@@ -157,6 +182,7 @@ export function buildSessionModeInstructions(
     mindLine,
     phaseRules[state.phase],
     `Body (avatar_intent): ${avatarByPhase[state.phase]}`,
+    dnaModeBias,
     "",
     "Rules:",
     "- Weave the phase into dirty talk in THIS model’s voice (not a generic coach script).",

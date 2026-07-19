@@ -12,6 +12,7 @@
 import type { AvatarState } from "../../types/session.js";
 import { resolveAvatarBaseId } from "./character-catalog.js";
 import { getCustomCharacter } from "./custom-characters.js";
+import { dnaPresenceDefaults } from "./forge-dna.js";
 
 /** Client color/grade keys — keep in sync with frontend/src/lib/presence.ts */
 export type PresenceSkin =
@@ -156,22 +157,42 @@ export function getPresenceProfile(characterId: string): PresenceProfile {
   if (custom) {
     const base = custom.avatarBase ?? resolveAvatarBaseId(characterId);
     const fromBase = PROFILES[base];
+    const dnaDefaults = custom.dna ? dnaPresenceDefaults(custom.dna) : null;
+
     if (fromBase) {
       return {
         ...fromBase,
         presenceSkin: "custom",
-        avatarHint: `${fromBase.avatarHint} Custom overlay: stay true to this character’s name and vibe while using the base model body language.`,
+        defaults: dnaDefaults
+          ? {
+              emotion: dnaDefaults.emotion,
+              pose: dnaDefaults.pose,
+              action: dnaDefaults.action,
+              arousalLevel: dnaDefaults.arousalLevel,
+            }
+          : fromBase.defaults,
+        avatarHint: dnaDefaults
+          ? `${dnaDefaults.avatarHint} Base body language from ${base}.`
+          : `${fromBase.avatarHint} Custom overlay: stay true to this character’s name and vibe while using the base model body language.`,
       };
     }
     return {
       presenceSkin: "custom",
-      defaults: {
-        emotion: "teasing",
-        pose: "idle",
-        action: "subtle_movement",
-        arousalLevel: 0.25,
-      },
+      defaults: dnaDefaults
+        ? {
+            emotion: dnaDefaults.emotion,
+            pose: dnaDefaults.pose,
+            action: dnaDefaults.action,
+            arousalLevel: dnaDefaults.arousalLevel,
+          }
+        : {
+            emotion: "teasing",
+            pose: "idle",
+            action: "subtle_movement",
+            arousalLevel: 0.25,
+          },
       avatarHint:
+        dnaDefaults?.avatarHint ??
         "Custom character — match their stated energy. Vary avatar_intent; rise arousal slowly.",
     };
   }

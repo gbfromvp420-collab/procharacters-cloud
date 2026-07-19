@@ -42,8 +42,14 @@ export type {
 } from "./custom-characters.js";
 export {
   assembleDnaCharacterPrompt,
+  dnaPresenceDefaults,
+  dnaStarterLine,
   expandFantasyToDna,
+  formatDnaMemorySeedsBlock,
+  formatDnaSessionSeed,
   heuristicForgeExpand,
+  pickBandFromDnaSentiment,
+  pickClipFromDnaIntensity,
 } from "./forge-expand.js";
 export type {
   AdaptivePromptCore,

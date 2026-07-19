@@ -27,6 +27,17 @@ Not a form-first builder. The primary input is natural language.
 
 On create with DNA → `defaultVersion: custom-v3` and `characterPrompt` assembled from adaptive core + branches.
 
+### Live runtime (post-save → chat)
+
+| Hook | Behavior |
+|------|----------|
+| **Session create** | DNA memory seeds + vibe/evolution → `priorNotes` / session notes (even without user dossier opt-in) |
+| **Opening line** | `dna.starterLine` (or first key phrase) instead of generic custom template |
+| **Presence / avatar defaults** | LiveKit band + evolution → emotion/pose/action/arousal + body hint |
+| **Clip pick** | `livekit.intensityMap` when emotion/action map misses |
+| **Session mode block** | Evolution denial/pace/power/chaos + behavior root each turn |
+| **Adaptive prompt** | Behavior tree node list + evolution runtime + DNA seeds in character layer |
+
 ---
 
 ## API
@@ -65,7 +76,7 @@ Forge complete model **under 5 seconds** in the happy path (heuristic always; LL
 ## Out of scope (still)
 
 - Full WebGL 3D mesh composer
-- Runtime WS behavior-tree stepper (DNA is persisted for chat prompt + future LiveKit)
+- Hard WS state-machine stepper for every behavior-tree edge (DNA tree is prompt + mode bias today)
 - Marketplace / public DNA share
 
 ---

@@ -692,6 +692,12 @@ Keep identity under 280 chars when possible. Scenes max 2. Phrases max 4.`;
 /** Merge DNA adaptive core into character prompt string. */
 export function assembleDnaCharacterPrompt(dna: NaughtySyntaxDna): string {
   const { adaptivePrompt } = dna;
+  const treeNodes = (dna.behaviorTree.nodes ?? [])
+    .slice(0, 8)
+    .map((n) => `- ${n.id}: ${n.action}${n.triggers?.length ? ` (when: ${n.triggers.slice(0, 4).join(", ")})` : ""}`)
+    .join("\n");
+  const seedBlock = formatDnaMemorySeedsBlock(dna);
+  const evo = dna.evolution;
   return [
     adaptivePrompt.core,
     ``,
@@ -704,12 +710,198 @@ export function assembleDnaCharacterPrompt(dna: NaughtySyntaxDna): string {
     adaptivePrompt.branches.flirty,
     adaptivePrompt.booster ? `\n## Booster\n${adaptivePrompt.booster}` : "",
     ``,
-    `## Behavior tree root`,
+    `## Behavior tree`,
     `Start at node "${dna.behaviorTree.rootId}". Escalate / deny / soft edges drive session evolution.`,
+    treeNodes,
+    ``,
+    `## Evolution vector (runtime)`,
+    `power:${evo.power.toFixed(2)} intimacy:${evo.intimacy.toFixed(2)} chaos:${evo.chaos.toFixed(2)} denial:${evo.denial.toFixed(2)} pace:${evo.pace.toFixed(2)}`,
+    evo.denial >= 0.55
+      ? "Denial bias ON — edge holds, delayed release, only climax on clear user ask."
+      : "Open to escalation — still climax only on clear ask.",
+    evo.pace >= 0.65
+      ? "Pace: climb heat faster across turns."
+      : evo.pace <= 0.35
+        ? "Pace: slow-burn; linger on fabric/breath."
+        : "Pace: medium climb.",
+    seedBlock ? `\n## DNA memory seeds (always-on identity)\n${seedBlock}` : "",
     ``,
     `## LiveKit reactivity`,
     `Sync pose/expression intensity to dialogue. Band order: ${dna.livekit.bandOrder.join(" → ")}.`,
+    dna.livekit.intensityMap?.length
+      ? `Intensity map: ${dna.livekit.intensityMap.map((r) => `${r.min}-${r.max}→${r.band}`).join(" · ")}`
+      : "",
   ]
-    .filter((l) => l !== null)
+    .filter((l) => l !== null && l !== "")
     .join("\n");
+}
+
+/**
+ * Compact DNA seeds for session priorNotes / sessionNotes injection.
+ * These are character DNA (not user dossier) — always safe to inject on create.
+ */
+export function formatDnaMemorySeedsBlock(dna: NaughtySyntaxDna): string {
+  const seeds = [...(dna.memorySeeds ?? [])]
+    .filter((s) => s?.text?.trim())
+    .sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))
+    .slice(0, 8);
+  if (!seeds.length) return "";
+  return seeds
+    .map((s) => `- [${s.kind}${typeof s.weight === "number" ? `·${s.weight.toFixed(2)}` : ""}] ${s.text.trim().slice(0, 220)}`)
+    .join("\n");
+}
+
+/** Session-create seed: DNA identity hooks so first turns aren't generic custom. */
+export function formatDnaSessionSeed(dna: NaughtySyntaxDna, characterName?: string): string {
+  const name = (characterName || dna.displayName || "this model").trim();
+  const seeds = formatDnaMemorySeedsBlock(dna);
+  const tags = (dna.vibeTags ?? []).slice(0, 5).join(", ");
+  const evo = dna.evolution;
+  const bits = [
+    `Forge DNA v${dna.version} · ${dna.source} · ${name}.`,
+    dna.vibe ? `Vibe: ${dna.vibe.slice(0, 160)}` : "",
+    tags ? `Tags: ${tags}.` : "",
+    `Evolution: denial ${evo.denial.toFixed(2)} · pace ${evo.pace.toFixed(2)} · power ${evo.power.toFixed(2)}.`,
+    seeds ? `DNA seeds:\n${seeds}` : "",
+    "Open in forged identity — never generic custom template.",
+  ].filter(Boolean);
+  return bits.join(" ").slice(0, 1200);
+}
+
+/** User-facing opening from DNA when present. */
+export function dnaStarterLine(dna: NaughtySyntaxDna | undefined | null): string | undefined {
+  const line = dna?.starterLine?.trim();
+  if (line && line.length >= 8) return line.slice(0, 500);
+  const phrase = dna?.keyPhrases?.[0]?.trim();
+  if (phrase && phrase.length >= 6) {
+    const name = dna?.displayName?.trim() || "me";
+    return `${phrase} … it’s ${name}. stay with me.`.slice(0, 500);
+  }
+  return undefined;
+}
+
+/** Presence defaults derived from DNA livekit + evolution (body language bias). */
+export function dnaPresenceDefaults(dna: NaughtySyntaxDna): {
+  emotion: string;
+  pose: string;
+  action: string;
+  arousalLevel: number;
+  avatarHint: string;
+} {
+  const idleBand = dna.livekit.bandOrder?.[0] ?? "idle";
+  const startBand =
+    dna.evolution.pace >= 0.7 ? "teasing" : dna.evolution.denial >= 0.7 ? "teasing" : idleBand;
+  const band = (["idle", "teasing", "playful", "aroused"] as ForgeClipKey[]).includes(
+    startBand as ForgeClipKey,
+  )
+    ? (startBand as ForgeClipKey)
+    : "idle";
+
+  // Prefer short tokens Grok/avatar brain understand — not free-prose pose essays
+  const emotionFromBand: Record<ForgeClipKey, string> = {
+    idle: "soft",
+    teasing: "teasing",
+    playful: "playful",
+    aroused: "edging",
+  };
+  const poseFromBand: Record<ForgeClipKey, string> = {
+    idle: "idle",
+    teasing: "leaning",
+    playful: "showing_off",
+    aroused: "edge_hold",
+  };
+  const emotion =
+    shortAvatarToken(dna.livekit.expressionByBand?.[band], 24) ||
+    (dna.evolution.denial >= 0.65
+      ? "edging"
+      : dna.vibeTags?.some((t) => /shy/i.test(t))
+        ? "shy"
+        : dna.vibeTags?.some((t) => /brat/i.test(t))
+          ? "bratty"
+          : emotionFromBand[band]);
+  const pose =
+    shortAvatarToken(dna.livekit.poseByBand?.[band], 24) || poseFromBand[band];
+  const action =
+    dna.evolution.denial >= 0.6
+      ? "freeze_edge"
+      : dna.evolution.pace >= 0.65
+        ? "hover_touch"
+        : "subtle_movement";
+  const baseArousal = 0.18 + dna.evolution.pace * 0.22 + dna.evolution.denial * 0.08;
+  const arousalLevel = Math.min(0.55, Math.max(0.12, baseArousal));
+
+  const avatarHint = [
+    `Forge DNA body bias for ${dna.displayName}: ${dna.vibe.slice(0, 120)}.`,
+    `Band order ${dna.livekit.bandOrder.join("→")}. Denial ${dna.evolution.denial.toFixed(2)} pace ${dna.evolution.pace.toFixed(2)}.`,
+    "Match avatar_intent emotion/pose to dialogue heat; never thrash clips every token.",
+    dna.memorySeeds?.[0]?.text
+      ? `Callback seed: ${dna.memorySeeds[0]!.text.slice(0, 100)}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return { emotion, pose, action, arousalLevel, avatarHint };
+}
+
+/** Map arousal 0–1 through DNA intensityMap when present. */
+export function pickClipFromDnaIntensity(
+  dna: NaughtySyntaxDna | undefined | null,
+  arousalLevel: number,
+): ForgeClipKey | null {
+  if (!dna?.livekit?.intensityMap?.length) return null;
+  const a = Number.isFinite(arousalLevel) ? Math.min(1, Math.max(0, arousalLevel)) : 0;
+  const hit = dna.livekit.intensityMap.find((r) => a >= r.min && a <= r.max);
+  if (hit && isForgeClipKey(hit.band)) return hit.band;
+  // Fallback: nearest band by mid-point
+  let best: ForgeClipKey | null = null;
+  let bestDist = Infinity;
+  for (const r of dna.livekit.intensityMap) {
+    if (!isForgeClipKey(r.band)) continue;
+    const mid = (r.min + r.max) / 2;
+    const d = Math.abs(a - mid);
+    if (d < bestDist) {
+      bestDist = d;
+      best = r.band;
+    }
+  }
+  return best;
+}
+
+/** Sentiment keyword → DNA band (editor + optional runtime nudge). */
+export function pickBandFromDnaSentiment(
+  dna: NaughtySyntaxDna | undefined | null,
+  text: string,
+): ForgeClipKey | null {
+  if (!dna?.livekit?.sentimentClips?.length || !text?.trim()) return null;
+  const lower = text.toLowerCase();
+  for (const row of dna.livekit.sentimentClips) {
+    if (!isForgeClipKey(row.band)) continue;
+    if (row.keywords?.some((k) => k && lower.includes(k.toLowerCase()))) {
+      return row.band;
+    }
+  }
+  return null;
+}
+
+function isForgeClipKey(v: string): v is ForgeClipKey {
+  return v === "idle" || v === "teasing" || v === "playful" || v === "aroused";
+}
+
+/** First 1–2 words as avatar token; drops free-prose LiveKit pose essays. */
+function shortAvatarToken(value?: string, max = 24): string | undefined {
+  if (!value || typeof value !== "string") return undefined;
+  const words = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s_-]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+  if (!words.length) return undefined;
+  // Ignore essay-like pose hints ("relaxed cam posture…")
+  if (words.join(" ").length > max || words.some((w) => w.length > 14)) {
+    return words[0]!.slice(0, max);
+  }
+  return words.join("_").slice(0, max) || undefined;
 }

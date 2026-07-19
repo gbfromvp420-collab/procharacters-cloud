@@ -1,5 +1,6 @@
 import { getCustomCharacter } from "../live/custom-characters.js";
 import { resolveAvatarBaseId } from "../live/character-catalog.js";
+import { pickClipFromDnaIntensity } from "../live/forge-dna.js";
 import { getPresenceProfile } from "../live/presence-profiles.js";
 import type { AvatarState } from "../../types/session.js";
 import { resolvePackMediaIds } from "./avatar-packs.js";
@@ -86,16 +87,16 @@ function isEnergyBand(value: string | undefined): value is EnergyBand {
 }
 
 /** Map avatar intent → energy band for UI badges. */
-export function resolveEnergyBand(state: AvatarState): EnergyBand {
-  return CLIP_TO_BAND[pickClipName(state)];
+export function resolveEnergyBand(state: AvatarState, characterId?: string): EnergyBand {
+  return CLIP_TO_BAND[pickClipName(state, characterId)];
 }
 
 /**
  * Sticky clip pick — honor Grok emotion, but require a real cross on arousal
  * edges so LiveKit/WS dual-publish doesn't thrash loops every turn.
  */
-function pickClipName(state: AvatarState): ClipKey {
-  const raw = pickClipNameRaw(state);
+function pickClipName(state: AvatarState, characterId?: string): ClipKey {
+  const raw = pickClipNameRaw(state, characterId);
   const prevBand = isEnergyBand(state.energyBand) ? state.energyBand : undefined;
   if (!prevBand) return raw;
 
@@ -161,7 +162,7 @@ function applyArousalHysteresis(
   return next;
 }
 
-function pickClipNameRaw(state: AvatarState): ClipKey {
+function pickClipNameRaw(state: AvatarState, characterId?: string): ClipKey {
   const emotion = normalizeToken(state.emotion);
   const pose = normalizeToken(state.pose);
   const action = normalizeToken(state.action ?? "");
@@ -183,6 +184,13 @@ function pickClipNameRaw(state: AvatarState): ClipKey {
   if (/hip|grind|show|flex/.test(action)) return "playful";
 
   if (EMOTION_TO_CLIP[pose]) return EMOTION_TO_CLIP[pose]!;
+
+  // Studio Forge DNA intensity map (custom-v3) — arousal → band from forged meta
+  if (characterId) {
+    const dna = getCustomCharacter(characterId)?.dna;
+    const fromDna = pickClipFromDnaIntensity(dna, state.arousalLevel ?? 0);
+    if (fromDna) return fromDna;
+  }
 
   // Arousal bands (fallback)
   if (state.arousalLevel >= 0.72) return "aroused";
@@ -218,7 +226,7 @@ function joinMediaBase(base: string, clip: ClipKey): string {
  * 4. Interim avatarBase pack (twink-default / female-default)
  */
 export function resolveClipPath(characterId: string, state: AvatarState): string {
-  const clip = pickClipName(state);
+  const clip = pickClipName(state, characterId);
   const custom = getCustomCharacter(characterId);
 
   if (custom?.mediaOverrides?.[clip]) {
@@ -245,7 +253,7 @@ export function resolveClipFallbackPath(
 ): string | undefined {
   const custom = getCustomCharacter(characterId);
   if (custom) return undefined;
-  const clip = pickClipName(state);
+  const clip = pickClipName(state, characterId);
   const { primary, fallback } = resolvePackMediaIds(characterId);
   if (!fallback || fallback === primary) return undefined;
   return `/avatar/${fallback}/${clip}.mp4`;
@@ -256,7 +264,7 @@ export function enrichAvatarWithMedia(characterId: string, state: AvatarState): 
   const mediaFallbackUrl = resolveClipFallbackPath(characterId, state);
   const presenceSkin =
     state.presenceSkin ?? getPresenceProfile(characterId).presenceSkin;
-  const energyBand = resolveEnergyBand(state);
+  const energyBand = resolveEnergyBand(state, characterId);
   return {
     ...state,
     mediaUrl,

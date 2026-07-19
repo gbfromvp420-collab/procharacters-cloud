@@ -11,6 +11,8 @@ import {
   assertLiveCharacter,
   getOpeningMessage,
 } from "../lib/live/character-catalog.js";
+import { getCustomCharacter } from "../lib/live/custom-characters.js";
+import { formatDnaSessionSeed } from "../lib/live/forge-dna.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { normalizeSessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
@@ -288,22 +290,37 @@ export class SessionManager {
       }
     }
 
+    // Studio Forge DNA seeds: character identity hooks (not user dossier).
+    // Always inject on custom-v3 so first turns honor forge fantasy + memory seeds.
+    const custom = getCustomCharacter(characterId);
+    const dnaSeed = custom?.dna
+      ? formatDnaSessionSeed(custom.dna, promptSnapshot.characterName)
+      : undefined;
+    if (dnaSeed) {
+      priorNotes = priorNotes
+        ? `${priorNotes}\n\n### Forge DNA seeds\n${dnaSeed}`.slice(0, 1600)
+        : `### Forge DNA seeds\n${dnaSeed}`.slice(0, 1600);
+    }
+
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.sessionTtlMinutes * 60_000);
     const sessionId = randomUUID();
     const wsToken = randomUUID();
     const resumeCode = await registerResumeCode(sessionId, input.accountId);
 
+    const sessionNotesFromPrior = priorNotes
+      ? buildPriorContinuitySeed(priorNotes, promptSnapshot.characterName)
+      : undefined;
+    // DNA-only sessions still get a sticky "what we remember" strip on turn 0
+    const sessionNotes =
+      sessionNotesFromPrior ||
+      (dnaSeed
+        ? `Just starting with ${promptSnapshot.characterName}. ${dnaSeed.slice(0, 400)}`
+        : undefined);
+
     const memory = SessionMemory.empty(messageWindow, {
       ...(priorNotes ? { priorNotes } : {}),
-      ...(priorNotes
-        ? {
-            sessionNotes: buildPriorContinuitySeed(
-              priorNotes,
-              promptSnapshot.characterName,
-            ),
-          }
-        : {}),
+      ...(sessionNotes ? { sessionNotes } : {}),
     });
 
     const sessionMode = normalizeSessionMode(input.sessionMode);

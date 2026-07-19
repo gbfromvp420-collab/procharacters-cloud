@@ -7,7 +7,6 @@ import { env } from "../../config/env.js";
 import { XaiApiError, XaiChatClient } from "../llm/xai-client.js";
 import { isSignatureModelId } from "./custom-characters.js";
 import {
-  assembleDnaCharacterPrompt,
   forgeSystemPrompt,
   heuristicForgeExpand,
   parseLlmForgeJson,
@@ -28,7 +27,16 @@ function isRealXaiKey(key?: string): boolean {
 }
 
 export type { ForgeExpandInput, ForgeExpandResult, NaughtySyntaxDna };
-export { assembleDnaCharacterPrompt, heuristicForgeExpand };
+export {
+  assembleDnaCharacterPrompt,
+  dnaPresenceDefaults,
+  dnaStarterLine,
+  formatDnaMemorySeedsBlock,
+  formatDnaSessionSeed,
+  heuristicForgeExpand,
+  pickBandFromDnaSentiment,
+  pickClipFromDnaIntensity,
+} from "./forge-dna.js";
 
 export async function expandFantasyToDna(
   input: ForgeExpandInput,

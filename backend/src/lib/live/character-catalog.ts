@@ -1,4 +1,5 @@
 import { canAccessCustom, getCustomCharacter } from "./custom-characters.js";
+import { dnaStarterLine } from "./forge-dna.js";
 
 export interface LiveCharacterProfile {
   id: string;
@@ -196,9 +197,15 @@ export function getOpeningMessage(characterId: string): string | null {
   if (builtIn?.openingMessage?.trim()) return builtIn.openingMessage.trim();
   const custom = getCustomCharacter(characterId);
   if (custom) {
+    // Studio Forge DNA starter beats generic custom template
+    const forged = dnaStarterLine(custom.dna);
+    if (forged) return forged;
     const name = custom.displayName;
     const clothing = custom.clothing?.slice(0, 80) || "signature look";
-    return `hey… it’s ${name}. ${clothing} on, and i’m already thinking about you. take it slow with me.`;
+    const vibeBit = custom.energy?.trim()
+      ? ` ${custom.energy.trim().slice(0, 60)}.`
+      : "";
+    return `hey… it’s ${name}. ${clothing} on, and i’m already thinking about you.${vibeBit} take it slow with me.`;
   }
   return null;
 }

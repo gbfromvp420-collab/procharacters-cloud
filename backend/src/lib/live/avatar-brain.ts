@@ -9,6 +9,7 @@
  */
 
 import type { AvatarState } from "../../types/session.js";
+import { getCustomCharacter } from "./custom-characters.js";
 import type { EdgePhase, SessionMode } from "./session-mode.js";
 import { getPresenceProfile } from "./presence-profiles.js";
 
@@ -63,11 +64,17 @@ function presenceDriftArousal(
   }
 
   // Normal mode: slow climb toward a soft ceiling
-  const ceiling = Math.min(0.92, base + 0.48);
+  // DNA evolution.pace (custom-v3) biases climb speed without thrashing.
+  const dnaPace = getCustomCharacter(characterId)?.dna?.evolution?.pace;
+  const paceBoost =
+    typeof dnaPace === "number" && Number.isFinite(dnaPace)
+      ? (Math.min(1, Math.max(0, dnaPace)) - 0.5) * 0.04
+      : 0;
+  const ceiling = Math.min(0.92, base + 0.48 + (dnaPace && dnaPace > 0.65 ? 0.04 : 0));
   if (previous >= ceiling - 0.02) {
     return clamp01(ceiling - 0.01);
   }
-  return clamp01(previous + 0.04 + base * 0.02);
+  return clamp01(previous + 0.04 + base * 0.02 + paceBoost);
 }
 
 /** When Grok omits emotion during Edge Pace, body still tracks the phase. */
