@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — System pulse + product metrics)  
+**Updated:** 2026-07-19 (**cook** — Duplicate My Character + private share guard)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,8 +9,8 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Site chrome + offline** | ✅ shared nav · smart offline shell | — |
-| **System pulse v2** | ✅ `/health` + `/metrics` chips (uptime, sessions, turns, WS, 5xx) | Hard refresh **web** · open Account |
+| **My Character loop** | ✅ create · edit · **duplicate** · delete · clips · hub · private share → resume | Hard refresh **web** |
+| **System pulse + chrome + offline** | ✅ shipped | — |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
 | **Next** | Ops webhook optional / heat / content | Say `resume` / `spot` / `next` / `cook` |

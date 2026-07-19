@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — System pulse product metrics)  
+**Updated:** 2026-07-19 (**cook** — Duplicate My Character + private share)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -47,7 +47,9 @@
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
 | Clip uploads (private) | ✅ owner Bearer required · batch + single · gallery Edit deep-link · Pack n/4 chips |
-| Account **My models** hub | ✅ list · cap · Chat/Continue/Edit/Edge/**Delete** · `#my-models` |
+| Account **My models** hub | ✅ list · cap · Chat/Continue/Edit/**Duplicate**/Edge/Delete · `#my-models` |
+| Duplicate My Character | ✅ clone identity/vibe/phrases/scenes (new private id · uses cap slot) |
+| Private share guard | ✅ share card on mine → resume code (not public gallery link) |
 | Create cap UX | ✅ using n/limit · almost-full / cap-full · Save disabled at cap |
 | Pause after End (mine) | ✅ Edit model · My models CTAs on session paused banner |
 | **SiteChrome** sticky nav | ✅ Gallery / Chat / Account / Models · Continue/Reclaim on every surface |

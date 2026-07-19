@@ -1540,8 +1540,32 @@ export function ChatApp() {
   };
 
   const shareCharacterLink = async (autostart = false) => {
-    const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
     const live = characters.find((c) => c.id === character);
+    // Private My Characters aren't on the public gallery — prefer resume share.
+    if (live?.mine === true || (live?.kind === "custom" && live.visibility === "private")) {
+      if (resumeCode) {
+        const url = buildResumeCodeShareUrl(resumeCode, {
+          characterId: activeCharacterId ?? character,
+        });
+        const result = await shareOrCopyUrl({
+          url,
+          title: "Resume Procharacters chat",
+          text: `Continue your private chat (code ${resumeCode})`,
+        });
+        const label = shareUrlResultLabel(result, `Resume ${resumeCode}`);
+        flashCopy(
+          label
+            ? `${label} · private mind (code only)`
+            : "Private model — resume code shared",
+        );
+        return;
+      }
+      flashCopy(
+        "Private My Character — only you can open it. Start chat to share a resume code.",
+      );
+      return;
+    }
+    const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
     const name = live?.displayName ?? characterName ?? character;
     const opening = live?.openingMessage?.trim();
     const quote =
@@ -2252,8 +2276,77 @@ export function ChatApp() {
       await deleteCustomCharacter(selected.id, account?.token);
       setCharacters((prev) => prev.filter((c) => c.id !== selected.id));
       setCharacter("twink-default");
+      if (editingCustomId === selected.id) {
+        setShowCreate(false);
+        resetCustomForm();
+      }
+      flashCopy(`Deleted ${selected.displayName}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete character");
+    }
+  };
+
+  /** Clone a private My Character — new id, same mind fields (not clips by default). */
+  const handleDuplicateCustom = async (sourceId?: string) => {
+    if (!account?.token) {
+      setError("Sign in to duplicate a My Character");
+      setShowAccount(true);
+      return;
+    }
+    const used = characters.filter((c) => c.mine === true).length;
+    if (used >= customsLimit) {
+      setError(`Cap full (${customsLimit}). Delete a model or upgrade for more slots.`);
+      return;
+    }
+    const selected = characters.find((c) => c.id === (sourceId ?? character));
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a My Character to duplicate");
+      return;
+    }
+    const appearance =
+      selected.appearance?.trim() ||
+      selected.energyLabel?.trim() ||
+      "Private custom mind — fill identity after duplicate.";
+    if (appearance.length < 12) {
+      setError("Source model is missing identity — Edit it first, then duplicate.");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const baseName = selected.displayName.replace(/\s*\(copy\)\s*$/i, "").trim() || "My model";
+      const created = await createCustomCharacter(
+        {
+          name: `${baseName} (copy)`.slice(0, 80),
+          appearance: appearance.slice(0, 2000),
+          energy: (selected.energy || selected.energyLabel || "").trim() || undefined,
+          clothing: selected.clothing?.trim() || undefined,
+          baseModelId: selected.baseModelId || selected.avatarBase,
+          avatarBase:
+            selected.avatarBase === "female-default" || selected.avatarBase === "twink-default"
+              ? selected.avatarBase
+              : undefined,
+          keyPhrases: selected.keyPhrases?.length ? selected.keyPhrases : undefined,
+          scenes: selected.scenes?.length ? selected.scenes : undefined,
+        },
+        account.token,
+      );
+      applyCustomOption({
+        ...created,
+        appearance,
+        energy: selected.energy || selected.energyLabel,
+        clothing: selected.clothing,
+        keyPhrases: selected.keyPhrases,
+        scenes: selected.scenes,
+      });
+      setCharacter(created.id);
+      replaceCharacterInUrl(created.id);
+      setJustCreated({ id: created.id, name: created.displayName });
+      flashCopy(`${created.displayName} · duplicated (private)`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Duplicate failed");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -3111,14 +3204,25 @@ export function ChatApp() {
                     (c) => c.id === character && c.kind === "custom" && c.mine !== false,
                   ) &&
                     !sessionActive && (
-                    <button
-                      type="button"
-                      onClick={() => openEditCustom()}
-                      className="btn-ghost min-h-0 shrink-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100 sm:text-sm"
-                      title="Edit identity, vibe, phrases, scenes"
-                    >
-                      Edit
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => openEditCustom()}
+                        className="btn-ghost min-h-0 shrink-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100 sm:text-sm"
+                        title="Edit identity, vibe, phrases, scenes"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void handleDuplicateCustom()}
+                        disabled={creating}
+                        className="btn-ghost min-h-0 shrink-0 border-violet-400/30 px-3 py-2 text-xs text-violet-100/90 sm:text-sm disabled:opacity-50"
+                        title="Clone this private model (uses one cap slot)"
+                      >
+                        {creating ? "…" : "Duplicate"}
+                      </button>
+                    </>
                   )}
                   {characters.some((c) => c.id === character && c.kind === "custom") && (
                     <button

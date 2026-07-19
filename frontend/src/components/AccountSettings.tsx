@@ -11,6 +11,7 @@ import {
   fetchAccountSessionMarkdown,
   fetchAllAccountSessionsMarkdown,
   confirmBillingCheckout,
+  createCustomCharacter,
   deleteCustomCharacter,
   fetchBillingCatalog,
   fetchBillingStatus,
@@ -1539,6 +1540,91 @@ export function AccountSettings() {
                             >
                               Edit
                             </Link>
+                            <button
+                              type="button"
+                              disabled={busy || myModels.length >= customsLimit}
+                              title={
+                                myModels.length >= customsLimit
+                                  ? "Cap full — delete a model first"
+                                  : "Clone identity/vibe into a new private model"
+                              }
+                              onClick={() => {
+                                if (!account) return;
+                                void (async () => {
+                                  setBusy(true);
+                                  setError(null);
+                                  try {
+                                    const appearance =
+                                      m.appearance?.trim() ||
+                                      m.energyLabel?.trim() ||
+                                      "Private custom mind — edit after duplicate.";
+                                    if (appearance.length < 12) {
+                                      throw new Error(
+                                        "Source missing identity — Edit first, then duplicate.",
+                                      );
+                                    }
+                                    const baseName =
+                                      m.displayName.replace(/\s*\(copy\)\s*$/i, "").trim() ||
+                                      "My model";
+                                    const created = await createCustomCharacter(
+                                      {
+                                        name: `${baseName} (copy)`.slice(0, 80),
+                                        appearance: appearance.slice(0, 2000),
+                                        energy:
+                                          (m.energy || m.energyLabel || "").trim() || undefined,
+                                        clothing: m.clothing?.trim() || undefined,
+                                        baseModelId: m.baseModelId || m.avatarBase,
+                                        avatarBase:
+                                          m.avatarBase === "female-default" ||
+                                          m.avatarBase === "twink-default"
+                                            ? m.avatarBase
+                                            : undefined,
+                                        keyPhrases: m.keyPhrases?.length
+                                          ? m.keyPhrases
+                                          : undefined,
+                                        scenes: m.scenes?.length ? m.scenes : undefined,
+                                      },
+                                      account.token,
+                                    );
+                                    setMyModels((prev) =>
+                                      [
+                                        {
+                                          id: created.id,
+                                          displayName: created.displayName,
+                                          defaultVersion: created.defaultVersion || "custom-v2",
+                                          kind: "custom" as const,
+                                          avatarBase: created.avatarBase,
+                                          energyLabel: created.energyLabel,
+                                          mine: true,
+                                          visibility: "private",
+                                          appearance,
+                                          energy: m.energy || m.energyLabel,
+                                          clothing: m.clothing,
+                                          keyPhrases: m.keyPhrases,
+                                          scenes: m.scenes,
+                                          baseModelId: created.baseModelId || m.baseModelId,
+                                        },
+                                        ...prev,
+                                      ].sort((a, b) =>
+                                        a.displayName.localeCompare(b.displayName),
+                                      ),
+                                    );
+                                    flash(`${created.displayName} · duplicated`);
+                                  } catch (err) {
+                                    setError(
+                                      err instanceof Error
+                                        ? err.message
+                                        : "Could not duplicate model",
+                                    );
+                                  } finally {
+                                    setBusy(false);
+                                  }
+                                })();
+                              }}
+                              className="rounded-lg border border-violet-400/30 px-2.5 py-1.5 text-[11px] text-violet-100/90 disabled:opacity-50"
+                            >
+                              Duplicate
+                            </button>
                             {!session?.resumeCode && (
                               <Link
                                 href={`/chat?character=${encodeURIComponent(m.id)}&autostart=1&mode=edge_pace`}
