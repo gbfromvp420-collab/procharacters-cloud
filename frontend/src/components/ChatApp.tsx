@@ -247,6 +247,8 @@ export function ChatApp() {
   const [livekit, setLivekit] = useState<LiveKitJoinInfo | null>(null);
   const [restarting, setRestarting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
+  /** When set, create form is edit mode for this custom id. */
+  const [editingCustomId, setEditingCustomId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   /** Soft cap for My Characters (free 10 / premium higher). */
   const [customsLimit, setCustomsLimit] = useState(10);
@@ -689,9 +691,9 @@ export function ChatApp() {
     }
   }, [refreshAccountSessions]);
 
-  // Prefill identity/vibe/clothing from selected base model (Phase 5)
+  // Prefill identity/vibe/clothing from selected base model (Phase 5) — create only
   useEffect(() => {
-    if (!showCreate) return;
+    if (!showCreate || editingCustomId) return;
     let cancelled = false;
     void fetchBaseModelPrefill(customBaseModel)
       .then((p) => {
@@ -707,10 +709,11 @@ export function ChatApp() {
     return () => {
       cancelled = true;
     };
-  }, [customBaseModel, showCreate]);
+  }, [customBaseModel, showCreate, editingCustomId]);
 
-  // Prefill clip editors when a custom character is selected.
+  // Prefill clip editors when a custom character is selected (not while form is open)
   useEffect(() => {
+    if (showCreate) return;
     const selected = characters.find((c) => c.id === character);
     if (!selected || selected.kind !== "custom") return;
     setMediaBase(selected.mediaBase ?? "");
@@ -718,7 +721,7 @@ export function ChatApp() {
     setClipTeasing(selected.mediaOverrides?.teasing ?? "");
     setClipPlayful(selected.mediaOverrides?.playful ?? "");
     setClipAroused(selected.mediaOverrides?.aroused ?? "");
-  }, [character, characters]);
+  }, [character, characters, showCreate]);
 
   // Keep address bar shareable without private tokens after boot.
   useEffect(() => {
@@ -1868,6 +1871,135 @@ export function ChatApp() {
     return Object.keys(mediaOverrides).length > 0 ? mediaOverrides : undefined;
   };
 
+  const resetCustomForm = () => {
+    setEditingCustomId(null);
+    setCustomName("");
+    setCustomAppearance("");
+    setCustomEnergy("");
+    setCustomClothing("");
+    setCustomPhrase1("");
+    setCustomPhrase2("");
+    setCustomPhrase3("");
+    setCustomScene1Title("");
+    setCustomScene1Body("");
+    setCustomScene2Title("");
+    setCustomScene2Body("");
+    setCustomScene3Title("");
+    setCustomScene3Body("");
+    setMediaBase("");
+    setClipIdle("");
+    setClipTeasing("");
+    setClipPlayful("");
+    setClipAroused("");
+    setShowMediaAdvanced(false);
+  };
+
+  const openCreateForm = () => {
+    resetCustomForm();
+    setShowCreate(true);
+  };
+
+  const openEditCustom = (id?: string) => {
+    const selected = characters.find((c) => c.id === (id ?? character));
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom My Character to edit");
+      return;
+    }
+    if (!account?.token) {
+      setError("Sign in to edit a My Character");
+      setShowAccount(true);
+      return;
+    }
+    setEditingCustomId(selected.id);
+    setCustomName(selected.displayName);
+    setCustomAppearance(selected.appearance ?? "");
+    setCustomEnergy(selected.energy ?? selected.energyLabel ?? "");
+    setCustomClothing(selected.clothing ?? "");
+    setCustomBaseModel(selected.baseModelId ?? selected.avatarBase ?? "twink-default");
+    const base = selected.avatarBase;
+    if (base === "female-default" || base === "twink-default") {
+      setCustomBase(base);
+    }
+    const phrases = selected.keyPhrases ?? [];
+    setCustomPhrase1(phrases[0] ?? "");
+    setCustomPhrase2(phrases[1] ?? "");
+    setCustomPhrase3(phrases[2] ?? "");
+    const scenes = selected.scenes ?? [];
+    setCustomScene1Title(scenes[0]?.title ?? "");
+    setCustomScene1Body(scenes[0]?.body ?? "");
+    setCustomScene2Title(scenes[1]?.title ?? "");
+    setCustomScene2Body(scenes[1]?.body ?? "");
+    setCustomScene3Title(scenes[2]?.title ?? "");
+    setCustomScene3Body(scenes[2]?.body ?? "");
+    setMediaBase(selected.mediaBase ?? "");
+    setClipIdle(selected.mediaOverrides?.idle ?? "");
+    setClipTeasing(selected.mediaOverrides?.teasing ?? "");
+    setClipPlayful(selected.mediaOverrides?.playful ?? "");
+    setClipAroused(selected.mediaOverrides?.aroused ?? "");
+    setShowCreate(true);
+  };
+
+  const collectCustomFormPayload = () => {
+    const keyPhrases = [customPhrase1, customPhrase2, customPhrase3]
+      .map((p) => p.trim())
+      .filter((p) => p.length >= 2);
+    const scenes = [
+      { title: customScene1Title, body: customScene1Body },
+      { title: customScene2Title, body: customScene2Body },
+      { title: customScene3Title, body: customScene3Body },
+    ]
+      .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
+      .filter((s) => s.title.length >= 2 && s.body.length >= 12);
+    return { keyPhrases, scenes };
+  };
+
+  const applyCustomOption = (updated: {
+    id: string;
+    displayName: string;
+    defaultVersion?: string;
+    avatarBase?: string;
+    energyLabel?: string;
+    mediaBase?: string;
+    mediaOverrides?: LiveCharacterOption["mediaOverrides"];
+    clips?: LiveCharacterOption["clips"];
+    visibility?: string;
+    baseModelId?: string;
+    appearance?: string;
+    energy?: string;
+    clothing?: string;
+    keyPhrases?: string[];
+    scenes?: LiveCharacterOption["scenes"];
+    featured?: boolean;
+  }) => {
+    const option: LiveCharacterOption = {
+      id: updated.id,
+      displayName: updated.displayName,
+      defaultVersion: updated.defaultVersion ?? "custom-v2",
+      kind: "custom",
+      avatarBase: updated.avatarBase,
+      energyLabel: updated.energyLabel,
+      mediaBase: updated.mediaBase,
+      mediaOverrides: updated.mediaOverrides,
+      clips: updated.clips,
+      mine: true,
+      visibility: updated.visibility ?? "private",
+      baseModelId: updated.baseModelId,
+      appearance: updated.appearance,
+      energy: updated.energy,
+      clothing: updated.clothing,
+      keyPhrases: updated.keyPhrases,
+      scenes: updated.scenes,
+      featured: updated.featured === true,
+    };
+    setCharacters((prev) => {
+      if (prev.some((c) => c.id === option.id)) {
+        return prev.map((c) => (c.id === option.id ? { ...c, ...option } : c));
+      }
+      return [option, ...prev];
+    });
+    return option;
+  };
+
   const handleCreateCustom = async () => {
     if (!account?.token) {
       setError("Sign in to save a My Character (private)");
@@ -1877,16 +2009,39 @@ export function ChatApp() {
     setCreating(true);
     setError(null);
     try {
-      const keyPhrases = [customPhrase1, customPhrase2, customPhrase3]
-        .map((p) => p.trim())
-        .filter((p) => p.length >= 2);
-      const scenes = [
-        { title: customScene1Title, body: customScene1Body },
-        { title: customScene2Title, body: customScene2Body },
-        { title: customScene3Title, body: customScene3Body },
-      ]
-        .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
-        .filter((s) => s.title.length >= 2 && s.body.length >= 12);
+      const { keyPhrases, scenes } = collectCustomFormPayload();
+
+      // Edit path — PATCH identity/vibe/scenes (auth fixed)
+      if (editingCustomId) {
+        const updated = await updateCustomCharacter(
+          editingCustomId,
+          {
+            name: customName.trim(),
+            appearance: customAppearance.trim(),
+            energy: customEnergy.trim() || undefined,
+            clothing: customClothing.trim() || undefined,
+            keyPhrases: keyPhrases.length ? keyPhrases : null,
+            scenes: scenes.length ? scenes : null,
+            mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
+            mediaOverrides: buildMediaOverrides() ?? null,
+          },
+          account.token,
+        );
+        applyCustomOption({
+          ...updated,
+          appearance: updated.appearance ?? customAppearance.trim(),
+          energy: updated.energy ?? customEnergy.trim(),
+          clothing: updated.clothing ?? customClothing.trim(),
+          keyPhrases: updated.keyPhrases ?? keyPhrases,
+          scenes: updated.scenes ?? scenes,
+        });
+        setCharacter(updated.id);
+        replaceCharacterInUrl(updated.id);
+        setShowCreate(false);
+        resetCustomForm();
+        flashCopy(`${updated.displayName} updated · private My Character`);
+        return;
+      }
 
       const created = await createCustomCharacter(
         {
@@ -1904,53 +2059,28 @@ export function ChatApp() {
         },
         account.token,
       );
-      const option: LiveCharacterOption = {
-        id: created.id,
-        displayName: created.displayName,
-        defaultVersion: created.defaultVersion,
-        kind: "custom",
-        avatarBase: created.avatarBase,
-        energyLabel: created.energyLabel,
-        mediaBase: created.mediaBase,
-        mediaOverrides: created.mediaOverrides,
-        clips: created.clips,
-        mine: true,
-        visibility: created.visibility ?? "private",
-        baseModelId: created.baseModelId,
-      };
-      setCharacters((prev) => {
-        if (prev.some((c) => c.id === option.id)) {
-          return prev.map((c) => (c.id === option.id ? { ...c, ...option } : c));
-        }
-        // Mine first so the picker lands on the new model
-        return [option, ...prev];
+      applyCustomOption({
+        ...created,
+        appearance: customAppearance.trim(),
+        energy: customEnergy.trim() || created.energyLabel,
+        clothing: customClothing.trim() || undefined,
+        keyPhrases,
+        scenes,
       });
       setCharacter(created.id);
       replaceCharacterInUrl(created.id);
       setShowCreate(false);
       setJustCreated({ id: created.id, name: created.displayName });
-      setCustomName("");
-      setCustomAppearance("");
-      setCustomEnergy("");
-      setCustomClothing("");
-      setCustomPhrase1("");
-      setCustomPhrase2("");
-      setCustomPhrase3("");
-      setCustomScene1Title("");
-      setCustomScene1Body("");
-      setCustomScene2Title("");
-      setCustomScene2Body("");
-      setCustomScene3Title("");
-      setCustomScene3Body("");
-      setMediaBase("");
-      setClipIdle("");
-      setClipTeasing("");
-      setClipPlayful("");
-      setClipAroused("");
-      setShowMediaAdvanced(false);
+      resetCustomForm();
       flashCopy(`${created.displayName} saved · private My Character`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create My Character");
+      setError(
+        err instanceof Error
+          ? err.message
+          : editingCustomId
+            ? "Failed to update My Character"
+            : "Failed to create My Character",
+      );
     } finally {
       setCreating(false);
     }
@@ -1965,10 +2095,14 @@ export function ChatApp() {
     setCreating(true);
     setError(null);
     try {
-      const updated = await updateCustomCharacter(selected.id, {
-        mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
-        mediaOverrides: buildMediaOverrides() ?? null,
-      });
+      const updated = await updateCustomCharacter(
+        selected.id,
+        {
+          mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
+          mediaOverrides: buildMediaOverrides() ?? null,
+        },
+        account?.token,
+      );
       setCharacters((prev) =>
         prev.map((c) =>
           c.id === selected.id
@@ -2899,11 +3033,31 @@ export function ChatApp() {
                   </label>
                   <button
                     type="button"
-                    onClick={() => setShowCreate((v) => !v)}
+                    onClick={() => {
+                      if (showCreate) {
+                        setShowCreate(false);
+                        resetCustomForm();
+                      } else {
+                        openCreateForm();
+                      }
+                    }}
                     className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
                   >
                     {showCreate ? "Close" : "Create"}
                   </button>
+                  {characters.some(
+                    (c) => c.id === character && c.kind === "custom" && c.mine !== false,
+                  ) &&
+                    !sessionActive && (
+                    <button
+                      type="button"
+                      onClick={() => openEditCustom()}
+                      className="btn-ghost min-h-0 shrink-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100 sm:text-sm"
+                      title="Edit identity, vibe, phrases, scenes"
+                    >
+                      Edit
+                    </button>
+                  )}
                   {characters.some((c) => c.id === character && c.kind === "custom") && (
                     <button
                       type="button"
@@ -3027,8 +3181,12 @@ export function ChatApp() {
             {showCreate && !sessionActive && (
               <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
                 <p className="text-xs text-brand-muted">
-                  <strong className="text-brand-text">My Character (v2)</strong> — private to your
-                  account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save.
+                  <strong className="text-brand-text">
+                    {editingCustomId ? "Edit My Character" : "My Character (v2)"}
+                  </strong>
+                  {editingCustomId
+                    ? " — update identity, vibe, phrases, scenes. Private to your account."
+                    : " — private to your account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save."}
                   {!account
                     ? " Sign in required."
                     : activePremium
@@ -3036,11 +3194,12 @@ export function ChatApp() {
                       : ` Soft cap: ${customsLimit} per account (Day Pass unlocks more).`}
                 </p>
                 <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
-                  Base model
+                  Base model{editingCustomId ? " (locked on edit)" : ""}
                 </label>
                 <select
                   id="baseModel"
                   value={customBaseModel}
+                  disabled={!!editingCustomId}
                   onChange={(e) => {
                     setCustomBaseModel(e.target.value);
                     // Force re-prefill by clearing soft fields when switching base
@@ -3048,7 +3207,7 @@ export function ChatApp() {
                     setCustomEnergy("");
                     setCustomClothing("");
                   }}
-                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text disabled:opacity-60"
                 >
                   {characters
                     .filter((c) => c.kind === "default")
@@ -3148,7 +3307,15 @@ export function ChatApp() {
                     }
                     className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
                   >
-                    {creating ? "Saving…" : account ? "Save My Character" : "Sign in to save"}
+                    {creating
+                      ? editingCustomId
+                        ? "Updating…"
+                        : "Saving…"
+                      : !account
+                        ? "Sign in to save"
+                        : editingCustomId
+                          ? "Save changes"
+                          : "Save My Character"}
                   </button>
                 </div>
 
@@ -3208,7 +3375,14 @@ export function ChatApp() {
                         {characters.find((c) => c.id === character)?.displayName}
                       </span>
                     </p>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => openEditCustom()}
+                        className="text-xs font-medium text-violet-200 hover:underline"
+                      >
+                        Edit identity
+                      </button>
                       <label className="flex cursor-pointer items-center gap-1.5 text-xs text-brand-muted">
                         <input
                           type="checkbox"
@@ -3222,9 +3396,13 @@ export function ChatApp() {
                             void (async () => {
                               setCreating(true);
                               try {
-                                const updated = await updateCustomCharacter(selected.id, {
-                                  featured: e.target.checked,
-                                });
+                                const updated = await updateCustomCharacter(
+                                  selected.id,
+                                  {
+                                    featured: e.target.checked,
+                                  },
+                                  account?.token,
+                                );
                                 setCharacters((prev) =>
                                   prev.map((c) =>
                                     c.id === selected.id

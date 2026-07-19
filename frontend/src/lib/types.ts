@@ -23,6 +23,12 @@ export interface LiveCharacterOption {
   mine?: boolean;
   visibility?: string;
   baseModelId?: string;
+  /** Owner-only edit fields (from authenticated /characters list). */
+  appearance?: string;
+  energy?: string;
+  clothing?: string;
+  keyPhrases?: string[];
+  scenes?: CustomSceneInput[];
 }
 
 export interface LiveKitJoinInfo {
@@ -98,9 +104,12 @@ export interface CreateCustomCharacterResponse {
   avatarBase: string;
   baseModelId?: string;
   energyLabel: string;
-  signatureClothing: string;
-  consistencyTraits: string[];
-  createdAt: string;
+  signatureClothing?: string;
+  consistencyTraits?: string[];
+  createdAt?: string;
+  appearance?: string;
+  energy?: string;
+  clothing?: string;
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
   featured?: boolean;

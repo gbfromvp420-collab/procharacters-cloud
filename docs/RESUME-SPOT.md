@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — post-create win for My Character)  
+**Updated:** 2026-07-19 (**cook** — Edit My Character + PATCH auth fix)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,13 +9,12 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Morning conversion** | ✅ One-tap Day Pass / Supporter | — |
-| **Stripe smoke** | ✅ Gary complete | — |
-| **Premium payoff** | ✅ My models · create deep-link · caps | — |
-| **Post-create cook** | ✅ Win toast Start/Edge · Mine badges · picker groups | Hard refresh **web**; Start heat on your new model |
-| Railway | ✅ project `captivating-vision` | Confirm web SHA ≈ latest `main` |
+| **Conversion + premium payoff** | ✅ one-tap Stripe · My models · create | — |
+| **Post-create win** | ✅ Start heat toast · Mine badges | — |
+| **Edit My Character** | ✅ Edit form · Save changes · owner fields on list · **PATCH auth fixed** | Hard refresh **web** (API + web); try Edit on your model |
+| Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| **Next** | Ops optional / edit My Character / content | Say `resume` / `spot` / `next` / `cook` |
+| **Next** | Ops optional / clips polish / content | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 

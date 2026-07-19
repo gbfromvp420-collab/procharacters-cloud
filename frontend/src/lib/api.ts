@@ -732,12 +732,16 @@ export async function deleteCustomCharacter(
 export async function updateCustomCharacter(
   characterId: string,
   input: UpdateCustomCharacterInput,
+  accountToken?: string | null,
 ): Promise<CreateCustomCharacterResponse> {
+  if (!accountToken) {
+    throw new Error("Sign in to edit a My Character");
+  }
   const res = await fetch(
     `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}`,
     {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: authHeaders(accountToken),
       body: JSON.stringify(input),
     },
   );

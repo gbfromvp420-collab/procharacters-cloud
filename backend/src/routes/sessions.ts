@@ -235,21 +235,34 @@ export const createSessionRoutes = (
       const customMap = new Map(
         [...publicCustom, ...mine].map((p) => [p.id, p] as const),
       );
-      const custom = [...customMap.values()].map((profile) => ({
-        id: profile.id,
-        displayName: profile.displayName,
-        defaultVersion: profile.defaultVersion,
-        kind: "custom" as const,
-        avatarBase: profile.avatarBase,
-        baseModelId: profile.baseModelId,
-        energyLabel: profile.energyLabel,
-        mediaBase: profile.mediaBase,
-        mediaOverrides: profile.mediaOverrides,
-        featured: profile.featured === true,
-        visibility: profile.visibility ?? (profile.ownerAccountId ? "private" : "public"),
-        mine: !!account && profile.ownerAccountId === account.id,
-        clips: listClipUrls(profile.avatarBase ?? profile.id),
-      }));
+      const custom = [...customMap.values()].map((profile) => {
+        const isMine = !!account && profile.ownerAccountId === account.id;
+        return {
+          id: profile.id,
+          displayName: profile.displayName,
+          defaultVersion: profile.defaultVersion,
+          kind: "custom" as const,
+          avatarBase: profile.avatarBase,
+          baseModelId: profile.baseModelId,
+          energyLabel: profile.energyLabel,
+          mediaBase: profile.mediaBase,
+          mediaOverrides: profile.mediaOverrides,
+          featured: profile.featured === true,
+          visibility: profile.visibility ?? (profile.ownerAccountId ? "private" : "public"),
+          mine: isMine,
+          clips: listClipUrls(profile.avatarBase ?? profile.id),
+          // Edit payload only for owners (private My Characters)
+          ...(isMine
+            ? {
+                appearance: profile.appearance,
+                energy: profile.energy,
+                clothing: profile.clothing,
+                keyPhrases: profile.keyPhrases,
+                scenes: profile.scenes,
+              }
+            : {}),
+        };
+      });
 
       return {
         live: [
@@ -378,13 +391,19 @@ export const createSessionRoutes = (
         return {
           id: updated.id,
           displayName: updated.displayName,
+          defaultVersion: updated.defaultVersion,
           kind: "custom",
           avatarBase: updated.avatarBase,
           baseModelId: updated.baseModelId,
+          energyLabel: updated.energyLabel,
+          appearance: updated.appearance,
+          energy: updated.energy,
+          clothing: updated.clothing,
           mediaBase: updated.mediaBase,
           mediaOverrides: updated.mediaOverrides,
           featured: updated.featured === true,
           visibility: updated.visibility,
+          mine: true,
           keyPhrases: updated.keyPhrases,
           scenes: updated.scenes,
           clips: listClipUrls(updated.avatarBase),
