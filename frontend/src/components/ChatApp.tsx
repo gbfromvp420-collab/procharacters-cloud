@@ -55,6 +55,7 @@ import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
+import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
 import {
@@ -292,6 +293,13 @@ export function ChatApp() {
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const prevEnergyBandRef = useRef<EnergyBand | null>(null);
   const skipDraftSaveRef = useRef(false);
+  /** Snapshot after End — morph goodbye into return. */
+  const [pauseSnapshot, setPauseSnapshot] = useState<{
+    characterId: string;
+    characterName: string | null;
+    resumeCode: string | null;
+    messageCount: number;
+  } | null>(null);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
@@ -476,12 +484,19 @@ export function ChatApp() {
     // End on server but keep local resume credentials (memory is persisted server-side).
     intentionalCloseRef.current = true;
     setConnectionDropped(false);
+    const cid = activeCharacterId ?? character;
+    setPauseSnapshot({
+      characterId: cid,
+      characterName,
+      resumeCode: resumeCode ?? savedSession?.resumeCode ?? null,
+      messageCount: messages.length,
+    });
     closeSocket(true);
-    if (sessionId && wsToken && (activeCharacterId || character)) {
+    if (sessionId && wsToken && cid) {
       rememberSession({
         sessionId,
         wsToken,
-        characterId: activeCharacterId ?? character,
+        characterId: cid,
         characterName,
         resumeCode,
       });
@@ -496,8 +511,10 @@ export function ChatApp() {
     characterName,
     clearSessionState,
     closeSocket,
+    messages.length,
     rememberSession,
     resumeCode,
+    savedSession?.resumeCode,
     sessionId,
     wsToken,
   ]);
@@ -2104,6 +2121,23 @@ export function ChatApp() {
             messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
           }
         />
+        {pauseSnapshot && status === "idle" && (
+          <SessionPausedBanner
+            characterId={pauseSnapshot.characterId}
+            characterName={pauseSnapshot.characterName}
+            resumeCode={pauseSnapshot.resumeCode}
+            messageCount={pauseSnapshot.messageCount}
+            onResume={() => {
+              const snap = pauseSnapshot;
+              setPauseSnapshot(null);
+              setCharacter(snap.characterId);
+              void resumeLastSession().catch(() => {
+                void startSession();
+              });
+            }}
+            onDismiss={() => setPauseSnapshot(null)}
+          />
+        )}
         <SessionDropRescue
           className="mb-3"
           show={connectionDropped}

@@ -28,6 +28,7 @@ import { SessionAuthBanner } from "./SessionAuthBanner";
 import { InstallAppHint } from "./InstallAppHint";
 import { PushEnableHint } from "./PushEnableHint";
 import { SoftSupportHint } from "./SoftSupportHint";
+import { GalleryLiveStrip } from "./GalleryLiveStrip";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -259,6 +260,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </p>
           {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}
         </header>
+
+        <GalleryLiveStrip characters={characters} resumeCount={resumeCount} />
 
         {/* Hero reel only on main browse (not “my chats” / search clutter) */}
         {filter === "all" && !query.trim() && (
