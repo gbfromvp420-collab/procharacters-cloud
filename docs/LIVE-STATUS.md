@@ -37,7 +37,7 @@
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
 | LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse |
 | Account **System pulse** | ✅ `/health` + `/metrics` — deploy, DB, push, Stripe, uptime, sessions, turns, WS, 5xx · **Send test alert** |
-| **Error webhook (5xx)** | 🟡 eng ready · set `ERROR_WEBHOOK_URL` on API — [ops-error-webhook.md](./ops-error-webhook.md) |
+| **Error alerts (5xx)** | ✅ eng: **ntfy** (no Discord) · email · Discord/Slack · [ops-error-webhook.md](./ops-error-webhook.md) · Gary sets topic URL |
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
@@ -83,7 +83,7 @@
 3. ~~Housekeeping: close stale PRs `#1` `#2` `#3` `#4` `#29`~~ ✅ + CI workflows on `main`  
 4. ~~Ops noise: Azure workflow manual-only + Account System pulse~~ ✅  
 5. Content: dedicated packs when footage exists  
-6. Optional: **`ERROR_WEBHOOK_URL`** — Discord/Slack → [ops-error-webhook.md](./ops-error-webhook.md) · then Account **Send test alert**  
+6. Optional: **alerts without Discord** — `ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC` + free ntfy app → [ops-error-webhook.md](./ops-error-webhook.md) · **Send test alert**  
 7. Optional: more footage packs when ready
 
 ---

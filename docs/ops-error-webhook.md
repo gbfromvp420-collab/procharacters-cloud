@@ -1,97 +1,104 @@
-# Ops — Error webhook (5xx alerts)
+# Ops — Error alerts (no Discord required)
 
-**Goal:** Get a Slack or Discord ping when the API throws a real 5xx — so you sleep at night.
+**Goal:** Get a ping on your **phone** (or email) when the API throws a real 5xx.
 
-**Status chip:** Account → **System pulse** → `Alerts on` / `No error webhook`.
+**Status chip:** Account → **System pulse** → `Alerts · ntfy` / `No error alerts`.
 
----
-
-## What it is (not Stripe)
-
-| | Stripe webhook | Error webhook |
-|--|----------------|---------------|
-| Env var | `STRIPE_WEBHOOK_SECRET` | **`ERROR_WEBHOOK_URL`** |
-| Purpose | Confirm Day Pass payments | Alert you on server 5xx |
-| Direction | Stripe → our API | Our API → Slack/Discord |
-
-You already have Stripe live. This is a **separate** optional URL.
+You do **not** need Discord or Slack.
 
 ---
 
-## Fix in 4 steps (Discord — easiest)
+## Recommended: ntfy (free phone push) — 3 minutes
 
-### 1. Create a Discord webhook
+[ntfy](https://ntfy.sh) is free. No account required for a private topic if the name is hard to guess.
 
-1. Open your ops server (or make one: **#procharacters-ops**)
-2. Channel settings → **Integrations** → **Webhooks** → **New Webhook**
-3. Name it `procharacters-api`
-4. **Copy Webhook URL**  
-   Looks like: `https://discord.com/api/webhooks/123…/abc…`
+### 1. Pick a secret topic name
 
-### 2. Paste on Railway (API only)
+Something long and random (treat like a password), e.g.:
 
-1. [Railway dashboard](https://railway.app) → project **captivating-vision**
-2. Service **`procharacters-api`** (not the web frontend)
-3. **Variables** → **New**
-4. Name: `ERROR_WEBHOOK_URL`  
-   Value: paste the Discord (or Slack) URL — **no quotes**
-5. Save → wait for redeploy (or **Deploy** once)
-
-### 3. Confirm health chip
-
-After API redeploys:
-
-```bash
-curl -sS https://procharacters-api-production-0417.up.railway.app/health | jq .observability
+```text
+pcc-gary-ops-k7m2xq9w
 ```
 
-You want:
+**URL you will paste on Railway:**
 
-```json
-"errorWebhook": true,
-"errorWebhookUrl": true
+```text
+https://ntfy.sh/pcc-gary-ops-k7m2xq9w
 ```
 
-Or open **Account → System pulse** — chip should say **Alerts on**.
+(Use *your* secret, not this example if you paste it publicly.)
 
-### 4. Send test ping
+### 2. Phone
 
-**From Account (after this ship):** System pulse → **Send test alert**
+1. Install **ntfy** (iOS / Android) — or open https://ntfy.sh/app in a browser  
+2. **Subscribe** to the same topic name (`pcc-gary-ops-k7m2xq9w`)  
+3. Leave notifications on for that topic
 
-**Or curl:**
+### 3. Railway (API only)
+
+1. Railway → **captivating-vision** → **`procharacters-api`** (not web)  
+2. **Variables** → New  
+
+| Name | Value |
+|------|--------|
+| `ERROR_WEBHOOK_URL` | `https://ntfy.sh/YOUR-SECRET-TOPIC` |
+
+3. Save → wait for redeploy  
+
+### 4. Smoke
+
+Account → System pulse → **Send test alert**  
+→ phone should buzz with **Procharacters · test OK**.
+
+Or:
 
 ```bash
 curl -sS -X POST \
   https://procharacters-api-production-0417.up.railway.app/api/v1/ops/error-webhook/test
 ```
 
-You should see a green **TEST PING** in Discord/Slack within a few seconds.
+Health should show:
 
-Rate limit: **1 test per 60s** (process-wide) so the endpoint can’t spam your channel.
-
----
-
-## Slack instead of Discord
-
-1. Slack → your workspace → **Apps** → **Incoming Webhooks** → Add to channel
-2. Copy the URL (`https://hooks.slack.com/services/…`)
-3. Same Railway var: `ERROR_WEBHOOK_URL=<that url>`
-
-Our payload sends both `text` (Slack) and `content` (Discord).
+```json
+"errorWebhook": true,
+"errorWebhookUrl": true,
+"alertChannel": "ntfy"
+```
 
 ---
 
-## What fires a real alert
+## Alternative: email (if Resend already works for magic links)
 
-| Event | Webhook? |
-|-------|----------|
-| Unhandled throw / 5xx error handler | ✅ |
-| Silent `reply.code(500)` paths | ✅ |
-| 4xx client errors (bad auth, validation) | ❌ (by design) |
-| Health checks | ❌ |
-| Manual **Send test alert** | ✅ (green TEST PING) |
+On **procharacters-api**:
 
-No request bodies are sent (PII / NSFW safe). You get path, method, status, requestId, short stack, deploy SHA.
+| Name | Value |
+|------|--------|
+| `ERROR_ALERT_EMAIL` | `you@your-email.com` |
+| `RESEND_API_KEY` | (already set if magic-link email works) |
+
+Optional: keep ntfy **and** email — both fire.
+
+---
+
+## Discord / Slack (optional)
+
+Only if you want them later:
+
+- Discord channel webhook URL → same `ERROR_WEBHOOK_URL`  
+- Slack Incoming Webhook URL → same var  
+
+Not required.
+
+---
+
+## What this is *not*
+
+| Stripe webhook | Error alerts |
+|----------------|--------------|
+| `STRIPE_WEBHOOK_SECRET` | **`ERROR_WEBHOOK_URL`** or **`ERROR_ALERT_EMAIL`** |
+| Money in | You get paged on 5xx |
+
+Free chat never depends on alerts.
 
 ---
 
@@ -99,34 +106,18 @@ No request bodies are sent (PII / NSFW safe). You get path, method, status, requ
 
 | Symptom | Fix |
 |---------|-----|
-| Chip still **No error webhook** | Var on **api** service? Typo in name? Wait for redeploy; check `gitSha` moved |
-| Test returns `503` | `ERROR_WEBHOOK_URL` empty or whitespace |
-| Test returns `429` | Wait ~60s and retry |
-| Test returns `502` | URL wrong / webhook deleted / Discord rejects body — check API logs `error_webhook_failed` |
-| Discord says invalid webhook | Regenerate URL; don’t add query junk; full URL including secret tail |
-| Alerts never on real 5xx | Confirm test works first; then check Railway logs for `reported_error` |
-
----
-
-## Optional: Railway CLI (from this machine)
-
-If you’ve pasted `RAILWAY_API_TOKEN` in session:
-
-```bash
-export RAILWAY_TOKEN="$RAILWAY_API_TOKEN"
-# Link / select procharacters-api, then:
-railway variables set ERROR_WEBHOOK_URL='https://discord.com/api/webhooks/…'
-```
-
-Never commit the URL (it’s a secret).
+| Still **No error alerts** | Var on **api** service? Typo? Wait for redeploy (`gitSha` moves) |
+| Test `503` | Neither ntfy URL nor email path configured |
+| Test `429` | Wait ~60s |
+| ntfy silent | Same topic name on phone + Railway? Notifications allowed? |
+| Email silent | `RESEND_API_KEY` live? Check spam; Resend domain verified? |
 
 ---
 
 ## Related
 
-- [LIVE-STATUS.md](./LIVE-STATUS.md) — chip truth  
-- [DEPLOY.md](./DEPLOY.md) — full env table  
+- [LIVE-STATUS.md](./LIVE-STATUS.md)  
+- [DEPLOY.md](./DEPLOY.md)  
 - [ops-billing-stripe.md](./ops-billing-stripe.md) — payments (different webhook)  
-- [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md) — ops priority stack  
 
-*Free chat never depends on this. Alerts are for you, not the product path.*
+*Easiest path for Boss Sr.: ntfy topic → Railway var → Send test alert.*

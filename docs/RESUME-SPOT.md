@@ -9,7 +9,7 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Error webhook** | ✅ eng: Discord/Slack dual payload · test endpoint · System pulse **Send test alert** · [ops-error-webhook.md](./ops-error-webhook.md) | **You:** set `ERROR_WEBHOOK_URL` on Railway **procharacters-api** → Send test alert |
+| **Error alerts** | ✅ eng: **ntfy phone** (no Discord/Slack) · optional email · test button · [ops-error-webhook.md](./ops-error-webhook.md) | **You:** set `ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC` on **procharacters-api** → install ntfy → Send test alert |
 | **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass · return seed | Hard refresh web after deploy |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Stripe | ✅ LIVE + webhook | Careful real charge smoke if desired |

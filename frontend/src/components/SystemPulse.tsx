@@ -19,6 +19,8 @@ type HealthPayload = {
   observability?: {
     errorWebhook?: boolean;
     errorWebhookUrl?: boolean;
+    errorAlertEmail?: boolean;
+    alertChannel?: string;
     webPush?: boolean;
     lastExpiryCron?: { at?: string; accounts?: number; sent?: number } | null;
   };
@@ -213,14 +215,20 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
 
     const alertsOn =
       health.observability?.errorWebhookUrl === true ||
+      health.observability?.errorAlertEmail === true ||
       health.observability?.errorWebhook === true;
+    const channel = health.observability?.alertChannel;
     chips.push({
       key: "webhook",
-      label: alertsOn ? "Alerts on" : "No error webhook",
+      label: alertsOn
+        ? channel && channel !== "none"
+          ? `Alerts · ${channel}`
+          : "Alerts on"
+        : "No error alerts",
       ok: alertsOn ? true : "info",
       title: alertsOn
-        ? "ERROR_WEBHOOK_URL live — 5xx pings Slack/Discord. Use Send test alert."
-        : "Set ERROR_WEBHOOK_URL on Railway → procharacters-api (see docs/ops-error-webhook.md)",
+        ? `5xx pings via ${channel ?? "configured channel"}. Use Send test alert.`
+        : "No Discord needed — easiest: ntfy.sh phone topic (docs/ops-error-webhook.md)",
     });
 
     const ready = health.avatar?.dedicatedReady?.length ?? 0;
@@ -299,6 +307,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
 
   const alertsConfigured =
     health?.observability?.errorWebhookUrl === true ||
+    health?.observability?.errorAlertEmail === true ||
     health?.observability?.errorWebhook === true;
 
   const onTestAlert = async () => {
@@ -313,6 +322,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         error?: string;
         retryAfterSec?: number;
         configured?: boolean;
+        channel?: string;
       };
       if (res.status === 429) {
         setAlertNotice(
@@ -323,7 +333,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       }
       if (res.status === 503 || data.configured === false) {
         setAlertNotice(
-          "Not configured — set ERROR_WEBHOOK_URL on Railway procharacters-api (docs/ops-error-webhook.md)",
+          "Not configured — easiest: ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC (no Discord). docs/ops-error-webhook.md",
         );
         return;
       }
@@ -331,7 +341,9 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         setAlertNotice(data.error || `Test failed (HTTP ${res.status})`);
         return;
       }
-      setAlertNotice("Test alert sent — check Slack/Discord");
+      setAlertNotice(
+        `Test alert sent${data.channel ? ` · ${data.channel}` : ""} — check phone/email`,
+      );
       window.setTimeout(() => setAlertNotice(null), 4000);
     } catch {
       setAlertNotice("Could not reach API for test alert");
@@ -430,10 +442,14 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       )}
       {!alertsConfigured && !loading && health && (
         <p className="mt-2 text-[10px] text-brand-muted">
-          Sleep-at-night: set{" "}
-          <code className="text-brand-muted/90">ERROR_WEBHOOK_URL</code> on Railway{" "}
-          <strong className="text-brand-text/80">procharacters-api</strong> to a Discord or
-          Slack webhook URL — then <strong className="text-brand-text/80">Send test alert</strong>.
+          Sleep-at-night (no Discord needed): Railway{" "}
+          <strong className="text-brand-text/80">procharacters-api</strong> →{" "}
+          <code className="text-brand-muted/90">ERROR_WEBHOOK_URL</code>
+          ={" "}
+          <code className="text-brand-muted/90">https://ntfy.sh/your-secret-topic</code>
+          {" · "}
+          install free <strong className="text-brand-text/80">ntfy</strong> app → subscribe →{" "}
+          <strong className="text-brand-text/80">Send test alert</strong>.
         </p>
       )}
       <p className="mt-2 text-[10px] text-brand-muted">

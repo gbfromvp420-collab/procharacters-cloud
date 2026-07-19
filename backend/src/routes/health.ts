@@ -12,8 +12,10 @@ import {
   phase4PackIds,
 } from "../lib/media/avatar-packs.js";
 import {
+  isErrorEmailConfigured,
   isErrorReportingConfigured,
   isErrorWebhookUrlConfigured,
+  primaryAlertChannel,
   sendErrorWebhookTest,
 } from "../lib/observability/error-reporter.js";
 import { getLastExpiryCron, getMetrics } from "../lib/observability/metrics.js";
@@ -93,6 +95,8 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
         observability: {
           errorWebhook: isErrorReportingConfigured(),
           errorWebhookUrl: isErrorWebhookUrlConfigured(),
+          errorAlertEmail: isErrorEmailConfigured(),
+          alertChannel: primaryAlertChannel(),
           webPush: isWebPushConfigured(),
           logLevel: process.env.LOG_LEVEL?.trim() || "info",
           /** Resume-expiry push cron last tick (null until first run). */
@@ -127,12 +131,13 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
      * only posts to *your* configured webhook.
      */
     app.post("/api/v1/ops/error-webhook/test", async (request, reply) => {
-      if (!isErrorWebhookUrlConfigured()) {
+      if (!isErrorReportingConfigured() || primaryAlertChannel() === "none") {
         return reply.code(503).send({
           ok: false,
           configured: false,
+          channel: "none",
           error:
-            "ERROR_WEBHOOK_URL not set on procharacters-api. See docs/ops-error-webhook.md",
+            "No alert channel. Easiest (no Discord): set ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC — see docs/ops-error-webhook.md",
         });
       }
 
@@ -145,6 +150,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
           .send({
             ok: false,
             configured: true,
+            channel: primaryAlertChannel(),
             error: `Try again in ${Math.ceil(waitMs / 1000)}s`,
             retryAfterSec: Math.ceil(waitMs / 1000),
           });
@@ -157,6 +163,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
       return reply.code(result.sent ? 200 : 502).send({
         ok: result.sent,
         configured: result.configured,
+        channel: result.channel ?? primaryAlertChannel(),
         status: result.status,
         error: result.error,
       });
