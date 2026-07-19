@@ -159,6 +159,7 @@ export async function resumeSession(
 
 export async function resumeByCode(
   code: string,
+  options?: { sessionMode?: "normal" | "edge_pace" },
 ): Promise<
   CreateSessionResponse & {
     messages: MemoryMessage[];
@@ -171,7 +172,10 @@ export async function resumeByCode(
   const res = await fetch(`${API_BASE}/api/v1/sessions/resume-code`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code }),
+    body: JSON.stringify({
+      code,
+      ...(options?.sessionMode ? { sessionMode: options.sessionMode } : {}),
+    }),
   });
   if (!res.ok) {
     const text = await res.text();

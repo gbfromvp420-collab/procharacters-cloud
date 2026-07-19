@@ -1591,10 +1591,23 @@ export function ChatApp() {
       void (async () => {
         try {
           setStatus("connecting");
-          const session = await resumeByCode(query.resumeCode!);
+          // DNA power reclaim: ?mode=edge_pace on Continue deep-links
+          if (query.sessionMode) {
+            setSessionMode(query.sessionMode);
+          }
+          const session = await resumeByCode(query.resumeCode!, {
+            sessionMode: query.sessionMode,
+          });
+          if (session.sessionMode === "edge_pace" || session.sessionMode === "normal") {
+            setSessionMode(session.sessionMode);
+          }
           await openLiveSession(session, {
             forceRehydrate: query.rehydrate !== false,
           });
+          if (query.sessionMode === "edge_pace" || session.sessionMode === "edge_pace") {
+            setCopyNotice("DNA power reclaim · Edge Pace + heat restored");
+            window.setTimeout(() => setCopyNotice(null), 3200);
+          }
         } catch (err) {
           setError(err instanceof Error ? err.message : "Invalid resume code");
           setStatus("error");

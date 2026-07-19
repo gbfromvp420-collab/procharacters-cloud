@@ -484,11 +484,37 @@ export function getMostRecentResume(): ResumeCacheEntry | null {
   return null;
 }
 
-/** Chat deep-link for a resume entry. Always requests full memory rehydrate. */
-export function buildResumeChatPath(entry: Pick<ResumeCacheEntry, "resumeCode" | "characterId">): string {
+/** True when heat trail is mid DNA climb — reclaim should reopen Edge Pace. */
+export function isDnaPowerTrail(
+  entry: Pick<ResumeCacheEntry, "dnaTreeNodeId" | "dnaTreeLabel" | "heatDepth">,
+): boolean {
+  const dna = `${entry.dnaTreeLabel || ""} ${entry.dnaTreeNodeId || ""}`.toLowerCase();
+  if (/edge|deny|release|gate|tease/.test(dna)) return true;
+  return (
+    entry.heatDepth === "edge" ||
+    entry.heatDepth === "deep" ||
+    entry.heatDepth === "locked"
+  );
+}
+
+/**
+ * Chat deep-link for a resume entry. Always requests full memory rehydrate.
+ * DNA power trails auto-attach mode=edge_pace so Continue reclaims the climb.
+ */
+export function buildResumeChatPath(
+  entry: Pick<
+    ResumeCacheEntry,
+    "resumeCode" | "characterId" | "dnaTreeNodeId" | "dnaTreeLabel" | "heatDepth"
+  >,
+  options?: { edgePace?: boolean },
+): string {
   const code = entry.resumeCode.trim().toUpperCase();
   const params = new URLSearchParams({ resume: code, rehydrate: "1" });
   if (entry.characterId) params.set("character", entry.characterId);
+  const edge =
+    options?.edgePace === true ||
+    (options?.edgePace !== false && isDnaPowerTrail(entry));
+  if (edge) params.set("mode", "edge_pace");
   return `/chat?${params.toString()}`;
 }
 

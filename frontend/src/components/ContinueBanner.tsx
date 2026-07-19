@@ -145,9 +145,11 @@ export function ContinueBanner({
                 urgent ? "text-rose-200/90" : "text-amber-200/90"
               }`}
             >
-              {continueTarget.recapLine || trailDepth
-                ? `Heat trail · ${nick}`
-                : "Continue where you left off"}
+              {dnaLabel
+                ? `DNA power · ${nick}`
+                : continueTarget.recapLine || trailDepth
+                  ? `Heat trail · ${nick}`
+                  : "Continue where you left off"}
             </p>
             <p className="truncate text-base font-semibold text-brand-text sm:text-lg">
               {displayName}

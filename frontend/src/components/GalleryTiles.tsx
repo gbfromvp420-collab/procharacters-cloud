@@ -356,7 +356,7 @@ export function CharacterTile({
                 {urgent
                   ? "Tap to reclaim →"
                   : resume.dnaTreeLabel || resume.dnaTreeNodeId
-                    ? "DNA trail · continue →"
+                    ? "DNA power · Edge reclaim →"
                     : "Heat trail · continue →"}
               </p>
             </div>

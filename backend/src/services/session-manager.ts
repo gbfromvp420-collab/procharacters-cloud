@@ -12,10 +12,10 @@ import {
   getOpeningMessage,
 } from "../lib/live/character-catalog.js";
 import { getCustomCharacter } from "../lib/live/custom-characters.js";
-import { initialDnaTreeNodeId } from "../lib/live/dna-tree-stepper.js";
+import { initialDnaTreeNodeId, uiForTreeNode } from "../lib/live/dna-tree-stepper.js";
 import { formatDnaSessionSeed } from "../lib/live/forge-dna.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
-import { normalizeSessionMode } from "../lib/live/session-mode.js";
+import { normalizeSessionMode, type SessionMode } from "../lib/live/session-mode.js";
 import { getCrossSessionNote } from "../lib/memory/cross-session-notes.js";
 import { returnGreetingHint } from "../lib/memory/cross-session-dossier.js";
 import {
@@ -390,13 +390,14 @@ export class SessionManager {
   async resumeByCode(
     code: string,
     wsBaseUrl: string,
+    options?: { sessionMode?: SessionMode },
   ): Promise<CreateSessionResult & { messages: SessionRecord["memory"]["messages"] }> {
     const mapping = await resolveResumeCode(code);
     if (!mapping) {
       throw new SessionNotFoundError("resume-code");
     }
     const session = await this.loadSession(mapping.sessionId);
-    return this.reactivate(session, wsBaseUrl);
+    return this.reactivate(session, wsBaseUrl, options);
   }
 
   /** Resume a session owned by a logged-in account (no ws token needed). */
@@ -404,12 +405,13 @@ export class SessionManager {
     accountId: string,
     sessionId: string,
     wsBaseUrl: string,
+    options?: { sessionMode?: SessionMode },
   ): Promise<CreateSessionResult & { messages: SessionRecord["memory"]["messages"] }> {
     const session = await this.loadSession(sessionId);
     if (session.accountId !== accountId) {
       throw new SessionAuthError("Session does not belong to this account");
     }
-    return this.reactivate(session, wsBaseUrl);
+    return this.reactivate(session, wsBaseUrl, options);
   }
 
   async claimSessionForAccount(sessionId: string, accountId: string): Promise<SessionRecord> {
@@ -1175,6 +1177,7 @@ export class SessionManager {
   private async reactivate(
     session: SessionRecord,
     wsBaseUrl: string,
+    options?: { sessionMode?: SessionMode },
   ): Promise<
     CreateSessionResult & {
       messages: SessionRecord["memory"]["messages"];
@@ -1235,6 +1238,14 @@ export class SessionManager {
       }
     }
 
+    // DNA power reclaim: Continue deep-link can reopen Edge Pace
+    const nextMode = options?.sessionMode
+      ? normalizeSessionMode(options.sessionMode)
+      : normalizeSessionMode(session.sessionMode);
+    const modeChanged = nextMode !== (session.sessionMode ?? "normal");
+    const modeStartedAt =
+      modeChanged || !session.modeStartedAt ? now.toISOString() : session.modeStartedAt;
+
     const continuity = memory.ensureResumeContinuity({
       characterId: session.characterId,
       characterName: session.promptSnapshot.characterName,
@@ -1242,7 +1253,7 @@ export class SessionManager {
         buildSessionNotes(msgs, {
           characterId: session.characterId,
           characterName: session.promptSnapshot.characterName,
-          sessionMode: session.sessionMode,
+          sessionMode: nextMode,
         }),
     });
     // Stamp scene lock into session notes so prompt formatter always sees it.
@@ -1255,12 +1266,37 @@ export class SessionManager {
       memory.setSessionNotes(stamped);
     }
 
+    // Hard DNA rehydrate — tree node survives End/Continue
+    const custom = getCustomCharacter(session.characterId);
+    let dnaTreeNodeId = session.dnaTreeNodeId;
+    if (!dnaTreeNodeId && custom?.dna) {
+      dnaTreeNodeId = initialDnaTreeNodeId(custom.dna);
+    }
+    if (dnaTreeNodeId && custom?.dna?.behaviorTree?.nodes) {
+      const node = custom.dna.behaviorTree.nodes.find((n) => n.id === dnaTreeNodeId);
+      if (node) {
+        const label = uiForTreeNode(node).label;
+        const beat = `DNA tree · ${label}`;
+        const notesNow = memory.getSessionNotes() || "";
+        if (!/DNA tree ·/i.test(notesNow)) {
+          memory.setSessionNotes(`${notesNow} ${beat}.`.trim().slice(0, 1200));
+        } else if (!notesNow.includes(label)) {
+          memory.setSessionNotes(
+            notesNow.replace(/DNA tree ·[^.]*/i, beat).slice(0, 1200),
+          );
+        }
+      }
+    }
+
     const updated: SessionRecord = {
       ...session,
       wsToken: randomUUID(),
       status: "active",
       resumeCode,
       memory: memory.toData(),
+      sessionMode: nextMode,
+      modeStartedAt,
+      ...(dnaTreeNodeId ? { dnaTreeNodeId } : {}),
       expiresAt: new Date(now.getTime() + this.sessionTtlMinutes * 60_000).toISOString(),
       updatedAt: now.toISOString(),
     };

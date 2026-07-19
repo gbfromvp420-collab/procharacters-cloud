@@ -61,6 +61,8 @@ const resumeSessionSchema = z.object({
 
 const resumeCodeSchema = z.object({
   code: z.string().min(6).max(16),
+  /** DNA power reclaim — reopen Edge Pace on Continue deep-links. */
+  sessionMode: z.enum(["normal", "edge_pace"]).optional(),
 });
 
 const exportSessionSchema = z.object({
@@ -804,7 +806,9 @@ export const createSessionRoutes = (
       const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
       try {
         const body = resumeCodeSchema.parse(request.body ?? {});
-        const session = await sessionManager.resumeByCode(body.code, wsBaseUrl);
+        const session = await sessionManager.resumeByCode(body.code, wsBaseUrl, {
+          sessionMode: body.sessionMode,
+        });
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });
 
@@ -813,6 +817,10 @@ export const createSessionRoutes = (
           const identity = `user-${session.sessionId.slice(0, 8)}`;
           livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
           await media.publish(session.sessionId, session.characterId, avatarState);
+        }
+
+        if (body.sessionMode === "edge_pace" && session.sessionMode === "edge_pace") {
+          bump("sessionsEdgePace");
         }
 
         return { ...session, avatarState, livekit: livekitJoin };
