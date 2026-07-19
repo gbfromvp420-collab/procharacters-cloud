@@ -4,6 +4,7 @@
  */
 import Stripe from "stripe";
 import { grantAccountPlan } from "../accounts/account-store.js";
+import { bump } from "../observability/metrics.js";
 
 export type CheckoutProduct = "day_pass" | "supporter";
 
@@ -158,7 +159,7 @@ export async function handleStripeWebhook(
         typeof session.customer === "string"
           ? session.customer
           : session.customer?.id;
-      await grantAccountPlan(
+      const grant = await grantAccountPlan(
         accountId,
         product === "supporter" ? "supporter" : "day_pass",
         {
@@ -166,6 +167,10 @@ export async function handleStripeWebhook(
           checkoutSessionId: session.id,
         },
       );
+      // Funnel: webhook path (return confirm also bumps — idempotent grants still count once each path)
+      if (grant) {
+        bump("checkoutConfirms");
+      }
     }
   }
 

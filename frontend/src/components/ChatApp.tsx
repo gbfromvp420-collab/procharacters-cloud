@@ -876,6 +876,45 @@ export function ChatApp() {
               resumeCode,
             });
             setRestarting(false);
+            // Sexy first open: Studio DNA starter → composer seed (fresh sessions only)
+            try {
+              const histLen = history?.length ?? 0;
+              const rawStarter = sessionStorage.getItem("pc_studio_starter");
+              if (rawStarter && histLen <= 2) {
+                const parsed = JSON.parse(rawStarter) as {
+                  characterId?: string;
+                  starter?: string;
+                  at?: number;
+                };
+                const fresh =
+                  !parsed.at || Date.now() - Number(parsed.at) < 30 * 60_000;
+                if (
+                  fresh &&
+                  parsed.characterId === session.characterId &&
+                  parsed.starter?.trim()
+                ) {
+                  const seed = parsed.starter.trim().slice(0, 400);
+                  setInput((prev) => (prev.trim() ? prev : seed));
+                  const edge =
+                    data.sessionMode === "edge_pace" ||
+                    (typeof data.modeState === "object" &&
+                      data.modeState &&
+                      (data.modeState as { mode?: string }).mode === "edge_pace");
+                  setCopyNotice(
+                    edge
+                      ? "DNA starter ready · Fire ↵ to climb Edge"
+                      : "DNA starter ready · Fire ↵ to open heat",
+                  );
+                  window.setTimeout(() => setCopyNotice(null), 2800);
+                  sessionStorage.removeItem("pc_studio_starter");
+                }
+              } else if (rawStarter) {
+                // Stale / resume — drop so it doesn't poison later
+                sessionStorage.removeItem("pc_studio_starter");
+              }
+            } catch {
+              /* ignore starter seed */
+            }
             inputRef.current?.focus();
             break;
           }

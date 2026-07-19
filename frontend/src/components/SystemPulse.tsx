@@ -293,46 +293,54 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       });
     }
     // Funnel: expand → DNA save → edge sessions → tree climb → checkout
-    if (
-      (metrics.forgeExpands ?? 0) +
-        (metrics.customV3Created ?? 0) +
-        (metrics.sessionsEdgePace ?? 0) +
-        (metrics.dnaTreeAdvances ?? 0) +
-        (metrics.checkoutStarts ?? 0) +
-        (metrics.checkoutConfirms ?? 0) >
-      0
-    ) {
+    const expands = metrics.forgeExpands ?? 0;
+    const dnaSaves = metrics.customV3Created ?? 0;
+    const edgeSessions = metrics.sessionsEdgePace ?? 0;
+    const climbs = metrics.dnaTreeAdvances ?? 0;
+    const payStarts = metrics.checkoutStarts ?? 0;
+    const payConfirms = metrics.checkoutConfirms ?? 0;
+    if (expands + dnaSaves + edgeSessions + climbs + payStarts + payConfirms > 0) {
+      const pct = (num: number, den: number) =>
+        den > 0 ? `${Math.min(999, Math.round((num / den) * 100))}%` : "—";
       chips.push({
         key: "funnel",
-        label: `Forge ${formatCount(metrics.forgeExpands)} · DNA ${formatCount(
-          metrics.customV3Created,
-        )} · Edge ${formatCount(metrics.sessionsEdgePace)}`,
+        label: `Forge ${formatCount(expands)} · DNA ${formatCount(dnaSaves)} · Edge ${formatCount(
+          edgeSessions,
+        )}`,
         ok: true,
         title: [
-          `forge expands ${metrics.forgeExpands ?? 0}`,
-          `custom-v3 saves ${metrics.customV3Created ?? 0}`,
-          `edge pace sessions ${metrics.sessionsEdgePace ?? 0}`,
-          `DNA tree advances ${metrics.dnaTreeAdvances ?? 0}`,
-          `checkout starts ${metrics.checkoutStarts ?? 0}`,
-          `checkout confirms ${metrics.checkoutConfirms ?? 0}`,
+          `expand→save ${pct(dnaSaves, expands)}`,
+          `save→edge ${pct(edgeSessions, dnaSaves)}`,
+          `edge→climbs ${pct(climbs, edgeSessions)}`,
+          `pay start→confirm ${pct(payConfirms, payStarts)}`,
+          `raw: expand ${expands} · DNA ${dnaSaves} · edge ${edgeSessions} · climbs ${climbs} · pay ${payStarts}→${payConfirms}`,
         ].join(" · "),
       });
-      if ((metrics.dnaTreeAdvances ?? 0) > 0) {
+      if (expands > 0 || dnaSaves > 0) {
+        chips.push({
+          key: "funnelRate",
+          label: `Save ${pct(dnaSaves, expands)} · Edge ${pct(edgeSessions, Math.max(dnaSaves, 1))}`,
+          ok: "info",
+          title: "Conversion ratios this process (hover funnel for full stack)",
+        });
+      }
+      if (climbs > 0) {
         chips.push({
           key: "dnaTree",
-          label: `${formatCount(metrics.dnaTreeAdvances)} DNA climbs`,
+          label: `${formatCount(climbs)} DNA climbs`,
           ok: "info",
           title: "Soft behavior-tree node advances mid-session",
         });
       }
-      if ((metrics.checkoutStarts ?? 0) + (metrics.checkoutConfirms ?? 0) > 0) {
+      if (payStarts + payConfirms > 0) {
         chips.push({
           key: "checkout",
-          label: `Pay ${formatCount(metrics.checkoutStarts)}→${formatCount(
-            metrics.checkoutConfirms,
-          )}`,
-          ok: (metrics.checkoutConfirms ?? 0) > 0 ? true : "info",
-          title: "Stripe checkout starts → return confirms this process",
+          label: `Pay ${formatCount(payStarts)}→${formatCount(payConfirms)} (${pct(
+            payConfirms,
+            payStarts,
+          )})`,
+          ok: payConfirms > 0 ? true : "info",
+          title: "Stripe checkout starts → confirms (webhook + return path)",
         });
       }
     }
