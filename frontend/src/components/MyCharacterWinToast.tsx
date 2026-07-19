@@ -12,6 +12,7 @@ export function MyCharacterWinToast({
   characterId,
   characterName,
   customsLimit,
+  starterHint,
   onStart,
   onStartEdge,
   onDismiss,
@@ -21,6 +22,8 @@ export function MyCharacterWinToast({
   characterName?: string | null;
   /** Soft cap hint (e.g. 10 free / 40 premium). */
   customsLimit?: number;
+  /** Smart starter line shown under Chat Now. */
+  starterHint?: string | null;
   onStart: () => void;
   onStartEdge?: () => void;
   onDismiss: () => void;
@@ -43,13 +46,18 @@ export function MyCharacterWinToast({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-violet-200/90">
-            My Character · private
+            Ready · private
           </p>
           <p className="mt-1 text-brand-muted">
-            <strong className="text-brand-text">{nick}</strong> is saved to your account only —
-            not on the public gallery. Start heat whenever you’re ready
-            {customsLimit != null ? ` · up to ${customsLimit} models` : ""}.
+            <strong className="text-brand-text">{nick}</strong> is live on your account —
+            Chat Now jumps straight into heat
+            {customsLimit != null ? ` · ${customsLimit} slots` : ""}.
           </p>
+          {starterHint?.trim() && (
+            <p className="mt-1.5 line-clamp-2 text-[11px] italic text-violet-100/85">
+              Starter · “{starterHint.trim()}”
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
@@ -59,7 +67,7 @@ export function MyCharacterWinToast({
               }}
               className="btn-primary min-h-0 px-3 py-1.5 text-xs"
             >
-              Start heat
+              Chat Now
             </button>
             {onStartEdge && (
               <button

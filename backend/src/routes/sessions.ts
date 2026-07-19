@@ -111,8 +111,8 @@ const createCustomCharacterSchema = z.object({
   baseModelId: z.string().min(2).max(80).optional(),
   avatarBase: z.enum(["twink-default", "female-default"]).optional(),
   audience: z.enum(["gay", "bi", "straight", "any"]).optional(),
-  keyPhrases: z.array(z.string().min(2).max(120)).max(6).optional(),
-  scenes: z.array(sceneSchema).max(5).optional(),
+  keyPhrases: z.array(z.string().min(2).max(120)).max(4).optional(),
+  scenes: z.array(sceneSchema).max(2).optional(),
   mediaBase: z.string().min(1).max(300).optional(),
   mediaOverrides: mediaOverridesSchema,
   featured: z.boolean().optional(),
@@ -125,8 +125,8 @@ const updateCustomCharacterSchema = z.object({
   appearance: z.string().min(12).max(2000).optional(),
   energy: z.string().min(4).max(800).optional(),
   clothing: z.string().min(2).max(200).optional(),
-  keyPhrases: z.array(z.string().min(2).max(120)).max(6).nullable().optional(),
-  scenes: z.array(sceneSchema).max(5).nullable().optional(),
+  keyPhrases: z.array(z.string().min(2).max(120)).max(4).nullable().optional(),
+  scenes: z.array(sceneSchema).max(2).nullable().optional(),
   featured: z.boolean().optional(),
 });
 

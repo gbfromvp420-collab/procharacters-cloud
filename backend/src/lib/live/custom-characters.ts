@@ -6,7 +6,6 @@ import {
   getAccount,
 } from "../accounts/account-store.js";
 import { repoPath } from "../paths.js";
-import { loadPromptBody } from "../prompts/loader.js";
 import {
   LIVE_CHARACTER_CATALOG,
   type LiveCharacterProfile,
@@ -42,9 +41,9 @@ export interface CustomCharacterInput {
   /** Clip pack root — resolved from baseModelId when omitted. */
   avatarBase?: CustomAvatarBase;
   audience?: "gay" | "bi" | "straight" | "any";
-  /** Short dirty-talk / tease lines (max 6). */
+  /** Short dirty-talk / tease lines (max 4 slim studio). */
   keyPhrases?: string[];
-  /** Scene anchors (2–3 recommended, max 5). */
+  /** Optional scene anchors (0–2 slim studio). */
   scenes?: CustomScene[];
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
@@ -91,8 +90,9 @@ const CUSTOMS_PER_ACCOUNT_FREE = Number(process.env.CUSTOM_CHARS_PER_ACCOUNT ?? 
 const CUSTOMS_PER_ACCOUNT_PREMIUM = Number(
   process.env.CUSTOM_CHARS_PER_ACCOUNT_PREMIUM ?? 40,
 );
-const MAX_SCENES = 5;
-const MAX_PHRASES = 6;
+/** Slim Studio v2 — quality over field sprawl. */
+const MAX_SCENES = 2;
+const MAX_PHRASES = 4;
 
 function customsLimitForAccount(accountId?: string): number {
   if (!accountId) return CUSTOMS_PER_ACCOUNT_FREE;
@@ -126,10 +126,6 @@ export function resolveAvatarBaseFromModel(baseModelId: string): CustomAvatarBas
   return ab === "female-default" ? "female-default" : "twink-default";
 }
 
-function defaultAudience(avatarBase: CustomAvatarBase): "gay" | "straight" {
-  return avatarBase === "female-default" ? "straight" : "gay";
-}
-
 function defaultClothing(avatarBase: CustomAvatarBase): string {
   return avatarBase === "female-default"
     ? "crotchless undies / open panel framing, visible arousal"
@@ -157,6 +153,11 @@ function sanitizePhrases(raw?: string[]): string[] | undefined {
   return out.length ? out : undefined;
 }
 
+/**
+ * Slim Studio prompt — user identity owns the mind.
+ * Base model id is video/clip root only; we do NOT paste full signature base
+ * prompts (that typecast customs into catalog look/energy).
+ */
 async function buildPromptV2(input: {
   name: string;
   appearance: string;
@@ -167,22 +168,11 @@ async function buildPromptV2(input: {
   keyPhrases?: string[];
   scenes?: CustomScene[];
 }): Promise<string> {
-  let baseBody = "";
-  try {
-    const base = await loadPromptBody(
-      input.baseModelId,
-      LIVE_CHARACTER_CATALOG[input.baseModelId]?.defaultVersion,
-    );
-    baseBody = base.body;
-  } catch {
-    baseBody = "";
-  }
-
   const phraseBlock =
     input.keyPhrases && input.keyPhrases.length
       ? [
           ``,
-          `## Key phrases (use naturally, sparingly — do not spam every line)`,
+          `## Key phrases (use naturally, sparingly — never every line)`,
           ...input.keyPhrases.map((p) => `- “${p}”`),
         ]
       : [];
@@ -191,65 +181,51 @@ async function buildPromptV2(input: {
     input.scenes && input.scenes.length
       ? [
           ``,
-          `## Scene anchors (pace like these unless the user escalates)`,
+          `## Scene anchors (optional pace cues — follow user if they lead)`,
           ...input.scenes.map(
             (s, i) => `${i + 1}. **${s.title}** — ${s.body}`,
           ),
         ]
       : [];
 
-  const overlay = [
-    ``,
-    `---`,
-    ``,
-    `# My Character overlay — ${input.name}`,
-    ``,
-    `## Identity lock (never break)`,
-    input.appearance,
-    `- Display name in chat: ${input.name}`,
-    `- Clothing emphasis: ${input.clothing}`,
-    `- Keep appearance consistent every reply`,
-    ``,
-    `## Vibe`,
-    input.energy,
-    `- Stay photorealistic, uncensored, Naughty Syntax premium`,
-    `- Inherit base model edging/teasing rules above`,
-    ``,
-    `## Audience`,
-    `Primary framing: ${input.audience}`,
-    ...phraseBlock,
-    ...sceneBlock,
-    ``,
-    `## Overlay rules`,
-    `- Base model signature clothing grammar stays unless clothing override conflicts`,
-    `- Private custom character — still live cam energy, first person`,
-    `- Climax only when the user clearly wants release`,
-  ].join("\n");
+  const clothingLine = input.clothing?.trim()
+    ? `- Clothing note: ${input.clothing.trim()}`
+    : null;
 
-  if (baseBody.trim()) {
-    return `${baseBody.trim()}\n${overlay}`;
-  }
+  const audienceLine =
+    input.audience && input.audience !== "any"
+      ? [`## Audience`, `Primary framing: ${input.audience}`, ``]
+      : [];
 
-  // Fallback if base prompt missing
+  const energy =
+    input.energy?.trim() ||
+    "Match the user's pace; tease and escalate on invitation.";
+
   return [
-    `# Naughty Syntax — Custom Character: ${input.name}`,
+    `# Naughty Syntax — My Character: ${input.name}`,
     ``,
-    `## Core Identity`,
-    `${input.name} is a consenting adult (18+) custom character.`,
-    `Photorealistic erotic style. Uncensored.`,
+    `Consenting adult 18+. Photorealistic. Uncensored. First person live cam.`,
     ``,
-    `## Visual Style & Appearance`,
+    `## Identity lock (user-authored — never replace with a catalog model look)`,
     input.appearance,
-    `- Signature clothing: ${input.clothing}`,
+    `- Display name: ${input.name}`,
+    clothingLine,
+    `- Stay consistent with THIS identity every reply`,
     ``,
-    `## Energy & Personality`,
-    input.energy,
+    `## Energy`,
+    energy,
+    ...audienceLine,
     ...phraseBlock,
     ...sceneBlock,
     ``,
-    `## Audience`,
-    input.audience,
-  ].join("\n");
+    `## Rules`,
+    `- User identity wins; video base id is clips only: ${input.baseModelId}`,
+    `- Do not morph into another signature catalog model`,
+    `- Escalate with the user; climax only when they clearly want release`,
+    `- Short natural lines; key phrases sparingly`,
+  ]
+    .filter((line) => line !== null)
+    .join("\n");
 }
 
 function buildTraits(input: {
@@ -266,12 +242,12 @@ function buildTraits(input: {
 
   return [
     ...appearanceBits,
-    input.clothing,
+    input.clothing?.trim() || undefined,
     input.energy.slice(0, 80),
-    `base:${input.baseModelId}`,
-    "photorealistic erotic detail",
-    "consistent appearance every turn",
-  ].filter(Boolean);
+    `clips:${input.baseModelId}`,
+    "user identity lock",
+    "photorealistic adult",
+  ].filter((x): x is string => Boolean(x));
 }
 
 const CLIP_KEYS: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
@@ -446,13 +422,12 @@ export async function createCustomCharacter(
   }
   const avatarBase = resolveAvatarBaseFromModel(baseModelId);
 
+  // Slim studio: no typecast defaults from base catalog energy/clothing.
   const energy =
     raw.energy?.trim() ||
-    LIVE_CHARACTER_CATALOG[baseModelId]?.energyLabel ||
-    "Slow seductive teasing, playful confidence, and building sexual tension.";
-  const clothing = raw.clothing?.trim() || defaultClothing(avatarBase);
-  const audience =
-    raw.audience ?? defaultAudience(avatarBase);
+    "Playful heat · follow the user's pace · stay in character.";
+  const clothing = raw.clothing?.trim() || "";
+  const audience = raw.audience ?? "any";
 
   const keyPhrases = sanitizePhrases(raw.keyPhrases);
   const scenes = sanitizeScenes(raw.scenes);

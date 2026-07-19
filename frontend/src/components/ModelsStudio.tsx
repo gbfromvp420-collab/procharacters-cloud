@@ -7,7 +7,6 @@ import { loadStoredAccount, type StoredAccount } from "@/lib/account-storage";
 import {
   createCustomCharacter,
   fetchAccountMe,
-  fetchBaseModelPrefill,
   listLiveCharacters,
   updateCustomCharacter,
   uploadCharacterClip,
@@ -32,76 +31,86 @@ const BAND_LABEL: Record<MediaClipKey, string> = {
   aroused: "Edge",
 };
 
+/** Lean energy chips — 1-tap vibe, no long auto-fill essays. */
 const ENERGY_PRESETS: Array<{
   id: string;
   label: string;
-  tags: string[];
+  tag: string;
   energy: string;
 }> = [
   {
+    id: "brat",
+    label: "Brat",
+    tag: "brat",
+    energy: "Playful brat · tease, count games, mean-soft denial",
+  },
+  {
     id: "soft-dom",
     label: "Soft-dom",
-    tags: ["soft-dom", "control", "praise"],
-    energy:
-      "Soft-dom control · slow commands · praise when they obey · deny finish until they beg pretty",
+    tag: "soft-dom",
+    energy: "Soft-dom · slow commands, praise, deny until they beg pretty",
   },
   {
-    id: "bratty",
-    label: "Bratty",
-    tags: ["brat", "tease", "count-games"],
-    energy:
-      "Playful brat energy · look-but-don’t · count games · cute denial with a laugh · mean-soft",
+    id: "edge",
+    label: "Edge",
+    tag: "edging",
+    energy: "Edge focus · freeze on the brink · no finish without clear beg",
   },
   {
-    id: "shy-heat",
+    id: "shy",
     label: "Shy heat",
-    tags: ["shy", "whisper", "praise-sensitive"],
-    energy:
-      "Shy whisper exhibition · peek-and-hide · blush when praised · soft Spanish optional · edge slow",
-  },
-  {
-    id: "edge-focus",
-    label: "Edge focus",
-    tags: ["edging", "denial", "sheer"],
-    energy:
-      "Sheer fabric denial · slow strokes · freeze on the edge · no climax without clear beg",
+    tag: "shy",
+    energy: "Shy heat · whisper, blush on praise, peek-and-hide escalate",
   },
   {
     id: "ritual",
-    label: "Ritual / goth",
-    tags: ["ritual", "hypnotic", "lace"],
-    energy:
-      "Hypnotic ritual pace · open lace still-life · beg quieter · charged cool-downs between edges",
+    label: "Ritual",
+    tag: "ritual",
+    energy: "Ritual pace · hypnotic still moments · charged cool-downs",
   },
   {
-    id: "gym-interval",
-    label: "Gym interval",
-    tags: ["sweat", "interval", "reps"],
-    energy:
-      "Post-set cool-down · sweat + sheer · interval edge reps · hold the burn · no early finish",
+    id: "gym",
+    label: "Gym",
+    tag: "sweat",
+    energy: "Gym cool-down · sweat + interval holds · burn, no early finish",
   },
 ];
 
-const AUDIENCE_OPTS = [
-  { id: "any", label: "Any" },
-  { id: "gay", label: "Gay" },
-  { id: "bi", label: "Bi" },
-  { id: "straight", label: "Straight" },
-] as const;
+const PHRASE_SUGGESTIONS = [
+  "not yet… look at me",
+  "hold it — good",
+  "say please",
+  "slower… right there",
+  "don’t finish without me",
+  "tell me what you need",
+];
+
+const VISUAL_MAX = 280;
+const PHRASE_MAX = 4;
+const SCENE_MAX = 2;
+const TAG_MAX = 2;
 
 function clipUrlForBase(baseId: string, key: MediaClipKey): string {
   return `/avatar/${baseId}/${key}.mp4`;
 }
 
+function detectBandFromName(fileName: string): MediaClipKey | null {
+  const base = fileName.toLowerCase();
+  if (base.includes("idle")) return "idle";
+  if (base.includes("teas") || base.includes("tease")) return "teasing";
+  if (base.includes("play")) return "playful";
+  if (base.includes("arous") || base.includes("edge") || base.includes("hot"))
+    return "aroused";
+  return null;
+}
+
 function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   const router = useRouter();
   const search = useSearchParams();
-  // Prefer path param; fall back to legacy ?edit= / ?character=
   const queryEdit =
     search.get("edit")?.trim() || search.get("character")?.trim() || "";
   const editId = (initialEditId || queryEdit).trim();
 
-  // Legacy query → canonical /models/studio/edit/:id
   useEffect(() => {
     if (initialEditId) return;
     if (!queryEdit) return;
@@ -117,34 +126,35 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [flash, setFlash] = useState<string | null>(null);
 
-  // Form
+  // Slim form
   const [baseModelId, setBaseModelId] = useState("twink-default");
   const [name, setName] = useState("");
-  const [archetype, setArchetype] = useState("");
   const [appearance, setAppearance] = useState("");
   const [energy, setEnergy] = useState("");
-  const [clothing, setClothing] = useState("");
-  const [audience, setAudience] = useState<"gay" | "bi" | "straight" | "any">("any");
   const [vibeTags, setVibeTags] = useState<string[]>([]);
-  const [tagDraft, setTagDraft] = useState("");
+  const [presetId, setPresetId] = useState<string | null>(null);
   const [phrases, setPhrases] = useState<string[]>([]);
   const [phraseDraft, setPhraseDraft] = useState("");
-  const [scenes, setScenes] = useState<CustomSceneInput[]>([
-    { title: "", body: "" },
-    { title: "", body: "" },
-  ]);
+  const [scenes, setScenes] = useState<CustomSceneInput[]>([]);
+  const [nsBoostOn, setNsBoostOn] = useState(false);
   const [promptBoost, setPromptBoost] = useState("");
   const [featured, setFeatured] = useState(false);
   const [clips, setClips] = useState<Partial<Record<MediaClipKey, string>>>({});
   const [localClipFiles, setLocalClipFiles] = useState<
     Partial<Record<MediaClipKey, { file: File; url: string }>>
   >({});
+  /** Files that need a band — auto-detect failed or user will 1-click assign. */
+  const [pendingClips, setPendingClips] = useState<
+    Array<{ file: File; url: string; id: string }>
+  >([]);
   const [previewBand, setPreviewBand] = useState<MediaClipKey>("teasing");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [justCreated, setJustCreated] = useState<{
     id: string;
     name: string;
+    starter?: string;
   } | null>(null);
+  const [showPromptSim, setShowPromptSim] = useState(true);
 
   const defaults = useMemo(
     () => characters.filter((c) => c.kind === "default"),
@@ -174,7 +184,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
   const showFlash = (msg: string) => {
     setFlash(msg);
-    window.setTimeout(() => setFlash(null), 2800);
+    window.setTimeout(() => setFlash(null), 2400);
   };
 
   const bootstrap = useCallback(async () => {
@@ -195,32 +205,28 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         }
       }
 
-      // Prefill create defaults
       if (!editId) {
-        const first = list.find((c) => c.kind === "default")?.id || "twink-default";
+        const first =
+          list.find((c) => c.kind === "default")?.id || "twink-default";
         setBaseModelId(first);
-        try {
-          const pre = await fetchBaseModelPrefill(first);
-          setAppearance(pre.identityHint || "");
-          setEnergy(pre.vibeHint || pre.energyLabel || "");
-          setClothing(pre.clothingHint || "");
-        } catch {
-          /* keep empty */
-        }
+        // No heavy auto-fill — blank canvas on purpose
       } else {
         const target = list.find((c) => c.id === editId && c.mine);
         if (target) {
           setEditingId(target.id);
           setName(target.displayName || "");
-          setBaseModelId(target.baseModelId || target.avatarBase || "twink-default");
+          setBaseModelId(
+            target.baseModelId || target.avatarBase || "twink-default",
+          );
           const rawApp = target.appearance || "";
           const boostSplit = rawApp.split(/\n\n## Naughty Syntax booster\n/i);
-          setAppearance(boostSplit[0]?.trim() || rawApp);
-          setPromptBoost(boostSplit[1]?.trim() || "");
+          setAppearance((boostSplit[0]?.trim() || rawApp).slice(0, VISUAL_MAX));
+          const boost = boostSplit[1]?.trim() || "";
+          setPromptBoost(boost);
+          setNsBoostOn(!!boost);
+
           const rawEnergy = target.energy || target.energyLabel || "";
-          const archMatch = rawEnergy.match(/Archetype:\s*([^.]*)/i)?.[1]?.trim();
           const tagsMatch = rawEnergy.match(/Tags:\s*([^.]+)/i)?.[1];
-          if (archMatch) setArchetype(archMatch);
           if (tagsMatch) {
             setVibeTags(
               uniqueTags(
@@ -228,30 +234,29 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   .split(",")
                   .map((t) => t.trim())
                   .filter(Boolean),
-              ),
+              ).slice(0, TAG_MAX),
             );
           }
-          setEnergy(
-            rawEnergy
-              .replace(/\s*Archetype:\s*[^.]*\.?/gi, "")
-              .replace(/\s*Tags:\s*[^.]*\.?/gi, "")
-              .trim() || rawEnergy,
+          const cleanEnergy = rawEnergy
+            .replace(/\s*Archetype:\s*[^.]*\.?/gi, "")
+            .replace(/\s*Tags:\s*[^.]*\.?/gi, "")
+            .trim();
+          setEnergy(cleanEnergy || rawEnergy);
+          const matched = ENERGY_PRESETS.find(
+            (p) =>
+              cleanEnergy.includes(p.energy.slice(0, 20)) ||
+              (tagsMatch || "").includes(p.tag),
           );
-          setClothing(target.clothing || "");
-          setPhrases(target.keyPhrases?.filter(Boolean) ?? []);
+          if (matched) setPresetId(matched.id);
+
+          setPhrases((target.keyPhrases?.filter(Boolean) ?? []).slice(0, PHRASE_MAX));
           setScenes(
             target.scenes?.length
-              ? [
-                  ...target.scenes.slice(0, 4),
-                  ...Array.from(
-                    { length: Math.max(0, 2 - target.scenes.length) },
-                    () => ({ title: "", body: "" }),
-                  ),
-                ].slice(0, 4)
-              : [
-                  { title: "", body: "" },
-                  { title: "", body: "" },
-                ],
+              ? target.scenes.slice(0, SCENE_MAX).map((s) => ({
+                  title: s.title,
+                  body: s.body,
+                }))
+              : [],
           );
           setFeatured(target.featured === true);
           const overrides = target.mediaOverrides || {};
@@ -276,52 +281,55 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     void bootstrap();
   }, [bootstrap]);
 
-  // Auto-cycle preview band for “reactivity simulation”
+  // Light band cycle for preview life
   useEffect(() => {
-    const order: MediaClipKey[] = ["idle", "teasing", "playful", "aroused", "teasing"];
-    let i = 0;
+    const order: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
+    let i = Math.max(0, order.indexOf(previewBand));
     const t = window.setInterval(() => {
       i = (i + 1) % order.length;
       setPreviewBand(order[i]!);
-    }, 4200);
+    }, 5000);
     return () => window.clearInterval(t);
+    // only re-arm when base/edit changes — not every band click
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [baseModelId, editingId]);
 
-  const onPickBase = async (id: string) => {
+  const onPickBase = (id: string) => {
     if (editingId) return;
     setBaseModelId(id);
-    try {
-      const pre = await fetchBaseModelPrefill(id);
-      setAppearance((prev) => (prev.trim().length > 40 ? prev : pre.identityHint || prev));
-      setEnergy((prev) => (prev.trim().length > 20 ? prev : pre.vibeHint || pre.energyLabel || prev));
-      setClothing((prev) => (prev.trim().length > 8 ? prev : pre.clothingHint || prev));
-      showFlash(`Base · ${pre.displayName}`);
-    } catch {
-      showFlash("Base selected");
-    }
+    showFlash(`Base · video only`);
   };
 
-  const applyPreset = (presetId: string) => {
-    const p = ENERGY_PRESETS.find((x) => x.id === presetId);
+  const applyPreset = (id: string) => {
+    const p = ENERGY_PRESETS.find((x) => x.id === id);
     if (!p) return;
-    setArchetype(p.label);
+    if (presetId === id) {
+      // Toggle off
+      setPresetId(null);
+      setEnergy("");
+      setVibeTags((prev) => prev.filter((t) => t !== p.tag));
+      return;
+    }
+    setPresetId(id);
     setEnergy(p.energy);
-    setVibeTags((prev) => uniqueTags([...prev, ...p.tags]));
-    showFlash(`Energy · ${p.label}`);
+    setVibeTags((prev) => uniqueTags([p.tag, ...prev.filter((t) => t !== p.tag)]).slice(0, TAG_MAX));
+    showFlash(p.label);
   };
 
-  const addTag = () => {
-    const t = tagDraft.trim().toLowerCase().replace(/\s+/g, "-").slice(0, 24);
-    if (!t) return;
-    setVibeTags((prev) => uniqueTags([...prev, t]));
-    setTagDraft("");
+  const toggleTag = (tag: string) => {
+    setVibeTags((prev) => {
+      if (prev.includes(tag)) return prev.filter((t) => t !== tag);
+      if (prev.length >= TAG_MAX) return uniqueTags([tag, ...prev]).slice(0, TAG_MAX);
+      return uniqueTags([...prev, tag]);
+    });
   };
 
-  const addPhrase = () => {
-    const p = phraseDraft.trim().slice(0, 120);
-    if (!p || phrases.length >= 6) return;
+  const addPhrase = (raw?: string) => {
+    const p = (raw ?? phraseDraft).trim().slice(0, 120);
+    if (!p || phrases.length >= PHRASE_MAX) return;
+    if (phrases.some((x) => x.toLowerCase() === p.toLowerCase())) return;
     setPhrases((prev) => [...prev, p]);
-    setPhraseDraft("");
+    if (!raw) setPhraseDraft("");
   };
 
   const updateScene = (idx: number, field: "title" | "body", value: string) => {
@@ -334,16 +342,11 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   };
 
   const addSceneSlot = () => {
-    if (scenes.length >= 4) return;
+    if (scenes.length >= SCENE_MAX) return;
     setScenes((prev) => [...prev, { title: "", body: "" }]);
   };
 
   const removeSceneSlot = (idx: number) => {
-    if (scenes.length <= 2) {
-      updateScene(idx, "title", "");
-      updateScene(idx, "body", "");
-      return;
-    }
     setScenes((prev) => prev.filter((_, i) => i !== idx));
   };
 
@@ -364,21 +367,52 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   const onBatchFiles = (list: FileList | null) => {
     if (!list?.length) return;
     const files = Array.from(list);
+    let auto = 0;
+    const needAssign: Array<{ file: File; url: string; id: string }> = [];
     for (const file of files) {
-      const base = file.name.toLowerCase();
-      let key: MediaClipKey | null = null;
-      if (base.includes("idle")) key = "idle";
-      else if (base.includes("teas") || base.includes("tease")) key = "teasing";
-      else if (base.includes("play")) key = "playful";
-      else if (base.includes("arous") || base.includes("edge") || base.includes("hot"))
-        key = "aroused";
-      if (key) onLocalClip(key, file);
+      const key = detectBandFromName(file.name);
+      if (key) {
+        onLocalClip(key, file);
+        auto += 1;
+      } else {
+        needAssign.push({
+          file,
+          url: URL.createObjectURL(file),
+          id: `${file.name}-${file.size}-${Math.random().toString(36).slice(2, 7)}`,
+        });
+      }
     }
-    showFlash(`Loaded ${files.length} file(s) — assign bands if needed`);
+    if (needAssign.length) {
+      setPendingClips((prev) => [...prev, ...needAssign]);
+    }
+    showFlash(
+      auto
+        ? `Auto-banded ${auto}${needAssign.length ? ` · ${needAssign.length} to assign` : ""}`
+        : `${needAssign.length} clip(s) — tap a band`,
+    );
+  };
+
+  const assignPending = (pendingId: string, key: MediaClipKey) => {
+    setPendingClips((prev) => {
+      const item = prev.find((p) => p.id === pendingId);
+      if (!item) return prev;
+      onLocalClip(key, item.file);
+      URL.revokeObjectURL(item.url);
+      return prev.filter((p) => p.id !== pendingId);
+    });
+  };
+
+  const dismissPending = (pendingId: string) => {
+    setPendingClips((prev) => {
+      const item = prev.find((p) => p.id === pendingId);
+      if (item) URL.revokeObjectURL(item.url);
+      return prev.filter((p) => p.id !== pendingId);
+    });
   };
 
   const mergeAppearance = (): string => {
     const core = appearance.trim();
+    if (!nsBoostOn) return core;
     const boost = promptBoost.trim();
     if (!boost) return core;
     return `${core}\n\n## Naughty Syntax booster\n${boost}`.slice(0, 2000);
@@ -386,21 +420,78 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
   const mergeEnergy = (): string => {
     const tags = vibeTags.length ? ` Tags: ${vibeTags.join(", ")}.` : "";
-    const arch = archetype.trim() ? ` Archetype: ${archetype.trim()}.` : "";
-    return `${energy.trim()}${arch}${tags}`.trim().slice(0, 800);
+    return `${energy.trim()}${tags}`.trim().slice(0, 400);
   };
 
   const validScenes = (): CustomSceneInput[] =>
     scenes
       .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
       .filter((s) => s.title.length >= 2 && s.body.length >= 12)
-      .slice(0, 4);
+      .slice(0, SCENE_MAX);
+
+  /** Real-time prompt merge sim (mirrors slim server overlay). */
+  const promptSim = useMemo(() => {
+    const lines: string[] = [
+      `# My Character — ${name.trim() || "Unnamed"}`,
+      ``,
+      `Consenting adult 18+. Photorealistic. Uncensored. First person live cam.`,
+      ``,
+      `## Identity lock (user-authored)`,
+      appearance.trim() || "_(add a short visual — 1–2 sentences)_",
+    ];
+    if (nsBoostOn && promptBoost.trim()) {
+      lines.push(``, `## Naughty Syntax booster`, promptBoost.trim());
+    }
+    lines.push(``, `## Energy`, mergeEnergy() || "_(pick a vibe chip or write one line)_");
+    if (vibeTags.length) {
+      lines.push(`Tags: ${vibeTags.join(", ")}`);
+    }
+    if (phrases.length) {
+      lines.push(``, `## Key phrases (sparingly)`);
+      for (const p of phrases) lines.push(`- “${p}”`);
+    }
+    const sc = validScenes();
+    if (sc.length) {
+      lines.push(``, `## Scene anchors`);
+      sc.forEach((s, i) => lines.push(`${i + 1}. **${s.title}** — ${s.body}`));
+    }
+    lines.push(
+      ``,
+      `## Rules`,
+      `- Stay in THIS identity; video base is clips only (${baseModelId})`,
+      `- Escalate with user; climax only on clear ask`,
+    );
+    return lines.join("\n");
+    // validScenes/mergeEnergy depend on form state already in deps via scenes/energy/tags
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    name,
+    appearance,
+    nsBoostOn,
+    promptBoost,
+    energy,
+    vibeTags,
+    phrases,
+    scenes,
+    baseModelId,
+  ]);
+
+  const smartStarter = useMemo(() => {
+    if (phrases[0]) return phrases[0];
+    if (vibeTags.includes("edging") || presetId === "edge")
+      return "Start slow — edge me, don’t let me finish yet.";
+    if (vibeTags.includes("brat") || presetId === "brat")
+      return "Come tease me. Don’t make it easy.";
+    if (vibeTags.includes("soft-dom") || presetId === "soft-dom")
+      return "Take control. Soft, but don’t let me rush.";
+    if (name.trim()) return `Hey ${name.trim().split(/\s+/)[0]} — pick up where the heat starts.`;
+    return "Start heat — match my pace.";
+  }, [phrases, vibeTags, presetId, name]);
 
   const canSave =
     !!account?.token &&
     name.trim().length >= 2 &&
     appearance.trim().length >= 12 &&
-    energy.trim().length >= 4 &&
     !capFull &&
     !saving;
 
@@ -414,7 +505,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
       return;
     }
     if (name.trim().length < 2 || appearance.trim().length < 12) {
-      setError("Name (2+) and visual description (12+) required");
+      setError("Name (2+) and a short visual (12+ chars) required");
       return;
     }
 
@@ -425,15 +516,17 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         name: name.trim(),
         appearance: mergeAppearance(),
         energy: mergeEnergy() || undefined,
-        clothing: clothing.trim() || undefined,
+        // No forced clothing — identity box owns look
+        clothing: undefined as string | undefined,
         baseModelId: editingId ? undefined : baseModelId,
-        audience,
-        keyPhrases: phrases.length ? phrases.slice(0, 6) : undefined,
+        audience: "any" as const,
+        keyPhrases: phrases.length ? phrases.slice(0, PHRASE_MAX) : undefined,
         scenes: validScenes().length ? validScenes() : undefined,
       };
 
       let id = editingId;
       let displayName = name.trim();
+      const wasCreate = !editingId;
 
       if (editingId) {
         const updated = await updateCustomCharacter(
@@ -442,7 +535,6 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             name: payload.name,
             appearance: payload.appearance,
             energy: payload.energy,
-            clothing: payload.clothing,
             keyPhrases: payload.keyPhrases ?? null,
             scenes: payload.scenes ?? null,
             featured,
@@ -458,9 +550,8 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             name: payload.name,
             appearance: payload.appearance,
             energy: payload.energy,
-            clothing: payload.clothing,
             baseModelId,
-            audience,
+            audience: "any",
             keyPhrases: payload.keyPhrases,
             scenes: payload.scenes,
           },
@@ -478,7 +569,6 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         }
       }
 
-      // Upload pending local clips (need id)
       if (id) {
         const pending = Object.entries(localClipFiles) as Array<
           [MediaClipKey, { file: File; url: string }]
@@ -491,12 +581,10 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
           const files = pending.map(([, v]) => v.file);
           const up = await uploadCharacterClipsBatch(id, files, account.token);
           setClips((c) => ({ ...c, ...up.clips }));
-          // Map remaining by emotion from uploaded list
           for (const u of up.uploaded) {
             setClips((c) => ({ ...c, [u.emotion]: u.url }));
           }
         }
-        // Clear blob URLs
         setLocalClipFiles((prev) => {
           for (const v of Object.values(prev)) {
             if (v?.url) URL.revokeObjectURL(v.url);
@@ -507,10 +595,13 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
       const list = await listLiveCharacters(account.token);
       setCharacters(list);
-      setJustCreated({ id: id!, name: displayName });
-      showFlash(`${displayName} · private My Character`);
-      // Canonical edit URL after first save
-      if (id && !editingId) {
+      setJustCreated({
+        id: id!,
+        name: displayName,
+        starter: smartStarter,
+      });
+      showFlash(`${displayName} · ready`);
+      if (id && wasCreate) {
         router.replace(`/models/studio/edit/${encodeURIComponent(id)}`);
       }
     } catch (e) {
@@ -522,6 +613,21 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
   const startHeat = (mode?: "edge_pace") => {
     if (!justCreated?.id) return;
+    // Smart starter seed for chat session (sessionStorage — chat may ignore; mind already loaded)
+    try {
+      if (justCreated.starter) {
+        sessionStorage.setItem(
+          "pc_studio_starter",
+          JSON.stringify({
+            characterId: justCreated.id,
+            starter: justCreated.starter,
+            at: Date.now(),
+          }),
+        );
+      }
+    } catch {
+      /* ignore */
+    }
     const q = new URLSearchParams({
       character: justCreated.id,
       autostart: "1",
@@ -540,25 +646,24 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         title="My Models Studio"
         subtitle={
           editingId
-            ? "Edit private model · clips · scenes · boost"
-            : "Create private Naughty Syntax minds"
+            ? "Slim edit · identity + clips"
+            : "Fast forge · 60-second mind"
         }
         className="pt-[env(safe-area-inset-top,0px)]"
       />
 
       <div className="relative mx-auto w-full max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
-        {/* Header strip */}
-        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-200/90">
-              Custom Character v2 · private
+              Studio slim v2 · private
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
-              {editingId ? "Edit model" : "Forge a mind"}
+              {editingId ? "Tune your model" : "Forge fast"}
             </h1>
             <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-brand-muted">
-              Base body + your identity, scenes, and clips. Never public unless you pin
-              Featured (soft). Free path always works.
+              Base is video only. Your name + vibe + short visual own the mind — no
+              typecast auto-fill.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -572,25 +677,25 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                       : "border-violet-400/35 bg-violet-500/10 text-violet-100"
                 }`}
               >
-                {used}/{customsLimit} slots
-                {activePremium ? " · premium" : " · free"}
+                {used}/{customsLimit}
+                {activePremium ? " · premium" : ""}
               </span>
             ) : (
               <Link
                 href="/account"
                 className="rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-100"
               >
-                Sign in required
+                Sign in
               </Link>
             )}
             <Link
               href="/?filter=owned"
               className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
             >
-              My models gallery
+              My models
             </Link>
             <Link href="/account#my-models" className="btn-ghost min-h-0 px-3 py-1.5 text-xs">
-              Account hub
+              Hub
             </Link>
           </div>
         </div>
@@ -618,6 +723,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             characterId={justCreated.id}
             characterName={justCreated.name}
             customsLimit={customsLimit}
+            starterHint={justCreated.starter}
             onStart={() => startHeat()}
             onStartEdge={() => startHeat("edge_pace")}
             onDismiss={() => setJustCreated(null)}
@@ -628,7 +734,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
           <div className="mb-4 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-4">
             <p className="text-sm font-medium text-brand-text">Sign in to open the studio</p>
             <p className="mt-1 text-[12px] text-brand-muted">
-              My Characters are private to your account. Sign in, then forge a mind.
+              Private models only. Sign in, then forge in under a minute.
             </p>
             <Link href="/account" className="btn-primary mt-3 inline-flex min-h-0 px-4 py-2 text-sm">
               Sign in
@@ -639,17 +745,18 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         {loading ? (
           <p className="text-sm text-brand-muted">Loading studio…</p>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[1fr_minmax(280px,340px)] lg:items-start lg:gap-6">
-            {/* ── Form column ── */}
-            <div className="space-y-4">
-              {/* Base picker */}
+          <div className="grid gap-4 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start lg:gap-6">
+            <div className="space-y-3">
+              {/* 1 · Base */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <div className="mb-3 flex items-center justify-between gap-2">
+                <div className="mb-2 flex items-center justify-between gap-2">
                   <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                    1 · Base model
+                    1 · Base (video)
                   </h2>
-                  {editingId && (
-                    <span className="text-[10px] text-brand-muted">Locked on edit</span>
+                  {editingId ? (
+                    <span className="text-[10px] text-brand-muted">Locked</span>
+                  ) : (
+                    <span className="text-[10px] text-brand-soft">1-tap · no identity fill</span>
                   )}
                 </div>
                 <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x">
@@ -662,8 +769,8 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                         key={c.id}
                         type="button"
                         disabled={!!editingId}
-                        onClick={() => void onPickBase(c.id)}
-                        className={`snap-start shrink-0 w-[7.5rem] overflow-hidden rounded-xl border text-left transition sm:w-36 ${
+                        onClick={() => onPickBase(c.id)}
+                        className={`snap-start shrink-0 w-[6.75rem] overflow-hidden rounded-xl border text-left transition sm:w-32 ${
                           active
                             ? "border-violet-400/60 ring-2 ring-violet-400/40"
                             : "border-brand-border hover:border-brand-accent/50"
@@ -688,9 +795,6 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                           <p className="truncate text-[11px] font-medium text-brand-text">
                             {c.displayName}
                           </p>
-                          <p className="truncate text-[9px] text-brand-muted">
-                            {mindFingerprint(c.id)?.tag || c.energyLabel?.split(",")[0]}
-                          </p>
                         </div>
                       </button>
                     );
@@ -698,168 +802,106 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                 </div>
               </section>
 
-              {/* Identity */}
+              {/* 2 · Quick identity */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
                 <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                  2 · Identity
+                  2 · Quick identity
                 </h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <label className="block sm:col-span-1">
-                    <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                      Name
-                    </span>
-                    <input
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Diego, Mila, your muse…"
-                      className="field w-full text-sm"
-                      maxLength={80}
-                    />
-                  </label>
-                  <label className="block sm:col-span-1">
-                    <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                      Archetype / role
-                    </span>
-                    <input
-                      value={archetype}
-                      onChange={(e) => setArchetype(e.target.value)}
-                      placeholder="Soft-dom, shy cam boy…"
-                      className="field w-full text-sm"
-                      maxLength={60}
-                    />
-                  </label>
-                </div>
-
-                <p className="mb-1.5 mt-3 text-[10px] uppercase tracking-wide text-brand-muted">
-                  Energy presets
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ENERGY_PRESETS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => applyPreset(p.id)}
-                      className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
-                        archetype === p.label
-                          ? "border-rose-400/50 bg-rose-500/20 text-rose-50"
-                          : "border-brand-border bg-brand-bg text-brand-muted hover:border-brand-accent/50"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
-                </div>
-
-                <label className="mt-3 block">
+                <label className="block">
                   <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                    Visual description · photorealistic lock
+                    Name
                   </span>
-                  <textarea
-                    value={appearance}
-                    onChange={(e) => setAppearance(e.target.value)}
-                    rows={5}
-                    placeholder="Age 18+, body, hair, skin, face, signature clothing physics, arousal detail…"
-                    className="field w-full resize-y text-sm leading-relaxed"
-                    maxLength={2000}
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your muse…"
+                    className="field w-full text-sm"
+                    maxLength={80}
+                    autoComplete="off"
                   />
-                  <span className="mt-0.5 block text-[10px] text-brand-soft">
-                    {appearance.trim().length}/2000 · min 12
-                  </span>
                 </label>
 
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                      Vibe / energy
-                    </span>
-                    <textarea
-                      value={energy}
-                      onChange={(e) => setEnergy(e.target.value)}
-                      rows={3}
-                      placeholder="How they tease, deny, talk…"
-                      className="field w-full resize-y text-sm"
-                      maxLength={800}
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                      Clothing focus
-                    </span>
-                    <input
-                      value={clothing}
-                      onChange={(e) => setClothing(e.target.value)}
-                      placeholder="Sheer thong / crotchless lace…"
-                      className="field w-full text-sm"
-                      maxLength={200}
-                    />
-                    <span className="mb-1 mt-2 block text-[10px] uppercase tracking-wide text-brand-muted">
-                      Audience
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {AUDIENCE_OPTS.map((a) => (
-                        <button
-                          key={a.id}
-                          type="button"
-                          onClick={() => setAudience(a.id)}
-                          className={`rounded-full border px-2.5 py-1 text-[10px] ${
-                            audience === a.id
-                              ? "border-brand-accent/50 bg-brand-accent/15 text-brand-text"
-                              : "border-brand-border text-brand-muted"
-                          }`}
-                        >
-                          {a.label}
-                        </button>
-                      ))}
-                    </div>
-                  </label>
+                <p className="mb-1.5 mt-3 text-[10px] uppercase tracking-wide text-brand-muted">
+                  Vibe · pick 1 (or 2 tags)
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {ENERGY_PRESETS.map((p) => {
+                    const on = presetId === p.id || vibeTags.includes(p.tag);
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => applyPreset(p.id)}
+                        className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+                          on
+                            ? "border-rose-400/50 bg-rose-500/20 text-rose-50"
+                            : "border-brand-border bg-brand-bg text-brand-muted hover:border-brand-accent/50"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {/* Vibe tags */}
-                <div className="mt-3">
-                  <p className="mb-1.5 text-[10px] uppercase tracking-wide text-brand-muted">
-                    Vibe tags
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
+                {vibeTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
                     {vibeTags.map((t) => (
                       <button
                         key={t}
                         type="button"
-                        onClick={() => setVibeTags((p) => p.filter((x) => x !== t))}
+                        onClick={() => toggleTag(t)}
                         className="rounded-full border border-violet-400/35 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-100"
-                        title="Remove"
                       >
                         {t} ×
                       </button>
                     ))}
                   </div>
-                  <div className="mt-1.5 flex gap-2">
-                    <input
-                      value={tagDraft}
-                      onChange={(e) => setTagDraft(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          addTag();
-                        }
-                      }}
-                      placeholder="Add tag…"
-                      className="field min-w-0 flex-1 text-xs"
-                    />
-                    <button type="button" onClick={addTag} className="btn-ghost min-h-0 px-3 py-1.5 text-xs">
-                      Add
-                    </button>
-                  </div>
-                </div>
+                )}
+
+                <label className="mt-3 block">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
+                    Visual · 1–2 sentences
+                  </span>
+                  <textarea
+                    value={appearance}
+                    onChange={(e) => setAppearance(e.target.value.slice(0, VISUAL_MAX))}
+                    rows={3}
+                    placeholder="Who they look like in the room — body, hair, outfit vibe. Keep it short; identity wins over base video."
+                    className="field w-full resize-none text-sm leading-relaxed"
+                    maxLength={VISUAL_MAX}
+                  />
+                  <span className="mt-0.5 block text-[10px] text-brand-soft">
+                    {appearance.trim().length}/{VISUAL_MAX} · min 12
+                  </span>
+                </label>
               </section>
 
-              {/* Phrases */}
+              {/* 3 · Phrases */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
                   3 · Key phrases
                 </h2>
                 <p className="mb-2 text-[11px] text-brand-muted">
-                  Signature lines the mind can drop mid-heat (max 6).
+                  Optional · max {PHRASE_MAX}. Tap a suggestion or type your own — nothing forced.
                 </p>
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {PHRASE_SUGGESTIONS.map((s) => {
+                    const usedPhrase = phrases.some(
+                      (p) => p.toLowerCase() === s.toLowerCase(),
+                    );
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={usedPhrase || phrases.length >= PHRASE_MAX}
+                        onClick={() => addPhrase(s)}
+                        className="rounded-full border border-brand-border bg-brand-bg px-2 py-0.5 text-[10px] text-brand-muted transition hover:border-rose-400/40 hover:text-rose-100 disabled:opacity-35"
+                      >
+                        + {s}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="flex flex-wrap gap-1.5">
                   {phrases.map((p, i) => (
                     <button
@@ -868,7 +910,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                       onClick={() => setPhrases((prev) => prev.filter((_, j) => j !== i))}
                       className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2.5 py-1 text-[11px] text-rose-50"
                     >
-                      “{p.length > 28 ? `${p.slice(0, 26)}…` : p}” ×
+                      “{p.length > 32 ? `${p.slice(0, 30)}…` : p}” ×
                     </button>
                   ))}
                 </div>
@@ -882,14 +924,14 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                         addPhrase();
                       }
                     }}
-                    placeholder='e.g. “not yet… mírame”'
+                    placeholder="Your line…"
                     className="field min-w-0 flex-1 text-sm"
-                    disabled={phrases.length >= 6}
+                    disabled={phrases.length >= PHRASE_MAX}
                   />
                   <button
                     type="button"
-                    onClick={addPhrase}
-                    disabled={phrases.length >= 6}
+                    onClick={() => addPhrase()}
+                    disabled={phrases.length >= PHRASE_MAX}
                     className="btn-ghost min-h-0 px-3 py-1.5 text-xs disabled:opacity-40"
                   >
                     Add
@@ -897,74 +939,78 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                 </div>
               </section>
 
-              {/* Scenes */}
+              {/* 4 · Scenes optional */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                    4 · Scene examples
+                    4 · Scenes
                   </h2>
                   <button
                     type="button"
                     onClick={addSceneSlot}
-                    disabled={scenes.length >= 4}
+                    disabled={scenes.length >= SCENE_MAX}
                     className="text-[11px] text-brand-accent hover:underline disabled:opacity-40"
                   >
-                    + Scene ({scenes.length}/4)
+                    {scenes.length === 0 ? "+ Add scene (optional)" : `+ Scene (${scenes.length}/${SCENE_MAX})`}
                   </button>
                 </div>
-                <p className="mb-3 text-[11px] text-brand-muted">
-                  Title + body inject into the prompt — 2–4 slots recommended.
-                </p>
-                <div className="space-y-3">
-                  {scenes.map((s, idx) => (
-                    <div
-                      key={idx}
-                      className="rounded-xl border border-brand-border/60 bg-brand-bg/50 p-2.5"
-                    >
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-                          Scene {idx + 1}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeSceneSlot(idx)}
-                          className="text-[10px] text-brand-soft hover:text-rose-200"
-                        >
-                          Clear
-                        </button>
+                {scenes.length === 0 ? (
+                  <p className="text-[11px] text-brand-muted">
+                    Skip if you want — vibe + visual is enough to chat.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {scenes.map((s, idx) => (
+                      <div
+                        key={idx}
+                        className="rounded-xl border border-brand-border/60 bg-brand-bg/50 p-2.5"
+                      >
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+                            Scene {idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeSceneSlot(idx)}
+                            className="text-[10px] text-brand-soft hover:text-rose-200"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        <input
+                          value={s.title}
+                          onChange={(e) => updateScene(idx, "title", e.target.value)}
+                          placeholder="Title"
+                          className="field mb-1.5 w-full text-xs"
+                          maxLength={80}
+                        />
+                        <textarea
+                          value={s.body}
+                          onChange={(e) => updateScene(idx, "body", e.target.value)}
+                          placeholder="Short beat + one line of dialogue"
+                          rows={2}
+                          className="field w-full resize-none text-xs leading-relaxed"
+                          maxLength={400}
+                        />
                       </div>
-                      <input
-                        value={s.title}
-                        onChange={(e) => updateScene(idx, "title", e.target.value)}
-                        placeholder="Title — Mirror tease, Cool-down edge…"
-                        className="field mb-1.5 w-full text-xs"
-                        maxLength={80}
-                      />
-                      <textarea
-                        value={s.body}
-                        onChange={(e) => updateScene(idx, "body", e.target.value)}
-                        placeholder="What happens + one line of dialogue (min ~12 chars when filled)"
-                        rows={3}
-                        className="field w-full resize-y text-xs leading-relaxed"
-                        maxLength={600}
-                      />
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </section>
 
-              {/* Clips */}
+              {/* 5 · Clips */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                  5 · Avatar clips
+                <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                  5 · Clips
                 </h2>
-                <p className="mb-3 text-[11px] text-brand-muted">
-                  Four energy bands (idle → edge). Batch-upload files named idle / teasing /
-                  playful / aroused — or assign per slot. Upload runs after save.
+                <p className="mb-2 text-[11px] text-brand-muted">
+                  Drop files — auto-band from filename, or 1-click assign. Uploads after save.
                 </p>
-                <label className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-violet-400/40 bg-violet-500/5 px-3 py-4 text-center transition hover:border-violet-400/70">
-                  <span className="text-sm font-medium text-brand-text">Batch drop / select</span>
-                  <span className="text-[11px] text-brand-muted">MP4 or WebM · max 40MB each</span>
+                <label className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-violet-400/40 bg-violet-500/5 px-3 py-3 text-center transition hover:border-violet-400/70">
+                  <span className="text-sm font-medium text-brand-text">Upload clips</span>
+                  <span className="text-[11px] text-brand-muted">
+                    idle / teasing / playful / aroused in name · MP4/WebM
+                  </span>
                   <input
                     type="file"
                     accept={CLIP_FILE_ACCEPT}
@@ -976,7 +1022,43 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                     }}
                   />
                 </label>
-                <div className="grid gap-3 sm:grid-cols-2">
+
+                {pendingClips.length > 0 && (
+                  <div className="mb-3 space-y-2 rounded-xl border border-amber-400/30 bg-amber-500/5 p-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-100/90">
+                      Assign band
+                    </p>
+                    {pendingClips.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex flex-wrap items-center gap-1.5 border-b border-brand-border/40 pb-2 last:border-0 last:pb-0"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-[11px] text-brand-text">
+                          {p.file.name}
+                        </span>
+                        {CLIP_KEYS.map((k) => (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => assignPending(p.id, k)}
+                            className="rounded-full border border-brand-border px-2 py-0.5 text-[9px] font-semibold uppercase text-brand-muted hover:border-rose-400/50 hover:text-rose-100"
+                          >
+                            {BAND_LABEL[k]}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => dismissPending(p.id)}
+                          className="text-[10px] text-brand-soft hover:text-rose-200"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {CLIP_KEYS.map((key) => {
                     const local = localClipFiles[key]?.url;
                     const src =
@@ -984,34 +1066,33 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                       clips[key] ||
                       baseCard?.clips?.[key] ||
                       clipUrlForBase(baseModelId, key);
+                    const custom = !!(local || clips[key]);
                     return (
-                      <div key={key} className="space-y-1.5">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-                            {BAND_LABEL[key]} · {key}
+                      <div key={key} className="space-y-1">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
+                            {BAND_LABEL[key]}
+                            {custom ? " · yours" : ""}
                           </span>
                           <button
                             type="button"
                             onClick={() => setPreviewBand(key)}
-                            className={`text-[10px] ${
-                              previewBand === key
-                                ? "text-rose-200"
-                                : "text-brand-soft hover:text-brand-accent"
+                            className={`text-[9px] ${
+                              previewBand === key ? "text-rose-200" : "text-brand-soft"
                             }`}
                           >
-                            Preview
+                            ▶
                           </button>
                         </div>
                         <ClipPreview src={src} label={key} />
-                        <label className="btn-ghost flex min-h-0 cursor-pointer items-center justify-center px-2 py-1.5 text-[10px]">
-                          {localClipFiles[key] ? "Replace file" : "Assign file"}
+                        <label className="btn-ghost flex min-h-0 cursor-pointer items-center justify-center px-1 py-1 text-[9px]">
+                          {local ? "Replace" : "Assign"}
                           <input
                             type="file"
                             accept={CLIP_FILE_ACCEPT}
                             className="hidden"
                             onChange={(e) => {
-                              const f = e.target.files?.[0] ?? null;
-                              onLocalClip(key, f);
+                              onLocalClip(key, e.target.files?.[0] ?? null);
                               e.target.value = "";
                             }}
                           />
@@ -1022,26 +1103,37 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                 </div>
               </section>
 
-              {/* Prompt boost */}
+              {/* 6 · NS booster toggle */}
               <section className="rounded-2xl border border-violet-400/25 bg-violet-500/5 p-3 sm:p-4">
-                <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-200/90">
-                  6 · Naughty Syntax booster
-                </h2>
-                <p className="mb-2 text-[11px] text-brand-muted">
-                  Optional overlay merged into the identity lock on save (auto-appended under a
-                  booster header). Use for filthy specificity without rewriting the base.
-                </p>
-                <textarea
-                  value={promptBoost}
-                  onChange={(e) => setPromptBoost(e.target.value)}
-                  rows={4}
-                  placeholder="Extra mind rules: denial style, Spanish density, fabric physics, no-climax law…"
-                  className="field w-full resize-y text-sm leading-relaxed"
-                  maxLength={1200}
-                />
+                <label className="flex cursor-pointer items-start gap-2.5">
+                  <input
+                    type="checkbox"
+                    checked={nsBoostOn}
+                    onChange={(e) => setNsBoostOn(e.target.checked)}
+                    className="mt-0.5 rounded border-brand-border"
+                  />
+                  <span>
+                    <span className="block text-[12px] font-medium text-violet-100">
+                      Naughty Syntax booster
+                    </span>
+                    <span className="mt-0.5 block text-[11px] text-brand-muted">
+                      One slim overlay — filthy specificity without rewriting identity.
+                    </span>
+                  </span>
+                </label>
+                {nsBoostOn && (
+                  <textarea
+                    value={promptBoost}
+                    onChange={(e) => setPromptBoost(e.target.value.slice(0, 400))}
+                    rows={2}
+                    placeholder="e.g. sheer fabric physics · deny climax · soft Spanish optional"
+                    className="field mt-2 w-full resize-none text-sm leading-relaxed"
+                    maxLength={400}
+                  />
+                )}
               </section>
 
-              {/* Visibility + save */}
+              {/* Save bar */}
               <section className="sticky bottom-0 z-20 -mx-3 border-t border-brand-border/80 bg-brand-bg/95 px-3 py-3 backdrop-blur-md sm:static sm:mx-0 sm:rounded-2xl sm:border sm:border-brand-border/80 sm:bg-brand-panel/90 sm:px-4 sm:py-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <label className="flex items-center gap-2 text-[12px] text-brand-muted">
@@ -1051,10 +1143,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                       onChange={(e) => setFeatured(e.target.checked)}
                       className="rounded border-brand-border"
                     />
-                    Soft Featured pin
-                    <span className="text-[10px] text-brand-soft">
-                      (still private · pin on your surfaces)
-                    </span>
+                    Soft Featured
                   </label>
                   <div className="flex flex-wrap gap-2">
                     <Link href="/chat" className="btn-ghost min-h-0 px-3 py-2 text-xs">
@@ -1068,15 +1157,15 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                     >
                       {saving
                         ? editingId
-                          ? "Updating…"
-                          : "Saving…"
+                          ? "Saving…"
+                          : "Forging…"
                         : !account
                           ? "Sign in to save"
                           : capFull
                             ? "Cap full"
                             : editingId
-                              ? "Save changes"
-                              : "Save My Character"}
+                              ? "Save · Chat ready"
+                              : "Save · Chat Now"}
                     </button>
                   </div>
                 </div>
@@ -1086,23 +1175,14 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                     <Link href="/account#my-models" className="underline">
                       Manage models
                     </Link>
-                    {!activePremium && (
-                      <>
-                        {" "}
-                        or{" "}
-                        <Link href="/account" className="underline">
-                          Day Pass
-                        </Link>
-                      </>
-                    )}
                     .
                   </p>
                 )}
               </section>
             </div>
 
-            {/* ── Live preview pane ── */}
-            <aside className="lg:sticky lg:top-[4.5rem]">
+            {/* Live preview + prompt sim */}
+            <aside className="lg:sticky lg:top-[4.5rem] space-y-3">
               <div className="overflow-hidden rounded-2xl border border-brand-border/80 bg-black shadow-card">
                 <div className="relative aspect-[3/4] sm:aspect-[4/5]">
                   <video
@@ -1117,14 +1197,16 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-violet-200/90">
-                      Live preview · {BAND_LABEL[previewBand]}
+                      Live · {BAND_LABEL[previewBand]}
                     </p>
                     <p className="mt-1 text-xl font-semibold text-white">
-                      {name.trim() || "Unnamed model"}
+                      {name.trim() || "Unnamed"}
                     </p>
                     <p className="mt-0.5 text-[11px] text-white/75">
-                      {archetype || mind?.tag || "Custom mind"}
-                      {clothing.trim() ? ` · ${clothing.trim().slice(0, 40)}` : ""}
+                      {ENERGY_PRESETS.find((p) => p.id === presetId)?.label ||
+                        vibeTags[0] ||
+                        mind?.tag ||
+                        "Custom mind"}
                     </p>
                     {phrases[0] && (
                       <p className="mt-2 line-clamp-2 text-[12px] italic text-rose-100/90">
@@ -1150,32 +1232,33 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   </div>
                 </div>
                 <div className="space-y-2 border-t border-white/10 bg-brand-panel/95 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-                    Reactivity sim
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+                      Prompt merge · live
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowPromptSim((v) => !v)}
+                      className="text-[10px] text-brand-accent hover:underline"
+                    >
+                      {showPromptSim ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {showPromptSim && (
+                    <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-lg border border-brand-border/60 bg-brand-bg/80 px-2.5 py-2 font-mono text-[10px] leading-relaxed text-brand-muted">
+                      {promptSim}
+                    </pre>
+                  )}
+                  <p className="text-[10px] text-brand-soft">
+                    Phrases {phrases.length}/{PHRASE_MAX} · Scenes {validScenes().length}/
+                    {SCENE_MAX} · Base clips: {baseCard?.displayName || baseModelId}
                   </p>
-                  <p className="text-[11px] leading-relaxed text-brand-muted">
-                    Bands cycle like chat energy — idle → tease → play → edge. Assign clips so
-                    each band has its own loop. Not generative video (v2.2).
-                  </p>
-                  {energy.trim() && (
-                    <p className="line-clamp-3 rounded-lg border border-brand-border/60 bg-brand-bg/60 px-2 py-1.5 text-[10px] text-brand-muted">
-                      {energy}
+                  {canSave && (
+                    <p className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2 py-1.5 text-[10px] text-violet-100/90">
+                      After save → <strong>Chat Now</strong>
+                      {smartStarter ? ` · “${smartStarter.slice(0, 48)}${smartStarter.length > 48 ? "…" : ""}”` : ""}
                     </p>
                   )}
-                  <div className="flex flex-wrap gap-1">
-                    {vibeTags.slice(0, 6).map((t) => (
-                      <span
-                        key={t}
-                        className="rounded-full border border-violet-400/30 px-1.5 py-0.5 text-[9px] text-violet-100/90"
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  <p className="text-[10px] text-brand-soft">
-                    Scenes ready: {validScenes().length} · Phrases: {phrases.length} · Base:{" "}
-                    {baseCard?.displayName || baseModelId}
-                  </p>
                 </div>
               </div>
             </aside>
@@ -1195,10 +1278,9 @@ function uniqueTags(items: string[]): string[] {
     seen.add(k);
     out.push(raw.trim());
   }
-  return out.slice(0, 12);
+  return out.slice(0, TAG_MAX);
 }
 
-/** Suspense boundary for useSearchParams */
 export function ModelsStudio({ editId }: { editId?: string } = {}) {
   return (
     <Suspense
