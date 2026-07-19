@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Heat Trail)  
-**Session:** King Grok + Gary — ntfy when ready; innovation keeps shipping.
+**Updated:** 2026-07-19 (**cook** — End Ritual / trail full loop)  
+**Session:** King Grok + Gary — ntfy ✅ green; keep cooking.
 
 ---
 
@@ -9,23 +9,19 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Error alerts** | ✅ eng ready | **You:** ntfy → `ERROR_WEBHOOK_URL` on **procharacters-api** |
-| **Heat Arc** | ✅ | Long session |
-| **Edge Pace feel** | ✅ | Full cycle |
-| **Return Intelligence** | ✅ | Sign-in remember return |
-| **Heat Trail** | ✅ resume cache stamps depth/chips · gallery + Continue + hero show where you left | Heat → End → Gallery glance |
+| **Error alerts** | ✅ ntfy live | Optional: Send test from Account pulse anytime |
+| **Heat Arc → Edge → Return → Trail → End Ritual** | ✅ full return loop | Heat → End → see trail → Continue / Gallery |
 | Railway | ✅ | Confirm SHA after push |
-| Stripe | ✅ LIVE | Optional |
-| **Next** | Webhook · content packs | `resume` / `spot` / `next` / `cook` |
+| Stripe | ✅ LIVE | Optional careful charge |
+| **Next** | content packs when footage ready | `resume` / `spot` / `next` / `cook` |
 
 ---
 
-## What shipped this cook (Heat Trail)
+## What shipped this cook (End Ritual)
 
-1. **Resume cache trail** — heatDepth, heatChips, messageCount, mindTag, smarter recap  
-2. **Stamp on every turn + End** so gallery always knows last pose/heat  
-3. **Continue banner** depth dots + chips  
-4. **Gallery tiles + hero reel** show “Heat trail · continue” with left-at chips  
+1. **SessionPausedBanner** shows heat depth dots, scene chips, recap quote on End  
+2. **ChatResumeHero** reads trail from resume cache on re-open  
+3. End snapshot carries trail so goodbye = invitation back  
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 

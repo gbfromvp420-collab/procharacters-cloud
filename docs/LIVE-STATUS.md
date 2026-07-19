@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — Heat Trail)  
+**Updated:** 2026-07-19 (**cook** — End Ritual; ntfy ✅)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -33,6 +33,8 @@
 | **Edge Pace feel** | ✅ round-aware coach · strip Seed/Fire · phase chips · last-8s urgency · multi-cycle mind lines |
 | **Return Intelligence** | ✅ last-scene dossier · named return greetings · **They remember you** card + pick-up seeds |
 | **Heat Trail** | ✅ resume stamps depth/chips · gallery tiles + Continue + hero show where you left heat |
+| **End Ritual** | ✅ pause banner + chat resume hero show full heat trail (depth/chips/recap) |
+| **Error alerts (ntfy)** | ✅ Gary live · channel ntfy · test 200 |
 | CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |

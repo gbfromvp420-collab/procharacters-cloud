@@ -322,12 +322,15 @@ export function ChatApp() {
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const prevEnergyBandRef = useRef<EnergyBand | null>(null);
   const skipDraftSaveRef = useRef(false);
-  /** Snapshot after End — morph goodbye into return. */
+  /** Snapshot after End — morph goodbye into return (+ heat trail). */
   const [pauseSnapshot, setPauseSnapshot] = useState<{
     characterId: string;
     characterName: string | null;
     resumeCode: string | null;
     messageCount: number;
+    heatDepth?: import("@/lib/resume-cache").HeatTrailDepth | null;
+    heatChips?: string[] | null;
+    recapLine?: string | null;
   } | null>(null);
   /** Live session stopwatch (seconds) while status === ready. */
   const [liveSeconds, setLiveSeconds] = useState(0);
@@ -550,11 +553,20 @@ export function ChatApp() {
     intentionalCloseRef.current = true;
     setConnectionDropped(false);
     const cid = activeCharacterId ?? character;
+    const mind = mindFingerprint(cid);
+    const trail = heatTrailFromSession({
+      sessionNotes,
+      messageCount: messages.length,
+      mindTag: mind?.tag,
+    });
     setPauseSnapshot({
       characterId: cid,
       characterName,
       resumeCode: resumeCode ?? savedSession?.resumeCode ?? null,
       messageCount: messages.length,
+      heatDepth: trail.heatDepth,
+      heatChips: trail.heatChips,
+      recapLine: trail.recapLine,
     });
     closeSocket(true);
     if (sessionId && wsToken && cid) {
@@ -2650,6 +2662,9 @@ export function ChatApp() {
             characterName={pauseSnapshot.characterName}
             resumeCode={pauseSnapshot.resumeCode}
             messageCount={pauseSnapshot.messageCount}
+            heatDepth={pauseSnapshot.heatDepth}
+            heatChips={pauseSnapshot.heatChips}
+            recapLine={pauseSnapshot.recapLine}
             isMine={
               characters.find((c) => c.id === pauseSnapshot.characterId)?.mine === true ||
               pauseSnapshot.characterId.startsWith("custom-")

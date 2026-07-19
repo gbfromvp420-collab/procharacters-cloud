@@ -4,7 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
-import { buildResumeChatPath } from "@/lib/resume-cache";
+import {
+  buildResumeChatPath,
+  type HeatTrailDepth,
+} from "@/lib/resume-cache";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
 import {
   getLocalPushSubscription,
@@ -14,13 +17,16 @@ import {
 /**
  * After End — heat is saved, path back is one tap. Morph the goodbye into return.
  * Mine models get Edit + My models so ownership loop stays closed.
- * Deep sessions get a return seed: hold heat + optional push nudge.
+ * Deep sessions + heat trail: show where you left the edge.
  */
 export function SessionPausedBanner({
   characterId,
   characterName,
   resumeCode,
   messageCount,
+  heatDepth,
+  heatChips,
+  recapLine,
   isMine = false,
   onResume,
   onDismiss,
@@ -29,6 +35,9 @@ export function SessionPausedBanner({
   characterName?: string | null;
   resumeCode?: string | null;
   messageCount?: number;
+  heatDepth?: HeatTrailDepth | null;
+  heatChips?: string[] | null;
+  recapLine?: string | null;
   /** Private My Character — show ownership CTAs */
   isMine?: boolean;
   onResume?: () => void;
@@ -46,6 +55,20 @@ export function SessionPausedBanner({
     ? buildResumeChatPath({ characterId, resumeCode })
     : `/chat?character=${encodeURIComponent(characterId)}&autostart=1`;
 
+  const depthLevel =
+    heatDepth === "locked"
+      ? 4
+      : heatDepth === "deep"
+        ? 3
+        : heatDepth === "edge"
+          ? 2
+          : heatDepth === "warm"
+            ? 1
+            : heatDepth === "spark"
+              ? 0
+              : null;
+  const chips = heatChips?.slice(0, 4) ?? [];
+
   useEffect(() => {
     let cancelled = false;
     async function probe() {
@@ -60,7 +83,6 @@ export function SessionPausedBanner({
         const account = loadStoredAccount();
         if (!cancelled) setSignedIn(!!account);
         if (!isPushSupported()) {
-          // Still seed sign-in for guests with heat
           if (!cancelled) setPushSeed(!account);
           return;
         }
@@ -92,17 +114,24 @@ export function SessionPausedBanner({
       className={`mb-3 animate-rise-in rounded-xl border bg-gradient-to-r px-3 py-3 text-[11px] leading-relaxed shadow-glow-sm ${
         isMine
           ? "border-violet-400/40 from-violet-500/15 via-brand-panel to-brand-panel"
-          : "border-brand-accent/35 from-brand-accent/10 via-brand-panel to-brand-panel"
+          : deep
+            ? "border-rose-400/40 from-rose-500/12 via-brand-panel to-brand-panel"
+            : "border-brand-accent/35 from-brand-accent/10 via-brand-panel to-brand-panel"
       }`}
       role="status"
     >
       <p
         className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${
-          isMine ? "text-violet-200/90" : "text-brand-accent"
+          isMine
+            ? "text-violet-200/90"
+            : deep
+              ? "text-rose-200/90"
+              : "text-brand-accent"
         }`}
       >
-        Session paused · heat saved
+        Session paused · heat trail saved
         {isMine ? " · my model" : mind ? ` · ${mind.tag}` : ""}
+        {heatDepth ? ` · ${heatDepth}` : ""}
       </p>
       <p className="mt-1.5 text-sm text-brand-text">
         You left <strong>{nick}</strong> mid-flow
@@ -117,10 +146,57 @@ export function SessionPausedBanner({
           " Start again anytime — free path stays open."
         )}
       </p>
+
+      {(depthLevel != null || chips.length > 0) && (
+        <div className="mt-2 space-y-1.5">
+          {depthLevel != null && (
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-0.5" aria-hidden>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-2.5 rounded-full ${
+                      i <= depthLevel
+                        ? i >= 3
+                          ? "bg-rose-400 shadow-[0_0_6px_rgba(251,113,133,0.5)]"
+                          : "bg-amber-300"
+                        : "bg-brand-border"
+                    }`}
+                  />
+                ))}
+              </div>
+              {heatDepth && (
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-rose-100/90">
+                  {heatDepth}
+                </span>
+              )}
+            </div>
+          )}
+          {chips.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-full border border-rose-400/35 bg-rose-500/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-rose-100/90"
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          )}
+          {recapLine?.trim() && (
+            <p className="line-clamp-2 text-[11px] italic text-brand-muted">
+              “{recapLine.trim()}”
+            </p>
+          )}
+        </div>
+      )}
+
       {deep && (
         <p className="mt-1.5 text-[11px] text-brand-muted">
           We&apos;ll hold this heat
           {resumeCode ? " on your code" : ""}
+          {heatDepth ? ` at ${heatDepth}` : ""}
           {" — "}
           one tap Continue when you&apos;re ready. Free path stays open.
         </p>
@@ -154,7 +230,7 @@ export function SessionPausedBanner({
           </>
         )}
         <Link href="/" className="btn-ghost min-h-0 px-4 py-2 text-xs">
-          Gallery
+          Gallery trail
         </Link>
         {resumeCode && (
           <button
