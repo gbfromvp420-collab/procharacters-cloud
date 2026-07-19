@@ -2,7 +2,8 @@
 /* eslint-disable no-restricted-globals */
 
 const OFFLINE_URL = "/offline.html";
-const SHELL_CACHE = "procharacters-shell-v1";
+/** Bump when offline shell / icons change so clients re-cache. */
+const SHELL_CACHE = "procharacters-shell-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

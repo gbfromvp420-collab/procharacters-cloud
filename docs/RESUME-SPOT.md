@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — shared SiteChrome nav)  
+**Updated:** 2026-07-19 (**cook** — smart offline shell + resume CTAs)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,8 +9,8 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **My Character loop** | ✅ create · edit · clips · hub · delete · cap | — |
-| **Site chrome** | ✅ Gallery · Chat · Account · card share same nav · Continue · Models | Hard refresh **web** |
+| **Site chrome** | ✅ shared nav · Continue · Models | — |
+| **Offline shell** | ✅ resume list · Continue/Reclaim · auto-reload online · SW cache v2 | Hard refresh **web** / re-open PWA |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
 | **Next** | Ops optional / heat / content | Say `resume` / `spot` / `next` / `cook` |

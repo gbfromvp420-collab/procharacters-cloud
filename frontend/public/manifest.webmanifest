@@ -32,6 +32,12 @@
       "description": "Open live character chat"
     },
     {
+      "name": "My models",
+      "short_name": "Models",
+      "url": "/account#my-models",
+      "description": "Private My Characters hub"
+    },
+    {
       "name": "Account",
       "short_name": "Account",
       "url": "/account",

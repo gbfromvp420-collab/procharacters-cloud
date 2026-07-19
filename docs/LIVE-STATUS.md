@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — shared SiteChrome return nav)  
+**Updated:** 2026-07-19 (**cook** — smart offline shell + resume CTAs)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -51,6 +51,8 @@
 | Create cap UX | ✅ using n/limit · almost-full / cap-full · Save disabled at cap |
 | Pause after End (mine) | ✅ Edit model · My models CTAs on session paused banner |
 | **SiteChrome** sticky nav | ✅ Gallery / Chat / Account / Models · Continue/Reclaim on every surface |
+| Offline shell v2 | ✅ cached resumes · Continue/Reclaim · auto-reload on reconnect · PWA Models shortcut |
+| Offline banner | ✅ Continue chip + resume count while wire is down |
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
