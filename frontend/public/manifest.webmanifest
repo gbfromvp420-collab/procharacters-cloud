@@ -32,6 +32,12 @@
       "description": "Open live character chat"
     },
     {
+      "name": "My Models Studio",
+      "short_name": "Studio",
+      "url": "/models/studio",
+      "description": "Create and edit private My Characters"
+    },
+    {
       "name": "My models",
       "short_name": "Models",
       "url": "/account#my-models",

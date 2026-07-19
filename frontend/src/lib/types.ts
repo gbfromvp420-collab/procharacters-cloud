@@ -98,6 +98,8 @@ export interface CreateCustomCharacterInput {
   scenes?: CustomSceneInput[];
   mediaBase?: string;
   mediaOverrides?: MediaOverrides;
+  /** Soft pin — private models can still be featured on owner surfaces. */
+  featured?: boolean;
 }
 
 export interface CreateCustomCharacterResponse {

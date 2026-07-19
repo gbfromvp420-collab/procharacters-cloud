@@ -45,7 +45,7 @@ export function PremiumUnlockCeremony({
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
-              href="/chat?create=1"
+              href="/models/studio"
               className="rounded-lg bg-brand-accent px-4 py-2.5 text-sm font-semibold text-white hover:brightness-110"
             >
               Create My Character

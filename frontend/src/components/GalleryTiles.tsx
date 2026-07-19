@@ -423,7 +423,7 @@ export function CharacterTile({
           )}
           {card.mine && (
             <Link
-              href={`/chat?character=${encodeURIComponent(card.id)}&edit=1`}
+              href={`/models/studio?edit=${encodeURIComponent(card.id)}`}
               className="btn-ghost min-h-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100"
               title="Edit My Character identity, vibe, clips"
             >

@@ -639,7 +639,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 </p>
                 <div className="mt-5 flex flex-wrap justify-center gap-3">
                   <Link
-                    href={signedInHandle ? "/chat?create=1" : "/account"}
+                    href={signedInHandle ? "/models/studio" : "/account"}
                     className="btn-primary min-h-0 px-5 py-2.5 text-sm"
                   >
                     {signedInHandle ? "Create My Character" : "Sign in · Account"}

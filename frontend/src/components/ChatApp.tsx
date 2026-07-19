@@ -1472,39 +1472,19 @@ export function ChatApp() {
     };
   }, [account?.token]);
 
-  // Deep-link: ?create=1 → create form; ?edit=1&character= → edit form
+  // Deep-link: ?create=1 → My Models Studio; ?edit=1&character= → studio edit
   useEffect(() => {
     if (typeof window === "undefined") return;
     const query = parseShareQuery(window.location.search);
     if (query.edit && query.characterId) {
-      // Wait for catalog; open edit once character list has this id
+      window.location.replace(
+        `/models/studio?edit=${encodeURIComponent(query.characterId)}`,
+      );
       return;
     }
     if (!query.create) return;
-    setShowCreate(true);
-    if (!loadStoredAccount()) setShowAccount(true);
+    window.location.replace("/models/studio");
   }, []);
-
-  // Deep-link edit once catalog is ready
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (characters.length === 0) return;
-    const query = parseShareQuery(window.location.search);
-    if (!query.edit || !query.characterId) return;
-    const target = characters.find((c) => c.id === query.characterId);
-    if (!target || target.kind !== "custom") return;
-    setCharacter(target.id);
-    openEditCustom(target.id);
-    // strip edit flag so refresh doesn't re-open forever
-    try {
-      const url = new URL(window.location.href);
-      url.searchParams.delete("edit");
-      window.history.replaceState({}, "", url.pathname + url.search);
-    } catch {
-      /* ignore */
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot when list lands
-  }, [characters]);
 
   // Deep-links: ?magic=  ?character=  ?resume=  or legacy ?session=&token=
   useEffect(() => {
@@ -3690,10 +3670,13 @@ export function ChatApp() {
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => openEditCustom()}
+                        onClick={() => {
+                          const id = activeCharacterId ?? character;
+                          window.location.href = `/models/studio?edit=${encodeURIComponent(id)}`;
+                        }}
                         className="text-xs font-medium text-violet-200 hover:underline"
                       >
-                        Edit identity
+                        Edit in Studio
                       </button>
                       <label className="flex cursor-pointer items-center gap-1.5 text-xs text-brand-muted">
                         <input

@@ -1495,7 +1495,7 @@ export function AccountSettings() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href="/chat?create=1"
+                    href="/models/studio"
                     className="rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
                   >
                     Create
@@ -1517,7 +1517,7 @@ export function AccountSettings() {
                     clips.
                   </p>
                   <Link
-                    href="/chat?create=1"
+                    href="/models/studio"
                     className="mt-3 inline-flex rounded-lg bg-brand-accent px-4 py-2 text-xs font-semibold text-white"
                   >
                     Create My Character
@@ -1586,7 +1586,7 @@ export function AccountSettings() {
                               </Link>
                             )}
                             <Link
-                              href={`/chat?character=${encodeURIComponent(m.id)}&edit=1`}
+                              href={`/models/studio?edit=${encodeURIComponent(m.id)}`}
                               className="rounded-lg border border-violet-400/40 px-2.5 py-1.5 text-[11px] text-violet-100"
                             >
                               Edit
@@ -1796,7 +1796,7 @@ export function AccountSettings() {
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     <Link
-                      href="/chat?create=1"
+                      href="/models/studio"
                       className="rounded-lg bg-brand-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
                     >
                       Create My Character

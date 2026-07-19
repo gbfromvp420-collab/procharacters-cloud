@@ -10,7 +10,7 @@ import {
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
 
-export type SiteChromeActive = "gallery" | "chat" | "account" | "card";
+export type SiteChromeActive = "gallery" | "chat" | "account" | "card" | "studio";
 
 /**
  * Sticky product chrome — same return path on every surface.
@@ -96,13 +96,25 @@ export function SiteChrome({
               Chat
             </Link>
             {handle ? (
-              <Link
-                href="/account#my-models"
-                className="btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm"
-                title="Private My Characters"
-              >
-                Models
-              </Link>
+              <>
+                <Link
+                  href="/models/studio"
+                  className={`btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm ${
+                    active === "studio" ? "border-violet-300/70 text-violet-50" : ""
+                  }`}
+                  title="My Models Studio — create & edit"
+                  aria-current={active === "studio" ? "page" : undefined}
+                >
+                  Studio
+                </Link>
+                <Link
+                  href="/account#my-models"
+                  className="btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm"
+                  title="Private My Characters hub"
+                >
+                  Models
+                </Link>
+              </>
             ) : null}
             <Link
               href="/account"

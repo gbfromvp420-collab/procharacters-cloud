@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — End Ritual; ntfy ✅)  
+**Updated:** 2026-07-19 (**cook** — My Models Studio v2)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -52,7 +52,8 @@
 | **Heat→pay no double-ask** | ✅ Session win owns Day Pass; Soft Support yields + 6h cooldown after win |
 | **Return seed after End** | ✅ “We’ll hold this heat” + Enable alerts / Sign in when deep session |
 | **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
-| Create My Character deep-link | ✅ `/chat?create=1` opens form; Account premium CTAs |
+| Create My Character deep-link | ✅ **`/models/studio`** dedicated Studio · `/chat?create=1` redirects there |
+| **My Models Studio** | ✅ immersive create/edit · base previews · phrases/scenes/clips · NS booster · live preview · caps · Start heat toast |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
