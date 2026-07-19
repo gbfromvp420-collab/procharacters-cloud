@@ -43,7 +43,7 @@
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
-| Chat continuity pack | ✅ whisper Seed/Fire · footer mind line · sort 4K first · room wash · hot-zone chips · Share heat |
+| Chat continuity pack | ✅ phase-aware Send · afterglow when idle · mine reclaim count · Seed/Fire · room wash · Share heat |
 
 ---
 

@@ -3416,7 +3416,8 @@ export function ChatApp() {
                   !msg.streaming &&
                   status === "ready" &&
                   !sending &&
-                  !isTyping;
+                  !isTyping &&
+                  !input.trim();
                 return (
                 <div
                   key={msg.id}
@@ -3554,6 +3555,7 @@ export function ChatApp() {
               {status === "ready" &&
                 !sending &&
                 !isTyping &&
+                !input.trim() &&
                 (messages.length <= 4 || almostHot || highArousal) && (
                 <QuickReplyChips
                   characterId={activeCharacterId ?? character}
@@ -3613,6 +3615,12 @@ export function ChatApp() {
                   autoComplete="off"
                   className={`field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm ${
                     input.trim() && status !== "ready" ? "field-has-draft" : ""
+                  } ${
+                    modeState?.mode === "edge_pace" && modeState.phase === "almost" && status === "ready"
+                      ? "border-rose-400/50 focus:ring-rose-400/30"
+                      : modeState?.mode === "edge_pace" && modeState.phase === "breathe" && status === "ready"
+                        ? "border-sky-400/40 focus:ring-sky-400/25"
+                        : ""
                   }`}
                 />
                 <button
@@ -3624,13 +3632,25 @@ export function ChatApp() {
                   } ${sending ? "opacity-80" : ""} ${
                     modeState?.mode === "edge_pace" && modeState.phase === "almost"
                       ? "ring-2 ring-rose-300/50"
-                      : ""
+                      : modeState?.mode === "edge_pace" && modeState.phase === "hold"
+                        ? "ring-1 ring-amber-300/40"
+                        : modeState?.mode === "edge_pace" && modeState.phase === "breathe"
+                          ? "ring-1 ring-sky-300/40"
+                          : ""
                   }`}
                 >
                   {sending
                     ? "…"
-                    : modeState?.mode === "edge_pace" && modeState.phase === "almost"
-                      ? "Hold…"
+                    : modeState?.mode === "edge_pace"
+                      ? modeState.phase === "almost"
+                        ? "Hold…"
+                        : modeState.phase === "hold"
+                          ? "Stay…"
+                          : modeState.phase === "breathe"
+                            ? "Soft…"
+                            : modeState.phase === "build"
+                              ? "Build…"
+                              : "Send"
                       : "Send"}
                 </button>
               </div>

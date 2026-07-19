@@ -473,6 +473,12 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               mind{visible.length === 1 ? "" : "s"}
               {query.trim() ? ` for “${query.trim()}”` : ""}
               {filter !== "all" ? ` · ${filter}` : ""}
+              {filter === "mine" && urgentMineCount > 0 ? (
+                <span className="text-rose-200/90">
+                  {" "}
+                  · {urgentMineCount} need reclaim
+                </span>
+              ) : null}
             </p>
           )}
         </div>
