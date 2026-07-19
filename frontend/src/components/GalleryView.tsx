@@ -27,6 +27,7 @@ import { ContinueBanner } from "./ContinueBanner";
 import { SessionAuthBanner } from "./SessionAuthBanner";
 import { InstallAppHint } from "./InstallAppHint";
 import { PushEnableHint } from "./PushEnableHint";
+import { SoftSupportHint } from "./SoftSupportHint";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -247,6 +248,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         />
         <InstallAppHint className="mb-4" />
         <PushEnableHint className="mb-4" />
+        <SoftSupportHint className="mb-4" hasEngagement={resumeCount > 0} />
         <header className="mb-5 animate-fade-in sm:mb-6">
           <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">Live character gallery</h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">

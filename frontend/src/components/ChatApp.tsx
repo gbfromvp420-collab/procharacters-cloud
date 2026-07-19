@@ -55,6 +55,8 @@ import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
+import { SessionWinToast } from "@/components/SessionWinToast";
+import { SoftSupportHint } from "@/components/SoftSupportHint";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -2096,6 +2098,12 @@ export function ChatApp() {
           }}
         />
         <InstallAppHint className="mb-3" />
+        <SoftSupportHint
+          className="mb-3"
+          hasEngagement={
+            messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
+          }
+        />
         <SessionDropRescue
           className="mb-3"
           show={connectionDropped}
@@ -3076,6 +3084,13 @@ export function ChatApp() {
                 recapLine={rejoinRecap.line}
                 priorNotes={priorNotes}
                 onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
+              />
+              <SessionWinToast
+                show={status === "ready"}
+                characterId={activeCharacterId ?? character}
+                characterName={characterName ?? headerCharacterName}
+                resumeCode={resumeCode}
+                messageCount={messages.length}
               />
               {(status === "ready" ||
                 messages.length > 0 ||

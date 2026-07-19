@@ -99,24 +99,25 @@ export function InstallAppHint({ className = "" }: { className?: string }) {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-            Install for better push
+            Home screen · keep the heat
           </p>
           <p className="mt-1 text-brand-muted">
             {ios ? (
               <>
                 Safari → <strong className="text-brand-text">Share</strong> →{" "}
-                <strong className="text-brand-text">Add to Home Screen</strong>, then open from the
-                icon. Notifications are more reliable that way.
+                <strong className="text-brand-text">Add to Home Screen</strong>. Open from the icon
+                so Continue + push feel like a real app — free path stays free.
               </>
             ) : deferred ? (
               <>
-                Install Procharacters on your home screen for stabler alerts when the tab is closed.
+                One tap install — faster return to your chats and stabler alerts when the tab is
+                closed. Core chat never paywalls.
               </>
             ) : (
               <>
-                Use your browser menu → <strong className="text-brand-text">Install app</strong> or{" "}
-                <strong className="text-brand-text">Add to Home screen</strong>, then open from the
-                icon for stabler alerts.
+                Browser menu → <strong className="text-brand-text">Install app</strong> or{" "}
+                <strong className="text-brand-text">Add to Home screen</strong>. One icon back to
+                Continue + your minds.
               </>
             )}
           </p>
