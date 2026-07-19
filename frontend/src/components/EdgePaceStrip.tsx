@@ -10,6 +10,29 @@ const PHASES: Array<{ id: string; label: string }> = [
   { id: "breathe", label: "Breathe" },
 ];
 
+/** Soft DNA tree path — dual with Edge Pace when forge custom-v3. */
+const DNA_NODES: Array<{ id: string; label: string }> = [
+  { id: "spark", label: "Spark" },
+  { id: "soft-lock", label: "Soft" },
+  { id: "tease", label: "Tease" },
+  { id: "edge", label: "Edge" },
+  { id: "deny", label: "Deny" },
+  { id: "release-gate", label: "Gate" },
+];
+
+function dnaNodeIndex(nodeId?: string | null): number {
+  if (!nodeId) return 0;
+  const exact = DNA_NODES.findIndex((n) => n.id === nodeId);
+  if (exact >= 0) return exact;
+  const lower = nodeId.toLowerCase();
+  if (lower.includes("release")) return 5;
+  if (lower.includes("deny")) return 4;
+  if (lower.includes("edge")) return 3;
+  if (lower.includes("tease")) return 2;
+  if (lower.includes("soft")) return 1;
+  return 0;
+}
+
 function phaseShellClass(phase: string): string {
   switch (phase) {
     case "almost":
@@ -120,14 +143,33 @@ export function EdgePaceStrip({
     modeState.fireLine?.trim() || fallbackFire(modeState.phase);
   const chips =
     modeState.phaseChips?.length
-      ? modeState.phaseChips.slice(0, 3)
+      ? modeState.phaseChips.slice(0, 4)
       : fallbackChips(modeState.phase);
+  const dnaLabel = modeState.dnaTreeLabel || modeState.dnaTreeNodeId;
+  const dnaIdx = dnaNodeIndex(modeState.dnaTreeNodeId);
+  const [dnaFlash, setDnaFlash] = useState(false);
+  const prevDna = useRef(modeState.dnaTreeNodeId);
+  useEffect(() => {
+    if (
+      modeState.dnaTreeNodeId &&
+      prevDna.current &&
+      prevDna.current !== modeState.dnaTreeNodeId
+    ) {
+      setDnaFlash(true);
+      const t = window.setTimeout(() => setDnaFlash(false), 1100);
+      prevDna.current = modeState.dnaTreeNodeId;
+      return () => window.clearTimeout(t);
+    }
+    prevDna.current = modeState.dnaTreeNodeId;
+  }, [modeState.dnaTreeNodeId]);
 
   return (
     <div
       className={`rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed text-rose-50 transition-[border-color,box-shadow,background] duration-500 ${phaseShellClass(modeState.phase)} ${
         flash ? "ring-2 ring-white/30 scale-[1.01]" : ""
-      } ${urgent && !isBreathe ? "ring-1 ring-amber-200/40" : ""}`}
+      } ${urgent && !isBreathe ? "ring-1 ring-amber-200/40" : ""} ${
+        dnaLabel ? "ring-1 ring-violet-400/25" : ""
+      }`}
       role="status"
       aria-live="polite"
     >
@@ -146,6 +188,8 @@ export function EdgePaceStrip({
           {modeState.label}
           {isAlmost ? " · DON’T FINISH" : isBreathe ? " · soft" : ""}
           {flash ? " · phase shift" : ""}
+          {dnaLabel ? ` · DNA ${dnaLabel}` : ""}
+          {(modeState.dnaTreeAdvanced || dnaFlash) && dnaLabel ? " ↑" : ""}
         </p>
         <p
           className={`font-mono text-xs tabular-nums ${
@@ -187,6 +231,40 @@ export function EdgePaceStrip({
           );
         })}
       </div>
+
+      {/* DNA soft tree — dual with Edge Pace on custom-v3 forge models */}
+      {dnaLabel && (
+        <div className="mt-1.5 space-y-1">
+          <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-violet-200/90">
+            DNA path · {modeState.dnaTreeLabel || modeState.dnaTreeNodeId}
+            {(modeState.dnaTreeAdvanced || dnaFlash) && (
+              <span className="ml-1 rounded-full border border-violet-300/40 bg-violet-500/25 px-1.5 py-0.5 text-[8px] normal-case tracking-normal">
+                climbed
+              </span>
+            )}
+          </p>
+          <div className="grid grid-cols-6 gap-0.5" aria-label="Forge DNA heat path">
+            {DNA_NODES.map((n, i) => {
+              const active = i === dnaIdx;
+              const done = i < dnaIdx;
+              return (
+                <div
+                  key={n.id}
+                  className={`rounded px-0.5 py-1 text-center text-[8px] font-semibold uppercase tracking-wide ${
+                    active
+                      ? "bg-violet-400/50 text-white ring-1 ring-violet-200/60"
+                      : done
+                        ? "bg-violet-500/25 text-violet-100/85"
+                        : "bg-black/25 text-violet-100/35"
+                  }`}
+                >
+                  {n.label}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div
         className={`mt-2 h-1.5 overflow-hidden rounded-full bg-black/30 ${
@@ -271,7 +349,8 @@ export function EdgePaceStrip({
 
       <p className="mt-1.5 text-[10px] text-brand-soft">
         Soft timers · round {modeState.round + 1}
-        {modeState.round >= 1 ? " · multi-cycle" : ""} · not a full assistant product
+        {modeState.round >= 1 ? " · multi-cycle" : ""}
+        {dnaLabel ? " · DNA soft tree live" : ""} · not a full assistant product
       </p>
     </div>
   );

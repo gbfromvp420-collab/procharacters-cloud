@@ -202,7 +202,9 @@ export function SoftSupportHint({
                 >
                   {busy === "day_pass"
                     ? "Opening…"
-                    : `Day Pass · ${priceLabel("day_pass", "$4.99")}`}
+                    : dnaHeat
+                      ? `Forge headroom · Day Pass · ${priceLabel("day_pass", "$4.99")}`
+                      : `Day Pass · ${priceLabel("day_pass", "$4.99")}`}
                 </button>
                 <button
                   type="button"

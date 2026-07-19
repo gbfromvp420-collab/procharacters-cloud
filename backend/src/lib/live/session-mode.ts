@@ -232,8 +232,15 @@ export function formatModeForUi(
   const phase = state.phase;
   const edgeFire = edgePaceFireLine(characterId, phase);
   const edgeChips = edgePacePhaseChips(phase);
-  // Edge Pace owns fire chips when active; DNA tree fills normal mode + optional coach color
+  // Normal mode: DNA owns fire. Edge Pace: edge owns fire, DNA chips still ship for dual strip.
   const useDnaFire = state.mode !== "edge_pace" && !!dnaTree?.fireLine;
+  const dnaChips = dnaTree?.chips?.filter(Boolean).slice(0, 3) ?? [];
+  const phaseChips =
+    state.mode === "edge_pace"
+      ? mergeChipLists(edgeChips, dnaChips, 4)
+      : useDnaFire && dnaChips.length
+        ? dnaChips
+        : edgeChips;
   return {
     mode: state.mode,
     label: state.label,
@@ -244,8 +251,7 @@ export function formatModeForUi(
     phaseDurationSec,
     coachCue: state.coachCue,
     fireLine: useDnaFire ? dnaTree!.fireLine! : edgeFire,
-    phaseChips:
-      useDnaFire && dnaTree?.chips?.length ? dnaTree.chips.slice(0, 3) : edgeChips,
+    phaseChips,
     ...(dnaTree
       ? {
           dnaTreeNodeId: dnaTree.nodeId,
@@ -254,4 +260,19 @@ export function formatModeForUi(
         }
       : {}),
   };
+}
+
+function mergeChipLists(primary: string[], secondary: string[], max: number): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const list of [primary, secondary]) {
+    for (const raw of list) {
+      const key = raw.toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(raw.trim());
+      if (out.length >= max) return out;
+    }
+  }
+  return out;
 }

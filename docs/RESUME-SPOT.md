@@ -15,6 +15,7 @@
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |
 | **DNA gallery badges** | ✅ tiles + hero reel + pause banner | End heat → gallery shows **DNA · Edge** violet badge |
 | **DNA conversion + My models** | ✅ win toast · Soft Support forge frame · Account DNA · offline DNA | Climb DNA → Day Pass framed as more forge headroom |
+| **Unlock → Forge + Edge×DNA** | ✅ Day Pass ceremony forge CTA · Edge Pace dual DNA path | Pay → Studio; Edge Pace + DNA tree coexist |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Redeploy API after DNA runtime push |

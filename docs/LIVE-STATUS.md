@@ -62,6 +62,7 @@
 | **DNA chip bar + Heat Trail** | ✅ 6-node path strip · one-tap Fire chips · climb flash · gallery/Continue/resume hero show DNA node |
 | **DNA gallery badges** | ✅ gallery tiles + hero reel + End pause banner · DNA · node violet · return loop stamps node every turn |
 | **DNA conversion close** | ✅ Session win “DNA heat locked” + Day Pass CTA · Soft Support forge headroom · Account My models DNA trail · offline shell DNA Continue |
+| **Unlock → Forge + Edge×DNA** | ✅ Premium ceremony primary **Forge another model** · Edge Pace strip dual DNA path + merged chips |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
