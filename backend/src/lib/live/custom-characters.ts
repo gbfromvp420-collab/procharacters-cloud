@@ -10,6 +10,10 @@ import {
   LIVE_CHARACTER_CATALOG,
   type LiveCharacterProfile,
 } from "./character-catalog.js";
+import {
+  assembleDnaCharacterPrompt,
+  type NaughtySyntaxDna,
+} from "./forge-dna.js";
 
 /** Clip pack roots (engine media). Phase 4 models resolve here via avatarBase. */
 export type CustomAvatarBase = "twink-default" | "female-default";
@@ -52,6 +56,8 @@ export interface CustomCharacterInput {
   /** Required for My Character (private). */
   ownerAccountId?: string;
   visibility?: CustomVisibility;
+  /** Studio Forge v3 — Naughty Syntax DNA bundle. */
+  dna?: NaughtySyntaxDna;
 }
 
 export interface CustomCharacterRecord extends LiveCharacterProfile {
@@ -74,6 +80,8 @@ export interface CustomCharacterRecord extends LiveCharacterProfile {
   featured?: boolean;
   ownerAccountId?: string;
   visibility?: CustomVisibility;
+  /** Studio Forge v3 DNA (adaptive prompt, behavior tree, LiveKit, seeds). */
+  dna?: NaughtySyntaxDna;
 }
 
 interface CustomCharacterFile {
@@ -455,16 +463,19 @@ export async function createCustomCharacter(
   const slug = slugify(name) || "custom";
   const id = `custom-${slug}-${randomUUID().slice(0, 8)}`;
 
-  const characterPrompt = await buildPromptV2({
-    name,
-    appearance,
-    energy,
-    clothing,
-    audience,
-    baseModelId,
-    keyPhrases,
-    scenes,
-  });
+  const dna = sanitizeDna(raw.dna);
+  const characterPrompt = dna
+    ? assembleDnaCharacterPrompt(dna)
+    : await buildPromptV2({
+        name,
+        appearance,
+        energy,
+        clothing,
+        audience,
+        baseModelId,
+        keyPhrases,
+        scenes,
+      });
   const appearanceAnchor = [
     `Character: ${name}`,
     `Base model: ${baseModelId}`,
@@ -473,6 +484,7 @@ export async function createCustomCharacter(
     `Energy: ${energy}`,
     `Audience: ${audience}`,
     keyPhrases?.length ? `Key phrases: ${keyPhrases.join(" | ")}` : "",
+    dna ? `DNA: v${dna.version} · ${dna.source}` : "",
   ]
     .filter(Boolean)
     .join("\n");
@@ -485,7 +497,7 @@ export async function createCustomCharacter(
     kind: "custom",
     id,
     displayName: name,
-    defaultVersion: "custom-v2",
+    defaultVersion: dna ? "custom-v3" : "custom-v2",
     consistencyTraits: buildTraits({ appearance, clothing, energy, baseModelId }),
     signatureClothing:
       clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit",
@@ -507,6 +519,7 @@ export async function createCustomCharacter(
     ...(scenes ? { scenes } : {}),
     ...(mediaBase ? { mediaBase } : {}),
     ...(mediaOverrides ? { mediaOverrides } : {}),
+    ...(dna ? { dna } : {}),
   };
 
   store.set(id, record);
@@ -524,6 +537,22 @@ export interface UpdateCustomCharacterInput {
   keyPhrases?: string[] | null;
   scenes?: CustomScene[] | null;
   featured?: boolean;
+  /** Replace or clear Studio Forge DNA. */
+  dna?: NaughtySyntaxDna | null;
+}
+
+function sanitizeDna(raw?: NaughtySyntaxDna | null): NaughtySyntaxDna | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  if (raw.version !== "3.0") return undefined;
+  if (!raw.displayName || !raw.identity || !raw.adaptivePrompt?.core) return undefined;
+  // Cap size — DNA is rich but must stay file-store friendly
+  try {
+    const json = JSON.stringify(raw);
+    if (json.length > 48_000) return undefined;
+  } catch {
+    return undefined;
+  }
+  return raw;
 }
 
 export async function updateCustomCharacter(
@@ -597,17 +626,32 @@ export async function updateCustomCharacter(
     }
   }
 
-  // Rebuild prompt when identity fields change
-  next.characterPrompt = await buildPromptV2({
-    name: next.displayName,
-    appearance: next.appearance,
-    energy: next.energy,
-    clothing: next.clothing,
-    audience: next.audience,
-    baseModelId: next.baseModelId,
-    keyPhrases: next.keyPhrases,
-    scenes: next.scenes,
-  });
+  if (patch.dna !== undefined) {
+    if (patch.dna === null) {
+      delete next.dna;
+      next.defaultVersion = "custom-v2";
+    } else {
+      const d = sanitizeDna(patch.dna);
+      if (d) {
+        next.dna = d;
+        next.defaultVersion = "custom-v3";
+      }
+    }
+  }
+
+  // Rebuild prompt when identity fields change (DNA adaptive core wins when present)
+  next.characterPrompt = next.dna
+    ? assembleDnaCharacterPrompt(next.dna)
+    : await buildPromptV2({
+        name: next.displayName,
+        appearance: next.appearance,
+        energy: next.energy,
+        clothing: next.clothing,
+        audience: next.audience,
+        baseModelId: next.baseModelId,
+        keyPhrases: next.keyPhrases,
+        scenes: next.scenes,
+      });
   next.appearanceAnchor = [
     `Character: ${next.displayName}`,
     `Base model: ${next.baseModelId}`,
@@ -615,7 +659,10 @@ export async function updateCustomCharacter(
     `Clothing: ${next.clothing}`,
     `Energy: ${next.energy}`,
     `Audience: ${next.audience}`,
-  ].join("\n");
+    next.dna ? `DNA: v${next.dna.version} · ${next.dna.source}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
   next.consistencyTraits = buildTraits({
     appearance: next.appearance,
     clothing: next.clothing,

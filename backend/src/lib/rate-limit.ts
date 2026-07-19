@@ -110,6 +110,11 @@ export const RATE_LIMITS = {
     limit: Number(process.env.RATE_LIMIT_PUSH_TEST_IP ?? 12),
     windowMs: Number(process.env.RATE_LIMIT_PUSH_TEST_IP_WINDOW_MS ?? 15 * 60 * 1000),
   },
+  /** Studio Forge expand — LLM cost guard */
+  forgeExpand: {
+    limit: Number(process.env.RATE_LIMIT_FORGE_EXPAND ?? 30),
+    windowMs: Number(process.env.RATE_LIMIT_FORGE_EXPAND_WINDOW_MS ?? 15 * 60 * 1000),
+  },
 };
 
 /** Apply multiple limiters; returns first denial or null if all pass. */

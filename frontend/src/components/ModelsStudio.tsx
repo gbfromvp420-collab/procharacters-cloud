@@ -3,16 +3,25 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { forgeExpandAction } from "@/app/models/studio/actions";
 import { loadStoredAccount, type StoredAccount } from "@/lib/account-storage";
 import {
   createCustomCharacter,
   fetchAccountMe,
+  forgeExpandFantasy,
   listLiveCharacters,
   updateCustomCharacter,
   uploadCharacterClip,
   uploadCharacterClipsBatch,
 } from "@/lib/api";
 import { CLIP_FILE_ACCEPT } from "@/lib/clip-upload";
+import {
+  downloadDnaJson,
+  estimateIntensity,
+  FORGE_EXAMPLE_PROMPTS,
+  sentimentToBand,
+  type NaughtySyntaxDna,
+} from "@/lib/forge-dna";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type {
   CustomSceneInput,
@@ -20,6 +29,7 @@ import type {
   MediaClipKey,
 } from "@/lib/types";
 import { ClipPreview } from "@/components/ClipPreview";
+import { ForgeAvatarComposer } from "@/components/ForgeAvatarComposer";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SiteChrome } from "@/components/SiteChrome";
 
@@ -156,6 +166,15 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   } | null>(null);
   const [showPromptSim, setShowPromptSim] = useState(true);
 
+  // Studio Forge v3 Unchained
+  const [fantasy, setFantasy] = useState("");
+  const [forging, setForging] = useState(false);
+  const [dna, setDna] = useState<NaughtySyntaxDna | null>(null);
+  const [forgeMs, setForgeMs] = useState<number | null>(null);
+  const [forgeSource, setForgeSource] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [manualBandLock, setManualBandLock] = useState(false);
+
   const defaults = useMemo(
     () => characters.filter((c) => c.kind === "default"),
     [characters],
@@ -259,6 +278,12 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
               : [],
           );
           setFeatured(target.featured === true);
+          if (target.dna) {
+            setDna(target.dna);
+            setFantasy(target.dna.fantasyRaw || "");
+            setForgeSource(target.dna.source);
+            setShowAdvanced(true);
+          }
           const overrides = target.mediaOverrides || {};
           setClips({
             idle: overrides.idle || target.clips?.idle,
@@ -281,8 +306,17 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     void bootstrap();
   }, [bootstrap]);
 
-  // Light band cycle for preview life
+  // Sentiment-aware clip band from fantasy / DNA (editor immersion)
   useEffect(() => {
+    if (manualBandLock) return;
+    const text = fantasy.trim() || appearance.trim() || energy.trim();
+    if (text.length < 4) return;
+    setPreviewBand(sentimentToBand(text, dna));
+  }, [fantasy, appearance, energy, dna, manualBandLock]);
+
+  // Light band cycle for preview life when no fantasy driving sentiment
+  useEffect(() => {
+    if (fantasy.trim().length >= 8 || manualBandLock) return;
     const order: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
     let i = Math.max(0, order.indexOf(previewBand));
     const t = window.setInterval(() => {
@@ -290,9 +324,13 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
       setPreviewBand(order[i]!);
     }, 5000);
     return () => window.clearInterval(t);
-    // only re-arm when base/edit changes — not every band click
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseModelId, editingId]);
+  }, [baseModelId, editingId, fantasy, manualBandLock]);
+
+  const forgeIntensity = useMemo(
+    () => estimateIntensity(fantasy || appearance || energy, dna),
+    [fantasy, appearance, energy, dna],
+  );
 
   const onPickBase = (id: string) => {
     if (editingId) return;
@@ -477,6 +515,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   ]);
 
   const smartStarter = useMemo(() => {
+    if (dna?.starterLine) return dna.starterLine;
     if (phrases[0]) return phrases[0];
     if (vibeTags.includes("edging") || presetId === "edge")
       return "Start slow — edge me, don’t let me finish yet.";
@@ -486,7 +525,117 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
       return "Take control. Soft, but don’t let me rush.";
     if (name.trim()) return `Hey ${name.trim().split(/\s+/)[0]} — pick up where the heat starts.`;
     return "Start heat — match my pace.";
-  }, [phrases, vibeTags, presetId, name]);
+  }, [dna, phrases, vibeTags, presetId, name]);
+
+  const applyForgeResult = (result: {
+    dna: NaughtySyntaxDna;
+    form: {
+      name: string;
+      appearance: string;
+      energy: string;
+      baseModelId: string;
+      keyPhrases: string[];
+      scenes: Array<{ title: string; body: string }>;
+    };
+    expandMs?: number | null;
+    source?: string;
+  }) => {
+    setDna(result.dna);
+    setForgeMs(result.expandMs ?? result.dna.expandMs ?? null);
+    setForgeSource(result.source ?? result.dna.source);
+    if (!editingId && result.form.baseModelId) {
+      setBaseModelId(result.form.baseModelId);
+    }
+    setName(result.form.name);
+    setAppearance(result.form.appearance.slice(0, VISUAL_MAX));
+    const tagsMatch = result.form.energy.match(/Tags:\s*([^.]+)/i)?.[1];
+    if (tagsMatch) {
+      setVibeTags(
+        uniqueTags(
+          tagsMatch
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean),
+        ).slice(0, TAG_MAX),
+      );
+    } else if (result.dna.vibeTags?.length) {
+      setVibeTags(uniqueTags(result.dna.vibeTags).slice(0, TAG_MAX));
+    }
+    const cleanEnergy = result.form.energy
+      .replace(/\s*Tags:\s*[^.]*\.?/gi, "")
+      .trim();
+    setEnergy(cleanEnergy || result.dna.vibe);
+    const matched = ENERGY_PRESETS.find(
+      (p) =>
+        result.dna.vibeTags?.includes(p.tag) ||
+        cleanEnergy.toLowerCase().includes(p.tag),
+    );
+    if (matched) setPresetId(matched.id);
+    setPhrases((result.form.keyPhrases ?? []).slice(0, PHRASE_MAX));
+    setScenes(
+      (result.form.scenes ?? []).slice(0, SCENE_MAX).map((s) => ({
+        title: s.title,
+        body: s.body,
+      })),
+    );
+    setManualBandLock(false);
+    setPreviewBand(sentimentToBand(result.dna.fantasyRaw || result.form.appearance, result.dna));
+    showFlash(
+      `DNA forged · ${result.source ?? result.dna.source}${
+        result.expandMs != null ? ` · ${result.expandMs}ms` : ""
+      }`,
+    );
+  };
+
+  const handleForge = async () => {
+    const text = fantasy.trim();
+    if (text.length < 8) {
+      setError("Type your fantasy (min 8 chars) — name, vibe, body, kinks…");
+      return;
+    }
+    setForging(true);
+    setError(null);
+    try {
+      // Prefer Server Action; fall back to direct REST if action fails
+      const actionResult = await forgeExpandAction({
+        fantasy: text,
+        baseModelId: editingId ? baseModelId : undefined,
+        displayNameHint: name.trim() || undefined,
+      });
+      if (actionResult.ok) {
+        const data = actionResult.data as {
+          dna: NaughtySyntaxDna;
+          form: {
+            name: string;
+            appearance: string;
+            energy: string;
+            baseModelId: string;
+            keyPhrases: string[];
+            scenes: Array<{ title: string; body: string }>;
+          };
+          expandMs?: number | null;
+          source?: string;
+        };
+        applyForgeResult({
+          dna: data.dna,
+          form: data.form,
+          expandMs: actionResult.expandMs ?? data.expandMs,
+          source: actionResult.source ?? data.source,
+        });
+        return;
+      }
+      const rest = await forgeExpandFantasy({
+        fantasy: text,
+        baseModelId: editingId ? baseModelId : undefined,
+        displayNameHint: name.trim() || undefined,
+      });
+      applyForgeResult(rest);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Forge expand failed");
+    } finally {
+      setForging(false);
+    }
+  };
 
   const canSave =
     !!account?.token &&
@@ -522,6 +671,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         audience: "any" as const,
         keyPhrases: phrases.length ? phrases.slice(0, PHRASE_MAX) : undefined,
         scenes: validScenes().length ? validScenes() : undefined,
+        dna: dna ?? undefined,
       };
 
       let id = editingId;
@@ -538,6 +688,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             keyPhrases: payload.keyPhrases ?? null,
             scenes: payload.scenes ?? null,
             featured,
+            dna: dna ?? undefined,
           },
           account.token,
         );
@@ -554,6 +705,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             audience: "any",
             keyPhrases: payload.keyPhrases,
             scenes: payload.scenes,
+            dna: dna ?? undefined,
           },
           account.token,
         );
@@ -643,11 +795,11 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
       <SiteChrome
         active="studio"
-        title="My Models Studio"
+        title="Studio Forge"
         subtitle={
           editingId
-            ? "Slim edit · identity + clips"
-            : "Fast forge · 60-second mind"
+            ? "Unchained edit · DNA + clips"
+            : "Conversational forge · DNA under 5s"
         }
         className="pt-[env(safe-area-inset-top,0px)]"
       />
@@ -656,14 +808,14 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-200/90">
-              Studio slim v2 · private
+              Studio Forge · v3 Unchained · private
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
-              {editingId ? "Tune your model" : "Forge fast"}
+              {editingId ? "Tune the god you made" : "Speak it into heat"}
             </h1>
             <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-brand-muted">
-              Base is video only. Your name + vibe + short visual own the mind — no
-              typecast auto-fill.
+              Type the fantasy. Forge expands identity, branches, behavior tree,
+              LiveKit reactivity, and memory seeds — then Chat Now.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -747,6 +899,147 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         ) : (
           <div className="grid gap-4 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start lg:gap-6">
             <div className="space-y-3">
+              {/* 0 · Conversational Forge */}
+              <section className="relative overflow-hidden rounded-2xl border border-rose-400/30 bg-gradient-to-br from-rose-500/10 via-brand-panel/90 to-violet-500/10 p-3 sm:p-4">
+                <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-rose-500/15 blur-2xl" />
+                <div className="relative mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-200">
+                    Conversational forge
+                  </h2>
+                  <span className="text-[10px] text-brand-soft">
+                    LLM expand · target &lt;5s · zero censorship
+                  </span>
+                </div>
+                <textarea
+                  value={fantasy}
+                  onChange={(e) => {
+                    setFantasy(e.target.value.slice(0, 4000));
+                    setManualBandLock(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                      e.preventDefault();
+                      void handleForge();
+                    }
+                  }}
+                  rows={4}
+                  placeholder="Describe the avatar you can't quit — name, body, clothing, vibe, kinks, how they edge or spoil you…"
+                  className="field relative w-full resize-none text-sm leading-relaxed"
+                  maxLength={4000}
+                  disabled={forging}
+                />
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {FORGE_EXAMPLE_PROMPTS.map((ex) => (
+                    <button
+                      key={ex.slice(0, 24)}
+                      type="button"
+                      onClick={() => {
+                        setFantasy(ex);
+                        setManualBandLock(false);
+                      }}
+                      className="max-w-full truncate rounded-full border border-brand-border/70 bg-brand-bg/60 px-2.5 py-1 text-[10px] text-brand-muted transition hover:border-rose-400/40 hover:text-rose-100"
+                    >
+                      {ex.length > 48 ? `${ex.slice(0, 46)}…` : ex}
+                    </button>
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void handleForge()}
+                    disabled={forging || fantasy.trim().length < 8}
+                    className="btn-primary min-h-0 px-5 py-2.5 text-sm disabled:opacity-50"
+                  >
+                    {forging ? "Forging DNA…" : "Forge model"}
+                  </button>
+                  {dna && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => downloadDnaJson(dna)}
+                        className="btn-ghost min-h-0 px-3 py-2 text-xs"
+                      >
+                        Export DNA
+                      </button>
+                      <span className="rounded-full border border-violet-400/35 bg-violet-500/15 px-2.5 py-1 text-[10px] text-violet-100">
+                        {forgeSource ?? dna.source}
+                        {forgeMs != null ? ` · ${forgeMs}ms` : ""}
+                        {" · "}
+                        {dna.memorySeeds?.length ?? 0} seeds
+                      </span>
+                    </>
+                  )}
+                  <span className="text-[10px] text-brand-soft">⌘/Ctrl+Enter</span>
+                </div>
+                {dna && (
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    <div className="rounded-xl border border-brand-border/50 bg-brand-bg/40 p-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
+                        Evolution
+                      </p>
+                      <p className="mt-1 text-[10px] leading-relaxed text-brand-text">
+                        power {dna.evolution.power.toFixed(2)} · intimacy{" "}
+                        {dna.evolution.intimacy.toFixed(2)} · chaos{" "}
+                        {dna.evolution.chaos.toFixed(2)}
+                        <br />
+                        denial {dna.evolution.denial.toFixed(2)} · pace{" "}
+                        {dna.evolution.pace.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-brand-border/50 bg-brand-bg/40 p-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
+                        Branches
+                      </p>
+                      <p className="mt-1 line-clamp-3 text-[10px] text-brand-text">
+                        dark · chaotic · flirty ready
+                      </p>
+                      <p className="mt-0.5 line-clamp-2 text-[10px] text-brand-soft">
+                        {dna.adaptivePrompt.branches.flirty.slice(0, 90)}…
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-brand-border/50 bg-brand-bg/40 p-2">
+                      <p className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
+                        Memory seeds
+                      </p>
+                      <ul className="mt-1 space-y-0.5">
+                        {dna.memorySeeds.slice(0, 3).map((s) => (
+                          <li
+                            key={s.id}
+                            className="truncate text-[10px] text-brand-text"
+                            title={s.text}
+                          >
+                            <span className="text-rose-200/80">[{s.kind}]</span>{" "}
+                            {s.text}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </section>
+
+              {/* Advanced toggle — form fields after forge or manual */}
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvanced((v) => !v)}
+                  className="text-[11px] font-medium text-brand-accent hover:underline"
+                >
+                  {showAdvanced
+                    ? "Hide manual fields"
+                    : dna
+                      ? "Tune fields · clips · booster"
+                      : "Manual forge · fields without LLM"}
+                </button>
+                {dna && !showAdvanced && (
+                  <span className="text-[10px] text-brand-soft">
+                    DNA filled · save when ready
+                  </span>
+                )}
+              </div>
+
+              {(showAdvanced || editingId || !dna) && (
+              <>
               {/* 1 · Base */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
                 <div className="mb-2 flex items-center justify-between gap-2">
@@ -1179,9 +1472,34 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   </p>
                 )}
               </section>
+              </>
+              )}
+
+              {/* Always-visible save when DNA forged without advanced open */}
+              {dna && !showAdvanced && !editingId && (
+                <section className="sticky bottom-0 z-20 -mx-3 border-t border-brand-border/80 bg-brand-bg/95 px-3 py-3 backdrop-blur-md sm:static sm:mx-0 sm:rounded-2xl sm:border sm:border-brand-border/80 sm:bg-brand-panel/90 sm:px-4 sm:py-4">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void handleSave()}
+                      disabled={!canSave}
+                      className="btn-primary min-h-0 flex-1 px-5 py-2.5 text-sm disabled:opacity-50"
+                    >
+                      {saving ? "Forging…" : !account ? "Sign in to save" : "Save DNA · Chat Now"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => downloadDnaJson(dna)}
+                      className="btn-ghost min-h-0 px-3 py-2 text-xs"
+                    >
+                      Export
+                    </button>
+                  </div>
+                </section>
+              )}
             </div>
 
-            {/* Live preview + prompt sim */}
+            {/* Live preview + prompt sim + canvas composer */}
             <aside className="lg:sticky lg:top-[4.5rem] space-y-3">
               <div className="overflow-hidden rounded-2xl border border-brand-border/80 bg-black shadow-card">
                 <div className="relative aspect-[3/4] sm:aspect-[4/5]">
@@ -1194,10 +1512,17 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                     playsInline
                     autoPlay
                   />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                  <ForgeAvatarComposer
+                    band={previewBand}
+                    intensity={forgeIntensity}
+                    dna={dna}
+                  />
+                  <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black via-black/30 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 z-[3] p-3 sm:p-4">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-violet-200/90">
                       Live · {BAND_LABEL[previewBand]}
+                      {fantasy.trim().length >= 8 ? " · sentiment" : ""}
+                      {dna ? " · DNA" : ""}
                     </p>
                     <p className="mt-1 text-xl font-semibold text-white">
                       {name.trim() || "Unnamed"}
@@ -1218,7 +1543,10 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                         <button
                           key={k}
                           type="button"
-                          onClick={() => setPreviewBand(k)}
+                          onClick={() => {
+                            setManualBandLock(true);
+                            setPreviewBand(k);
+                          }}
                           className={`pointer-events-auto rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase ${
                             previewBand === k
                               ? "border-rose-300/60 bg-rose-500/40 text-white"
@@ -1234,7 +1562,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                 <div className="space-y-2 border-t border-white/10 bg-brand-panel/95 p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-                      Prompt merge · live
+                      {dna ? "DNA prompt core · live" : "Prompt merge · live"}
                     </p>
                     <button
                       type="button"
@@ -1246,12 +1574,31 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   </div>
                   {showPromptSim && (
                     <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-lg border border-brand-border/60 bg-brand-bg/80 px-2.5 py-2 font-mono text-[10px] leading-relaxed text-brand-muted">
-                      {promptSim}
+                      {dna?.adaptivePrompt?.core || promptSim}
                     </pre>
+                  )}
+                  {dna && (
+                    <div className="flex flex-wrap gap-1">
+                      {(Object.keys(dna.adaptivePrompt.branches) as Array<
+                        keyof typeof dna.adaptivePrompt.branches
+                      >).map((b) => (
+                        <span
+                          key={b}
+                          className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-rose-100/90"
+                          title={dna.adaptivePrompt.branches[b]}
+                        >
+                          {b}
+                        </span>
+                      ))}
+                      <span className="rounded-full border border-violet-400/30 bg-violet-500/10 px-2 py-0.5 text-[9px] text-violet-100/90">
+                        tree:{dna.behaviorTree.rootId}
+                      </span>
+                    </div>
                   )}
                   <p className="text-[10px] text-brand-soft">
                     Phrases {phrases.length}/{PHRASE_MAX} · Scenes {validScenes().length}/
                     {SCENE_MAX} · Base clips: {baseCard?.displayName || baseModelId}
+                    {dna ? ` · intensity ${(forgeIntensity * 100).toFixed(0)}%` : ""}
                   </p>
                   {canSave && (
                     <p className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2 py-1.5 text-[10px] text-violet-100/90">

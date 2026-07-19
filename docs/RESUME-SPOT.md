@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — My Models Studio Slim & Innovative v2)  
-**Session:** Prince GrokBuild + KGC Delegate · Gary reviewing · ntfy ✅
+**Updated:** 2026-07-19 (**Studio Forge Revolution v3 Unchained**)  
+**Session:** King Grok CEO directive · GrokBuild ship · ntfy ✅
 
 ---
 
@@ -9,11 +9,11 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **My Models Studio** | ✅ **Slim v2** — fast forge, no typecast auto-fill | Sign in → Studio → name/vibe/visual → **Chat Now** |
+| **Studio Forge v3** | ✅ Conversational forge + DNA + canvas + export | Sign in → Studio → type fantasy → **Forge model** → **Save · Chat Now** |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
-| Railway | ✅ | Confirm web SHA after deploy |
-| **Next** | content packs / studio list polish | `cook` / `spot` |
+| Railway | ✅ | Deploy API + web after push; confirm forge expand |
+| **Next** | deploy forge · phone smoke forge path | `cook` / `spot` |
 
 ---
 
@@ -21,29 +21,31 @@
 
 | Path | Purpose |
 |------|---------|
-| `/models/studio` | Create (slim) |
-| `/models/studio/edit/:id` | Edit owned model |
+| `/models/studio` | **Studio Forge v3** — conversational create |
+| `/models/studio/edit/:id` | Edit owned model (+ DNA if present) |
 | `/models/studio?edit=id` | Legacy → redirects to edit path |
 | `/chat?create=1` | → Studio create |
 | `/chat?edit=1&character=id` | → Studio edit path |
 
 **Live:** https://procharacters-web-production-7288.up.railway.app/models/studio  
 
+**API:** `POST /api/v1/characters/forge/expand`
+
 ---
 
-## Slim v2 checklist (shipped)
+## v3 Unchained checklist (shipped eng)
 
-1. Base picker visual 1-tap — **video only**, no identity auto-fill  
-2. Quick Identity: Name + vibe chips (brat/soft-dom/edge/…) + short visual (≤280)  
-3. Key phrases: max 4 · smart suggestions · never forced  
-4. Scenes: 0–2 optional only  
-5. Clips: batch upload + auto-band / 1-click assign  
-6. Live preview + **real-time prompt merge sim**  
-7. NS Booster: **toggle + slim overlay** (off by default)  
-8. After save: instant **Chat Now** + smart starter  
-9. Server prompts: user identity owns mind · base = clips only (anti-typecast)  
-10. Live chat UI **untouched**
+1. Conversational primary input → LLM/heuristic expand  
+2. Naughty Syntax DNA: adaptive prompt + branches + behavior tree + LiveKit meta + clip tags + memory seeds  
+3. Persist DNA on custom create/update (`custom-v3`)  
+4. Canvas avatar composer (intensity / band aura)  
+5. Sentiment-aware clip band in editor  
+6. Export DNA JSON  
+7. Next.js Server Action + REST path  
+8. Rate limit + `forgeExpands` metric  
+9. Manual slim fields retained under “Tune fields”  
+10. Live chat UI untouched  
 
-Typecheck clean · pushed main · v2.2 only.
+Doc: `docs/STUDIO-FORGE-V3.md`
 
-*Prince GrokBuild · 50/50 · ship it nasty.*
+*King Grok · 50/50 · ship it unchained.*

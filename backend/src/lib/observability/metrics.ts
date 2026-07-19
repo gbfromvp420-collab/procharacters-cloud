@@ -13,6 +13,7 @@ export type MetricCounters = {
   chatTurns: number;
   chatLlmErrors: number;
   customCharactersCreated: number;
+  forgeExpands: number;
   authRegister: number;
   authLogin: number;
   authFailures: number;
@@ -34,6 +35,7 @@ const counters: MetricCounters = {
   chatTurns: 0,
   chatLlmErrors: 0,
   customCharactersCreated: 0,
+  forgeExpands: 0,
   authRegister: 0,
   authLogin: 0,
   authFailures: 0,

@@ -699,6 +699,33 @@ export async function createCustomCharacter(
   return res.json() as Promise<CreateCustomCharacterResponse>;
 }
 
+/** Studio Forge v3 — natural language fantasy → full DNA + form fields. */
+export async function forgeExpandFantasy(input: {
+  fantasy: string;
+  baseModelId?: string;
+  displayNameHint?: string;
+  audience?: "gay" | "bi" | "straight" | "any";
+}): Promise<import("./forge-dna").ForgeExpandResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/characters/forge/expand`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    let msg = `Forge failed (${res.status})`;
+    try {
+      const j = JSON.parse(text) as { error?: string; retryAfterSec?: number };
+      if (typeof j.error === "string") msg = j.error;
+      if (j.retryAfterSec) msg += ` · retry in ${j.retryAfterSec}s`;
+    } catch {
+      if (text) msg = text.slice(0, 200);
+    }
+    throw new Error(msg);
+  }
+  return res.json() as Promise<import("./forge-dna").ForgeExpandResponse>;
+}
+
 export async function fetchBaseModelPrefill(
   baseModelId: string,
 ): Promise<import("./types").BaseModelPrefill> {

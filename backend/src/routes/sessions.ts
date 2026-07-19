@@ -10,6 +10,7 @@ import {
   canAccessCustom,
   createCustomCharacter,
   deleteCustomCharacter,
+  expandFantasyToDna,
   getBaseModelPrefill,
   getCustomCharacter,
   getOpeningMessage,
@@ -103,6 +104,9 @@ const sceneSchema = z.object({
   body: z.string().min(12).max(600),
 });
 
+/** Studio Forge DNA — passthrough object; store sanitizes structure. */
+const dnaSchema = z.record(z.unknown()).optional();
+
 const createCustomCharacterSchema = z.object({
   name: z.string().min(2).max(80),
   appearance: z.string().min(12).max(2000),
@@ -116,6 +120,8 @@ const createCustomCharacterSchema = z.object({
   mediaBase: z.string().min(1).max(300).optional(),
   mediaOverrides: mediaOverridesSchema,
   featured: z.boolean().optional(),
+  /** Studio Forge v3 DNA bundle. */
+  dna: dnaSchema,
 });
 
 const updateCustomCharacterSchema = z.object({
@@ -128,6 +134,14 @@ const updateCustomCharacterSchema = z.object({
   keyPhrases: z.array(z.string().min(2).max(120)).max(4).nullable().optional(),
   scenes: z.array(sceneSchema).max(2).nullable().optional(),
   featured: z.boolean().optional(),
+  dna: dnaSchema.nullable(),
+});
+
+const forgeExpandSchema = z.object({
+  fantasy: z.string().min(8).max(4000),
+  baseModelId: z.string().min(2).max(80).optional(),
+  displayNameHint: z.string().min(1).max(80).optional(),
+  audience: z.enum(["gay", "bi", "straight", "any"]).optional(),
 });
 
 const injector = new LivePromptInjector();
@@ -259,6 +273,7 @@ export const createSessionRoutes = (
                 clothing: profile.clothing,
                 keyPhrases: profile.keyPhrases,
                 scenes: profile.scenes,
+                dna: profile.dna,
               }
             : {}),
         };
@@ -320,7 +335,52 @@ export const createSessionRoutes = (
     });
 
     /**
-     * Create My Character (v2) — sign-in required, private by default.
+     * Studio Forge v3 — expand natural language fantasy → full DNA + form fields.
+     * Auth optional (preview forge); save still requires sign-in.
+     * Target: complete under 5s (LLM with 12s hard timeout + heuristic fallback).
+     */
+    app.post("/characters/forge/expand", async (request, reply) => {
+      try {
+        const body = forgeExpandSchema.parse(request.body ?? {});
+        const ip = clientIp(
+          request.headers as Record<string, string | string[] | undefined>,
+        );
+        const limited = enforceRateLimits([
+          {
+            key: `forge:${ip}`,
+            ...RATE_LIMITS.forgeExpand,
+          },
+        ]);
+        if (limited) {
+          return reply
+            .code(429)
+            .header("Retry-After", String(limited.retryAfterSec))
+            .send({
+              error: "Forge rate limit — try again shortly",
+              code: "RATE_LIMIT",
+              retryAfterSec: limited.retryAfterSec,
+            });
+        }
+        const result = await expandFantasyToDna(body);
+        bump("forgeExpands");
+        return {
+          dna: result.dna,
+          form: result.form,
+          expandMs: result.dna.expandMs ?? null,
+          source: result.dna.source,
+        };
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return reply.code(400).send({ error: error.flatten() });
+        }
+        const message =
+          error instanceof Error ? error.message : "Forge expand failed";
+        return reply.code(400).send({ error: message });
+      }
+    });
+
+    /**
+     * Create My Character (v2/v3) — sign-in required, private by default.
      * Prefer /accounts/me/characters; this path also requires auth.
      */
     app.post("/characters/custom", async (request, reply) => {
@@ -332,8 +392,12 @@ export const createSessionRoutes = (
       }
       try {
         const body = createCustomCharacterSchema.parse(request.body ?? {});
+        const { dna: dnaRaw, ...rest } = body;
         const created = await createCustomCharacter({
-          ...body,
+          ...rest,
+          ...(dnaRaw
+            ? { dna: dnaRaw as unknown as import("../lib/live/forge-dna.js").NaughtySyntaxDna }
+            : {}),
           ownerAccountId: account.id,
           visibility: "private",
         });
@@ -356,6 +420,7 @@ export const createSessionRoutes = (
           mine: true,
           keyPhrases: created.keyPhrases,
           scenes: created.scenes,
+          dna: created.dna,
           clips: listClipUrls(created.avatarBase),
         });
       } catch (error) {
@@ -385,9 +450,21 @@ export const createSessionRoutes = (
       }
       try {
         const body = updateCustomCharacterSchema.parse(request.body ?? {});
-        const updated = await updateCustomCharacter(characterId, body, {
-          accountId: account?.id,
-        });
+        const { dna: dnaRaw, ...rest } = body;
+        const updated = await updateCustomCharacter(
+          characterId,
+          {
+            ...rest,
+            ...(dnaRaw === null
+              ? { dna: null }
+              : dnaRaw
+                ? {
+                    dna: dnaRaw as unknown as import("../lib/live/forge-dna.js").NaughtySyntaxDna,
+                  }
+                : {}),
+          },
+          { accountId: account?.id },
+        );
         return {
           id: updated.id,
           displayName: updated.displayName,
@@ -406,6 +483,7 @@ export const createSessionRoutes = (
           mine: true,
           keyPhrases: updated.keyPhrases,
           scenes: updated.scenes,
+          dna: updated.dna,
           clips: listClipUrls(updated.avatarBase),
         };
       } catch (error) {

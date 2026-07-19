@@ -106,6 +106,7 @@ When cold: rehydrate from this file → LIVE-STATUS → roadmap → code. Then s
 - [ ] Dedicated 4K packs dropped  
 - [x] Stale PR hygiene + split CI (2026-07-18)  
 - [ ] Optional ERROR_WEBHOOK / Stripe live  
+- [x] Studio Forge v3 Unchained — conversational DNA forge (2026-07-19 eng)  
 
 ---
 

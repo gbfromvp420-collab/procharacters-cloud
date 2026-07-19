@@ -40,6 +40,22 @@ export type {
   MediaOverrides,
   UpdateCustomCharacterInput,
 } from "./custom-characters.js";
+export {
+  assembleDnaCharacterPrompt,
+  expandFantasyToDna,
+  heuristicForgeExpand,
+} from "./forge-expand.js";
+export type {
+  AdaptivePromptCore,
+  BehaviorTree,
+  ClipTagMap,
+  ForgeExpandInput,
+  ForgeExpandResult,
+  ForgeEvolutionVector,
+  LiveKitForgeMeta,
+  MemorySeed,
+  NaughtySyntaxDna,
+} from "./forge-dna.js";
 export { detectMissingTraits, buildConsistencyReminder } from "./consistency.js";
 export { LivePromptInjector } from "./injector.js";
 export { formatMemoryBlock, toLlmMessages } from "./memory-context.js";

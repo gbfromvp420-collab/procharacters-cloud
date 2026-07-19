@@ -29,6 +29,8 @@ export interface LiveCharacterOption {
   clothing?: string;
   keyPhrases?: string[];
   scenes?: CustomSceneInput[];
+  /** Studio Forge DNA when owner-loaded. */
+  dna?: import("./forge-dna").NaughtySyntaxDna;
 }
 
 export interface LiveKitJoinInfo {
@@ -100,6 +102,8 @@ export interface CreateCustomCharacterInput {
   mediaOverrides?: MediaOverrides;
   /** Soft pin — private models can still be featured on owner surfaces. */
   featured?: boolean;
+  /** Studio Forge v3 DNA bundle. */
+  dna?: import("./forge-dna").NaughtySyntaxDna;
 }
 
 export interface CreateCustomCharacterResponse {
@@ -124,6 +128,7 @@ export interface CreateCustomCharacterResponse {
   keyPhrases?: string[];
   scenes?: CustomSceneInput[];
   clips?: Record<MediaClipKey, string>;
+  dna?: import("./forge-dna").NaughtySyntaxDna;
 }
 
 export interface UpdateCustomCharacterInput {
@@ -136,6 +141,7 @@ export interface UpdateCustomCharacterInput {
   keyPhrases?: string[] | null;
   scenes?: CustomSceneInput[] | null;
   featured?: boolean;
+  dna?: import("./forge-dna").NaughtySyntaxDna | null;
 }
 
 export interface BaseModelPrefill {

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { ModelsStudio } from "@/components/ModelsStudio";
 
 export const metadata: Metadata = {
-  title: "My Models Studio",
+  title: "Studio Forge · Unchained",
   description:
-    "Create private Naughty Syntax My Characters — base models, scenes, clips, prompt boost.",
+    "Conversational Naughty Syntax forge — fantasy to DNA: adaptive prompts, behavior tree, LiveKit reactivity, memory seeds.",
 };
 
 export default function ModelsStudioPage() {

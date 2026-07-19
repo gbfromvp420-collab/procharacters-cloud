@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — My Models Studio Slim & Innovative v2)  
+**Updated:** 2026-07-19 (**Studio Forge Revolution v3 Unchained**)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -11,7 +11,7 @@
 | | URL |
 |--|-----|
 | **Gallery** | https://procharacters-web-production-7288.up.railway.app |
-| **My Models Studio** | https://procharacters-web-production-7288.up.railway.app/models/studio |
+| **Studio Forge v3** | https://procharacters-web-production-7288.up.railway.app/models/studio |
 | **Studio edit** | `/models/studio/edit/:id` (owned custom id) |
 | **Account** | https://procharacters-web-production-7288.up.railway.app/account |
 | **Chat** | https://procharacters-web-production-7288.up.railway.app/chat |
@@ -55,7 +55,8 @@
 | **Return seed after End** | ✅ “We’ll hold this heat” + Enable alerts / Sign in when deep session |
 | **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
 | Create My Character deep-link | ✅ **`/models/studio`** create · **`/models/studio/edit/:id`** edit · `/chat?create=1` + `?edit=` redirect |
-| **My Models Studio** | ✅ **Slim v2** · base video-only · name + vibe + short visual · phrases 4 · scenes 0–2 · clip auto-band · NS toggle · prompt merge sim · **Chat Now** · anti-typecast prompts |
+| **My Models Studio** | ✅ **Slim v2** foundation retained under advanced fields |
+| **Studio Forge v3 Unchained** | ✅ Conversational fantasy → DNA (adaptive prompt + behavior tree + LiveKit meta + memory seeds) · canvas composer · sentiment clips · Export DNA · Server Action + `POST /characters/forge/expand` · save as `custom-v3` · [STUDIO-FORGE-V3.md](./STUDIO-FORGE-V3.md) |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
