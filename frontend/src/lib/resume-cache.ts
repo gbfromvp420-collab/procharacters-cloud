@@ -18,6 +18,9 @@ export type HeatTrail = {
   heatChips?: string[];
   messageCount?: number;
   mindTag?: string;
+  /** Studio Forge DNA tree node when left mid-climb. */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
 };
 
 export type ResumeCacheEntry = {
@@ -39,6 +42,9 @@ export type ResumeCacheEntry = {
   messageCount?: number;
   /** Mind fingerprint tag (Post-set, Shy heat, …). */
   mindTag?: string;
+  /** Studio Forge DNA tree node at last stamp. */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
 };
 
 /** Short urgency label for gallery / banner (e.g. "expires in 2d"). */
@@ -250,6 +256,8 @@ export function heatTrailFromSession(options: {
   sessionNotes?: string | null;
   messageCount?: number;
   mindTag?: string | null;
+  dnaTreeNodeId?: string | null;
+  dnaTreeLabel?: string | null;
 }): HeatTrail {
   const notes = options.sessionNotes ?? "";
   const messageCount = options.messageCount ?? 0;
@@ -274,11 +282,22 @@ export function heatTrailFromSession(options: {
     if (
       p &&
       chips.length < 5 &&
-      /edge|denial|sheer|crotchless|gym|shy|brat|goth|kiss|hand|pace/i.test(p) &&
+      /edge|denial|sheer|crotchless|gym|shy|brat|goth|kiss|hand|pace|dna tree/i.test(p) &&
       !/^heat ·/i.test(p)
     ) {
       chips.push(p.length > 24 ? `${p.slice(0, 22)}…` : p);
     }
+  }
+
+  // DNA tree · Edge ↑ from session notes
+  const dnaFromNotes = text.match(/DNA tree ·\s*([^↑.]+)/i)?.[1]?.trim();
+  const dnaTreeLabel =
+    options.dnaTreeLabel?.trim() || dnaFromNotes || undefined;
+  const dnaTreeNodeId = options.dnaTreeNodeId?.trim() || undefined;
+  if (dnaTreeLabel && chips.length < 5) {
+    chips.unshift(
+      dnaTreeLabel.length > 22 ? `DNA ${dnaTreeLabel.slice(0, 18)}…` : `DNA ${dnaTreeLabel}`,
+    );
   }
 
   // Depth from notes label or message count
@@ -293,6 +312,8 @@ export function heatTrailFromSession(options: {
     heatChips: uniqueChips(chips).slice(0, 4),
     messageCount: messageCount > 0 ? messageCount : undefined,
     mindTag: options.mindTag?.trim() || undefined,
+    ...(dnaTreeNodeId ? { dnaTreeNodeId } : {}),
+    ...(dnaTreeLabel ? { dnaTreeLabel } : {}),
   };
 }
 
@@ -326,6 +347,8 @@ export function rememberResumeRecap(
     heatChips: trail?.heatChips?.length ? trail.heatChips : prev.heatChips,
     messageCount: trail?.messageCount ?? prev.messageCount,
     mindTag: trail?.mindTag ?? prev.mindTag,
+    dnaTreeNodeId: trail?.dnaTreeNodeId ?? prev.dnaTreeNodeId,
+    dnaTreeLabel: trail?.dnaTreeLabel ?? prev.dnaTreeLabel,
     updatedAt: new Date().toISOString(),
   };
   writeCache(file);
@@ -344,6 +367,8 @@ export function rememberHeatTrail(characterId: string, trail: HeatTrail): void {
     heatChips: trail.heatChips?.length ? trail.heatChips.slice(0, 4) : prev.heatChips,
     messageCount: trail.messageCount ?? prev.messageCount,
     mindTag: trail.mindTag ?? prev.mindTag,
+    dnaTreeNodeId: trail.dnaTreeNodeId ?? prev.dnaTreeNodeId,
+    dnaTreeLabel: trail.dnaTreeLabel ?? prev.dnaTreeLabel,
     updatedAt: new Date().toISOString(),
   };
   writeCache(file);

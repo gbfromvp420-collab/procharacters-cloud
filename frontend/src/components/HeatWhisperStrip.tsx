@@ -1,7 +1,31 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type { SessionModeUiState } from "@/lib/types";
+
+/** Soft DNA tree path — mirrors backend defaultBehaviorTree node order. */
+const DNA_TREE_NODES: Array<{ id: string; label: string }> = [
+  { id: "spark", label: "Spark" },
+  { id: "soft-lock", label: "Soft" },
+  { id: "tease", label: "Tease" },
+  { id: "edge", label: "Edge" },
+  { id: "deny", label: "Deny" },
+  { id: "release-gate", label: "Gate" },
+];
+
+function dnaNodeIndex(nodeId?: string | null): number {
+  if (!nodeId) return 0;
+  const exact = DNA_TREE_NODES.findIndex((n) => n.id === nodeId);
+  if (exact >= 0) return exact;
+  const lower = nodeId.toLowerCase();
+  if (lower.includes("release")) return 5;
+  if (lower.includes("deny")) return 4;
+  if (lower.includes("edge")) return 3;
+  if (lower.includes("tease")) return 2;
+  if (lower.includes("soft")) return 1;
+  return 0;
+}
 
 function whisperForMind(characterId?: string | null): string {
   const mind = mindFingerprint(characterId);
@@ -91,7 +115,7 @@ export function HeatWhisperStrip({
   const line =
     cue ||
     (dnaTree && modeState?.fireLine?.trim()
-      ? `DNA · ${modeState.dnaTreeLabel ?? modeState.dnaTreeNodeId}: stay in this beat.`
+      ? `Stay in ${modeState.dnaTreeLabel ?? modeState.dnaTreeNodeId} — Fire a chip to climb or soft-lock.`
       : null) ||
     whisperForMind(characterId);
   const fire = fireLineFor(
@@ -101,16 +125,41 @@ export function HeatWhisperStrip({
   );
   const almost = edge && modeState?.phase === "almost";
   const dnaGlow = !!dnaTree && !edge;
+  const chips =
+    !edge && modeState?.phaseChips?.length
+      ? modeState.phaseChips.slice(0, 3)
+      : [];
+  const activeDnaIdx = dnaNodeIndex(modeState?.dnaTreeNodeId);
+
+  const [climbFlash, setClimbFlash] = useState(false);
+  const prevNode = useRef(modeState?.dnaTreeNodeId);
+  useEffect(() => {
+    if (
+      modeState?.dnaTreeNodeId &&
+      prevNode.current &&
+      prevNode.current !== modeState.dnaTreeNodeId
+    ) {
+      setClimbFlash(true);
+      const t = window.setTimeout(() => setClimbFlash(false), 1200);
+      prevNode.current = modeState.dnaTreeNodeId;
+      return () => window.clearTimeout(t);
+    }
+    prevNode.current = modeState?.dnaTreeNodeId;
+  }, [modeState?.dnaTreeNodeId]);
 
   return (
     <div
-      className={`mb-2 rounded-lg border px-2.5 py-1.5 text-[10px] leading-snug ${
+      className={`mb-2 rounded-lg border px-2.5 py-1.5 text-[10px] leading-snug transition-[border-color,box-shadow] duration-300 ${
         almost
           ? "border-rose-400/40 bg-rose-500/10 text-rose-50"
           : edge
             ? "border-rose-400/25 bg-rose-500/5 text-rose-100/90"
             : dnaGlow
-              ? "border-violet-400/35 bg-violet-500/10 text-violet-50/95"
+              ? `border-violet-400/40 bg-violet-500/10 text-violet-50/95 ${
+                  climbFlash || modeState?.dnaTreeAdvanced
+                    ? "ring-1 ring-violet-300/40 shadow-[0_0_20px_-6px_rgba(167,139,250,0.55)]"
+                    : ""
+                }`
               : "border-brand-border/60 bg-brand-bg/50 text-brand-muted"
       }`}
       role="note"
@@ -136,7 +185,7 @@ export function HeatWhisperStrip({
         {remaining != null && edge && (
           <span className="font-mono tabular-nums opacity-80">{remaining}s</span>
         )}
-        {modeState?.dnaTreeAdvanced && (
+        {(modeState?.dnaTreeAdvanced || climbFlash) && dnaGlow && (
           <span className="rounded-full border border-violet-300/50 bg-violet-500/20 px-1.5 py-0.5 text-[9px] text-violet-100">
             ↑ climbed
           </span>
@@ -148,6 +197,34 @@ export function HeatWhisperStrip({
         )}
       </div>
       <p className="mt-0.5 line-clamp-2">{line}</p>
+
+      {/* DNA tree path — where heat lives right now */}
+      {dnaGlow && (
+        <div
+          className="mt-1.5 grid grid-cols-6 gap-0.5"
+          aria-label="Forge DNA heat path"
+        >
+          {DNA_TREE_NODES.map((n, i) => {
+            const active = i === activeDnaIdx;
+            const done = i < activeDnaIdx;
+            return (
+              <div
+                key={n.id}
+                className={`rounded px-0.5 py-1 text-center text-[8px] font-semibold uppercase tracking-wide ${
+                  active
+                    ? "bg-violet-400/45 text-white ring-1 ring-violet-200/60"
+                    : done
+                      ? "bg-violet-500/20 text-violet-100/80"
+                      : "bg-black/20 text-violet-100/40"
+                }`}
+              >
+                {n.label}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {(onSeed || onFire) && (
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {onSeed && (
@@ -167,13 +244,43 @@ export function HeatWhisperStrip({
               className={`rounded-full border px-2.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide disabled:opacity-40 ${
                 almost
                   ? "border-rose-300/60 bg-rose-500/30 text-rose-50"
-                  : "border-brand-accent/45 bg-brand-accent/20 text-brand-accent"
+                  : dnaGlow
+                    ? "border-violet-300/55 bg-violet-500/25 text-violet-50"
+                    : "border-brand-accent/45 bg-brand-accent/20 text-brand-accent"
               }`}
             >
               Fire ↵
             </button>
           )}
           <span className="self-center font-mono text-[9px] opacity-60">“{fire}”</span>
+        </div>
+      )}
+
+      {/* One-tap DNA node chips — Fire climbs the soft tree */}
+      {dnaGlow && chips.length > 0 && onFire && (
+        <div className="mt-1.5 flex flex-wrap gap-1">
+          {chips.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              disabled={canFire === false}
+              onClick={() => onFire(chip)}
+              className="rounded-full border border-violet-300/40 bg-violet-500/15 px-2 py-0.5 text-[9px] font-medium text-violet-50 hover:border-violet-200/70 hover:bg-violet-500/30 disabled:opacity-40"
+            >
+              {chip}
+            </button>
+          ))}
+          {onSeed &&
+            chips.slice(0, 1).map((chip) => (
+              <button
+                key={`seed-${chip}`}
+                type="button"
+                onClick={() => onSeed(chip)}
+                className="rounded-full border border-violet-400/25 bg-black/15 px-2 py-0.5 text-[9px] text-violet-100/80 hover:border-violet-300/50"
+              >
+                + seed
+              </button>
+            ))}
         </div>
       )}
     </div>

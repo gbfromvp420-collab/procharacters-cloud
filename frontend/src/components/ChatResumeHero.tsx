@@ -82,6 +82,9 @@ export function ChatResumeHero({
           >
             {heatDepth ? `Heat trail · ${heatDepth}` : "Ready to continue"}
             {trail?.mindTag || mind ? ` · ${trail?.mindTag || mind?.tag}` : ""}
+            {trail?.dnaTreeLabel || trail?.dnaTreeNodeId
+              ? ` · DNA ${trail.dnaTreeLabel || trail.dnaTreeNodeId}`
+              : ""}
           </p>
           <p className="mt-0.5 truncate text-sm font-medium text-brand-text">
             {saved.characterName || saved.characterId}

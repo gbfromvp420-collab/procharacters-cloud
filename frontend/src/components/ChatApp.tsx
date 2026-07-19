@@ -490,12 +490,14 @@ export function ChatApp() {
             sessionNotes: notes ?? sessionNotes,
             messageCount: count ?? messages.length,
             mindTag: mind?.tag,
+            dnaTreeNodeId: modeState?.dnaTreeNodeId,
+            dnaTreeLabel: modeState?.dnaTreeLabel,
           });
           rememberHeatTrail(characterId, trail);
         },
       );
     },
-    [messages.length, sessionNotes],
+    [messages.length, sessionNotes, modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel],
   );
 
   const rememberSession = useCallback(
