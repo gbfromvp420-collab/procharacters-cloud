@@ -1805,11 +1805,21 @@ export function ChatApp() {
 
   const sessionActive = status === "ready" || status === "connecting" || restarting;
   const canSend = status === "ready" && !sending && input.trim().length > 0;
+  const headerCharacterName =
+    characterName ??
+    savedSession?.characterName ??
+    characters.find((c) => c.id === character)?.displayName ??
+    null;
+  const headerMind = mindFingerprint(activeCharacterId ?? character);
   const statusLabel =
     status === "ready"
-      ? "Connected"
+      ? headerCharacterName
+        ? `Live · ${headerCharacterName}`
+        : "Connected"
       : status === "connecting" || restarting
-        ? "Connecting…"
+        ? headerCharacterName
+          ? `Opening ${headerCharacterName}…`
+          : "Connecting…"
         : status === "ended"
           ? "Session ended"
           : status === "error"
@@ -1825,9 +1835,12 @@ export function ChatApp() {
       <header className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">Naughty Syntax</p>
+            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
+              Naughty Syntax
+              {headerMind ? ` · ${headerMind.tag}` : ""}
+            </p>
             <h1 className="truncate bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-base font-semibold tracking-tight text-transparent sm:text-xl">
-              Live chat
+              {headerCharacterName ? `Chat · ${headerCharacterName}` : "Live chat"}
             </h1>
           </div>
           <span className="hidden items-center gap-1.5 rounded-full border border-brand-border bg-brand-panel/80 px-2.5 py-1 text-[11px] text-brand-muted sm:inline-flex">
@@ -2127,12 +2140,14 @@ export function ChatApp() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-brand-text">
-                  {characterName ?? "Avatar hidden"}
+                  {characterName ?? headerCharacterName ?? "Avatar hidden"}
                 </p>
                 <p className="truncate text-[11px] text-brand-muted">
                   {avatarState
                     ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}%`
-                    : "Video collapsed for more chat space"}
+                    : headerMind
+                      ? `Mind · ${headerMind.tag}`
+                      : "Video collapsed for more chat space"}
                   {avatarPip ? " · PiP on" : " · PiP off"}
                 </p>
               </div>
@@ -2837,24 +2852,51 @@ export function ChatApp() {
                 <SessionMemoryStrip priorNotes={priorNotes} sessionNotes={sessionNotes} />
               )}
               {messages.length === 0 && !isTyping && (
-                <div className="px-2 py-12 text-center sm:py-16">
+                <div className="px-2 py-10 text-center sm:py-14">
+                  {(status === "connecting" || restarting) && (
+                    <div className="mx-auto mb-5 max-w-sm animate-fade-in">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-accentDim to-brand-accent text-xl font-semibold text-white shadow-glow-sm">
+                        {(headerCharacterName ?? "?").charAt(0)}
+                      </div>
+                      <p className="mt-3 text-base font-semibold text-brand-text">
+                        {headerCharacterName
+                          ? `Opening ${headerCharacterName}…`
+                          : "Opening live session…"}
+                      </p>
+                      {headerMind && (
+                        <p className="mt-1.5 text-[11px] leading-relaxed text-brand-muted">
+                          <span className="font-semibold text-brand-accent">{headerMind.tag}</span>
+                          {" · "}
+                          {headerMind.blurb}
+                        </p>
+                      )}
+                      <p className="mt-3 text-xs text-brand-muted animate-pulse">
+                        Wiring avatar + mind…
+                      </p>
+                    </div>
+                  )}
+                  {status !== "connecting" && !restarting && (
                   <p className="text-sm text-brand-muted">
                     {status === "ready"
                       ? priorNotes
                         ? "Session live — they still remember you. Heat continues from the strip above."
-                        : "Session live — they should greet you first. Memory saves as you go."
-                      : status === "connecting" || restarting
-                        ? "Opening live session…"
-                        : savedSession
+                        : headerCharacterName
+                          ? `${headerCharacterName} is live — they should greet you first.`
+                          : "Session live — they should greet you first. Memory saves as you go."
+                      : savedSession
                           ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
                           : priorNotes
                             ? "They kept a little of you — Start to pick up the heat."
-                            : "Pick a character, choose Normal or Edge Pace, then Start."}
+                            : headerCharacterName
+                              ? `Ready for ${headerCharacterName}. Choose Normal or Edge Pace, then Start.`
+                              : "Pick a character, choose Normal or Edge Pace, then Start."}
                   </p>
+                  )}
                   {status !== "ready" && status !== "connecting" && !restarting && (
                     <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
-                      Signature models open with a brand line. Edge Pace adds soft build → hold →
-                      almost → breathe cycles. Free path always works.
+                      {headerMind
+                        ? `${headerMind.tag} · ${headerMind.blurb}`
+                        : "Signature models open with a brand line. Edge Pace adds soft build → hold → almost → breathe cycles. Free path always works."}
                     </p>
                   )}
                 </div>

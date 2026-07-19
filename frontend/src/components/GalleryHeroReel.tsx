@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { calendarDaySeed, mindFingerprint, seededShuffle } from "@/lib/mind-fingerprint";
 import {
   buildResumeChatPath,
   type ResumeCacheEntry,
@@ -13,8 +14,14 @@ const ROTATE_MS = 7000;
 const CROSSFADE_MS = 700;
 const SWIPE_PX = 48;
 
-/** Prefer featured dedicated packs, then any featured, then rest with posters. */
-export function pickHeroCast(characters: CharacterCard[]): CharacterCard[] {
+/**
+ * Prefer featured dedicated packs, then any featured, then rest with posters.
+ * Order is seeded by UTC calendar day so “tonight’s cast” rotates without jitter mid-day.
+ */
+export function pickHeroCast(
+  characters: CharacterCard[],
+  daySeed = calendarDaySeed(),
+): CharacterCard[] {
   const withPoster = characters.filter((c) => !!c.posterClip);
   if (withPoster.length === 0) return [];
 
@@ -30,11 +37,13 @@ export function pickHeroCast(characters: CharacterCard[]): CharacterCard[] {
           ? dedicated
           : withPoster;
 
-  return [...pool].sort((a, b) => {
-    if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
-    if (!!a.dedicatedPack !== !!b.dedicatedPack) return a.dedicatedPack ? -1 : 1;
-    return a.displayName.localeCompare(b.displayName);
-  });
+  // Featured stay in the front half; each tier shuffles with the day seed.
+  const featuredPool = pool.filter((c) => c.featured);
+  const restPool = pool.filter((c) => !c.featured);
+  return [
+    ...seededShuffle(featuredPool, daySeed),
+    ...seededShuffle(restPool, daySeed + 17),
+  ];
 }
 
 function firstName(name: string): string {
@@ -173,6 +182,7 @@ export function GalleryHeroReel({
   const card = cast[safeIndex]!;
   const poster = posterUrl(card);
   const vibe = (card.vibeTag || card.energyLabel || "").split(",")[0]?.trim();
+  const mind = mindFingerprint(card.id);
   const resume = resumes[card.id];
   const continueHref = resume?.resumeCode ? buildResumeChatPath(resume) : null;
   const nick = firstName(card.displayName);
@@ -254,7 +264,7 @@ export function GalleryHeroReel({
         <div className="absolute inset-0 flex flex-col justify-end p-4 sm:justify-center sm:p-8 lg:p-10">
           <div className="max-w-xl">
             <p className="text-[10px] uppercase tracking-[0.35em] text-brand-accent">
-              Naughty Syntax · Live reel
+              Naughty Syntax · Tonight&apos;s cast
             </p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {card.featured && (
@@ -272,6 +282,11 @@ export function GalleryHeroReel({
                   Your chat
                 </span>
               )}
+              {mind && (
+                <span className="rounded-full border border-white/25 bg-brand-accent/25 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+                  {mind.tag}
+                </span>
+              )}
               {vibe && (
                 <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur">
                   {vibe}
@@ -282,7 +297,7 @@ export function GalleryHeroReel({
               {card.displayName}
             </h2>
             <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/80 sm:mt-3 sm:line-clamp-3 sm:text-base">
-              {card.teaser}
+              {mind?.blurb || card.teaser}
             </p>
             <div className="mt-4 flex flex-wrap gap-2 sm:mt-5 sm:gap-3">
               {continueHref ? (

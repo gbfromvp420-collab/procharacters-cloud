@@ -245,7 +245,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
             {sort === "recent" || signedInHandle
               ? "Your last chats first — then the rest of the catalog."
-              : "Big reel up top — then featured, then the full roster."}
+              : "Tonight’s cast up top — mind fingerprints on every tile, then the full roster."}
             {resumeCount > 0 ? " Amber codes are saved chats." : signedInHandle ? " Chat while signed in for multi-device codes." : " Sign in to sync resumes."}
           </p>
           {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}

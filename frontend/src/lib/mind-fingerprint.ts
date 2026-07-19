@@ -25,30 +25,31 @@ const FINGERPRINTS: Record<string, MindFingerprint> = {
   },
   "twink-shy-boy": {
     tag: "Shy heat",
-    blurb: "Whisper exhibition · peek-and-hide · praise makes him leak Spanish",
+    blurb:
+      "Diego · whisper exhibition · peek-and-hide · praise makes him leak Spanish",
     bilingual: true,
   },
   "twink-gym": {
     tag: "Post-set",
-    blurb: "Interval edging · sweat + sheer · reps, burn, hold — Aguanta…",
+    blurb: "Mateo · interval edging · sweat + sheer · Aguanta… then one more rep",
     bilingual: true,
   },
   "twink-alt-punk": {
     tag: "Mesh brat",
-    blurb: "Black mesh soft-dom · mean-cool · short Spanish grit (Ven… Pide…)",
+    blurb: "Rio · black mesh soft-dom · mean-cool · Ven… Pide… short grit Spanish",
     bilingual: true,
   },
   "female-soft-goth": {
     tag: "Soft goth",
-    blurb: "Hypnotic lace ritual · open panel still-life · beg quieter",
+    blurb: "Luna · hypnotic lace ritual · open panel still-life · beg quieter",
   },
   "female-athletic-tease": {
     tag: "Cool-down",
-    blurb: "Post-workout intervals · sweat + crotchless sport cut · hold the set",
+    blurb: "Sienna · post-set intervals · sweat + sport cut · hold until she says go",
   },
   "female-playful-brat": {
     tag: "Brat game",
-    blurb: "Count games · look-but-don’t · cute denial with a laugh",
+    blurb: "Mila · count games · look-but-don’t · cute denial with a laugh",
   },
 };
 
@@ -62,4 +63,38 @@ export function mindFingerprint(characterId: string | null | undefined): MindFin
     };
   }
   return null;
+}
+
+/** UTC calendar day as YYYYMMDD int — stable “tonight’s cast” seed. */
+export function calendarDaySeed(date = new Date()): number {
+  return (
+    date.getUTCFullYear() * 10000 +
+    (date.getUTCMonth() + 1) * 100 +
+    date.getUTCDate()
+  );
+}
+
+/** Deterministic PRNG (Mulberry32). */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** Fisher–Yates shuffle with a stable seed (same day → same order). */
+export function seededShuffle<T>(items: T[], seed: number): T[] {
+  const out = [...items];
+  const rng = mulberry32(seed ^ 0x9e3779b9);
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = out[i]!;
+    out[i] = out[j]!;
+    out[j] = tmp;
+  }
+  return out;
 }

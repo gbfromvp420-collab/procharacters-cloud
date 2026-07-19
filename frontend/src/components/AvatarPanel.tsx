@@ -3,6 +3,7 @@ import {
   energyBandLabel,
   energyBandBadgeClass,
 } from "@/lib/energy";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type { AvatarState } from "@/lib/types";
 
 function formatLabel(value: string): string {
@@ -29,6 +30,7 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
   const initial = characterName?.charAt(0) ?? "?";
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
   const band = energyBandFromAvatar(avatar);
+  const mind = mindFingerprint(characterId);
 
   return (
     <aside className="flex flex-col gap-3 rounded-xl border border-brand-border bg-brand-panel/90 p-3 shadow-card backdrop-blur-sm sm:gap-4 sm:p-4 lg:min-w-[240px]">
@@ -45,16 +47,27 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
             {characterName ?? "No character"}
           </p>
           <p className="truncate text-[11px] text-brand-muted sm:text-xs">
-            {characterId ? formatLabel(characterId) : "Start a session"}
+            {mind
+              ? mind.tag
+              : characterId
+                ? formatLabel(characterId)
+                : "Start a session"}
             {avatar ? ` · ${formatLabel(avatar.emotion)}` : ""}
           </p>
-          {avatar && (
-            <span
-              className={`mt-1 inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(band)}`}
-            >
-              {energyBandLabel(band)} energy
-            </span>
-          )}
+          <div className="mt-1 flex flex-wrap items-center gap-1">
+            {mind && (
+              <span className="inline-flex rounded-full border border-brand-accent/35 bg-brand-accent/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-brand-accent">
+                Mind
+              </span>
+            )}
+            {avatar && (
+              <span
+                className={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(band)}`}
+              >
+                {energyBandLabel(band)} energy
+              </span>
+            )}
+          </div>
         </div>
         {avatar && (
           <div className="hidden w-16 shrink-0 sm:block lg:hidden">
@@ -73,7 +86,16 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
       </div>
 
       {status === "connecting" && (
-        <p className="text-xs text-brand-muted animate-pulse">Connecting to live session…</p>
+        <p className="text-xs text-brand-muted animate-pulse">
+          {characterName ? `Opening ${characterName}…` : "Connecting to live session…"}
+        </p>
+      )}
+
+      {mind && (
+        <p className="line-clamp-2 text-[11px] leading-relaxed text-brand-muted">
+          {mind.blurb}
+          {mind.bilingual ? " · soft ES" : ""}
+        </p>
       )}
 
       {avatar ? (

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import {
   buildResumeChatPath,
@@ -81,6 +82,7 @@ export function CharacterTile({
   const urgent = isResumeExpiryUrgent(resume?.resumeExpiresAt);
   const { containerRef, videoRef } = useVisibleVideo(true);
   const first = card.displayName.trim().split(/\s+/)[0] || card.displayName;
+  const mind = mindFingerprint(card.id);
 
   return (
     <article
@@ -183,7 +185,15 @@ export function CharacterTile({
         </div>
       </div>
       <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
-        <p className="line-clamp-2 text-xs text-brand-muted sm:text-sm">{card.teaser}</p>
+        {mind && !compact && (
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-accent">
+            Mind · {mind.tag}
+            {mind.bilingual ? " · ES" : ""}
+          </p>
+        )}
+        <p className="line-clamp-2 text-xs text-brand-muted sm:text-sm">
+          {mind?.blurb || card.teaser}
+        </p>
         {!compact && card.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {card.tags.slice(0, 3).map((tag) => (

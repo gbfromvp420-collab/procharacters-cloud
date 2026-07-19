@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { fetchLatestAccountSessionForCharacter } from "@/lib/api";
+import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
   buildResumeChatPath,
   getResumeForCharacter,
@@ -146,6 +147,8 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   };
 
   const shareLabel = canNativeShare() ? "Share" : "Copy";
+  const mind = mindFingerprint(card.id);
+  const nick = card.displayName.trim().split(/\s+/)[0] || card.displayName;
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] sm:pb-8">
@@ -243,6 +246,15 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Meet {card.displayName}
               </h2>
+              {mind && (
+                <div className="mt-3 rounded-xl border border-brand-accent/25 bg-brand-accent/5 px-3 py-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-accent">
+                    Mind · {mind.tag}
+                    {mind.bilingual ? " · Soft ES spice" : ""}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed text-brand-muted">{mind.blurb}</p>
+                </div>
+              )}
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:mt-4 sm:text-base">
                 {card.teaser}
               </p>
@@ -282,7 +294,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                     href={buildResumeChatPath(resumeEntry)}
                     className="btn-primary px-6 ring-1 ring-amber-400/45"
                   >
-                    Continue chat
+                    Continue with {nick}
                   </Link>
                   <Link href={card.ctaPath} className="btn-ghost px-6">
                     New chat
@@ -290,7 +302,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 </>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary px-6">
-                  Start live chat
+                  Chat with {nick}
                 </Link>
               )}
               <Link
