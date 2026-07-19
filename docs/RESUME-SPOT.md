@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — clip auth + pack readiness + gallery Edit)  
+**Updated:** 2026-07-19 (**cook** — Account My models hub)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,8 +9,8 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **My Character loop** | ✅ create · win toast · edit · **clips owner-auth** · pack 0–4 chips | Hard refresh **API + web**; upload clips while signed in |
-| **Gallery** | ✅ My models · **Edit** deep-link (`?edit=1`) | — |
+| **My Character loop** | ✅ create · edit · clips · **Account hub** · gallery Edit | Hard refresh **web**; open Account → My models |
+| **Gallery** | ✅ My models filter · live strip chip · Edit deep-link | — |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
 | **Next** | Ops optional / heat / content | Say `resume` / `spot` / `next` / `cook` |

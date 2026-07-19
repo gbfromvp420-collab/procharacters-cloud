@@ -53,13 +53,20 @@ const FINGERPRINTS: Record<string, MindFingerprint> = {
   },
 };
 
-export function mindFingerprint(characterId: string | null | undefined): MindFingerprint | null {
+export function mindFingerprint(
+  characterId: string | null | undefined,
+  hints?: { displayName?: string | null; energyLabel?: string | null },
+): MindFingerprint | null {
   if (!characterId) return null;
   if (FINGERPRINTS[characterId]) return FINGERPRINTS[characterId]!;
   if (characterId.startsWith("custom") || characterId.includes("custom")) {
+    const nick = hints?.displayName?.trim().split(/\s+/)[0];
+    const vibe = hints?.energyLabel?.trim().split(",")[0]?.trim();
     return {
-      tag: "Yours",
-      blurb: "Custom mind on a signature body base — stays true to their vibe",
+      tag: nick ? nick.slice(0, 18) : "Yours",
+      blurb: vibe
+        ? `${nick || "My model"} · ${vibe} · private to you`
+        : "Custom mind on a signature body base — private to your account",
     };
   }
   return null;

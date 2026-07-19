@@ -157,7 +157,10 @@ export function CharacterTile({
   const { containerRef, videoRef, visible } = useVisibleVideo(true);
   const { src, bandLabel } = useClipRotation(card, visible);
   const first = card.displayName.trim().split(/\s+/)[0] || card.displayName;
-  const mind = mindFingerprint(card.id);
+  const mind = mindFingerprint(card.id, {
+    displayName: card.displayName,
+    energyLabel: card.energyLabel || card.vibeTag,
+  });
 
   // Smooth src swap without blank frame
   useEffect(() => {

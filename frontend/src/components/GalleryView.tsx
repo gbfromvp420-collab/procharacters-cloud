@@ -439,6 +439,11 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             setSort("recent");
             setQuery("");
           }}
+          onOwned={() => {
+            setFilter("owned");
+            setSort("recent");
+            setQuery("");
+          }}
           onFeatured={() => {
             setFilter("featured");
             setSort("featured");

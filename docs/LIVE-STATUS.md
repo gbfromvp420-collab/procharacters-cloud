@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — clip owner-auth + pack readiness)  
+**Updated:** 2026-07-19 (**cook** — Account My models hub)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -47,6 +47,7 @@
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
 | Clip uploads (private) | ✅ owner Bearer required · batch + single · gallery Edit deep-link · Pack n/4 chips |
+| Account **My models** hub | ✅ list private models · cap n/limit · Chat/Continue/Edit/Edge · gallery strip chip |
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |

@@ -136,6 +136,8 @@ export function AccountSettings() {
     "More My Characters + higher upload headroom",
   );
   const [premiumCustomsLimit, setPremiumCustomsLimit] = useState(40);
+  /** Private My Characters for this account (from authenticated catalog). */
+  const [myModels, setMyModels] = useState<LiveCharacterOption[]>([]);
 
   const EXPIRY_WARN_DAYS = 3;
 
@@ -205,15 +207,21 @@ export function AccountSettings() {
 
   const refresh = useCallback(
     async (token: string) => {
-      const [me, list, push, billing] = await Promise.all([
+      const [me, list, push, billing, live] = await Promise.all([
         fetchAccountMe(token),
         listAccountSessions(token).catch(() => [] as AccountSessionSummary[]),
         fetchPushStatus(token).catch(() => null),
         fetchBillingStatus(token).catch(() => null),
+        listLiveCharacters(token).catch(() => [] as LiveCharacterOption[]),
       ]);
       setEmail(me.email ?? null);
       setHasPassphrase(me.hasPassphrase === true);
       setSessions(list);
+      setMyModels(
+        live
+          .filter((c) => c.kind === "custom" && c.mine === true)
+          .sort((a, b) => a.displayName.localeCompare(b.displayName)),
+      );
       setAccount((prev) =>
         prev
           ? { ...prev, handle: me.handle, accountId: me.accountId }
@@ -531,6 +539,7 @@ export function AccountSettings() {
     setAccount(null);
     setEmail(null);
     setSessions([]);
+    setMyModels([]);
     setHasPassphrase(false);
     flash("Signed out");
   };
@@ -1410,6 +1419,140 @@ export function AccountSettings() {
                   Sign out
                 </button>
               </div>
+            </section>
+
+            <section className="rounded-2xl border border-violet-400/35 bg-violet-500/5 p-5">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h2 className="text-sm font-semibold text-brand-text">My models</h2>
+                  <p className="mt-1 text-xs text-brand-muted">
+                    Private My Characters — only you see them. Cap{" "}
+                    <strong className="text-brand-text">
+                      {myModels.length}/{customsLimit}
+                    </strong>
+                    {activePremium ? " · premium" : " · free path"}.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href="/chat?create=1"
+                    className="rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
+                  >
+                    Create
+                  </Link>
+                  <Link
+                    href="/?filter=owned"
+                    className="rounded-lg border border-violet-400/45 px-3 py-1.5 text-xs text-violet-100 hover:border-violet-300/60"
+                  >
+                    Gallery
+                  </Link>
+                </div>
+              </div>
+
+              {myModels.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-dashed border-violet-400/30 bg-brand-bg/40 px-3 py-4 text-center">
+                  <p className="text-sm text-brand-text">No private models yet</p>
+                  <p className="mt-1 text-[11px] text-brand-muted">
+                    Build one from a signature base — identity, vibe, phrases, scenes, optional
+                    clips.
+                  </p>
+                  <Link
+                    href="/chat?create=1"
+                    className="mt-3 inline-flex rounded-lg bg-brand-accent px-4 py-2 text-xs font-semibold text-white"
+                  >
+                    Create My Character
+                  </Link>
+                </div>
+              ) : (
+                <ul className="mt-4 space-y-2">
+                  {myModels.map((m) => {
+                    const session = sessions.find((s) => s.characterId === m.id && s.resumeCode);
+                    const packKeys = ["idle", "teasing", "playful", "aroused"] as const;
+                    const packFilled = packKeys.filter(
+                      (k) => !!m.mediaOverrides?.[k]?.trim(),
+                    ).length;
+                    const mind = mindFingerprint(m.id, {
+                      displayName: m.displayName,
+                      energyLabel: m.energyLabel,
+                    });
+                    const urgent = isResumeExpiryUrgent(session?.resumeExpiresAt);
+                    const expiry = formatResumeExpiryShort(session?.resumeExpiresAt);
+                    return (
+                      <li
+                        key={m.id}
+                        className="rounded-xl border border-brand-border/80 bg-brand-bg/50 px-3 py-2.5"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-brand-text">
+                              {m.displayName}
+                              <span className="ml-1.5 text-[10px] font-medium uppercase tracking-wide text-violet-200/90">
+                                private
+                              </span>
+                            </p>
+                            <p className="mt-0.5 line-clamp-1 text-[11px] text-brand-muted">
+                              {mind?.blurb || m.energyLabel || "My Character"}
+                              {packFilled > 0 ? ` · clips ${packFilled}/4` : " · base clips"}
+                            </p>
+                            {session?.resumeCode && (
+                              <p
+                                className={`mt-0.5 font-mono text-[10px] ${
+                                  urgent ? "text-rose-200" : "text-amber-100/90"
+                                }`}
+                              >
+                                Resume {session.resumeCode}
+                                {expiry ? ` · ${expiry}` : ""}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {session?.resumeCode ? (
+                              <Link
+                                href={`/chat?resume=${encodeURIComponent(session.resumeCode)}&rehydrate=1`}
+                                className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-white ${
+                                  urgent
+                                    ? "bg-rose-500/90 ring-1 ring-rose-300/50"
+                                    : "bg-brand-accent"
+                                }`}
+                              >
+                                Continue
+                              </Link>
+                            ) : (
+                              <Link
+                                href={`/chat?character=${encodeURIComponent(m.id)}&autostart=1`}
+                                className="rounded-lg bg-brand-accent px-2.5 py-1.5 text-[11px] font-semibold text-white"
+                              >
+                                Chat
+                              </Link>
+                            )}
+                            <Link
+                              href={`/chat?character=${encodeURIComponent(m.id)}&edit=1`}
+                              className="rounded-lg border border-violet-400/40 px-2.5 py-1.5 text-[11px] text-violet-100"
+                            >
+                              Edit
+                            </Link>
+                            {!session?.resumeCode && (
+                              <Link
+                                href={`/chat?character=${encodeURIComponent(m.id)}&autostart=1&mode=edge_pace`}
+                                className="rounded-lg border border-rose-400/40 px-2.5 py-1.5 text-[11px] text-rose-100"
+                              >
+                                Edge
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+
+              {myModels.length >= customsLimit && (
+                <p className="mt-3 text-[11px] text-amber-100/90">
+                  Cap reached ({customsLimit}). Delete a model or{" "}
+                  {activePremium ? "wait for a free slot" : "grab Day Pass / Supporter for more"}.
+                </p>
+              )}
             </section>
 
             <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">

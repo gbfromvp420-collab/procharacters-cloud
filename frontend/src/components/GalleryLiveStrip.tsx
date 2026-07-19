@@ -12,22 +12,26 @@ export function GalleryLiveStrip({
   resumeCount,
   onPacks,
   onMine,
+  onOwned,
   onFeatured,
 }: {
   characters: CharacterCard[];
   resumeCount: number;
   onPacks?: () => void;
   onMine?: () => void;
+  /** Filter to private My Characters */
+  onOwned?: () => void;
   onFeatured?: () => void;
 }) {
   const signature = characters.filter((c) => c.kind === "default").length;
   const packs = characters.filter((c) => c.dedicatedPack).length;
   const featured = characters.filter((c) => c.featured).length;
+  const owned = characters.filter((c) => c.mine === true).length;
   const minds = characters.filter((c) => !!mindFingerprint(c.id)).length;
 
   type Chip = {
     label: string;
-    tone: "accent" | "emerald" | "amber" | "muted";
+    tone: "accent" | "emerald" | "amber" | "muted" | "violet";
     onClick?: () => void;
   };
 
@@ -38,6 +42,13 @@ export function GalleryLiveStrip({
       : null,
     featured > 0
       ? { label: `${featured} featured`, tone: "accent", onClick: onFeatured }
+      : null,
+    owned > 0
+      ? {
+          label: `${owned} my model${owned === 1 ? "" : "s"}`,
+          tone: "violet",
+          onClick: onOwned,
+        }
       : null,
     resumeCount > 0
       ? {
@@ -56,9 +67,11 @@ export function GalleryLiveStrip({
       ? "border-emerald-400/35 bg-emerald-500/10 text-emerald-100/90"
       : tone === "amber"
         ? "border-amber-400/40 bg-amber-500/10 text-amber-100/90"
-        : tone === "accent"
-          ? "border-brand-accent/35 bg-brand-accent/10 text-brand-accent"
-          : "border-brand-border bg-brand-panel text-brand-muted";
+        : tone === "violet"
+          ? "border-violet-400/45 bg-violet-500/10 text-violet-100/90"
+          : tone === "accent"
+            ? "border-brand-accent/35 bg-brand-accent/10 text-brand-accent"
+            : "border-brand-border bg-brand-panel text-brand-muted";
 
   return (
     <div
