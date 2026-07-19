@@ -594,6 +594,7 @@ export async function fetchLatestAccountSessionForCharacter(
   characterId: string;
   characterName: string;
   resumeCode?: string;
+  resumeExpiresAt?: string;
   messageCount: number;
   status: string;
   updatedAt: string;

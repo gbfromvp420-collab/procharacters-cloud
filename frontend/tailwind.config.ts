@@ -44,6 +44,9 @@ const config: Config = {
       animation: {
         "fade-in": "fade-in 0.35s ease-out both",
         "rise-in": "rise-in 0.4s ease-out both",
+        "hero-crossfade": "hero-crossfade 0.7s ease-out both",
+        "hero-fadeout": "hero-fadeout 0.7s ease-out both",
+        "hero-progress": "hero-progress linear both",
       },
       keyframes: {
         "fade-in": {
@@ -53,6 +56,18 @@ const config: Config = {
         "rise-in": {
           from: { opacity: "0", transform: "translateY(8px)" },
           to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "hero-crossfade": {
+          from: { opacity: "0" },
+          to: { opacity: "1" },
+        },
+        "hero-fadeout": {
+          from: { opacity: "1" },
+          to: { opacity: "0" },
+        },
+        "hero-progress": {
+          from: { transform: "scaleX(0)" },
+          to: { transform: "scaleX(1)" },
         },
       },
     },

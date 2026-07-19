@@ -105,6 +105,11 @@ body {
   animation: avatar-band-pulse 0.7s ease-out;
 }
 
+/* Gallery hero reel progress — freezes fill while user hovers/focuses */
+.hero-progress-paused {
+  animation-play-state: paused !important;
+}
+
 /* Glass panels / sticky chrome */
 @layer components {
   .glass-bar {

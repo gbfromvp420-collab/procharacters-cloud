@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import {
@@ -15,6 +16,49 @@ export function posterUrl(card: CharacterCard): string {
   const poster = card.posterClip;
   if (poster.startsWith("http") || poster.startsWith("/")) return poster;
   return `/${poster}`;
+}
+
+/** Play video only while mostly on-screen — saves battery when scrolling a full roster. */
+function useVisibleVideo(enabled = true) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    if (!enabled) return;
+    const root = containerRef.current;
+    const video = videoRef.current;
+    if (!root || !video) return;
+
+    let visible = false;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        visible = !!entry?.isIntersecting && (entry.intersectionRatio ?? 0) > 0.12;
+        if (visible) {
+          void video.play().catch(() => {
+            /* autoplay policy — ignore */
+          });
+        } else {
+          video.pause();
+        }
+      },
+      { root: null, rootMargin: "80px 0px", threshold: [0, 0.12, 0.35] },
+    );
+    io.observe(root);
+
+    // Pause when tab is hidden
+    const onVis = () => {
+      if (document.hidden) video.pause();
+      else if (visible) void video.play().catch(() => {});
+    };
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [enabled]);
+
+  return { containerRef, videoRef };
 }
 
 export function CharacterTile({
@@ -35,18 +79,24 @@ export function CharacterTile({
   const visual = presenceVisual(skin);
   const expiryLabel = formatResumeExpiryShort(resume?.resumeExpiresAt);
   const urgent = isResumeExpiryUrgent(resume?.resumeExpiresAt);
+  const { containerRef, videoRef } = useVisibleVideo(true);
+  const first = card.displayName.trim().split(/\s+/)[0] || card.displayName;
+
   return (
     <article
       className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
         compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
-      }`}
+      } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""}`}
     >
-      <div className={`relative aspect-[3/4] overflow-hidden bg-black ${visual.glow}`}>
+      <div
+        ref={containerRef}
+        className={`relative aspect-[3/4] overflow-hidden bg-black ${visual.glow}`}
+      >
         <video
+          ref={videoRef}
           className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
           style={{ filter: visual.filter }}
           src={poster}
-          autoPlay
           muted
           loop
           playsInline
@@ -56,6 +106,13 @@ export function CharacterTile({
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${visual.wash}`}
           aria-hidden
         />
+        {card.dedicatedPack && (
+          <span
+            className="pointer-events-none absolute left-2 top-2 z-10 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse"
+            title="Dedicated 4K pack live"
+            aria-hidden
+          />
+        )}
         {resume?.resumeCode && (
           <div className="absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
             <span
@@ -64,7 +121,11 @@ export function CharacterTile({
                   ? "border-rose-400/60 text-rose-100"
                   : "border-amber-400/50 text-amber-200"
               }`}
-              title={resume.source === "account" ? "Saved chat (account)" : "Saved chat on this device"}
+              title={
+                resume.source === "account"
+                  ? "Saved chat (account)"
+                  : "Saved chat on this device"
+              }
             >
               {resume.resumeCode}
             </span>
@@ -116,7 +177,9 @@ export function CharacterTile({
               </span>
             )}
           </div>
-          <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">{card.displayName}</h2>
+          <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
+            {card.displayName}
+          </h2>
         </div>
       </div>
       <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
@@ -124,7 +187,10 @@ export function CharacterTile({
         {!compact && card.tags?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {card.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="rounded-full border border-brand-border px-2 py-0.5 text-[10px] text-brand-muted">
+              <span
+                key={tag}
+                className="rounded-full border border-brand-border px-2 py-0.5 text-[10px] text-brand-muted"
+              >
                 {tag}
               </span>
             ))}
@@ -136,17 +202,25 @@ export function CharacterTile({
               <Link
                 href={buildResumeChatPath(resume)}
                 className={`btn-primary min-h-0 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
-                title={expiryLabel ? `Continue saved chat · ${expiryLabel}` : "Continue saved chat"}
+                title={
+                  expiryLabel
+                    ? `Continue saved chat · ${expiryLabel}`
+                    : "Continue saved chat"
+                }
               >
                 Continue
               </Link>
-              <Link href={card.ctaPath} className="btn-ghost min-h-0 px-3 py-2 text-xs" title="Start a new session">
+              <Link
+                href={card.ctaPath}
+                className="btn-ghost min-h-0 px-3 py-2 text-xs"
+                title="Start a new session"
+              >
                 New chat
               </Link>
             </>
           ) : (
             <Link href={card.ctaPath} className="btn-primary min-h-0 px-3 py-2 text-xs">
-              Chat
+              Chat{!compact ? ` · ${first}` : ""}
             </Link>
           )}
           <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">

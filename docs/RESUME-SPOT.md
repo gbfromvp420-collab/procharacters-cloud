@@ -13,7 +13,8 @@
 | Stripe | ✅ **LIVE** on API (`billing.mode=live`, webhook on) · Day Pass $4.99 / Supporter $9.99 | Gary: smoke checkout carefully — **real money** |
 | Railway CLI + MCP | ✅ Authed · project `captivating-vision` · Stripe vars upserted + API redeployed | — |
 | 4K packs | ✅ 6 Phase 4 packs on GitHub `main` (web 200) · `status.json` + API badge fix shipping | Open gallery → green **4K pack** after API redeploy |
-| Hero reel + names | ✅ Gallery big reel · Phase 4 display names (Mateo/Diego/Rio/Luna/Sienna/Mila) | Redeploy web + API so live shows names + reel |
+| Hero reel + names | ✅ Gallery big reel · Phase 4 display names (Mateo/Diego/Rio/Luna/Sienna/Mila) | Live after web deploy |
+| Gallery immersion | ✅ Hero crossfade/swipe/progress · resume Continue on hero/card · tile play-on-visible | Redeploy **web** |
 
 ---
 

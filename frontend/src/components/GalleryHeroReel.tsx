@@ -1,11 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import {
+  buildResumeChatPath,
+  type ResumeCacheEntry,
+} from "@/lib/resume-cache";
 import { posterUrl } from "./GalleryTiles";
 
-const ROTATE_MS = 6500;
+const ROTATE_MS = 7000;
+const CROSSFADE_MS = 700;
+const SWIPE_PX = 48;
 
 /** Prefer featured dedicated packs, then any featured, then rest with posters. */
 export function pickHeroCast(characters: CharacterCard[]): CharacterCard[] {
@@ -24,7 +30,6 @@ export function pickHeroCast(characters: CharacterCard[]): CharacterCard[] {
           ? dedicated
           : withPoster;
 
-  // Stable order: featured first, then name
   return [...pool].sort((a, b) => {
     if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
     if (!!a.dedicatedPack !== !!b.dedicatedPack) return a.dedicatedPack ? -1 : 1;
@@ -32,11 +37,28 @@ export function pickHeroCast(characters: CharacterCard[]): CharacterCard[] {
   });
 }
 
-export function GalleryHeroReel({ characters }: { characters: CharacterCard[] }) {
+function firstName(name: string): string {
+  return name.trim().split(/\s+/)[0] || name;
+}
+
+export function GalleryHeroReel({
+  characters,
+  resumes = {},
+}: {
+  characters: CharacterCard[];
+  /** When set for the active hero, primary CTA becomes Continue. */
+  resumes?: Record<string, ResumeCacheEntry>;
+}) {
   const cast = useMemo(() => pickHeroCast(characters), [characters]);
   const [index, setIndex] = useState(0);
+  const [outgoing, setOutgoing] = useState<CharacterCard | null>(null);
   const [paused, setPaused] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [progressKey, setProgressKey] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const goLock = useRef(false);
+  const fadeTimer = useRef<number | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -51,27 +73,128 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
     if (index >= cast.length) setIndex(0);
   }, [cast.length, index]);
 
+  useEffect(() => {
+    return () => {
+      if (fadeTimer.current != null) window.clearTimeout(fadeTimer.current);
+    };
+  }, []);
+
+  const goTo = useCallback(
+    (nextRaw: number) => {
+      if (cast.length === 0 || goLock.current) return;
+      const next = ((nextRaw % cast.length) + cast.length) % cast.length;
+      if (next === index) return;
+
+      const leaving = cast[index] ?? null;
+
+      if (reducedMotion || !leaving) {
+        setIndex(next);
+        setOutgoing(null);
+        setProgressKey((k) => k + 1);
+        return;
+      }
+
+      goLock.current = true;
+      setOutgoing(leaving);
+      setIndex(next);
+      setProgressKey((k) => k + 1);
+      if (fadeTimer.current != null) window.clearTimeout(fadeTimer.current);
+      fadeTimer.current = window.setTimeout(() => {
+        setOutgoing(null);
+        goLock.current = false;
+        fadeTimer.current = null;
+      }, CROSSFADE_MS);
+    },
+    [cast, index, reducedMotion],
+  );
+
   const go = useCallback(
     (dir: 1 | -1) => {
       if (cast.length === 0) return;
-      setIndex((i) => (i + dir + cast.length) % cast.length);
+      goTo(index + dir);
     },
-    [cast.length],
+    [cast.length, goTo, index],
   );
 
   useEffect(() => {
     if (paused || reducedMotion || cast.length < 2) return;
     const t = window.setInterval(() => {
-      setIndex((i) => (i + 1) % cast.length);
+      goTo(index + 1);
     }, ROTATE_MS);
     return () => window.clearInterval(t);
-  }, [paused, reducedMotion, cast.length]);
+  }, [paused, reducedMotion, cast.length, goTo, index]);
+
+  // Preload next poster so rotation feels instant
+  useEffect(() => {
+    if (cast.length < 2 || typeof document === "undefined") return;
+    const next = cast[(index + 1) % cast.length];
+    if (!next) return;
+    const url = posterUrl(next);
+    if (!url || !/\.mp4(\?|$)/i.test(url)) return;
+    const v = document.createElement("video");
+    v.preload = "auto";
+    v.muted = true;
+    v.playsInline = true;
+    v.src = url;
+    v.load();
+    return () => {
+      v.removeAttribute("src");
+      try {
+        v.load();
+      } catch {
+        /* ignore */
+      }
+    };
+  }, [cast, index]);
+
+  // Desktop: arrow keys when reel is hovered/focused (paused)
+  useEffect(() => {
+    if (!paused || cast.length < 2) return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) {
+        return;
+      }
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        go(-1);
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        go(1);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [paused, cast.length, go]);
 
   if (cast.length === 0) return null;
 
-  const card = cast[Math.min(index, cast.length - 1)]!;
+  const safeIndex = Math.min(index, cast.length - 1);
+  const card = cast[safeIndex]!;
   const poster = posterUrl(card);
   const vibe = (card.vibeTag || card.energyLabel || "").split(",")[0]?.trim();
+  const resume = resumes[card.id];
+  const continueHref = resume?.resumeCode ? buildResumeChatPath(resume) : null;
+  const nick = firstName(card.displayName);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+    touchStartY.current = e.touches[0]?.clientY ?? null;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const sx = touchStartX.current;
+    const sy = touchStartY.current;
+    touchStartX.current = null;
+    touchStartY.current = null;
+    if (sx == null || sy == null || cast.length < 2) return;
+    const x = e.changedTouches[0]?.clientX ?? sx;
+    const y = e.changedTouches[0]?.clientY ?? sy;
+    const dx = x - sx;
+    const dy = y - sy;
+    if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    go(dx < 0 ? 1 : -1);
+  };
 
   return (
     <section
@@ -84,12 +207,29 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
       onBlurCapture={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
       }}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       <div className="relative aspect-[4/5] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
-        {/* Crossfade layers — only active + previous would be ideal; keep simple with key swap */}
+        {/* Outgoing layer fades under the new hero */}
+        {outgoing && outgoing.id !== card.id && (
+          <video
+            key={`out-${outgoing.id}`}
+            className="absolute inset-0 h-full w-full object-cover animate-hero-fadeout"
+            src={posterUrl(outgoing)}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden
+          />
+        )}
         <video
-          key={card.id}
-          className="absolute inset-0 h-full w-full object-cover animate-fade-in"
+          key={`cur-${card.id}-${safeIndex}`}
+          className={`absolute inset-0 h-full w-full object-cover ${
+            outgoing && !reducedMotion ? "animate-hero-crossfade" : ""
+          }`}
           src={poster}
           autoPlay
           muted
@@ -97,12 +237,17 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
           playsInline
           preload="auto"
         />
+
         <div
           className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/55 to-black/20 sm:bg-gradient-to-r sm:from-black sm:via-black/70 sm:to-transparent"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgba(225,29,143,0.12),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,rgba(225,29,143,0.14),transparent_55%)]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand-accent/15 to-transparent"
           aria-hidden
         />
 
@@ -122,6 +267,11 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
                   4K pack
                 </span>
               )}
+              {resume?.resumeCode && (
+                <span className="rounded-full border border-amber-400/50 bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-50">
+                  Your chat
+                </span>
+              )}
               {vibe && (
                 <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur">
                   {vibe}
@@ -135,10 +285,22 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
               {card.teaser}
             </p>
             <div className="mt-4 flex flex-wrap gap-2 sm:mt-5 sm:gap-3">
-              <Link href={card.ctaPath} className="btn-primary min-h-0 px-5 py-2.5 text-sm">
-                Chat with {card.displayName.split(" ")[0]}
-              </Link>
-              <Link href={card.cardPath} className="btn-ghost min-h-0 border-white/20 bg-black/30 px-5 py-2.5 text-sm text-white hover:bg-black/50">
+              {continueHref ? (
+                <Link
+                  href={continueHref}
+                  className="btn-primary min-h-0 px-5 py-2.5 text-sm ring-1 ring-amber-400/50"
+                >
+                  Continue with {nick}
+                </Link>
+              ) : (
+                <Link href={card.ctaPath} className="btn-primary min-h-0 px-5 py-2.5 text-sm">
+                  Chat with {nick}
+                </Link>
+              )}
+              <Link
+                href={card.cardPath}
+                className="btn-ghost min-h-0 border-white/20 bg-black/30 px-5 py-2.5 text-sm text-white hover:bg-black/50"
+              >
                 Full card
               </Link>
               {card.edgePacePath && (
@@ -149,14 +311,36 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
                   Edge Pace
                 </Link>
               )}
+              {continueHref && (
+                <Link
+                  href={card.ctaPath}
+                  className="btn-ghost min-h-0 border-white/15 bg-black/25 px-4 py-2.5 text-xs text-white/80 hover:bg-black/45"
+                >
+                  New chat
+                </Link>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Controls */}
+        {cast.length > 1 && !reducedMotion && (
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 z-10 h-[3px] bg-white/10"
+            aria-hidden
+          >
+            <div
+              key={progressKey}
+              className={`h-full origin-left bg-gradient-to-r from-brand-accent to-rose-300 animate-hero-progress ${
+                paused ? "hero-progress-paused" : ""
+              }`}
+              style={{ animationDuration: `${ROTATE_MS}ms` }}
+            />
+          </div>
+        )}
+
         {cast.length > 1 && (
           <>
-            <div className="absolute right-3 top-3 flex items-center gap-1.5 sm:right-5 sm:top-5">
+            <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 sm:right-5 sm:top-5">
               <button
                 type="button"
                 onClick={() => go(-1)}
@@ -175,7 +359,7 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
               </button>
             </div>
             <div
-              className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5 sm:bottom-5"
+              className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5 sm:bottom-5"
               role="tablist"
               aria-label="Reel slides"
             >
@@ -184,20 +368,20 @@ export function GalleryHeroReel({ characters }: { characters: CharacterCard[] })
                   key={c.id}
                   type="button"
                   role="tab"
-                  aria-selected={i === index}
+                  aria-selected={i === safeIndex}
                   aria-label={`Show ${c.displayName}`}
-                  onClick={() => setIndex(i)}
+                  onClick={() => goTo(i)}
                   className={`h-1.5 rounded-full transition-all ${
-                    i === index
-                      ? "w-6 bg-brand-accent"
+                    i === safeIndex
+                      ? "w-6 bg-brand-accent shadow-[0_0_12px_rgba(225,29,143,0.7)]"
                       : "w-1.5 bg-white/40 hover:bg-white/70"
                   }`}
                 />
               ))}
             </div>
-            <p className="pointer-events-none absolute bottom-3 right-4 hidden text-[10px] uppercase tracking-[0.2em] text-white/50 sm:block">
-              {index + 1} / {cast.length}
-              {paused || reducedMotion ? " · paused" : ""}
+            <p className="pointer-events-none absolute bottom-3 right-4 z-10 hidden text-[10px] uppercase tracking-[0.2em] text-white/50 sm:block">
+              {safeIndex + 1} / {cast.length}
+              {paused || reducedMotion ? " · paused" : " · swipe"}
             </p>
           </>
         )}

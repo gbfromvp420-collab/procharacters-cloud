@@ -253,7 +253,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         {/* Hero reel only on main browse (not “my chats” / search clutter) */}
         {filter === "all" && !query.trim() && (
-          <GalleryHeroReel characters={characters} />
+          <GalleryHeroReel characters={characters} resumes={resumes} />
         )}
 
         {continueTarget && continueHref && (
