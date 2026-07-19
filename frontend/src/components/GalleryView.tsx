@@ -54,6 +54,11 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     if (loadStoredAccount()) setSort("recent");
   }, []);
 
+  // Packs filter pairs with packs-first sort for a cleaner feast
+  useEffect(() => {
+    if (filter === "packs") setSort("packs");
+  }, [filter]);
+
   useEffect(() => {
     let cancelled = false;
     const seed: Record<string, ResumeCacheEntry> = {};

@@ -2119,12 +2119,23 @@ export function ChatApp() {
       />
 
       {/* Sticky glass top chrome */}
-      <header className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
+      <header
+        className={`glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)] transition-[box-shadow,border-color] duration-500 ${
+          status === "ready" && liveBand === "edge"
+            ? "border-b-rose-400/40 shadow-[0_8px_28px_-12px_rgba(244,63,94,0.35)]"
+            : status === "ready" && liveBand === "play"
+              ? "border-b-amber-400/30"
+              : status === "ready" && liveBand === "tease"
+                ? "border-b-brand-accent/35"
+                : ""
+        }`}
+      >
         <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
           <div className="min-w-0 flex-1">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
               Naughty Syntax
               {headerMind ? ` · ${headerMind.tag}` : ""}
+              {status === "ready" && liveBand !== "idle" ? ` · ${liveBand}` : ""}
             </p>
             <h1 className="truncate bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-base font-semibold tracking-tight text-transparent sm:text-xl">
               {headerCharacterName ? `Chat · ${headerCharacterName}` : "Live chat"}
@@ -3418,6 +3429,12 @@ export function ChatApp() {
                   !sending &&
                   !isTyping &&
                   !input.trim();
+                const showUseAgain =
+                  isLast &&
+                  msg.role === "user" &&
+                  status === "ready" &&
+                  !sending &&
+                  !isTyping;
                 return (
                 <div
                   key={msg.id}
@@ -3448,6 +3465,18 @@ export function ChatApp() {
                       <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-brand-accent align-middle" />
                     )}
                   </div>
+                  {showUseAgain && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInput(msg.content);
+                        window.setTimeout(() => inputRef.current?.focus(), 40);
+                      }}
+                      className="mt-1 text-[10px] text-brand-muted hover:text-brand-accent"
+                    >
+                      Use again
+                    </button>
+                  )}
                   {showAfterglow && (
                     <div className="max-w-[90%] sm:max-w-[80%]">
                       <AfterglowChips
