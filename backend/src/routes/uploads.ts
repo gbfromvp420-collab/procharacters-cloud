@@ -61,6 +61,38 @@ async function checkUploadLimits(
   ]);
 }
 
+/** Private My Characters: only the owner may upload / overwrite clips. */
+async function assertClipUploadAllowed(
+  request: FastifyRequest,
+  characterId: string,
+): Promise<{ ok: true; accountId?: string } | { ok: false; status: number; error: string; code: string }> {
+  const existing = getCustomCharacter(characterId);
+  if (!existing) {
+    return { ok: false, status: 404, error: "Custom character not found", code: "NOT_FOUND" };
+  }
+  if (!existing.ownerAccountId) {
+    return { ok: true };
+  }
+  const account = await resolveAccountToken(bearerToken(request));
+  if (!account) {
+    return {
+      ok: false,
+      status: 401,
+      error: "Sign in to upload clips for a private My Character",
+      code: "AUTH_REQUIRED",
+    };
+  }
+  if (existing.ownerAccountId !== account.id) {
+    return {
+      ok: false,
+      status: 403,
+      error: "Not allowed to upload clips for this character",
+      code: "FORBIDDEN",
+    };
+  }
+  return { ok: true, accountId: account.id };
+}
+
 const CLIP_KEYS: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
 
 function requestPublicBase(request: FastifyRequest): string {
@@ -127,8 +159,9 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
           .code(400)
           .send({ error: "emotion must be one of idle, teasing, playful, aroused" });
       }
-      if (!getCustomCharacter(characterId)) {
-        return reply.code(404).send({ error: "Custom character not found" });
+      const access = await assertClipUploadAllowed(request, characterId);
+      if (!access.ok) {
+        return reply.code(access.status).send({ error: access.error, code: access.code });
       }
 
       const denied = await checkUploadLimits(request, characterId);
@@ -166,7 +199,11 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
           ...(existing.mediaOverrides ?? {}),
           [emotion]: publicUrl,
         };
-        const updated = await updateCustomCharacter(characterId, { mediaOverrides });
+        const updated = await updateCustomCharacter(
+          characterId,
+          { mediaOverrides },
+          { accountId: access.accountId },
+        );
 
         return {
           ok: true,
@@ -195,8 +232,9 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
       if (!characterId.startsWith("custom-")) {
         return reply.code(400).send({ error: "Only custom characters accept uploads" });
       }
-      if (!getCustomCharacter(characterId)) {
-        return reply.code(404).send({ error: "Custom character not found" });
+      const access = await assertClipUploadAllowed(request, characterId);
+      if (!access.ok) {
+        return reply.code(access.status).send({ error: access.error, code: access.code });
       }
 
       const denied = await checkUploadLimits(request, characterId);
@@ -273,9 +311,11 @@ export const createUploadRoutes = (): FastifyPluginAsync => {
           });
         }
 
-        const updated = await updateCustomCharacter(characterId, {
-          mediaOverrides: overrides,
-        });
+        const updated = await updateCustomCharacter(
+          characterId,
+          { mediaOverrides: overrides },
+          { accountId: access.accountId },
+        );
 
         return {
           ok: true,

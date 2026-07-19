@@ -769,6 +769,7 @@ export async function uploadCharacterClip(
   characterId: string,
   emotion: MediaClipKey,
   file: File,
+  accountToken?: string | null,
 ): Promise<{
   url: string;
   clips: Record<MediaClipKey, string>;
@@ -776,6 +777,9 @@ export async function uploadCharacterClip(
   format?: string;
   contentType?: string;
 }> {
+  if (!accountToken) {
+    throw new Error("Sign in to upload clips for a My Character");
+  }
   const { validateClipFileClient } = await import("./clip-upload");
   const check = validateClipFileClient(file);
   if (!check.ok) throw new Error(check.error);
@@ -788,7 +792,11 @@ export async function uploadCharacterClip(
   body.append("file", file, safeName);
   const res = await fetch(
     `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}/clips/${emotion}`,
-    { method: "POST", body },
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accountToken}` },
+      body,
+    },
   );
   if (!res.ok) {
     const text = await res.text();
@@ -813,6 +821,7 @@ export async function uploadCharacterClip(
 export async function uploadCharacterClipsBatch(
   characterId: string,
   files: File[],
+  accountToken?: string | null,
 ): Promise<{
   uploaded: Array<{
     emotion: MediaClipKey;
@@ -826,6 +835,9 @@ export async function uploadCharacterClipsBatch(
   clips: Record<MediaClipKey, string>;
   mediaOverrides?: MediaOverrides;
 }> {
+  if (!accountToken) {
+    throw new Error("Sign in to upload clips for a My Character");
+  }
   const { filterValidClipFiles } = await import("./clip-upload");
   const { accepted, rejected } = filterValidClipFiles(files);
   if (accepted.length === 0) {
@@ -853,7 +865,11 @@ export async function uploadCharacterClipsBatch(
   }
   const res = await fetch(
     `${API_BASE}/api/v1/characters/custom/${encodeURIComponent(characterId)}/clips`,
-    { method: "POST", body },
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accountToken}` },
+      body,
+    },
   );
   if (!res.ok) {
     const text = await res.text();

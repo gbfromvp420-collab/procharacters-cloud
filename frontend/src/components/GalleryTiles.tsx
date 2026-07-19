@@ -385,6 +385,15 @@ export function CharacterTile({
               Edge
             </Link>
           )}
+          {card.mine && (
+            <Link
+              href={`/chat?character=${encodeURIComponent(card.id)}&edit=1`}
+              className="btn-ghost min-h-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100"
+              title="Edit My Character identity, vibe, clips"
+            >
+              Edit
+            </Link>
+          )}
           <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">
             Card
           </Link>

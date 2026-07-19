@@ -16,6 +16,8 @@ export interface ShareQuery {
   rehydrate?: boolean;
   /** Open My Character create panel (?create=1). */
   create?: boolean;
+  /** Open Edit form for character= (?edit=1). */
+  edit?: boolean;
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -49,6 +51,9 @@ export function parseShareQuery(search: string): ShareQuery {
     createRaw === "yes" ||
     createRaw === "my" ||
     createRaw === "character";
+  const editRaw = params.get("edit")?.trim().toLowerCase();
+  const edit =
+    editRaw === "1" || editRaw === "true" || editRaw === "yes" || editRaw === "me";
 
   return {
     characterId,
@@ -60,6 +65,7 @@ export function parseShareQuery(search: string): ShareQuery {
     sessionMode,
     rehydrate,
     create,
+    edit,
   };
 }
 

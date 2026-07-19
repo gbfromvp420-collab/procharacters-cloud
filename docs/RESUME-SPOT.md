@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — Edit My Character + PATCH auth fix)  
+**Updated:** 2026-07-19 (**cook** — clip auth + pack readiness + gallery Edit)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,12 +9,11 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Conversion + premium payoff** | ✅ one-tap Stripe · My models · create | — |
-| **Post-create win** | ✅ Start heat toast · Mine badges | — |
-| **Edit My Character** | ✅ Edit form · Save changes · owner fields on list · **PATCH auth fixed** | Hard refresh **web** (API + web); try Edit on your model |
+| **My Character loop** | ✅ create · win toast · edit · **clips owner-auth** · pack 0–4 chips | Hard refresh **API + web**; upload clips while signed in |
+| **Gallery** | ✅ My models · **Edit** deep-link (`?edit=1`) | — |
 | Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| **Next** | Ops optional / clips polish / content | Say `resume` / `spot` / `next` / `cook` |
+| **Next** | Ops optional / heat / content | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 

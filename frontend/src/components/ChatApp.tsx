@@ -1407,14 +1407,39 @@ export function ChatApp() {
     };
   }, [account?.token]);
 
-  // Deep-link: ?create=1 → open My Character form (sign-in if needed)
+  // Deep-link: ?create=1 → create form; ?edit=1&character= → edit form
   useEffect(() => {
     if (typeof window === "undefined") return;
     const query = parseShareQuery(window.location.search);
+    if (query.edit && query.characterId) {
+      // Wait for catalog; open edit once character list has this id
+      return;
+    }
     if (!query.create) return;
     setShowCreate(true);
     if (!loadStoredAccount()) setShowAccount(true);
   }, []);
+
+  // Deep-link edit once catalog is ready
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (characters.length === 0) return;
+    const query = parseShareQuery(window.location.search);
+    if (!query.edit || !query.characterId) return;
+    const target = characters.find((c) => c.id === query.characterId);
+    if (!target || target.kind !== "custom") return;
+    setCharacter(target.id);
+    openEditCustom(target.id);
+    // strip edit flag so refresh doesn't re-open forever
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("edit");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    } catch {
+      /* ignore */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot when list lands
+  }, [characters]);
 
   // Deep-links: ?magic=  ?character=  ?resume=  or legacy ?session=&token=
   useEffect(() => {
@@ -2152,10 +2177,20 @@ export function ChatApp() {
       setError("Select a custom character before uploading clips");
       return;
     }
+    if (!account?.token) {
+      setError("Sign in to upload clips");
+      setShowAccount(true);
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
-      const result = await uploadCharacterClip(selected.id, emotion, file);
+      const result = await uploadCharacterClip(
+        selected.id,
+        emotion,
+        file,
+        account.token,
+      );
       applyClipResult(selected.id, result.mediaOverrides, result.clips);
       flashCopy(`Uploaded ${emotion} clip`);
     } catch (err) {
@@ -2172,11 +2207,20 @@ export function ChatApp() {
       setError("Select a custom character before uploading clips");
       return;
     }
+    if (!account?.token) {
+      setError("Sign in to upload clips");
+      setShowAccount(true);
+      return;
+    }
     setCreating(true);
     setError(null);
     try {
       const files = Array.from(fileList);
-      const result = await uploadCharacterClipsBatch(selected.id, files);
+      const result = await uploadCharacterClipsBatch(
+        selected.id,
+        files,
+        account.token,
+      );
       applyClipResult(selected.id, result.mediaOverrides, result.clips);
       const n = result.uploaded.length;
       const skip = result.skipped.length;
@@ -3369,12 +3413,52 @@ export function ChatApp() {
               characters.some((c) => c.id === character && c.kind === "custom") && (
                 <div className="rounded-lg border border-brand-border/70 bg-brand-bg p-3">
                   <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-xs text-brand-muted">
-                      Edit clips for{" "}
-                      <span className="text-brand-text">
-                        {characters.find((c) => c.id === character)?.displayName}
-                      </span>
-                    </p>
+                    <div className="min-w-0">
+                      <p className="text-xs text-brand-muted">
+                        Edit clips for{" "}
+                        <span className="text-brand-text">
+                          {characters.find((c) => c.id === character)?.displayName}
+                        </span>
+                      </p>
+                      {(() => {
+                        const sel = characters.find((c) => c.id === character);
+                        if (!sel) return null;
+                        const keys: MediaClipKey[] = [
+                          "idle",
+                          "teasing",
+                          "playful",
+                          "aroused",
+                        ];
+                        // Count dedicated overrides / mediaBase — not signature fallback clips
+                        const filled = keys.filter((k) => !!sel.mediaOverrides?.[k]?.trim());
+                        const hasBase = !!sel.mediaBase?.trim();
+                        return (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+                              Pack {filled.length}/4
+                              {hasBase ? " · base folder" : ""}
+                            </span>
+                            {keys.map((k) => {
+                              const ok = !!sel.mediaOverrides?.[k]?.trim();
+                              return (
+                                <span
+                                  key={k}
+                                  className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${
+                                    ok
+                                      ? "border-emerald-400/45 bg-emerald-500/15 text-emerald-100"
+                                      : "border-brand-border bg-brand-bg text-brand-muted"
+                                  }`}
+                                  title={ok ? `${k} ready` : `${k} missing`}
+                                >
+                                  {ok ? "✓ " : ""}
+                                  {k}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="button"
