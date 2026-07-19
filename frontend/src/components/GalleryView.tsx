@@ -124,6 +124,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     if (!continueTarget?.resumeCode) return null;
     return buildResumeChatPath(continueTarget);
   }, [continueTarget]);
+  const continueUrgent = useMemo(
+    () => isResumeExpiryUrgent(continueTarget?.resumeExpiresAt),
+    [continueTarget?.resumeExpiresAt],
+  );
 
   const counts = useMemo(
     () => ({
@@ -402,10 +406,26 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 18+ · Procharacters.cloud / KGC Ventures</footer>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
+      <div
+        className={`fixed inset-x-0 bottom-0 z-30 border-t bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden ${
+          continueUrgent
+            ? "border-rose-400/50 shadow-[0_-8px_28px_-12px_rgba(244,63,94,0.45)]"
+            : "border-brand-border/70"
+        }`}
+      >
         <div className="mx-auto flex max-w-lg gap-2">
           {continueHref ? (
-            <Link href={continueHref} className="btn-primary flex-1">Continue{continueCard?.displayName ? ` · ${continueCard.displayName.split(" ")[0]}` : ""}</Link>
+            <Link
+              href={continueHref}
+              className={`btn-primary flex-1 ${
+                continueUrgent ? "ring-2 ring-rose-400/55 animate-pulse" : ""
+              }`}
+            >
+              {continueUrgent ? "Reclaim" : "Continue"}
+              {continueCard?.displayName
+                ? ` · ${continueCard.displayName.split(" ")[0]}`
+                : ""}
+            </Link>
           ) : (
             <Link href="/chat" className="btn-primary flex-1">Open live chat</Link>
           )}

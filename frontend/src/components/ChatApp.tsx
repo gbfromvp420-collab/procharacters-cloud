@@ -58,6 +58,7 @@ import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
+import { SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
@@ -303,6 +304,9 @@ export function ChatApp() {
     resumeCode: string | null;
     messageCount: number;
   } | null>(null);
+  /** Live session stopwatch (seconds) while status === ready. */
+  const [liveSeconds, setLiveSeconds] = useState(0);
+  const liveStartedAtRef = useRef<number | null>(null);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
@@ -545,6 +549,23 @@ export function ChatApp() {
     const t = window.setTimeout(() => setBandFlash(null), 2200);
     return () => window.clearTimeout(t);
   }, [avatarState]);
+
+  // Live session clock — soft depth context, not a hard timer product
+  useEffect(() => {
+    if (status === "ready") {
+      if (liveStartedAtRef.current == null) {
+        liveStartedAtRef.current = Date.now();
+        setLiveSeconds(0);
+      }
+      const t = window.setInterval(() => {
+        const start = liveStartedAtRef.current ?? Date.now();
+        setLiveSeconds(Math.floor((Date.now() - start) / 1000));
+      }, 1000);
+      return () => window.clearInterval(t);
+    }
+    liveStartedAtRef.current = null;
+    setLiveSeconds(0);
+  }, [status]);
 
   // Per-character composer drafts — swap brains without losing unsent heat
   useEffect(() => {
@@ -3106,17 +3127,21 @@ export function ChatApp() {
             }`}
           >
             <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
-              <p className="text-[11px] text-brand-muted">
-                {messages.length > 0
-                  ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
-                  : "Transcript"}
-                {status === "ready" && messages.length >= 6 ? " · deep heat" : ""}
-                {status === "ready" && messages.length > 0 && messages.length < 6
-                  ? " · warming up"
-                  : ""}
-                {avatarCollapsed ? " · avatar hidden" : ""}
-                {headerMind ? ` · ${headerMind.tag}` : ""}
-              </p>
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <p className="text-[11px] text-brand-muted">
+                  {messages.length > 0
+                    ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
+                    : "Transcript"}
+                  {avatarCollapsed ? " · avatar hidden" : ""}
+                  {headerMind ? ` · ${headerMind.tag}` : ""}
+                </p>
+                {status === "ready" && (
+                  <SessionDepthMeter
+                    messageCount={messages.length}
+                    liveSeconds={liveSeconds}
+                  />
+                )}
+              </div>
               <div className="flex items-center gap-2">
                 {bandFlash && (
                   <span
@@ -3200,6 +3225,10 @@ export function ChatApp() {
                     characterName={headerCharacterName}
                     openingMessage={selectedOpening}
                     variant={status === "ready" ? "live" : "idle"}
+                    onSeedReply={(text) => {
+                      setInput(text);
+                      window.setTimeout(() => inputRef.current?.focus(), 50);
+                    }}
                   />
                 )}
               {messages.length === 0 && !isTyping && (
