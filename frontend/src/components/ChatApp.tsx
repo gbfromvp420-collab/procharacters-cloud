@@ -107,6 +107,7 @@ import {
   energyBandBadgeClass,
   energyBandFromAvatar,
   energyBandLabel,
+  energyBandRoomClass,
   type EnergyBand,
 } from "@/lib/energy";
 import {
@@ -2102,10 +2103,20 @@ export function ChatApp() {
             ? "Error"
             : "Disconnected";
 
+  const liveBand =
+    status === "ready" ? energyBandFromAvatar(avatarState) : ("idle" as EnergyBand);
+  const roomWash = energyBandRoomClass(liveBand);
+  const almostHot =
+    modeState?.mode === "edge_pace" && modeState.phase === "almost" && status === "ready";
+  const highArousal =
+    status === "ready" && (avatarState?.arousalLevel ?? 0) >= 0.62;
+
   return (
     <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(225,29,143,0.08),transparent_40%)]" />
+      <div
+        className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${roomWash}`}
+      />
 
       {/* Sticky glass top chrome */}
       <header className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
@@ -3538,7 +3549,10 @@ export function ChatApp() {
                     }}
                   />
                 )}
-              {status === "ready" && messages.length <= 4 && !sending && !isTyping && (
+              {status === "ready" &&
+                !sending &&
+                !isTyping &&
+                (messages.length <= 4 || almostHot || highArousal) && (
                 <QuickReplyChips
                   characterId={activeCharacterId ?? character}
                   characterName={characterName ?? headerCharacterName}

@@ -63,3 +63,17 @@ export function energyBandBadgeClass(band: EnergyBand): string {
       return "border-brand-border bg-brand-bg/80 text-brand-muted";
   }
 }
+
+/** Full-room ambient wash for live chat shell by energy band. */
+export function energyBandRoomClass(band: EnergyBand): string {
+  switch (band) {
+    case "edge":
+      return "bg-[radial-gradient(ellipse_at_70%_10%,rgba(244,63,94,0.18),transparent_50%)]";
+    case "play":
+      return "bg-[radial-gradient(ellipse_at_70%_10%,rgba(251,191,36,0.14),transparent_50%)]";
+    case "tease":
+      return "bg-[radial-gradient(ellipse_at_70%_10%,rgba(225,29,143,0.14),transparent_50%)]";
+    default:
+      return "bg-[radial-gradient(ellipse_at_70%_10%,rgba(225,29,143,0.06),transparent_45%)]";
+  }
+}

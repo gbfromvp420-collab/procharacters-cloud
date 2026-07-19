@@ -460,6 +460,15 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               </button>
             ))}
           </div>
+          {(query.trim() || filter !== "all") && (
+            <p className="text-[10px] text-brand-muted">
+              Showing{" "}
+              <span className="font-semibold text-brand-text">{visible.length}</span>{" "}
+              mind{visible.length === 1 ? "" : "s"}
+              {query.trim() ? ` for “${query.trim()}”` : ""}
+              {filter !== "all" ? ` · ${filter}` : ""}
+            </p>
+          )}
         </div>
 
         {visible.length === 0 ? (
