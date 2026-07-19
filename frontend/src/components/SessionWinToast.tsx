@@ -2,6 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  fetchBillingCatalog,
+  fetchBillingStatus,
+  formatUsdCents,
+  startBillingCheckout,
+} from "@/lib/api";
+import { loadStoredAccount } from "@/lib/account-storage";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
 
@@ -10,6 +17,7 @@ const SEEN_KEY = "procharacters.sessionWin.seen.v1";
 /**
  * First “this is sticky” win — resume code landed + real chat heat.
  * Celebrates, copies code, points at push/install without blocking free chat.
+ * Soft Day Pass CTA only when signed in + Stripe ready + not already premium.
  */
 export function SessionWinToast({
   show,
@@ -26,6 +34,10 @@ export function SessionWinToast({
 }) {
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [offerCheckout, setOfferCheckout] = useState(false);
+  const [dayPrice, setDayPrice] = useState("$4.99");
+  const [busy, setBusy] = useState(false);
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "them";
 
@@ -48,6 +60,45 @@ export function SessionWinToast({
     }
     setVisible(true);
   }, [show, resumeCode, messageCount, characterId]);
+
+  useEffect(() => {
+    if (!visible) {
+      setOfferCheckout(false);
+      return;
+    }
+    let cancelled = false;
+    async function probe() {
+      try {
+        const account = loadStoredAccount();
+        if (!account) {
+          if (!cancelled) setOfferCheckout(false);
+          return;
+        }
+        const status = await fetchBillingStatus(account.token);
+        if (cancelled) return;
+        if (status.activePremium || !status.configured) {
+          setOfferCheckout(false);
+          return;
+        }
+        setOfferCheckout(true);
+        try {
+          const cat = await fetchBillingCatalog();
+          const day = cat.products?.find((p) => p.id === "day_pass");
+          if (day && !cancelled) {
+            setDayPrice(formatUsdCents(day.amountCents, day.currency));
+          }
+        } catch {
+          /* keep default $4.99 */
+        }
+      } catch {
+        if (!cancelled) setOfferCheckout(false);
+      }
+    }
+    void probe();
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
 
   if (!visible || !resumeCode) return null;
 
@@ -75,6 +126,25 @@ export function SessionWinToast({
     window.setTimeout(() => setCopied(false), 1600);
   };
 
+  const onDayPass = async () => {
+    const account = loadStoredAccount();
+    if (!account) {
+      window.location.href = "/account";
+      return;
+    }
+    setBusy(true);
+    setCheckoutError(null);
+    try {
+      const { url } = await startBillingCheckout(account.token, "day_pass");
+      window.location.href = url;
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error ? err.message : "Checkout failed — free chat still works",
+      );
+      setBusy(false);
+    }
+  };
+
   return (
     <div
       className="mb-3 animate-rise-in rounded-xl border border-emerald-400/40 bg-gradient-to-r from-emerald-500/15 via-brand-panel to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm"
@@ -92,6 +162,11 @@ export function SessionWinToast({
             <span className="font-mono text-emerald-100">{resumeCode}</span> saves this chat —
             come back anytime{messageCount >= 3 ? ` · ${messageCount} messages deep` : ""}.
           </p>
+          {checkoutError && (
+            <p className="mt-1.5 text-[10px] text-rose-300/90" role="alert">
+              {checkoutError}
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
@@ -114,6 +189,17 @@ export function SessionWinToast({
             >
               Push · Account
             </Link>
+            {offerCheckout && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void onDayPass()}
+                className="btn-ghost min-h-0 border-amber-400/45 px-3 py-1.5 text-xs text-amber-100 disabled:opacity-60"
+                title="Optional — free chat never paywalls"
+              >
+                {busy ? "Opening…" : `Day Pass · ${dayPrice}`}
+              </button>
+            )}
             <button
               type="button"
               onClick={() => dismiss(true)}

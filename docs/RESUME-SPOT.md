@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (night cook **closed** — final ship on `main`)  
+**Updated:** 2026-07-19 (**morning cook** — one-tap checkout live surface)  
 **Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
 
 ---
@@ -9,18 +9,19 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Eng night cook** | ✅ **CLOSED** — massive continuity/heat/growth stack on `main` | Hard refresh **web** after Railway deploy |
-| Stripe | ✅ **LIVE** (`billing.mode=live`, webhook on) · Day Pass $4.99 / Supporter $9.99 | Gary: smoke checkout carefully — **real money** |
+| **Eng night cook** | ✅ **CLOSED** — continuity/heat/growth stack on `main` | — |
+| **Morning cook** | ✅ One-tap **Day Pass / Supporter** from Soft Support + soft CTA on Heat locked in | Hard refresh **web** after Railway deploy |
+| Stripe | ✅ **LIVE** · one-tap from chat/gallery (signed-in) | Gary: smoke checkout carefully — **real money** |
 | Railway | ✅ project `captivating-vision` | Optional: confirm web SHA ≈ latest `main` |
 | 4K packs | ✅ all 6 Phase 4 dedicated packs | Gallery → green **4K pack** badges |
 | Named roster | ✅ Mateo / Diego / Rio / Luna / Sienna / Mila | — |
-| **Morning** | Rest product; phone smoke optional | Say `resume` / `spot` / `next` / `cook` |
+| **Next** | Ops optional / content packs / more conversion polish | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 
 ## What shipped this cook marathon (highlights)
 
-Return loop · mind fingerprints · hero reel · drafts · fire/afterglow chips · Edge Pace superheat · whisper Seed/Fire · offline banner · soft support (free forever) · session win · pause→continue · Export MD · Share heat · depth meter · room wash · Reclaim UX · 4K filter/sort · Use again · first-live flash · …
+Return loop · mind fingerprints · hero reel · drafts · fire/afterglow chips · Edge Pace superheat · whisper Seed/Fire · offline banner · soft support (free forever) · **one-tap Stripe checkout** · session win + soft Day Pass · pause→continue · Export MD · Share heat · depth meter · room wash · Reclaim · 4K filter/sort · Use again · first-live flash · …
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 
@@ -51,4 +52,4 @@ Tip: `git log --oneline -25` on `main` for the full plate list.
 - [ops-billing-stripe.md](./ops-billing-stripe.md)  
 - [RAILWAY.md](../RAILWAY.md)  
 
-*Knives racked. Product is hotter. Rest well.*
+*Morning knives out for cashflow with dignity. Free path forever.*

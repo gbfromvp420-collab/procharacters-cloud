@@ -2,14 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { fetchBillingStatus } from "@/lib/api";
+import {
+  fetchBillingCatalog,
+  fetchBillingStatus,
+  formatUsdCents,
+  startBillingCheckout,
+  type BillingCatalogProduct,
+} from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
 
 const DISMISS_KEY = "procharacters.softSupport.dismissed.v1";
 
 /**
  * Optional support path — only after real engagement, never blocks free chat.
- * Cashflow with dignity: free forever, Day Pass / Supporter when ready.
+ * Cashflow with dignity: free forever, one-tap Day Pass / Supporter when Stripe is live.
  */
 export function SoftSupportHint({
   hasEngagement,
@@ -22,6 +28,9 @@ export function SoftSupportHint({
   const [show, setShow] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const [checkoutReady, setCheckoutReady] = useState(false);
+  const [products, setProducts] = useState<BillingCatalogProduct[]>([]);
+  const [busy, setBusy] = useState<"day_pass" | "supporter" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -39,19 +48,26 @@ export function SoftSupportHint({
         if (!account) {
           if (!cancelled) {
             setSignedIn(false);
+            setCheckoutReady(false);
             setShow(true);
           }
           return;
         }
         if (!cancelled) setSignedIn(true);
         try {
-          const status = await fetchBillingStatus(account.token);
+          const [status, catalog] = await Promise.all([
+            fetchBillingStatus(account.token),
+            fetchBillingCatalog().catch(() => null),
+          ]);
           if (cancelled) return;
           if (status.activePremium) {
             setShow(false);
             return;
           }
           setCheckoutReady(!!status.configured);
+          if (catalog?.products?.length) {
+            setProducts(catalog.products);
+          }
           setShow(true);
         } catch {
           if (!cancelled) setShow(true);
@@ -77,6 +93,29 @@ export function SoftSupportHint({
     setShow(false);
   };
 
+  const priceLabel = (id: "day_pass" | "supporter", fallback: string) => {
+    const p = products.find((x) => x.id === id);
+    if (!p) return fallback;
+    return formatUsdCents(p.amountCents, p.currency);
+  };
+
+  const onCheckout = async (product: "day_pass" | "supporter") => {
+    const account = loadStoredAccount();
+    if (!account) {
+      window.location.href = "/account";
+      return;
+    }
+    setBusy(product);
+    setError(null);
+    try {
+      const { url } = await startBillingCheckout(account.token, product);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Checkout failed — free chat still works");
+      setBusy(null);
+    }
+  };
+
   return (
     <div
       className={`rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 via-brand-panel/80 to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed ${className}`}
@@ -93,7 +132,7 @@ export function SoftSupportHint({
                 Chat stays free. Optional{" "}
                 <strong className="text-brand-text">Day Pass</strong> /{" "}
                 <strong className="text-brand-text">Supporter</strong> unlocks more My Characters
-                {checkoutReady ? " — when you’re ready." : "."}
+                {checkoutReady ? " — one tap when you’re ready." : "."}
               </>
             ) : (
               <>
@@ -102,13 +141,49 @@ export function SoftSupportHint({
               </>
             )}
           </p>
+          {error && (
+            <p className="mt-1.5 text-[10px] text-rose-300/90" role="alert">
+              {error}
+            </p>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
-            <Link
-              href="/account"
-              className="btn-ghost min-h-0 border-amber-500/40 px-3 py-1.5 text-xs text-amber-100"
-            >
-              {signedIn ? "View Day Pass" : "Sign in · Account"}
-            </Link>
+            {signedIn && checkoutReady ? (
+              <>
+                <button
+                  type="button"
+                  disabled={busy != null}
+                  onClick={() => void onCheckout("day_pass")}
+                  className="btn-primary min-h-0 border-amber-400/40 bg-amber-500/90 px-3 py-1.5 text-xs text-brand-bg disabled:opacity-60"
+                >
+                  {busy === "day_pass"
+                    ? "Opening…"
+                    : `Day Pass · ${priceLabel("day_pass", "$4.99")}`}
+                </button>
+                <button
+                  type="button"
+                  disabled={busy != null}
+                  onClick={() => void onCheckout("supporter")}
+                  className="btn-ghost min-h-0 border-amber-500/40 px-3 py-1.5 text-xs text-amber-100 disabled:opacity-60"
+                >
+                  {busy === "supporter"
+                    ? "Opening…"
+                    : `Supporter · ${priceLabel("supporter", "$9.99")}`}
+                </button>
+                <Link
+                  href="/account"
+                  className="min-h-0 px-2 py-1.5 text-[10px] text-brand-muted hover:text-brand-text"
+                >
+                  Details
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/account"
+                className="btn-ghost min-h-0 border-amber-500/40 px-3 py-1.5 text-xs text-amber-100"
+              >
+                {signedIn ? "View Day Pass" : "Sign in · Account"}
+              </Link>
+            )}
             <button
               type="button"
               onClick={dismiss}

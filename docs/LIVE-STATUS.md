@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**night cook CLOSED** — final plate shipped)  
+**Updated:** 2026-07-19 (**morning cook** — one-tap Day Pass / Supporter on Soft Support)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -39,11 +39,12 @@
 | Account **System pulse** | ✅ live `/health` chips (deploy SHA, push, DB, Stripe, webhook) |
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
 | PWA install / Home Screen | ✅ manifest + install tip + offline shell |
-| Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; checkout waits for Railway keys |
+| Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
+| Soft Day Pass after heat win | ✅ Session win toast offers Day Pass when signed-in + not premium (never blocks) |
 | Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
 | Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
-| Chat continuity pack | ✅ **night closed** — full heat/return stack · first-live flash · win toast paths · Seed/Fire · room wash · Reclaim · Export/Share heat |
+| Chat continuity pack | ✅ night stack + morning conversion CTAs · first-live flash · win toast · Seed/Fire · room wash · Reclaim · Export/Share heat |
 
 ---
 
@@ -51,7 +52,8 @@
 
 1. ~~**Phone push**~~ ✅ done  
 2. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
-3. **Stripe (when ready):** paste keys on Railway API per [ops-billing-stripe.md](./ops-billing-stripe.md) — eng confirm-on-return already shipped  
+3. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap, or Account checkout — free path always works  
+
 4. **Avatar packs (content):** cut your library into 4 loops — start with 6 featured models → [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
 
 ---
