@@ -48,6 +48,11 @@ export interface SessionRecord {
   sessionMode?: SessionMode;
   /** ISO when mode clock started. */
   modeStartedAt?: string;
+  /**
+   * Studio Forge DNA behavior-tree soft stepper — active node id
+   * (e.g. spark | tease | edge | deny | release-gate).
+   */
+  dnaTreeNodeId?: string;
 }
 
 export interface CreateSessionInput {

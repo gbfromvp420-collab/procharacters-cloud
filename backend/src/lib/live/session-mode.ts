@@ -201,6 +201,13 @@ export function buildSessionModeInstructions(
 export function formatModeForUi(
   state: ModeRuntimeState,
   characterId?: string,
+  dnaTree?: {
+    nodeId: string;
+    label: string;
+    fireLine?: string;
+    chips?: string[];
+    advanced?: boolean;
+  } | null,
 ): {
   mode: SessionMode;
   label: string;
@@ -214,11 +221,19 @@ export function formatModeForUi(
   fireLine: string;
   /** Micro chips for one-tap replies this phase */
   phaseChips: string[];
+  /** Studio Forge DNA tree node (custom-v3 soft stepper). */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  dnaTreeAdvanced?: boolean;
 } {
   const phaseDurationSec =
     EDGE_PHASES.find((p) => p.phase === state.phase)?.seconds ??
     Math.max(1, state.phaseElapsedSec + state.phaseRemainingSec);
   const phase = state.phase;
+  const edgeFire = edgePaceFireLine(characterId, phase);
+  const edgeChips = edgePacePhaseChips(phase);
+  // Edge Pace owns fire chips when active; DNA tree fills normal mode + optional coach color
+  const useDnaFire = state.mode !== "edge_pace" && !!dnaTree?.fireLine;
   return {
     mode: state.mode,
     label: state.label,
@@ -228,7 +243,15 @@ export function formatModeForUi(
     phaseElapsedSec: state.phaseElapsedSec,
     phaseDurationSec,
     coachCue: state.coachCue,
-    fireLine: edgePaceFireLine(characterId, phase),
-    phaseChips: edgePacePhaseChips(phase),
+    fireLine: useDnaFire ? dnaTree!.fireLine! : edgeFire,
+    phaseChips:
+      useDnaFire && dnaTree?.chips?.length ? dnaTree.chips.slice(0, 3) : edgeChips,
+    ...(dnaTree
+      ? {
+          dnaTreeNodeId: dnaTree.nodeId,
+          dnaTreeLabel: dnaTree.label,
+          dnaTreeAdvanced: dnaTree.advanced === true,
+        }
+      : {}),
   };
 }

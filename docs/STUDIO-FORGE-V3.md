@@ -37,6 +37,7 @@ On create with DNA → `defaultVersion: custom-v3` and `characterPrompt` assembl
 | **Clip pick** | `livekit.intensityMap` when emotion/action map misses |
 | **Session mode block** | Evolution denial/pace/power/chaos + behavior root each turn |
 | **Adaptive prompt** | Behavior tree node list + evolution runtime + DNA seeds in character layer |
+| **Behavior-tree soft stepper** | `dnaTreeNodeId` on session · advances spark→tease→edge→deny/release from user language + heat auto-climb · prompt block + avatar floors · whisper UI “DNA · node” + Seed/Fire chips |
 
 ---
 
@@ -76,7 +77,7 @@ Forge complete model **under 5 seconds** in the happy path (heuristic always; LL
 ## Out of scope (still)
 
 - Full WebGL 3D mesh composer
-- Hard WS state-machine stepper for every behavior-tree edge (DNA tree is prompt + mode bias today)
+- Hard lock that blocks user-led climax (soft denial bias only)
 - Marketplace / public DNA share
 
 ---

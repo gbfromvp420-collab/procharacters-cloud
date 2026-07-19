@@ -82,18 +82,25 @@ export function HeatWhisperStrip({
 }) {
   const mind = mindFingerprint(characterId);
   const edge = modeState?.mode === "edge_pace";
+  const dnaTree = modeState?.dnaTreeLabel || modeState?.dnaTreeNodeId;
   const cue = edge && modeState?.coachCue?.trim() ? modeState.coachCue.trim() : null;
   const remaining =
     edge && modeState
       ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
       : null;
-  const line = cue || whisperForMind(characterId);
+  const line =
+    cue ||
+    (dnaTree && modeState?.fireLine?.trim()
+      ? `DNA · ${modeState.dnaTreeLabel ?? modeState.dnaTreeNodeId}: stay in this beat.`
+      : null) ||
+    whisperForMind(characterId);
   const fire = fireLineFor(
     characterId,
     edge ? modeState?.phase : null,
-    edge ? modeState?.fireLine : null,
+    modeState?.fireLine ?? null,
   );
   const almost = edge && modeState?.phase === "almost";
+  const dnaGlow = !!dnaTree && !edge;
 
   return (
     <div
@@ -102,22 +109,39 @@ export function HeatWhisperStrip({
           ? "border-rose-400/40 bg-rose-500/10 text-rose-50"
           : edge
             ? "border-rose-400/25 bg-rose-500/5 text-rose-100/90"
-            : "border-brand-border/60 bg-brand-bg/50 text-brand-muted"
+            : dnaGlow
+              ? "border-violet-400/35 bg-violet-500/10 text-violet-50/95"
+              : "border-brand-border/60 bg-brand-bg/50 text-brand-muted"
       }`}
       role="note"
     >
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span
           className={`font-semibold uppercase tracking-[0.16em] ${
-            edge ? "text-rose-200/90" : "text-brand-accent"
+            edge
+              ? "text-rose-200/90"
+              : dnaGlow
+                ? "text-violet-200/95"
+                : "text-brand-accent"
           }`}
         >
-          {edge ? `Edge · ${modeState?.phase ?? "pace"}` : mind ? `Whisper · ${mind.tag}` : "Whisper"}
+          {edge
+            ? `Edge · ${modeState?.phase ?? "pace"}`
+            : dnaTree
+              ? `DNA · ${modeState?.dnaTreeLabel ?? modeState?.dnaTreeNodeId}`
+              : mind
+                ? `Whisper · ${mind.tag}`
+                : "Whisper"}
         </span>
         {remaining != null && edge && (
           <span className="font-mono tabular-nums opacity-80">{remaining}s</span>
         )}
-        {mind?.bilingual && !edge && (
+        {modeState?.dnaTreeAdvanced && (
+          <span className="rounded-full border border-violet-300/50 bg-violet-500/20 px-1.5 py-0.5 text-[9px] text-violet-100">
+            ↑ climbed
+          </span>
+        )}
+        {mind?.bilingual && !edge && !dnaTree && (
           <span className="rounded-full border border-brand-border/70 px-1.5 py-0.5 text-[9px]">
             ES
           </span>

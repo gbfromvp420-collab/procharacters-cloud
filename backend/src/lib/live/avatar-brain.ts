@@ -21,6 +21,14 @@ export interface AvatarBrainContext {
   /** Phase 10 mode — couples timers into body language. */
   sessionMode?: SessionMode;
   edgePhase?: EdgePhase;
+  /** Studio Forge DNA tree soft bias (emotion/pose/action/arousal floors). */
+  dnaTreeBias?: {
+    emotion?: string;
+    pose?: string;
+    action?: string;
+    arousalFloor?: number;
+    arousalCeiling?: number;
+  };
 }
 
 function clamp01(n: number): number {
@@ -140,16 +148,23 @@ export function blendAvatarFromBrain(
 
   const phaseEmotion = phaseEmotionFallback(characterId, previous.emotion, ctx);
   const phaseAction = phaseActionFallback(ctx);
+  const tree = ctx?.dnaTreeBias;
 
   const emotion =
     sanitizeToken(fromGrok?.emotion) ??
     phaseEmotion ??
+    sanitizeToken(tree?.emotion) ??
     previous.emotion ??
     base.emotion;
-  const pose = sanitizeToken(fromGrok?.pose) ?? previous.pose ?? base.pose;
+  const pose =
+    sanitizeToken(fromGrok?.pose) ??
+    sanitizeToken(tree?.pose) ??
+    previous.pose ??
+    base.pose;
   const action =
     sanitizeToken(fromGrok?.action) ??
     phaseAction ??
+    sanitizeToken(tree?.action) ??
     previous.action ??
     base.action;
 
@@ -163,6 +178,14 @@ export function blendAvatarFromBrain(
       previous.arousalLevel ?? base.arousalLevel,
       ctx,
     );
+  }
+
+  // DNA tree floors/ceilings (soft — after edge phase floors)
+  if (typeof tree?.arousalFloor === "number") {
+    arousalTarget = Math.max(arousalTarget, tree.arousalFloor);
+  }
+  if (typeof tree?.arousalCeiling === "number") {
+    arousalTarget = Math.min(arousalTarget, tree.arousalCeiling);
   }
 
   return {

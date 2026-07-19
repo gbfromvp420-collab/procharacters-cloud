@@ -1,6 +1,8 @@
 import type { FastifyRequest } from "fastify";
 import type { WebSocket } from "ws";
 import { z } from "zod";
+import { getCustomCharacter } from "../lib/live/custom-characters.js";
+import { uiForTreeNode } from "../lib/live/dna-tree-stepper.js";
 import {
   computeModeState,
   formatModeForUi,
@@ -61,6 +63,29 @@ export function createWebSocketHandler(
 
     const initialAvatar = media.enrich(session.characterId, session.avatarState);
     const recentMessages = session.memory?.messages ?? [];
+    const custom = getCustomCharacter(session.characterId);
+    const treeNode =
+      session.dnaTreeNodeId && custom?.dna?.behaviorTree?.nodes
+        ? custom.dna.behaviorTree.nodes.find((n) => n.id === session.dnaTreeNodeId)
+        : custom?.dna?.behaviorTree?.nodes?.find(
+            (n) => n.id === custom.dna?.behaviorTree?.rootId,
+          );
+    const treeUi = treeNode ? uiForTreeNode(treeNode) : null;
+    const dnaTreeUi = treeNode && treeUi
+      ? {
+          nodeId: treeNode.id,
+          label: treeUi.label,
+          fireLine: treeUi.fireLine,
+          chips: treeUi.chips,
+          advanced: false,
+        }
+      : session.dnaTreeNodeId
+        ? {
+            nodeId: session.dnaTreeNodeId,
+            label: session.dnaTreeNodeId,
+            advanced: false,
+          }
+        : null;
     const modeState = formatModeForUi(
       computeModeState(
         session.sessionMode ?? "normal",
@@ -69,6 +94,7 @@ export function createWebSocketHandler(
         session.characterId,
       ),
       session.characterId,
+      dnaTreeUi,
     );
 
     send(socket, {

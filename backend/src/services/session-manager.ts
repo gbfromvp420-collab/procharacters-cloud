@@ -12,6 +12,7 @@ import {
   getOpeningMessage,
 } from "../lib/live/character-catalog.js";
 import { getCustomCharacter } from "../lib/live/custom-characters.js";
+import { initialDnaTreeNodeId } from "../lib/live/dna-tree-stepper.js";
 import { formatDnaSessionSeed } from "../lib/live/forge-dna.js";
 import { createPromptSnapshot } from "../lib/live/prompt-snapshot.js";
 import { normalizeSessionMode } from "../lib/live/session-mode.js";
@@ -340,6 +341,10 @@ export class SessionManager {
       memory.addMessage("assistant", line);
     }
 
+    const dnaTreeNodeId = custom?.dna
+      ? initialDnaTreeNodeId(custom.dna)
+      : undefined;
+
     const record: SessionRecord = {
       id: sessionId,
       characterId: promptSnapshot.characterId,
@@ -355,6 +360,7 @@ export class SessionManager {
       resumeCode,
       sessionMode,
       modeStartedAt,
+      ...(dnaTreeNodeId ? { dnaTreeNodeId } : {}),
       ...(input.accountId ? { accountId: input.accountId } : {}),
     };
 

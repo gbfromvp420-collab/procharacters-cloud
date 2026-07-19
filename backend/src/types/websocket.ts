@@ -47,6 +47,10 @@ export interface SessionModeUiState {
   coachCue: string;
   fireLine?: string;
   phaseChips?: string[];
+  /** Studio Forge DNA tree soft stepper. */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  dnaTreeAdvanced?: boolean;
 }
 
 export interface SessionReadyEvent extends ServerEventBase {

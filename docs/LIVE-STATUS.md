@@ -58,6 +58,7 @@
 | **My Models Studio** | ✅ **Slim v2** foundation retained under advanced fields |
 | **Studio Forge v3 Unchained** | ✅ Conversational fantasy → DNA (adaptive prompt + behavior tree + LiveKit meta + memory seeds) · canvas composer · sentiment clips · Export DNA · Server Action + `POST /characters/forge/expand` · save as `custom-v3` · [STUDIO-FORGE-V3.md](./STUDIO-FORGE-V3.md) |
 | **DNA runtime (live chat)** | ✅ custom-v3: memory seeds → prior/session notes · DNA starter opening · presence from LiveKit meta · clip intensity map · evolution bias in session mode · richer adaptive prompt |
+| **DNA behavior-tree stepper** | ✅ soft spark→tease→edge→deny/release mid-session · prompt + avatar floors · whisper strip DNA node · Seed/Fire chips |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |

@@ -63,6 +63,11 @@ export interface SessionModeUiState {
   fireLine?: string;
   /** Micro chips for one-tap replies this phase. */
   phaseChips?: string[];
+  /** Studio Forge DNA tree soft stepper (custom-v3). */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  /** True when the tree advanced this turn. */
+  dnaTreeAdvanced?: boolean;
 }
 
 export interface CreateSessionResponse {

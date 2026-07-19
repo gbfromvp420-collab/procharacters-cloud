@@ -3,11 +3,16 @@ import {
   blendAvatarFromBrain,
   buildConsistencyReminder,
   detectMissingTraits,
+  getCustomCharacter,
   getLiveCharacterProfile,
 } from "../lib/live/index.js";
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
 import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
+import {
+  stepDnaBehaviorTree,
+  type DnaTreeStep,
+} from "../lib/live/dna-tree-stepper.js";
 import {
   buildSessionModeInstructions,
   computeModeState,
@@ -104,10 +109,26 @@ export class ChatOrchestrator {
       Date.now(),
       session.characterId,
     );
-    const sessionModeBlock = buildSessionModeInstructions(
+    let sessionModeBlock = buildSessionModeInstructions(
       modeState,
       session.characterId,
     );
+
+    // Studio Forge DNA soft tree — advance before inject so this turn feels the node
+    const custom = getCustomCharacter(session.characterId);
+    let dnaTreeStep: DnaTreeStep | null = null;
+    if (custom?.dna?.behaviorTree?.nodes?.length) {
+      const priorTurns = Math.floor(memory.getRecentContext().messageCount / 2);
+      dnaTreeStep = stepDnaBehaviorTree({
+        dna: custom.dna,
+        currentNodeId: session.dnaTreeNodeId,
+        userMessage: content,
+        turnCount: priorTurns,
+      });
+      sessionModeBlock = [sessionModeBlock, dnaTreeStep.promptBlock]
+        .filter(Boolean)
+        .join("\n\n");
+    }
 
     // First turn after resume (or any turn with a scene lock in notes) rehydrates hard.
     const rehydrating =
@@ -154,12 +175,24 @@ export class ChatOrchestrator {
     bump("chatTurns");
     memory.addTurn(content, assistantContent);
 
-    const notes = buildSessionNotes(memory.getRecentContext().messages, {
+    let notes = buildSessionNotes(memory.getRecentContext().messages, {
       characterName: session.promptSnapshot.characterName,
       characterId: session.characterId,
       sessionMode: modeState.mode,
       edgePhase: modeState.mode === "edge_pace" ? modeState.phase : undefined,
     });
+    if (dnaTreeStep) {
+      const treeBeat = `DNA tree · ${dnaTreeStep.ui.label}${dnaTreeStep.advanced ? " ↑" : ""}`;
+      if (!notes.includes("DNA tree")) {
+        notes = notes.replace(
+          /Ongoing vibe: ([^.]+)\./,
+          (_m, vibe: string) => `Ongoing vibe: ${vibe}; ${treeBeat}.`,
+        );
+        if (!notes.includes("DNA tree")) {
+          notes = `${notes} ${treeBeat}.`.slice(0, 1200);
+        }
+      }
+    }
     memory.setSessionNotes(notes);
 
     // Opt-in cross-session: merge durable dossier (who they are / wants / heat)
@@ -197,12 +230,14 @@ export class ChatOrchestrator {
       {
         sessionMode: modeState.mode,
         edgePhase: modeState.mode === "edge_pace" ? modeState.phase : undefined,
+        dnaTreeBias: dnaTreeStep?.avatarBias,
       },
     );
 
     this.sessions.updateSession(sessionId, {
       memory: memory.toData(),
       avatarState: avatarIntent,
+      ...(dnaTreeStep ? { dnaTreeNodeId: dnaTreeStep.nodeId } : {}),
     });
 
     const lastMessage = memory.getRecentContext().messages.at(-1);
@@ -215,7 +250,19 @@ export class ChatOrchestrator {
       usedLlm,
       sessionNotes: notes,
       ...(priorNotesOut ? { priorNotes: priorNotesOut } : {}),
-      modeState: formatModeForUi(modeState, session.characterId),
+      modeState: formatModeForUi(
+        modeState,
+        session.characterId,
+        dnaTreeStep
+          ? {
+              nodeId: dnaTreeStep.nodeId,
+              label: dnaTreeStep.ui.label,
+              fireLine: dnaTreeStep.ui.fireLine,
+              chips: dnaTreeStep.ui.chips,
+              advanced: dnaTreeStep.advanced,
+            }
+          : null,
+      ),
     };
   }
 
@@ -271,9 +318,19 @@ export class ChatOrchestrator {
     signatureClothing: string,
     previous: AvatarState,
     fromGrok?: Partial<AvatarState>,
-    ctx?: { sessionMode?: "normal" | "edge_pace"; edgePhase?: ModeRuntimeState["phase"] },
+    ctx?: {
+      sessionMode?: "normal" | "edge_pace";
+      edgePhase?: ModeRuntimeState["phase"];
+      dnaTreeBias?: {
+        emotion?: string;
+        pose?: string;
+        action?: string;
+        arousalFloor?: number;
+        arousalCeiling?: number;
+      };
+    },
   ): AvatarState {
-    // Brain (Grok + presence + Edge Pace) drives body; clips only follow energy.
+    // Brain (Grok + presence + Edge Pace + DNA tree) drives body; clips only follow energy.
     return blendAvatarFromBrain(characterId, signatureClothing, previous, fromGrok, ctx);
   }
 

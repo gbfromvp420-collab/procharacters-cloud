@@ -51,6 +51,14 @@ export {
   pickBandFromDnaSentiment,
   pickClipFromDnaIntensity,
 } from "./forge-expand.js";
+export {
+  classifyDnaTreeIntent,
+  formatDnaTreePromptBlock,
+  initialDnaTreeNodeId,
+  stepDnaBehaviorTree,
+  uiForTreeNode,
+} from "./dna-tree-stepper.js";
+export type { DnaTreeEdgeKind, DnaTreeStep } from "./dna-tree-stepper.js";
 export type {
   AdaptivePromptCore,
   BehaviorTree,
