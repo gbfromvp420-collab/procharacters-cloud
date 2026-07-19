@@ -47,9 +47,13 @@ import {
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import { InstallAppHint } from "@/components/InstallAppHint";
 import { SessionDropRescue } from "@/components/SessionDropRescue";
-import { ComposerVibeChip } from "@/components/ComposerVibeChip";
+import {
+  ComposerVibeChip,
+  edgePaceComposerClass,
+} from "@/components/ComposerVibeChip";
 import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
+import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import {
   collectExportCharacters,
@@ -85,6 +89,7 @@ import {
 } from "@/lib/share-links";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
+  getResumeForCharacter,
   recapFromSessionNotes,
   rememberResumeRecap,
 } from "@/lib/resume-cache";
@@ -255,6 +260,11 @@ export function ChatApp() {
   const [avatarPip, setAvatarPip] = useState(true);
   /** Phase 6: compact "what we remember" blurb. */
   const [sessionNotes, setSessionNotes] = useState<string | null>(null);
+  /** Soft “pick up the heat” banner after resume / rejoin. */
+  const [rejoinRecap, setRejoinRecap] = useState<{
+    line: string | null;
+    show: boolean;
+  }>({ line: null, show: false });
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
@@ -600,13 +610,17 @@ export function ChatApp() {
               setModeState(data.modeState as SessionModeUiState);
               setModeTick(0);
             }
+            let notesForRecap: string | null = null;
             if (typeof data.sessionNotes === "string" && data.sessionNotes.trim()) {
               const notes = data.sessionNotes.trim();
+              notesForRecap = notes;
               setSessionNotes(notes);
               rememberResumeRecap(session.characterId, recapFromSessionNotes(notes));
             }
+            let priorForRecap: string | null = null;
             if (typeof data.priorNotes === "string" && data.priorNotes.trim()) {
-              setPriorNotes(data.priorNotes.trim());
+              priorForRecap = data.priorNotes.trim();
+              setPriorNotes(priorForRecap);
             }
             const historyFromServer = Array.isArray(data.messages)
               ? (data.messages as MemoryMessage[]).map((m) => ({
@@ -622,6 +636,13 @@ export function ChatApp() {
               setMessages(history);
             }
             pendingHistoryRef.current = null;
+            // Returning with history or memory → soft recap before they scroll
+            const cachedRecap = getResumeForCharacter(session.characterId)?.recapLine ?? null;
+            const line =
+              recapFromSessionNotes(notesForRecap) || cachedRecap || null;
+            if (history?.length || priorForRecap || line) {
+              setRejoinRecap({ line, show: true });
+            }
             rememberSession({
               sessionId: session.sessionId,
               wsToken: session.wsToken,
@@ -1303,14 +1324,19 @@ export function ChatApp() {
 
   const shareCharacterLink = async (autostart = false) => {
     const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
-    const name =
-      characters.find((c) => c.id === character)?.displayName ?? characterName ?? character;
+    const live = characters.find((c) => c.id === character);
+    const name = live?.displayName ?? characterName ?? character;
+    const opening = live?.openingMessage?.trim();
+    const quote =
+      opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url,
-      title: `${name} · Procharacters`,
-      text: autostart
-        ? `Chat with ${name} on Procharacters.cloud`
-        : `Meet ${name} on Procharacters.cloud`,
+      title: `${name} · Naughty Syntax`,
+      text: quote
+        ? `${name}: “${quote}” — live on Procharacters.cloud`
+        : autostart
+          ? `Chat with ${name} on Procharacters.cloud`
+          : `Meet ${name} on Procharacters.cloud`,
     });
     const label = shareUrlResultLabel(
       result,
@@ -2935,6 +2961,14 @@ export function ChatApp() {
               {modeState && modeState.mode === "edge_pace" && status === "ready" && (
                 <EdgePaceStrip modeState={modeState} tickOffset={modeTick} />
               )}
+              <RejoinRecapToast
+                show={rejoinRecap.show && status === "ready"}
+                characterId={activeCharacterId ?? character}
+                characterName={characterName ?? headerCharacterName}
+                recapLine={rejoinRecap.line}
+                priorNotes={priorNotes}
+                onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
+              />
               {(status === "ready" ||
                 messages.length > 0 ||
                 (!!priorNotes && status !== "connecting")) && (
@@ -3034,7 +3068,9 @@ export function ChatApp() {
             </div>
 
             {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
-            <div className="sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md sm:p-4 sm:pb-4">
+            <div
+              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-4 sm:pb-4 ${edgePaceComposerClass(modeState, status)}`}
+            >
               <ComposerVibeChip
                 characterId={activeCharacterId ?? character}
                 characterName={headerCharacterName}

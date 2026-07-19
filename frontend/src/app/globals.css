@@ -110,6 +110,44 @@ body {
   animation-play-state: paused !important;
 }
 
+/* Edge Pace composer rim — phase-reactive glow around the send box */
+.composer-edge-build {
+  box-shadow:
+    inset 0 1px 0 rgba(251, 113, 133, 0.12),
+    0 -8px 28px -12px rgba(244, 63, 94, 0.28);
+  border-color: rgba(251, 113, 133, 0.35) !important;
+}
+.composer-edge-hold {
+  box-shadow:
+    inset 0 1px 0 rgba(251, 191, 36, 0.14),
+    0 -8px 28px -12px rgba(245, 158, 11, 0.32);
+  border-color: rgba(251, 191, 36, 0.4) !important;
+}
+.composer-edge-almost {
+  animation: composer-almost-pulse 1.4s ease-in-out infinite;
+  border-color: rgba(251, 113, 133, 0.65) !important;
+}
+.composer-edge-breathe {
+  box-shadow:
+    inset 0 1px 0 rgba(56, 189, 248, 0.12),
+    0 -8px 28px -12px rgba(14, 165, 233, 0.28);
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
+
+@keyframes composer-almost-pulse {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 1px 0 rgba(251, 113, 133, 0.2),
+      0 -6px 24px -10px rgba(244, 63, 94, 0.35);
+  }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(251, 113, 133, 0.35),
+      0 -10px 36px -8px rgba(244, 63, 94, 0.55);
+  }
+}
+
 /* Glass panels / sticky chrome */
 @layer components {
   .glass-bar {

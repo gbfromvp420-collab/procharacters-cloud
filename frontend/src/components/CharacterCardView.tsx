@@ -117,21 +117,31 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   };
 
   const onShareCard = async () => {
+    const opening = card.openingMessage?.trim();
+    const quote =
+      opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url: shareUrl,
-      title: `${card.displayName} · Procharacters`,
-      text: card.teaser
-        ? `Meet ${card.displayName} — ${card.teaser}`
-        : `Meet ${card.displayName} on Procharacters.cloud`,
+      title: `${card.displayName} · Naughty Syntax`,
+      text: quote
+        ? `${card.displayName}: “${quote}” — live on Procharacters.cloud`
+        : card.teaser
+          ? `Meet ${card.displayName} — ${card.teaser}`
+          : `Meet ${card.displayName} on Procharacters.cloud`,
     });
     flash(shareUrlResultLabel(result, "Card link"));
   };
 
   const onShareAutostart = async () => {
+    const opening = card.openingMessage?.trim();
+    const quote =
+      opening && opening.length > 120 ? `${opening.slice(0, 117).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url: autostartUrl,
       title: `Chat with ${card.displayName}`,
-      text: `Start a live chat with ${card.displayName} on Procharacters.cloud`,
+      text: quote
+        ? `Chat with ${card.displayName}: “${quote}”`
+        : `Start a live chat with ${card.displayName} on Procharacters.cloud`,
     });
     flash(shareUrlResultLabel(result, "Start-chat link"));
   };

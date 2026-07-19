@@ -10,6 +10,26 @@ const PHASE_LABEL: Record<string, string> = {
   breathe: "Breathe",
 };
 
+/** Rim / glow class for the composer shell by Edge Pace phase. */
+export function edgePaceComposerClass(
+  modeState: SessionModeUiState | null | undefined,
+  status: string,
+): string {
+  if (status !== "ready" || modeState?.mode !== "edge_pace") return "";
+  switch (modeState.phase) {
+    case "build":
+      return "composer-edge-build";
+    case "hold":
+      return "composer-edge-hold";
+    case "almost":
+      return "composer-edge-almost";
+    case "breathe":
+      return "composer-edge-breathe";
+    default:
+      return "composer-edge-build";
+  }
+}
+
 /**
  * Sticky chip above the chat composer — mind identity + Edge Pace phase.
  */
@@ -60,10 +80,20 @@ export function ComposerVibeChip({
         </span>
       )}
       {edgeLive && phase && (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-rose-400/45 bg-rose-500/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-rose-100">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
+            modeState?.phase === "almost"
+              ? "border-rose-300/70 bg-rose-500/25 text-rose-50 animate-pulse"
+              : modeState?.phase === "hold"
+                ? "border-amber-400/55 bg-amber-500/15 text-amber-50"
+                : modeState?.phase === "breathe"
+                  ? "border-sky-400/45 bg-sky-500/15 text-sky-50"
+                  : "border-rose-400/45 bg-rose-500/15 text-rose-100"
+          }`}
+        >
           Edge Pace · {phase}
           {remaining != null && (
-            <span className="font-mono font-normal tabular-nums normal-case tracking-normal text-rose-100/85">
+            <span className="font-mono font-normal tabular-nums normal-case tracking-normal opacity-90">
               {remaining}s
             </span>
           )}

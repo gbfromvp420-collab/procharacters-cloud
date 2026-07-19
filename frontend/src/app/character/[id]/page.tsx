@@ -27,7 +27,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
 
   const title = `${card.displayName} · Naughty Syntax`;
-  const description = card.teaser;
+  const opening = card.openingMessage?.trim();
+  const description = opening
+    ? `“${opening.length > 160 ? `${opening.slice(0, 157)}…` : opening}”`
+    : card.teaser;
   const image = absoluteMediaUrl(card.posterClip, origin);
   const url = `${origin}${card.cardPath}`;
 

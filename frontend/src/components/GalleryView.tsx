@@ -185,10 +185,17 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   };
 
   const shareCard = async (card: CharacterCard) => {
+    const opening = card.openingMessage?.trim();
+    const quote =
+      opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url: `${siteOrigin}${card.cardPath}`,
-      title: `${card.displayName} · Procharacters`,
-      text: card.teaser ? `Meet ${card.displayName} — ${card.teaser}` : `Meet ${card.displayName} on Procharacters.cloud`,
+      title: `${card.displayName} · Naughty Syntax`,
+      text: quote
+        ? `${card.displayName}: “${quote}” — live on Procharacters.cloud`
+        : card.teaser
+          ? `Meet ${card.displayName} — ${card.teaser}`
+          : `Meet ${card.displayName} on Procharacters.cloud`,
     });
     flash(shareUrlResultLabel(result, card.displayName));
   };
