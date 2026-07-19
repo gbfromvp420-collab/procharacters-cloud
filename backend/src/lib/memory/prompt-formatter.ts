@@ -14,10 +14,51 @@ export interface FormatMemoryOptions {
 export const ANTI_LOOP_CONTINUITY_DIRECTIVE = `## ANTI-LOOP & CONTINUITY DIRECTIVE
 - NEVER repeat previous messages verbatim.
 - Always reference the LAST user action explicitly.
-- Progress arousal/clothing/pose state incrementally.
+- Progress arousal/clothing/pose state incrementally — use Scene lock pose + act when present.
 - If turns >= 3 and vibe feels repetitive, inject fresh bratty variation (new tease, physical detail, denial twist).
-- Session restore MUST rehydrate: current clothing="crotchless open", arousal level, ongoing edging/denial game.
-- Do not restart the scene, re-introduce yourself, or recycle the same joke/count/dare.`;
+- Session restore MUST rehydrate: clothing, pose, act, arousal, ongoing game from Scene lock / notes.
+- Do not restart the scene, re-introduce yourself, or recycle the same joke/count/dare.
+- Never drop signature clothing mid-scene without a user-led reason.`;
+
+/**
+ * Session heat depth from turn count — drives pacing so mid/late sessions
+ * don't soft-reset or stay stuck in opener energy.
+ */
+export function heatArcDirective(turnCount: number): string {
+  if (turnCount <= 1) {
+    return [
+      "### Heat arc · spark (open)",
+      "Establish body, signature clothing, and one hook. Soft invitation — don't skip to peak.",
+      "Plant one physical detail the later turns can call back.",
+    ].join("\n");
+  }
+  if (turnCount <= 5) {
+    return [
+      "### Heat arc · warm (build)",
+      "Escalate one concrete detail (fabric, breath, grip, eye contact). Name the game if denial is in play.",
+      "Stay in the established pose unless they move you.",
+    ].join("\n");
+  }
+  if (turnCount <= 11) {
+    return [
+      "### Heat arc · edge (pace control)",
+      "Denial / praise / control beats land hard. Specific anatomy + fabric physics every reply.",
+      "Callback to an earlier user beat. No 'hey stranger' energy.",
+    ].join("\n");
+  }
+  if (turnCount <= 19) {
+    return [
+      "### Heat arc · deep (sticky heat)",
+      "Long-session intimacy: short sentences, heavy presence, rare novelty.",
+      "Protect continuity — same clothing/pose/game. Escalate intensity, not new plot.",
+    ].join("\n");
+  }
+  return [
+    "### Heat arc · locked (obsession mode)",
+    "They stayed. Reward loyalty with recognition + denser sensory detail, not monologue.",
+    "Micro-variations only (breath, wetness, rule tweaks). Never cold-restart or re-introduce.",
+  ].join("\n");
+}
 
 /**
  * Formats session memory into a block injected into the system prompt.
@@ -34,7 +75,8 @@ export function formatMemoryBlock(
     lines.push(
       "",
       "### Continuity lock (resume-safe)",
-      'Clothing default if unspecified: crotchless open panel still on.',
+      "Rehydrate from Scene lock when present (clothing / pose / act / arousal / game).",
+      'Clothing default if unspecified: crotchless open panel or signature sheer still on.',
       "Carry forward arousal + any edging/denial game already in play.",
       "This is a continuation — never cold-open as if the session just started.",
     );
@@ -61,6 +103,8 @@ export function formatMemoryBlock(
         ? "Continue from the notes above; open in character."
         : "This is the start of the session. No prior messages yet.",
       "Build rapport slowly and stay in character.",
+      "",
+      heatArcDirective(0),
       "",
       ANTI_LOOP_CONTINUITY_DIRECTIVE,
     );
@@ -97,6 +141,8 @@ export function formatMemoryBlock(
     "",
     "Stay consistent with the conversation and notes above. Do not contradict prior messages.",
     "",
+    heatArcDirective(turnCount),
+    "",
     ANTI_LOOP_CONTINUITY_DIRECTIVE,
   );
 
@@ -105,6 +151,14 @@ export function formatMemoryBlock(
       "",
       "### Anti-stagnation (turns ≥ 3)",
       "Escalate one new physical detail, rule, or denial twist this reply. No recycled openers.",
+    );
+  }
+
+  if (turnCount >= 12) {
+    lines.push(
+      "",
+      "### Deep-session guard",
+      "Prefer shorter, denser replies. Callback > new premise. Keep the same body state.",
     );
   }
 

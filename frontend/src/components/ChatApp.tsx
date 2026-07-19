@@ -65,7 +65,10 @@ import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
 import { LastBeatEcho } from "@/components/LastBeatEcho";
 import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
-import { SessionDepthMeter } from "@/components/SessionDepthMeter";
+import {
+  heatDepthFromMessages,
+  SessionDepthMeter,
+} from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
@@ -2456,10 +2459,7 @@ export function ChatApp() {
   const liveBand =
     status === "ready" ? energyBandFromAvatar(avatarState) : ("idle" as EnergyBand);
   const roomWash = energyBandRoomClass(liveBand);
-  const almostHot =
-    modeState?.mode === "edge_pace" && modeState.phase === "almost" && status === "ready";
-  const highArousal =
-    status === "ready" && (avatarState?.arousalLevel ?? 0) >= 0.62;
+  const heatDepth = heatDepthFromMessages(messages.length);
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
@@ -3888,7 +3888,22 @@ export function ChatApp() {
               {(status === "ready" ||
                 messages.length > 0 ||
                 (!!priorNotes && status !== "connecting")) && (
-                <SessionMemoryStrip priorNotes={priorNotes} sessionNotes={sessionNotes} />
+                <SessionMemoryStrip
+                  priorNotes={priorNotes}
+                  sessionNotes={sessionNotes}
+                  onChipPick={
+                    status === "ready"
+                      ? (text) => {
+                          setInput((prev) => {
+                            const p = prev.trim();
+                            if (!p) return text;
+                            return `${p} ${text}`;
+                          });
+                          window.setTimeout(() => inputRef.current?.focus(), 40);
+                        }
+                      : undefined
+                  }
+                />
               )}
               {/* Opening continuity before first message lands */}
               {messages.length === 0 &&
@@ -4042,6 +4057,7 @@ export function ChatApp() {
                           modeState?.mode === "edge_pace" &&
                           modeState.phase === "almost"
                         }
+                        heatDepth={heatDepth.label}
                         onFire={(text) => sendMessage(text)}
                         onPick={(text) => {
                           setInput((prev) => {
@@ -4137,14 +4153,12 @@ export function ChatApp() {
                     }}
                   />
                 )}
-              {status === "ready" &&
-                !sending &&
-                !isTyping &&
-                !input.trim() &&
-                (messages.length <= 4 || almostHot || highArousal) && (
+              {/* Always offer vibe chips when composer is empty — mid-session used to go blank */}
+              {status === "ready" && !sending && !isTyping && !input.trim() && (
                 <QuickReplyChips
                   characterId={activeCharacterId ?? character}
                   characterName={characterName ?? headerCharacterName}
+                  heatDepth={heatDepth.label}
                   disabled={status !== "ready"}
                   onFire={(text) => sendMessage(text)}
                   onPick={(text) => {
@@ -4236,7 +4250,13 @@ export function ChatApp() {
                             : modeState.phase === "build"
                               ? "Build…"
                               : "Send"
-                      : "Send"}
+                      : heatDepth.label === "locked"
+                        ? "Stay…"
+                        : heatDepth.label === "deep"
+                          ? "Push…"
+                          : heatDepth.label === "edge"
+                            ? "Edge…"
+                            : "Send"}
                 </button>
               </div>
               {status === "ready" && (

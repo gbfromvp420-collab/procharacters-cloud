@@ -4,13 +4,17 @@ import { useMemo, useState } from "react";
 
 /**
  * Compact “what we remember” UI — prior dossier + this-session notes + scene lock chips.
+ * Chips are tappable when onChipPick is set — seed the composer with the lock beat.
  */
 export function SessionMemoryStrip({
   priorNotes,
   sessionNotes,
+  onChipPick,
 }: {
   priorNotes?: string | null;
   sessionNotes?: string | null;
+  /** Tap a scene-lock chip → seed into composer */
+  onChipPick?: (text: string) => void;
 }) {
   const hasPrior = !!(priorNotes && priorNotes.trim());
   const hasSession = !!(sessionNotes && sessionNotes.trim());
@@ -50,15 +54,31 @@ export function SessionMemoryStrip({
       {open && (
         <div className="space-y-2.5 border-t border-violet-400/15 px-3 py-2">
           {chips.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {chips.map((chip) => (
-                <span
-                  key={chip}
-                  className="rounded-full border border-rose-400/35 bg-rose-500/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-rose-100/90"
-                >
-                  {chip}
-                </span>
-              ))}
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Scene lock chips">
+              {chips.map((chip) => {
+                const seed = chipToComposerSeed(chip);
+                if (onChipPick) {
+                  return (
+                    <button
+                      key={chip}
+                      type="button"
+                      onClick={() => onChipPick(seed)}
+                      title="Seed into composer"
+                      className="rounded-full border border-rose-400/35 bg-rose-500/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-rose-100/90 transition hover:border-rose-300/60 hover:bg-rose-500/20"
+                    >
+                      {chip}
+                    </button>
+                  );
+                }
+                return (
+                  <span
+                    key={chip}
+                    className="rounded-full border border-rose-400/35 bg-rose-500/10 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-rose-100/90"
+                  >
+                    {chip}
+                  </span>
+                );
+              })}
             </div>
           )}
 
@@ -147,18 +167,24 @@ function parseSessionNotes(raw: string): {
   const scene = text.match(/Scene lock:\s*([^.]*(?:\.[^A-Z]*)?)/i)?.[1] ?? "";
   const chips: string[] = [];
   const clothing = scene.match(/clothing="([^"]+)"/i)?.[1];
+  const pose = scene.match(/pose=([^;]+)/i)?.[1]?.trim();
+  const act = scene.match(/act=([^;]+)/i)?.[1]?.trim();
   const arousal = scene.match(/arousal=([^;]+)/i)?.[1]?.trim();
   const game = scene.match(/game=([^;]+)/i)?.[1]?.trim();
+  const called = scene.match(/called=([^;]+)/i)?.[1]?.trim();
   if (clothing) chips.push(clothing);
+  if (pose && !/live cam presence/i.test(pose)) chips.push(pose);
+  if (act && !/^tease \/ escalate$/i.test(act)) chips.push(act);
   if (arousal) chips.push(arousal);
   if (game && !/tease \/ escalate/i.test(game)) chips.push(game);
+  if (called) chips.push(called);
   if (vibe) {
     for (const part of vibe.split(";")) {
       const p = part.trim();
       if (
         p &&
-        chips.length < 6 &&
-        /edge|denial|sheer|crotchless|gym|shy|brat|goth|kiss|hand/i.test(p)
+        chips.length < 8 &&
+        /heat ·|edge|denial|sheer|crotchless|gym|shy|brat|goth|kiss|hand|pose/i.test(p)
       ) {
         chips.push(p.length > 28 ? `${p.slice(0, 27)}…` : p);
       }
@@ -216,6 +242,23 @@ function parseDossier(raw: string): { sections: Array<{ title: string; items: st
 
 function stripQuotesNoise(s: string): string {
   return s.replace(/[“”]/g, '"').trim();
+}
+
+/** Turn a scene-lock chip into a short user line for the composer. */
+function chipToComposerSeed(chip: string): string {
+  const c = chip.trim();
+  if (/^heat ·/i.test(c)) return "stay in this heat with me…";
+  if (/edging|denial|peak|hold/i.test(c)) return "hold it — don’t finish yet";
+  if (/sheer|crotchless|lingerie|clothing|signature/i.test(c))
+    return `keep the ${c}… look at me`;
+  if (/kneel|on back|straddl|lean|mirror|standing|close/i.test(c))
+    return `stay ${c} for me`;
+  if (/stroke|grip|hands|kiss|grind|hover|eye contact|edging hold/i.test(c))
+    return `more of that — ${c}`;
+  if (/praise|soft-dom/i.test(c)) return "praise me while you edge me";
+  // Call name / short tag
+  if (/^[A-Z][a-zA-Z.-]{1,18}$/.test(c)) return `call me ${c}`;
+  return `keep going — ${c}`;
 }
 
 function unique(items: string[]): string[] {

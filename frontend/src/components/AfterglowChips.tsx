@@ -12,6 +12,8 @@ export function AfterglowChips({
   onFire,
   disabled,
   intense = false,
+  /** Session depth label — deep/locked get denser chips even outside Edge almost */
+  heatDepth,
 }: {
   characterId?: string | null;
   onPick: (text: string) => void;
@@ -20,8 +22,11 @@ export function AfterglowChips({
   disabled?: boolean;
   /** Edge Pace almost / high heat — denser chips + fire bias */
   intense?: boolean;
+  heatDepth?: "spark" | "warm" | "edge" | "deep" | "locked" | null;
 }) {
   const mind = mindFingerprint(characterId);
+  const deep = heatDepth === "deep" || heatDepth === "locked";
+  const hot = intense || deep || heatDepth === "edge";
   const chips = (() => {
     const core = (() => {
       switch (mind?.tag) {
@@ -45,13 +50,15 @@ export function AfterglowChips({
           return ["yes", "more", "slower", "don’t stop", "fuck…", "keep going"];
       }
     })();
-    if (intense) {
+    if (hot) {
+      const peak =
+        heatDepth === "locked"
+          ? ["don’t finish", "right there", "stay with me", "hold…"]
+          : ["don’t finish", "right there", "hold…"];
       return [
-        "don’t finish",
-        "right there",
-        "hold…",
-        ...core.filter((c) => !["don’t finish", "right there", "hold…"].includes(c)),
-      ].slice(0, 8);
+        ...peak,
+        ...core.filter((c) => !peak.includes(c)),
+      ].slice(0, deep || intense ? 8 : 6);
     }
     return core.slice(0, 5);
   })();
@@ -59,20 +66,20 @@ export function AfterglowChips({
   return (
     <div
       className={`mt-1.5 flex flex-wrap gap-1 animate-fade-in ${
-        intense ? "gap-1.5" : ""
+        hot ? "gap-1.5" : ""
       }`}
       role="group"
       aria-label="Quick reactions"
     >
-      {intense && (
+      {hot && (
         <span className="mr-0.5 self-center text-[9px] font-semibold uppercase tracking-wide text-rose-200/80">
-          Almost
+          {intense ? "Almost" : heatDepth === "locked" ? "Locked" : heatDepth === "deep" ? "Deep" : "Heat"}
         </span>
       )}
       {chips.map((chip, i) => {
         // First chips fire instantly when intense or when onFire provided + short chip
         const fire =
-          !!onFire && (intense ? i < 4 : chip.length <= 8 && i < 2);
+          !!onFire && (hot ? i < 4 : chip.length <= 8 && i < 2);
         return (
           <button
             key={`${chip}-${i}`}
@@ -82,7 +89,7 @@ export function AfterglowChips({
             title={fire ? "Send now" : "Add to composer"}
             className={`rounded-full border px-2 py-0.5 text-[10px] transition disabled:opacity-40 ${
               fire
-                ? intense
+                ? hot
                   ? "border-rose-400/50 bg-rose-500/20 font-medium text-rose-50 hover:bg-rose-500/30"
                   : "border-brand-accent/40 bg-brand-accent/15 text-brand-text hover:border-brand-accent/60"
                 : "border-brand-accent/25 bg-brand-accent/5 text-brand-muted hover:border-brand-accent/50 hover:text-brand-text"

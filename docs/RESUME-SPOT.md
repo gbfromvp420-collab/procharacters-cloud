@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**cook** — ERROR_WEBHOOK fix + test)  
-**Session:** King Grok + Gary — stay in window; terminal crash risk if they leave.
+**Updated:** 2026-07-19 (**cook** — Heat Arc continuity)  
+**Session:** King Grok + Gary — Gary on phone until ~5:30 CST (Railway vars at desk).
 
 ---
 
@@ -9,20 +9,20 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **Error alerts** | ✅ eng: **ntfy phone** (no Discord/Slack) · optional email · test button · [ops-error-webhook.md](./ops-error-webhook.md) | **You:** set `ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC` on **procharacters-api** → install ntfy → Send test alert |
-| **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass · return seed | Hard refresh web after deploy |
-| Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` |
+| **Error alerts** | ✅ eng: **ntfy phone** (no Discord/Slack) · optional email · test button · [ops-error-webhook.md](./ops-error-webhook.md) | **You @5:30:** set `ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC` on **procharacters-api** → install ntfy → Send test alert |
+| **Heat Arc** | ✅ richer scene lock · model heat-arc pacing · tappable lock chips · mid-session chips | Hard refresh after deploy; long session smoke |
+| **Conversion Close** | ✅ unlock ceremony · heat-win Day Pass · return seed | — |
+| Railway | ✅ project `captivating-vision` | Confirm SHA ≈ latest `main` after push |
 | Stripe | ✅ LIVE + webhook | Careful real charge smoke if desired |
-| **Next** | After webhook green: heat quality / content | Say `resume` / `spot` / `next` / `cook` |
+| **Next** | Webhook green @ desk · content packs when ready | Say `resume` / `spot` / `next` / `cook` |
 
 ---
 
-## What shipped this cook (Conversion Close)
+## What shipped this cook (Heat Arc)
 
-1. **PremiumUnlockCeremony** — after Stripe return, Account shows “You’re unlocked” with Create My Character · My models · Models hub · Live chat; scrolls to `#premium-unlocked`
-2. **Heat-win owns pay** — SessionWin Day Pass primary when eligible; Soft Support hides while win active + 6h cooldown after win offered checkout
-3. **Return seed** — SessionPausedBanner deep sessions: “We’ll hold this heat” + Enable alerts / Sign in CTA
-4. Checkout success URL hash `#premium-unlocked`
+1. **Scene lock v2** — clothing + pose + act + arousal + game (+ call name)
+2. **Heat arc directive** in every LLM turn — spark → warm → edge → deep → locked
+3. **UI** — memory chips tap-to-seed composer; quick replies stay mid-session; afterglow denser at deep/locked; Send label tracks depth
 
 Tip: `git log --oneline -25` on `main` for the full plate list.
 

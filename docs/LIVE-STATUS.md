@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-19 (**cook** — ERROR_WEBHOOK ops + Conversion Close)  
+**Updated:** 2026-07-19 (**cook** — Heat Arc continuity)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -29,6 +29,7 @@
 | “What we remember” memory strip | ✅ scene lock chips + structured prior |
 | Phase 5 anti-loop + restore rehydrate | ✅ `f4218eb` |
 | Memory stickiness (2026-07-18 night) | ✅ scene lock every turn · sticky Remember default · resume dossier refresh |
+| **Heat Arc continuity** | ✅ scene lock v2 (pose/act/name) · spark→locked pacing · tappable lock chips · mid-session vibe chips |
 | CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |

@@ -1,5 +1,18 @@
 "use client";
 
+export type HeatDepthLabel = "spark" | "warm" | "edge" | "deep" | "locked";
+
+/** Shared heat depth from message count — UI + chip intensity. */
+export function heatDepthFromMessages(messageCount: number): {
+  level: number;
+  label: HeatDepthLabel;
+} {
+  const level =
+    messageCount >= 20 ? 4 : messageCount >= 12 ? 3 : messageCount >= 6 ? 2 : messageCount >= 2 ? 1 : 0;
+  const labels: HeatDepthLabel[] = ["spark", "warm", "edge", "deep", "locked"];
+  return { level, label: labels[level] ?? "spark" };
+}
+
 /**
  * Soft “how deep is this heat” meter — visual stickiness, not a scoreboard.
  */
@@ -12,10 +25,7 @@ export function SessionDepthMeter({
 }) {
   if (messageCount <= 0 && !liveSeconds) return null;
 
-  const level =
-    messageCount >= 20 ? 4 : messageCount >= 12 ? 3 : messageCount >= 6 ? 2 : messageCount >= 2 ? 1 : 0;
-  const labels = ["spark", "warm", "edge", "deep", "locked"];
-  const label = labels[level] ?? "spark";
+  const { level, label } = heatDepthFromMessages(messageCount);
 
   const mins =
     liveSeconds != null && liveSeconds >= 60
@@ -46,7 +56,11 @@ export function SessionDepthMeter({
           />
         ))}
       </div>
-      <span className="text-[10px] font-medium uppercase tracking-[0.14em] text-brand-muted">
+      <span
+        className={`text-[10px] font-medium uppercase tracking-[0.14em] ${
+          level >= 3 ? "text-rose-200/90" : "text-brand-muted"
+        }`}
+      >
         {label}
       </span>
       {mins != null && (

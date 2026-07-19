@@ -98,12 +98,28 @@ export function buildSessionNotes(
   if (/handjob|stroke|palm|fingers|grip/.test(corpus)) {
     beats.push("hands-on pacing");
   }
+  if (/kneel|on (?:my |your )?back|straddl|lean(?:ing)? in|mirror/.test(corpus)) {
+    beats.push("pose locked in");
+  }
   if (beats.length === 0) {
     beats.push("slow tease / live cam rapport");
   }
 
+  // Heat arc label for UI + prompt (matches prompt-formatter turn bands)
+  const heatArc =
+    turns >= 20
+      ? "locked"
+      : turns >= 12
+        ? "deep"
+        : turns >= 6
+          ? "edge"
+          : turns >= 2
+            ? "warm"
+            : "spark";
+  beats.unshift(`heat · ${heatArc}`);
+
   // Dedupe while preserving order
-  const uniqueBeats = [...new Set(beats)].slice(0, 5);
+  const uniqueBeats = [...new Set(beats)].slice(0, 6);
   const sceneLock = extractSceneLock(messages, characterId);
 
   const lines = [

@@ -159,32 +159,91 @@ export class SessionMemory {
 }
 
 
-/** Heuristic scene lock for resume — clothing / arousal / game. */
+/**
+ * Heuristic scene lock for resume + mid-session stickiness.
+ * clothing / pose / act / arousal / game (+ optional call name).
+ */
 export function extractSceneLock(messages: MemoryMessage[], characterId?: string): string {
-  const corpus = messages
-    .slice(-16)
-    .map((m) => m.content.toLowerCase())
-    .join(" ");
+  const recent = messages.slice(-16);
+  const corpus = recent.map((m) => m.content.toLowerCase()).join(" ");
+  const rawCorpus = recent.map((m) => m.content).join(" ");
 
   const clothing =
     /crotchless|open panel|open-panel/.test(corpus)
       ? "crotchless open"
       : /sheer|thong|g-string|mesh/.test(corpus)
         ? "sheer signature on"
-        : characterId?.includes("female") || characterId?.includes("brat")
-          ? "crotchless open"
-          : "signature clothing on";
+        : /lace|lingerie|panties|undies/.test(corpus)
+          ? "lingerie / signature bottoms"
+          : characterId?.includes("female") || characterId?.includes("brat")
+            ? "crotchless open"
+            : "signature clothing on";
+
+  const pose =
+    /on (?:my |your )?back|lying back|on_back/.test(corpus)
+      ? "on back"
+      : /kneel|on (?:my |your )?knees/.test(corpus)
+        ? "kneeling"
+        : /straddl|on (?:my |your )?lap|riding/.test(corpus)
+          ? "straddling / close"
+          : /lean(?:ing)? in|close.?up|face.?to.?face|inches? away/.test(corpus)
+            ? "close / leaning in"
+            : /mirror|watching (?:myself|yourself)/.test(corpus)
+              ? "mirror view"
+              : /standing|against the wall/.test(corpus)
+                ? "standing"
+                : "live cam presence";
+
+  const act =
+    /handjob|stroke|stroking|palm|grip|fist/.test(corpus)
+      ? "hands-on stroke / grip"
+      : /french kiss|tongue|making out|kiss(?:ing)?/.test(corpus)
+        ? "kissing / mouth heat"
+        : /grind|hip.?roll|rub(?:bing)? against/.test(corpus)
+          ? "grinding / friction"
+          : /hover|tease over|over.?fabric|through (?:the )?fabric/.test(corpus)
+            ? "over-fabric tease"
+            : /edge|edging|hold it|don't cum|dont cum/.test(corpus)
+              ? "edging hold"
+              : /look(?:ing)? at|eye contact|watch me/.test(corpus)
+                ? "eye contact / show-off"
+                : "tease / escalate";
 
   let arousal = "warm / building";
-  if (/edge|edging|so close|almost|hold it|don't cum|dont cum|denial/.test(corpus)) {
+  if (
+    /so close|almost there|right on the edge|can't hold|cant hold|about to|gonna cum|going to cum/.test(
+      corpus,
+    )
+  ) {
+    arousal = "peak · denial hold";
+  } else if (/edge|edging|hold it|don't cum|dont cum|denial|not yet|no finish/.test(corpus)) {
     arousal = "high · edging / denial active";
-  } else if (/wet|hard|throbbing|dripping|moan|puffy|swollen/.test(corpus)) {
+  } else if (/wet|hard|throbbing|dripping|moan|puffy|swollen|leaking|precum/.test(corpus)) {
     arousal = "visibly aroused";
+  } else if (/calm|soft|afterglow|come.?down|breathing/.test(corpus) && recent.length >= 4) {
+    arousal = "soft / afterglow pocket";
   }
 
-  const game = /edge|deny|denial|count|beg|please|no finish/.test(corpus)
+  const game = /edge|deny|denial|count|beg|please|no finish|not yet|hold it/.test(corpus)
     ? "ongoing edging/denial game"
-    : "tease / escalate in-character";
+    : /praise|good boy|good girl|so good/.test(corpus)
+      ? "praise / soft-dom loop"
+      : "tease / escalate in-character";
 
-  return `clothing="${clothing}"; arousal=${arousal}; game=${game}`;
+  const calledRaw =
+    rawCorpus.match(
+      /(?:call(?:ed)? me|my name(?:'s| is)|i(?:'m| am))\s+([A-Za-z][A-Za-z-]{1,18})/i,
+    )?.[1] ?? null;
+  const called = calledRaw?.replace(/[.\s,!?]+$/g, "") || null;
+
+  const parts = [
+    `clothing="${clothing}"`,
+    `pose=${pose}`,
+    `act=${act}`,
+    `arousal=${arousal}`,
+    `game=${game}`,
+  ];
+  if (called) parts.push(`called=${called}`);
+
+  return parts.join("; ");
 }
