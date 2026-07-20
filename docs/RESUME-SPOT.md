@@ -27,6 +27,7 @@
 | **DNA chat bubbles** | ✅ Assistant/user bubbles violet→rose by tree · mind tag DNA stamp | Climb Tease/Edge — transcript glows with the node |
 | **Continue forge + DNA typing** | ✅ Home Continue banner Forge this DNA · typing “is climbing…” violet dots | Hot trail on home → forge without hunting gallery |
 | **Pack pipeline** | ✅ Stage1 extract · Stage2 cut-loops v2 · **cut-loops-batch** · id-map.example | Finish primes → batch → `packs ready: <id>` |
+| **GrokBuild 4K v1.0** | ✅ Humanized balanced packs · Pack 01 roster (3F+3M names+tags) · live-folder map | 6 primes → cut-loops → theme defs → `packs ready` |
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |

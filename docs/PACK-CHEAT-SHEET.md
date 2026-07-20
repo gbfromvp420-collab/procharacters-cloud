@@ -1,107 +1,93 @@
 # 4K pack cheat sheet (Gary)
 
-Quick cut + package guide. Full detail: [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md) · drop-in: `frontend/public/avatar/packs/DROP_IN.md`
+**Doctrine:** [GrokBuild Directive v1.0 — Humanized Balanced 4K Packs](./GROKBUILD-4K-PACKS-v1.md)  
+Full cut guide: [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md) · drop-in: `frontend/public/avatar/packs/DROP_IN.md`
 
 ---
 
-## Folder names
+## Core rules (v1.0)
 
-**Don’t:** `Anna4kpack`, spaces, mixed case, “4k” in the name.
+| Rule | Spec |
+|------|------|
+| **Pack size** | Exactly **6 characters**: **3 female + 3 male** |
+| **Names** | **Human names primary** (Maria Murillo, Hector Garcia…) |
+| **Tags** | Flexible vibe tags (`playful-brat`, `gym-rat`, `soft-goth`…) — **not** hard-coded into identity |
+| **Clips** | 4 loops: `idle` · `teasing` · `playful` · `aroused` |
+| **Clip specs** | **5–8s**, H.264, **silent**, **9:16** preferred |
+| **Bases** | Duplicate/edit from `female-default` / `twink-default` (engine) · pack slots `female-default1…3` / `male-default1…3` |
+
+**Shift:** realistic, humanized, high-obsession — not kink-compacted niche-only IDs as the public face.
+
+---
+
+## First pack (Pack 01 · Humanized Balanced)
+
+| Pack slot | Display name | Tags | Live drop folder *(until registry expands)* | Avatar base |
+|-----------|--------------|------|-----------------------------------------------|-------------|
+| `female-default1` | **Maria Murillo** | playful-brat | `female-playful-brat` | female-default |
+| `female-default2` | **Sofia Reyes** | soft-goth | `female-soft-goth` | female-default |
+| `female-default3` | **Luna Vargas** | athletic-tease | `female-athletic-tease` | female-default |
+| `male-default1` | **Hector Garcia** | gym-rat | `twink-gym` | twink-default |
+| `male-default2` | **Diego Morales** | shy-twink | `twink-shy-boy` | twink-default |
+| `male-default3` | **Alex Rivera** | alt-punk | `twink-alt-punk` | twink-default |
+
+> **Eng note:** Drop MP4s into **live drop folder** so gallery/chat pick them up *today* without a catalog rewrite. Pack slots + human names are the content doctrine; registry display-name renames can ship when defs are themed.
+
+---
+
+## Folder / naming rules
+
+**Don’t:** `Anna4kpack`, spaces, mixed case, “4k” in the folder name, kink-only public labels without a human name.
 
 **Do:**
 
-| Track | Layout |
-|-------|--------|
-| Live Phase 4 models | `frontend/public/avatar/<model-id>/` |
-| Your library (later) | one folder per character, lowercase + hyphens (`anna-soft`, `diego-mesh`) |
+| Layer | Example |
+|-------|---------|
+| Human name (gallery / chat) | Maria Murillo |
+| Tags (mind / search / forge) | `playful-brat`, `tease` |
+| Live folder (repo path) | `frontend/public/avatar/female-playful-brat/` |
+| Pack slot (content sheet) | `female-default1` |
 
-### Phase 4 model IDs (ship these first)
-
-| Folder | Vibe |
-|--------|------|
-| `female-playful-brat` | brat / almost-good-girl |
-| `twink-gym` | post-set / flex / burn |
-| `female-soft-goth` | soft candle / hover / edge |
-| `twink-shy-boy` | shy still / peek / nervous |
-| `female-athletic-tease` | mat cool-down / stretch / hold |
-| `twink-alt-punk` | bored-hot / mesh / brat edge |
-
-Match **vibe**, not real names. “Anna” playful → `female-playful-brat`.
-
----
-
-## New characters · master list (edit as you go)
-
-Track each prime → Stage 2 pack here as we hit **6–10**. Copy a block per vibe.  
-**Status values:** `Themed in other Grok` · `Packs ready` · `Integrated` · `Needs retweak`
-
-### Template (copy for each new cut)
-
-```markdown
-### <model-id> (e.g. female-soft-goth or twink-alt-punk)
-- **Prime clip**: path/to/whatever_prime_25s.mp4
-- **Loops generated**: packs/<model-id>/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5 (or your tweaks)
-- **Status**: Themed in other Grok | Packs ready | Integrated
-- **Notes**: Hot AF teasing loop, good for Phase 4
+```
+frontend/public/avatar/<live-drop-folder>/
+  idle.mp4
+  teasing.mp4
+  playful.mp4
+  aroused.mp4
 ```
 
-### Phase 4 roster (fill in)
+---
 
-### female-playful-brat
-- **Prime clip**: _(TBD)_
-- **Loops generated**: packs/female-playful-brat/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: _(empty — cut when prime lands)_
-- **Notes**: brat / almost-good-girl
+## Pipeline
 
-### twink-gym
-- **Prime clip**: _(TBD)_
-- **Loops generated**: packs/twink-gym/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: _(empty — cut when prime lands)_
-- **Notes**: post-set / flex / burn
+1. **Stage 1** — Extract **6 primes** (20–30s) from inventory  
+   `scripts/extract-prime-clips.sh`  
+2. **Stage 2** — `cut-loops.sh` per prime → 4 loops (5–8s, fades)  
+   Map primes → live drop folder via `id-map`  
+3. **Theming** — Other Grok: full character defs from **name + tags**  
+4. **This sheet** — Update roster status / primes / offsets  
+5. **Integrate** — `cp packs/<id>/*.mp4 frontend/public/avatar/<live-folder>/` → **`packs ready: <id>`**
 
-### female-soft-goth
-- **Prime clip**: _(TBD)_
-- **Loops generated**: packs/female-soft-goth/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: _(empty — cut when prime lands)_
-- **Notes**: soft candle / hover / edge
+```bash
+# Stage 1
+IN_DIR=. OUT_DIR=./new_chars_batch DURATION=25 MAX_CHARS=6 \
+  bash scripts/extract-prime-clips.sh
 
-### twink-shy-boy
-- **Prime clip**: _(TBD)_
-- **Loops generated**: packs/twink-shy-boy/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: _(empty — cut when prime lands)_
-- **Notes**: shy still / peek / nervous
+# Stage 2 (one)
+bash scripts/cut-loops.sh ./new_chars_batch/maria_prime_25s.mp4 female-playful-brat
 
-### female-athletic-tease
-- **Prime clip**: _(TBD)_
-- **Loops generated**: packs/female-athletic-tease/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: _(empty — cut when prime lands)_
-- **Notes**: mat cool-down / stretch / hold
+# Stage 2 (batch + map)
+bash scripts/cut-loops-batch.sh ./new_chars_batch ./scripts/id-map.pack01.txt
 
-### twink-alt-punk
-- **Prime clip**: _(TBD)_
-- **Loops generated**: packs/twink-alt-punk/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: _(empty — cut when prime lands)_
-- **Notes**: bored-hot / mesh / brat edge
+# Optional force 9:16
+SCALE_9_16=1 DURATIONS='6 6 7 6' bash scripts/cut-loops.sh ./primes/x_prime_25s.mp4 twink-gym
+```
 
-### Extra slots (7–10 — library beyond Phase 4)
-
-### _(model-id)_
-- **Prime clip**:
-- **Loops generated**: packs/_/{idle,teasing,playful,aroused}.mp4
-- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**:
-- **Notes**:
+Defaults: offsets `0 6 12 18`, durations `6 5 7 5` (aim **5–8s**), fade **0.4s**, CRF **22**, silent H.264.
 
 ---
 
-## Files (only these)
+## Files (engine — only these)
 
 ```
 idle.mp4
@@ -113,78 +99,106 @@ aroused.mp4
 | | |
 |--|--|
 | Required | **4 MP4s only** |
-| Optional | SVG posters — **not** needed for pack ready |
 | Codec | H.264 `.mp4` |
-| Aspect | **9:16** preferred (1:1 ok) |
-| Res | 1080×1920 ideal; 720×1280 fine |
-| Audio | off is fine |
-
-Exact names, case-sensitive.
+| Aspect | **9:16** preferred |
+| Length | **5–8s** loopable |
+| Audio | **silent** |
+| Loop | first frame ≈ last frame |
 
 ---
 
-## Stage 0 (optional) — prime extract from long takes
+## Master list · Pack 01 (edit as you go)
 
-From a folder of long source videos:
+**Status:** `Themed in other Grok` · `Packs ready` · `Integrated` · `Needs retweak` · `Prime pending`
 
-```bash
-cd /path/to/your/sources
-IN_DIR=. OUT_DIR=./new_chars_batch DURATION=25 MAX_CHARS=10 \
-  bash /path/to/procharacters-cloud/scripts/extract-prime-clips.sh
+### Template
+
+```markdown
+### <pack-slot> — <Human Name>
+- **Tags**: …
+- **Live folder**: …
+- **Prime clip**: path/to/whatever_prime_25s.mp4
+- **Loops generated**: packs/<live-folder>/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: …
+- **Notes**: …
 ```
 
-Gives one ~25s prime per file. **Then** cut each prime into the 4 engine slots below (product does **not** play 25s primes as avatar bands).
+### female-default1 — Maria Murillo
+- **Tags**: playful-brat
+- **Live folder**: `female-playful-brat`
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/female-playful-brat/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: Prime pending
+- **Notes**: First pack · playful brat energy, humanized not niche-only
 
-### Stage 2 — prime → 4 engine loops (ffmpeg) · v2
+### female-default2 — Sofia Reyes
+- **Tags**: soft-goth
+- **Live folder**: `female-soft-goth`
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/female-soft-goth/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: Prime pending
+- **Notes**: Soft candle / hover / edge
 
-```bash
-# Preferred:
-bash scripts/cut-loops.sh ./new_chars_batch/foo_prime_25s.mp4 female-playful-brat
+### female-default3 — Luna Vargas
+- **Tags**: athletic-tease
+- **Live folder**: `female-athletic-tease`
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/female-athletic-tease/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: Prime pending
+- **Notes**: Mat cool-down / stretch / hold
 
-# Alias (same script):
-bash scripts/prime-to-pack-loops.sh ./new_chars_batch/foo_prime_25s.mp4 female-playful-brat
+### male-default1 — Hector Garcia
+- **Tags**: gym-rat
+- **Live folder**: `twink-gym`
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/twink-gym/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: Prime pending
+- **Notes**: Post-set / flex / burn
 
-# Tweak starts/lengths per character
-OFFSETS='2 8 14 20' DURATIONS='6 5 7 5' \
-  bash scripts/cut-loops.sh ./primes/gym_prime_25s.mp4 twink-gym
+### male-default2 — Diego Morales
+- **Tags**: shy-twink
+- **Live folder**: `twink-shy-boy`
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/twink-shy-boy/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: Prime pending
+- **Notes**: Shy still / peek / nervous *(live id stays twink-shy-boy for paths)*
 
-# Optional force 9:16 1080×1920 (pad):
-SCALE_9_16=1 bash scripts/cut-loops.sh ./primes/x_prime_25s.mp4 twink-shy-boy
+### male-default3 — Alex Rivera
+- **Tags**: alt-punk
+- **Live folder**: `twink-alt-punk`
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/twink-alt-punk/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: Prime pending
+- **Notes**: Bored-hot / mesh / brat edge
 
-# Batch all primes in a folder (optional id-map.txt: filename  model-id)
-bash scripts/cut-loops-batch.sh ./new_chars_batch
-bash scripts/cut-loops-batch.sh ./new_chars_batch ./id-map.txt
-```
+### Pack 02+ (extra slots)
 
-Defaults: offsets `0 6 12 18`, durations `6 5 7 5`, fade **0.4s**, CRF **22**, silent H.264, even dims.  
-Outputs `packs/<model-id>/{idle,teasing,playful,aroused}.mp4`.  
-Then: `cp packs/<id>/*.mp4 frontend/public/avatar/<id>/` → **`packs ready: <id>`**
-
-Manual CapCut still fine if you prefer eye-cut energy marks.
-
-## Edit each clip
-
-| Slot | Feel | Length |
-|------|------|--------|
-| `idle` | calm, breathing, soft eye contact | **4–8s** (5–6s sweet) |
-| `teasing` | flirt, fabric tug, almost-touch | **4–8s** |
-| `playful` | motion, fun stroke/tease energy | **4–8s** |
-| `aroused` | heat, edge-hold, don’t-stop | **4–8s** |
-
-**Loop:** first frame ≈ last frame (no hard jump).  
-**Fades:** optional — only if the cut jumps; soft **0.2–0.3s** at ends is enough.  
-**Skip:** titles, logos, music, long cinematics.
-
-One long take → mark 4 energy moments → export 4 shorts.
+### _(pack-slot)_ — _(Human Name)_
+- **Tags**:
+- **Live folder**:
+- **Prime clip**:
+- **Loops generated**:
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**:
+- **Notes**:
 
 ---
 
 ## Hand-off
 
-1. Four files in the right folder  
-2. Tell King Grok: **`packs ready: <id>`** (or zip + **`unpack packs`**)  
-3. Eng: `cd backend && npm run avatar:check-packs -- --write` → deploy web + api  
-4. Gallery shows green **4K pack**; `/health` → `avatar.dedicatedReady`
+1. Four loops in **live drop folder**  
+2. Update this sheet (prime path + status)  
+3. Tell King Grok: **`packs ready: female-playful-brat`** (or several)  
+4. Eng: `cd backend && npm run avatar:check-packs -- --write` → deploy web + api  
+5. Gallery **4K pack** badge; `/health` → `avatar.dedicatedReady`  
+6. Other Grok: theme full defs (name + tags) → eng can sync display names when ready  
 
 ---
 
@@ -192,8 +206,9 @@ One long take → mark 4 energy moments → export 4 shorts.
 
 | Say | Does |
 |-----|------|
-| `packs ready: female-playful-brat` | verify + ship that id |
-| `unpack packs` | place zip into folders + check |
+| `packs ready: <live-folder>` | verify + ship that id |
+| `packs ready: pack01` | all six live folders when ready |
+| `unpack packs` | place zip + check |
 | `spot` | resume status |
 
-*King Grok CEO — keep this next to CapCut / DaVinci while you cut.*
+*King Grok CEO · GrokBuild v1.0 · 50/50 — keep next to CapCut / DaVinci.*
