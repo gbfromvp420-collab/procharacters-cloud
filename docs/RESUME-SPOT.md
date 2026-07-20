@@ -1,7 +1,17 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**Forge this heat · DNA conversion**)  
+**Updated:** 2026-07-20 (**Agent fleet live · parallel cook ready**)  
 **Session:** King Grok CEO · cook · ntfy ✅
+
+### Agent fleet (slash / auto)
+
+| Skill | Lane |
+|-------|------|
+| `/kgc-delegate` | Orchestrator · rehydrate · priority |
+| `/kgc-forge` | Studio DNA · heat→forge |
+| `/kgc-return` | DNA power reclaim · trail · dossier |
+| `/kgc-ops` | health · metrics · ntfy · doc truth |
+| `/kgc-smoke` | Gary phone checklists |
 
 ---
 

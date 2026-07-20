@@ -47,3 +47,26 @@ python scripts/character_list.py
 ## Learning loop
 
 When Gary corrects something, note the lesson in your response and apply it to future work in this repo. Prefer patterns that worked before over reinventing structure.
+
+## Agent fleet (divide workload)
+
+King Grok CEO **orchestrates**. Dispatch one lane per cook; prefer worktree isolation when two eng lanes run in parallel. **Never** two agents edit the same hot file (`ChatApp.tsx`, `session-manager.ts`) without a merge plan.
+
+| Skill | Slash | Lane |
+|-------|-------|------|
+| **`kgc-forge`** | `/kgc-forge` | Studio DNA, expand, heat→forge, My models create |
+| **`kgc-return`** | `/kgc-return` | DNA power reclaim, trail, dossier, Continue/Edge deep-links, push reclaim |
+| **`kgc-ops`** | `/kgc-ops` | health/metrics, ntfy, System pulse, doc truth, smoke scripts |
+| **`kgc-smoke`** | `/kgc-smoke` | Gary phone/desktop checklists, pass/fail, route failures |
+
+### Parallel cook protocol
+
+1. Rehydrate RESUME-SPOT → pick ≤2 eng lanes + optional smoke doc update.  
+2. Spawn subagents with **isolation=worktree** per eng lane; paste the matching skill SKILL.md boundaries into the prompt.  
+3. Orchestrator merges: ops-safe → return → forge (or reverse if forge-only files).  
+4. Typecheck + push; `kgc-smoke` writes Gary steps for the ship.  
+5. Update `docs/RESUME-SPOT.md` + `docs/LIVE-STATUS.md`.
+
+### Hold (all lanes)
+
+Full v3 gooning/voice product, generative live video, DNA marketplace, multi-character party — flag and do not start without CEO + Gary.
