@@ -5,6 +5,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { calendarDaySeed, mindFingerprint, seededShuffle } from "@/lib/mind-fingerprint";
 import {
+  buildForgeFromHeatPath,
+  shouldOfferForgeFromHeat,
+  stashForgeHeatSeed,
+} from "@/lib/forge-from-heat";
+import {
   buildResumeChatPath,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
@@ -204,6 +209,34 @@ export function GalleryHeroReel({
   const resume = resumes[card.id];
   const continueHref = resume?.resumeCode ? buildResumeChatPath(resume) : null;
   const nick = firstName(card.displayName);
+  const dnaLabel =
+    resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
+  const offerForge =
+    !!resume &&
+    shouldOfferForgeFromHeat({
+      messageCount: resume.messageCount,
+      dnaTreeLabel: resume.dnaTreeLabel,
+      dnaTreeNodeId: resume.dnaTreeNodeId,
+      heatDepth: resume.heatDepth,
+    });
+  const forgeHeatCtx = offerForge && resume
+    ? {
+        characterId: card.id,
+        characterName: card.displayName,
+        baseModelId:
+          card.avatarBase ||
+          (card.id.startsWith("custom-") ? undefined : card.id),
+        dnaTreeLabel: resume.dnaTreeLabel,
+        dnaTreeNodeId: resume.dnaTreeNodeId,
+        heatDepth: resume.heatDepth,
+        heatChips: resume.heatChips,
+        recapLine: resume.recapLine,
+        messageCount: resume.messageCount,
+        isMine: card.mine === true,
+      }
+    : null;
+  const forgeHref =
+    forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -349,6 +382,18 @@ export function GalleryHeroReel({
               ) : (
                 <Link href={card.ctaPath} className="btn-primary min-h-0 px-5 py-2.5 text-sm">
                   Chat with {nick}
+                </Link>
+              )}
+              {forgeHref && forgeHeatCtx && (
+                <Link
+                  href={forgeHref}
+                  className="btn-ghost min-h-0 border-violet-400/55 bg-violet-500/20 px-4 py-2.5 text-sm font-semibold text-violet-50 ring-1 ring-violet-300/35"
+                  title="Mint private DNA from this climb"
+                  onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
+                >
+                  {dnaLabel
+                    ? `Forge this DNA · ${dnaLabel}`
+                    : "Forge this heat"}
                 </Link>
               )}
               <Link
