@@ -3147,6 +3147,8 @@ export function ChatApp() {
                     avatar={avatarState}
                     characterName={characterName}
                     characterId={activeCharacterId ?? character}
+                    dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                    dnaTreeLabel={modeState?.dnaTreeLabel}
                     compact
                   />
                 </div>
@@ -4145,6 +4147,8 @@ export function ChatApp() {
                 characterName={characterName ?? headerCharacterName}
                 recapLine={rejoinRecap.line}
                 priorNotes={priorNotes}
+                dnaTreeLabel={modeState?.dnaTreeLabel}
+                dnaTreeNodeId={modeState?.dnaTreeNodeId}
                 onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
               />
               {/* Return Intelligence — opt-in dossier at session open */}
@@ -4155,6 +4159,8 @@ export function ChatApp() {
                     priorNotes={priorNotes}
                     characterId={activeCharacterId ?? character}
                     characterName={characterName ?? headerCharacterName}
+                    dnaTreeLabel={modeState?.dnaTreeLabel}
+                    dnaTreeNodeId={modeState?.dnaTreeNodeId}
                     canFire={!sending && !isTyping}
                     onSeed={(text) => {
                       setInput((prev) => {
@@ -4638,6 +4644,8 @@ export function ChatApp() {
           avatar={avatarState}
           characterName={characterName}
           characterId={activeCharacterId ?? character}
+          dnaTreeNodeId={modeState?.dnaTreeNodeId}
+          dnaTreeLabel={modeState?.dnaTreeLabel}
           onExpand={() => setAvatarCollapsedPersist(false)}
           onHide={() => setAvatarPipPersist(false)}
         />

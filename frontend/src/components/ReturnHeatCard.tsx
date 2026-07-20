@@ -11,6 +11,8 @@ export function ReturnHeatCard({
   priorNotes,
   characterId,
   characterName,
+  dnaTreeLabel,
+  dnaTreeNodeId,
   onSeed,
   onFire,
   canFire,
@@ -18,6 +20,8 @@ export function ReturnHeatCard({
   priorNotes?: string | null;
   characterId?: string | null;
   characterName?: string | null;
+  dnaTreeLabel?: string | null;
+  dnaTreeNodeId?: string | null;
   onSeed?: (text: string) => void;
   onFire?: (text: string) => void;
   canFire?: boolean;
@@ -25,23 +29,48 @@ export function ReturnHeatCard({
   const sig = useMemo(() => parseReturnSignals(priorNotes), [priorNotes]);
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "Them";
+  const liveDna =
+    dnaTreeLabel?.trim() ||
+    dnaTreeNodeId?.trim() ||
+    sig.dnaLabel ||
+    null;
+  const dnaHot = !!liveDna;
 
-  if (!sig.hasAnything) return null;
+  if (!sig.hasAnything && !dnaHot) return null;
 
-  const seeds = buildPickupSeeds(sig);
+  const seeds = buildPickupSeeds(sig, liveDna);
 
   return (
     <div
-      className="mb-3 animate-rise-in rounded-xl border border-emerald-400/35 bg-gradient-to-r from-emerald-500/12 via-brand-panel to-brand-panel px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm"
+      className={`mb-3 animate-rise-in rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm ${
+        dnaHot
+          ? "border-violet-400/45 bg-gradient-to-r from-violet-500/15 via-rose-500/10 to-brand-panel"
+          : "border-emerald-400/35 bg-gradient-to-r from-emerald-500/12 via-brand-panel to-brand-panel"
+      }`}
       role="status"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-emerald-200/95">
-          They remember you
+        <p
+          className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+            dnaHot ? "text-violet-200/95" : "text-emerald-200/95"
+          }`}
+        >
+          {dnaHot ? "They kept your DNA climb" : "They remember you"}
           {sig.name ? ` · ${sig.name}` : ""}
         </p>
+        {liveDna && (
+          <span className="rounded-full border border-violet-300/50 bg-violet-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50">
+            DNA · {liveDna.split(/\s+/)[0]}
+          </span>
+        )}
         {mind && (
-          <span className="rounded-full border border-emerald-400/30 px-2 py-0.5 text-[9px] text-emerald-100/80">
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[9px] ${
+              dnaHot
+                ? "border-violet-400/35 text-violet-100/85"
+                : "border-emerald-400/30 text-emerald-100/80"
+            }`}
+          >
             {mind.tag}
           </span>
         )}
@@ -51,11 +80,18 @@ export function ReturnHeatCard({
       </div>
 
       <p className="mt-1 text-brand-muted">
-        Opt-in heat is sticky. Tap a beat to pick up — no cold open.
+        {dnaHot
+          ? "Your tree is still warm — fire a beat and climb, don’t cold-reset."
+          : "Opt-in heat is sticky. Tap a beat to pick up — no cold open."}
       </p>
 
-      {(sig.heat.length > 0 || sig.lastScene.length > 0 || sig.wants.length > 0) && (
+      {(sig.heat.length > 0 || sig.lastScene.length > 0 || sig.wants.length > 0 || liveDna) && (
         <div className="mt-2 flex flex-wrap gap-1.5">
+          {liveDna && (
+            <span className="rounded-full border border-violet-400/45 bg-violet-500/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-100">
+              DNA · {liveDna.split(/\s+/)[0]}
+            </span>
+          )}
           {sig.lastScene.slice(0, 3).map((c) => (
             <span
               key={`s-${c}`}
@@ -96,8 +132,10 @@ export function ReturnHeatCard({
                 title={fire ? "Send now" : "Add to composer"}
                 className={`rounded-full border px-2.5 py-1 text-[10px] transition disabled:opacity-40 ${
                   fire
-                    ? "border-emerald-300/50 bg-emerald-500/20 font-medium text-emerald-50 hover:bg-emerald-500/30"
-                    : "border-brand-border/80 bg-black/20 text-brand-muted hover:border-emerald-400/40 hover:text-brand-text"
+                    ? dnaHot
+                      ? "border-violet-300/55 bg-violet-500/25 font-medium text-violet-50 hover:bg-violet-500/35"
+                      : "border-emerald-300/50 bg-emerald-500/20 font-medium text-emerald-50 hover:bg-emerald-500/30"
+                    : "border-brand-border/80 bg-black/20 text-brand-muted hover:border-violet-400/40 hover:text-brand-text"
                 }`}
               >
                 {seed.length > 42 ? `${seed.slice(0, 40)}…` : seed}
@@ -116,12 +154,20 @@ type ReturnSig = {
   wants: string[];
   heat: string[];
   lastScene: string[];
+  dnaLabel: string | null;
   hasAnything: boolean;
 };
 
 function parseReturnSignals(prior?: string | null): ReturnSig {
   if (!prior?.trim()) {
-    return { name: null, wants: [], heat: [], lastScene: [], hasAnything: false };
+    return {
+      name: null,
+      wants: [],
+      heat: [],
+      lastScene: [],
+      dnaLabel: null,
+      hasAnything: false,
+    };
   }
   const who = bullets(prior, "Who they are");
   const wants = bullets(prior, "What they want");
@@ -131,15 +177,27 @@ function parseReturnSignals(prior?: string | null): ReturnSig {
     who.map((w) => w.match(/^Called:\s*(.+)/i)?.[1]?.trim()).find(Boolean) ??
     prior.match(/(?:Called|call(?:ed)? me)\s*[:\s]+([A-Za-z][\w.-]{1,24})/i)?.[1] ??
     null;
+  const dnaMatch =
+    prior.match(/DNA power climb:\s*([^(\n]+)/i) ||
+    prior.match(/DNA tree ·\s*([^.]+)/i);
+  const dnaLabel =
+    dnaMatch?.[1]?.trim().replace(/\s*·\s*Edge Pace\s*$/i, "") || null;
   const hasAnything =
-    !!name || wants.length > 0 || heat.length > 0 || lastScene.length > 0 ||
-    /What they want:|Recurring heat:|Recent sessions:|Last scene lock:/i.test(prior);
+    !!name ||
+    !!dnaLabel ||
+    wants.length > 0 ||
+    heat.length > 0 ||
+    lastScene.length > 0 ||
+    /What they want:|Recurring heat:|Recent sessions:|Last scene lock:|DNA power climb/i.test(
+      prior,
+    );
 
   return {
     name: name || null,
     wants: wants.slice(0, 4),
     heat: heat.slice(0, 4),
     lastScene: lastScene.slice(0, 3),
+    dnaLabel,
     hasAnything,
   };
 }
@@ -168,8 +226,14 @@ function bullets(dossier: string, heading: string): string[] {
   return out;
 }
 
-function buildPickupSeeds(sig: ReturnSig): string[] {
+function buildPickupSeeds(sig: ReturnSig, liveDna?: string | null): string[] {
   const seeds: string[] = [];
+  const dna = (liveDna || sig.dnaLabel || "").trim();
+  if (dna) {
+    const short = dna.split(/\s+/)[0];
+    seeds.push(`DNA · ${short} — keep climbing, don’t reset`);
+    seeds.push(`stay on ${short} with me… slow`);
+  }
   if (sig.name) {
     seeds.push(`you remembered… call me ${sig.name} again while you edge me`);
   }

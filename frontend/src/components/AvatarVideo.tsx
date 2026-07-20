@@ -2,6 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  dnaAvatarRingClass,
+  dnaNodeShortLabel,
+  dnaTreeHeatLevel,
   energyBandBadgeClass,
   energyBandFromAvatar,
   energyBandLabel,
@@ -31,6 +34,9 @@ interface AvatarVideoProps {
   compact?: boolean;
   /** Floating picture-in-picture mini player */
   pip?: boolean;
+  /** Studio Forge DNA node — sexy frame heat */
+  dnaTreeNodeId?: string | null;
+  dnaTreeLabel?: string | null;
 }
 
 const CROSSFADE_MS = 620;
@@ -41,13 +47,17 @@ export function AvatarVideo({
   characterId = null,
   compact = false,
   pip = false,
+  dnaTreeNodeId = null,
+  dnaTreeLabel = null,
 }: AvatarVideoProps) {
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
   const [showIncoming, setShowIncoming] = useState(false);
   const [usedFallback, setUsedFallback] = useState(false);
   const [bandPulse, setBandPulse] = useState(false);
+  const [dnaPulse, setDnaPulse] = useState(false);
   const prevBandRef = useRef<EnergyBand | null>(null);
+  const prevDnaRef = useRef<string | null>(null);
   const crossfadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const mediaUrl = avatar?.mediaUrl ?? null;
@@ -56,6 +66,9 @@ export function AvatarVideo({
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
   const skin = resolvePresenceSkin(avatar?.presenceSkin, characterId);
   const visual = presenceVisual(skin);
+  const dnaLevel = dnaTreeHeatLevel(dnaTreeNodeId, dnaTreeLabel);
+  const dnaShort = dnaNodeShortLabel(dnaTreeNodeId, dnaTreeLabel);
+  const dnaRing = dnaAvatarRingClass(dnaTreeNodeId, dnaTreeLabel);
 
   // Smooth crossfade on primary URL change (do not hard-reset activeSrc).
   useEffect(() => {
@@ -115,6 +128,24 @@ export function AvatarVideo({
     return () => clearTimeout(t);
   }, [band, avatar]);
 
+  // Sexier DNA climb pulse — tree node advance lights the frame
+  useEffect(() => {
+    const node = dnaTreeNodeId?.trim() || null;
+    if (!node) {
+      prevDnaRef.current = null;
+      return;
+    }
+    if (prevDnaRef.current === null) {
+      prevDnaRef.current = node;
+      return;
+    }
+    if (prevDnaRef.current === node) return;
+    prevDnaRef.current = node;
+    setDnaPulse(true);
+    const t = setTimeout(() => setDnaPulse(false), 1100);
+    return () => clearTimeout(t);
+  }, [dnaTreeNodeId]);
+
   const onMediaError = () => {
     if (fallbackUrl && !usedFallback && activeSrc !== fallbackUrl) {
       setUsedFallback(true);
@@ -143,11 +174,13 @@ export function AvatarVideo({
           ? "shadow-[0_0_20px_-8px_rgba(225,29,143,0.28)]"
           : "";
 
+  const ringClass = dnaRing || energyBandRingClass(band);
+
   return (
     <div
-      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-700 ${frameClass} ${energyBandRingClass(band)} ${visual.glow} ${arousalGlow} ${
-        bandPulse ? "avatar-band-pulse" : ""
-      }`}
+      className={`relative w-full overflow-hidden border border-brand-border bg-brand-bg shadow-card ring-2 transition-shadow duration-700 ${frameClass} ${ringClass} ${visual.glow} ${arousalGlow} ${
+        dnaPulse ? "avatar-dna-pulse" : bandPulse ? "avatar-band-pulse" : ""
+      } ${dnaLevel >= 3 ? "dna-avatar-hot" : dnaLevel >= 0 ? "dna-avatar-live" : ""}`}
     >
       {!activeSrc && (
         <div
@@ -209,11 +242,21 @@ export function AvatarVideo({
           <div
             className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur-sm transition-transform duration-300 ${energyBandBadgeClass(band)} ${
               pip ? "px-1.5 text-[8px]" : ""
-            } ${bandPulse ? "scale-110" : "scale-100"}`}
+            } ${bandPulse || dnaPulse ? "scale-110" : "scale-100"}`}
           >
             {energyBandLabel(band)}
             {!pip && <span className="ml-1 opacity-80">{arousalPct}%</span>}
           </div>
+          {dnaShort && (
+            <div
+              className={`w-fit rounded-full border border-violet-300/55 bg-violet-500/35 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-violet-50 backdrop-blur-sm ${
+                pip ? "px-1.5 text-[7px]" : ""
+              } ${dnaPulse ? "scale-110 ring-1 ring-violet-200/60" : ""}`}
+            >
+              DNA · {dnaShort}
+              {dnaLevel >= 3 && !pip ? " · hot" : ""}
+            </div>
+          )}
           {!pip && (
             <div className="w-fit rounded-full border border-white/15 bg-black/40 px-2 py-0.5 text-[8px] font-medium uppercase tracking-wide text-white/80 backdrop-blur-sm">
               {visual.label}
@@ -228,15 +271,18 @@ export function AvatarVideo({
           <p className="text-xs text-white/70">
             {formatLabel(avatar.emotion)} · {formatLabel(avatar.pose)}
             {avatar.action ? ` · ${formatLabel(avatar.action)}` : ""}
+            {dnaShort ? ` · DNA ${dnaShort}` : ""}
           </p>
           <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-white/15">
             <div
               className={`h-full rounded-full bg-gradient-to-r transition-all duration-700 ${
-                arousalPct >= 72
-                  ? "from-rose-400 via-fuchsia-400 to-amber-300"
-                  : "from-brand-accentDim to-rose-400"
+                dnaLevel >= 3
+                  ? "from-violet-400 via-rose-400 to-amber-300"
+                  : arousalPct >= 72
+                    ? "from-rose-400 via-fuchsia-400 to-amber-300"
+                    : "from-brand-accentDim to-rose-400"
               }`}
-              style={{ width: `${arousalPct}%` }}
+              style={{ width: `${Math.max(arousalPct, dnaLevel >= 0 ? 28 + dnaLevel * 12 : 0)}%` }}
             />
           </div>
         </div>
@@ -248,7 +294,9 @@ export function AvatarVideo({
             {characterName ?? "Live"}
           </p>
           <p className="truncate text-[9px] text-white/70">
-            {formatLabel(avatar.emotion)} · {arousalPct}%
+            {dnaShort
+              ? `DNA · ${dnaShort} · ${arousalPct}%`
+              : `${formatLabel(avatar.emotion)} · ${arousalPct}%`}
           </p>
         </div>
       )}

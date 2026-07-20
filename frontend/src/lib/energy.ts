@@ -173,3 +173,34 @@ export function dnaComposerClass(
   }
   return "";
 }
+
+/** Avatar video ring when DNA tree is live — overrides generic energy ring when hot. */
+export function dnaAvatarRingClass(
+  nodeId?: string | null,
+  label?: string | null,
+): string {
+  const level = dnaTreeHeatLevel(nodeId, label);
+  if (level >= 4) {
+    return "ring-violet-400/85 shadow-[0_0_32px_rgba(167,139,250,0.5)]";
+  }
+  if (level >= 3) {
+    return "ring-rose-400/80 shadow-[0_0_28px_rgba(244,63,94,0.45)]";
+  }
+  if (level >= 2) {
+    return "ring-violet-400/70 shadow-[0_0_22px_rgba(192,132,252,0.4)]";
+  }
+  if (level >= 0) {
+    return "ring-violet-400/55 shadow-[0_0_16px_rgba(167,139,250,0.28)]";
+  }
+  return "";
+}
+
+/** Short display label for DNA node chips. */
+export function dnaNodeShortLabel(
+  nodeId?: string | null,
+  label?: string | null,
+): string | null {
+  const raw = (label?.trim() || nodeId?.trim() || "").trim();
+  if (!raw) return null;
+  return raw.split(/\s+/)[0] || raw.slice(0, 16);
+}

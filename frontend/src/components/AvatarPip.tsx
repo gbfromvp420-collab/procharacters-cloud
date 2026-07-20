@@ -109,6 +109,8 @@ interface AvatarPipProps {
   avatar: AvatarState | null;
   characterName: string | null;
   characterId?: string | null;
+  dnaTreeNodeId?: string | null;
+  dnaTreeLabel?: string | null;
   onExpand: () => void;
   onHide: () => void;
 }
@@ -117,6 +119,8 @@ export function AvatarPip({
   avatar,
   characterName,
   characterId = null,
+  dnaTreeNodeId = null,
+  dnaTreeLabel = null,
   onExpand,
   onHide,
 }: AvatarPipProps) {
@@ -356,6 +360,8 @@ export function AvatarPip({
             avatar={avatar}
             characterName={characterName}
             characterId={characterId}
+            dnaTreeNodeId={dnaTreeNodeId}
+            dnaTreeLabel={dnaTreeLabel}
             pip
           />
         </div>
