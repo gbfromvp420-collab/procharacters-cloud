@@ -511,6 +511,7 @@ export const createAccountRoutes = (
         "https://procharacters-web-production-7288.up.railway.app";
       const base = siteBase.replace(/\/$/, "");
 
+      const { isDnaPowerSession } = await import("../lib/push/expiry-notify.js");
       const sessions = await sessionManager.listAccountSessions(account.id);
       const items: ResumeLinkItem[] = sessions
         .filter((s) => s.resumeCode)
@@ -518,6 +519,11 @@ export const createAccountRoutes = (
           const url = new URL(`${base}/chat`);
           url.searchParams.set("resume", s.resumeCode!);
           url.searchParams.set("character", s.characterId);
+          url.searchParams.set("rehydrate", "1");
+          // DNA power reclaim — same as push / gallery Continue
+          if (isDnaPowerSession(s)) {
+            url.searchParams.set("mode", "edge_pace");
+          }
           return {
             characterName: s.characterName,
             characterId: s.characterId,

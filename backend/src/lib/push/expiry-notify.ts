@@ -1,5 +1,5 @@
 import type { SessionManager } from "../../services/session-manager.js";
-import { recordExpiryCronTick } from "../observability/metrics.js";
+import { bump, recordExpiryCronTick } from "../observability/metrics.js";
 import {
   deletePushByEndpoint,
   listPushAccountIds,
@@ -15,15 +15,54 @@ const NOTIFY_COOLDOWN_MS = Number(
 /** Background scan interval; 0 disables cron. Default 1 hour. */
 const CRON_MS = Number(process.env.RESUME_EXPIRY_PUSH_CRON_MS ?? 60 * 60 * 1000);
 
+type AccountSessionRow = Awaited<
+  ReturnType<SessionManager["listAccountSessions"]>
+>[number];
+
+/**
+ * DNA power trail — mid climb or Edge Pace heat.
+ * Mirrors frontend isDnaPowerTrail so push deep-links reclaim Edge Pace.
+ */
+export function isDnaPowerSession(
+  s: Pick<AccountSessionRow, "dnaTreeNodeId" | "sessionMode" | "messageCount">,
+): boolean {
+  if (s.sessionMode === "edge_pace") return true;
+  const node = (s.dnaTreeNodeId || "").toLowerCase();
+  if (/edge|deny|release|gate|tease/.test(node)) return true;
+  // Engaged DNA forge with a stamped node — still reclaim climb energy
+  if (s.dnaTreeNodeId && (s.messageCount ?? 0) >= 4) return true;
+  return false;
+}
+
+/** Pretty DNA node label for push copy. */
+export function dnaNodeLabel(nodeId?: string): string | null {
+  if (!nodeId?.trim()) return null;
+  const id = nodeId.trim().toLowerCase();
+  if (id.includes("release")) return "Release";
+  if (id.includes("deny")) return "Deny";
+  if (id.includes("edge")) return "Edge";
+  if (id.includes("tease")) return "Tease";
+  if (id.includes("soft")) return "Soft lock";
+  if (id.includes("spark")) return "Spark";
+  return nodeId.trim();
+}
+
 /**
  * If the account has push subscriptions and any resume codes expire soon,
  * send a Web Push (rate-limited per subscription).
+ * DNA power trails deep-link with mode=edge_pace + rehydrate (no cold Continue).
  */
 export async function notifyAccountResumeExpiry(
   accountId: string,
   sessionManager: SessionManager,
   options?: { siteBase?: string; force?: boolean },
-): Promise<{ sent: number; skipped: number; configured: boolean; expiring: number }> {
+): Promise<{
+  sent: number;
+  skipped: number;
+  configured: boolean;
+  expiring: number;
+  dnaPower?: boolean;
+}> {
   if (!isWebPushConfigured()) {
     return { sent: 0, skipped: 0, configured: false, expiring: 0 };
   }
@@ -50,8 +89,11 @@ export async function notifyAccountResumeExpiry(
     "https://procharacters-web-production-7288.up.railway.app"
   ).replace(/\/$/, "");
 
-  // Soonest-to-expire first — deep-link into that chat when possible
+  // Prefer DNA-hot sessions, then soonest-to-expire — reclaim > bare continue
   const soonSorted = [...soon].sort((a, b) => {
+    const da = isDnaPowerSession(a) ? 0 : 1;
+    const db = isDnaPowerSession(b) ? 0 : 1;
+    if (da !== db) return da - db;
     const ea = Date.parse(a.resumeExpiresAt || "") || Number.POSITIVE_INFINITY;
     const eb = Date.parse(b.resumeExpiresAt || "") || Number.POSITIVE_INFINITY;
     return ea - eb;
@@ -63,24 +105,42 @@ export async function notifyAccountResumeExpiry(
     .join(", ");
   const more = soonSorted.length > 3 ? ` +${soonSorted.length - 3} more` : "";
 
+  const dnaPower = primary ? isDnaPowerSession(primary) : false;
+  const nodeLabel = primary ? dnaNodeLabel(primary.dnaTreeNodeId) : null;
+
   // Prefer last-chat deep link so one tap continues the sticky loop
   let deepUrl = `${siteBase}/account`;
   if (primary?.resumeCode) {
     const q = new URLSearchParams({
       resume: primary.resumeCode.toUpperCase(),
+      rehydrate: "1",
     });
     if (primary.characterId) q.set("character", primary.characterId);
+    if (dnaPower) q.set("mode", "edge_pace");
     deepUrl = `${siteBase}/chat?${q.toString()}`;
   }
 
   const primaryName = primary?.characterName?.trim();
-  const body =
-    soonSorted.length === 1 && primaryName
-      ? `Resume with ${primaryName} before the code expires (within ${WARN_DAYS} days). Tap to continue.`
-      : `${soonSorted.length} code(s) expire within ${WARN_DAYS} days: ${names}${more}. Tap to jump back in.`;
+  let title = "Procharacters — continue before codes expire";
+  let body: string;
+  if (dnaPower && soonSorted.length === 1 && primaryName) {
+    title = nodeLabel
+      ? `DNA power · ${nodeLabel} reclaim`
+      : "DNA power · Edge reclaim";
+    body = nodeLabel
+      ? `${primaryName} is still on DNA · ${nodeLabel}. Tap to reclaim Edge Pace before the code expires.`
+      : `${primaryName} held your Edge Pace heat. Tap to reclaim before the code expires.`;
+  } else if (dnaPower && primaryName) {
+    title = "DNA power waiting — codes expire soon";
+    body = `${primaryName}${more ? more : ""} — DNA climb still hot. Tap to reclaim Edge Pace (${soonSorted.length} code${soonSorted.length === 1 ? "" : "s"}).`;
+  } else if (soonSorted.length === 1 && primaryName) {
+    body = `Resume with ${primaryName} before the code expires (within ${WARN_DAYS} days). Tap to continue.`;
+  } else {
+    body = `${soonSorted.length} code(s) expire within ${WARN_DAYS} days: ${names}${more}. Tap to jump back in.`;
+  }
 
   const payload = {
-    title: "Procharacters — continue before codes expire",
+    title,
     body,
     url: deepUrl,
     tag: "procharacters-resume-expiry",
@@ -114,7 +174,17 @@ export async function notifyAccountResumeExpiry(
     }
   }
 
-  return { sent, skipped, configured: true, expiring: soon.length };
+  if (sent > 0 && dnaPower) {
+    bump("pushDnaPowerReclaims", sent);
+  }
+
+  return {
+    sent,
+    skipped,
+    configured: true,
+    expiring: soon.length,
+    ...(dnaPower ? { dnaPower: true } : {}),
+  };
 }
 
 /**

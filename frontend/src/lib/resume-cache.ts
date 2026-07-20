@@ -122,6 +122,25 @@ export function syncResumeCacheFromAccountSessions(
     ) {
       continue;
     }
+    const sameSession = prev?.sessionId === s.sessionId;
+    // Server DNA node wins for multi-device reclaim; keep local label when same node
+    const serverNode = s.dnaTreeNodeId?.trim() || undefined;
+    const localNode = sameSession ? prev?.dnaTreeNodeId : undefined;
+    const dnaTreeNodeId = serverNode || localNode;
+    const dnaTreeLabel =
+      sameSession && prev?.dnaTreeNodeId === dnaTreeNodeId
+        ? prev?.dnaTreeLabel
+        : serverNode
+          ? dnaLabelFromNodeId(serverNode)
+          : undefined;
+    // Edge Pace on server ⇒ heat trail is hot enough for reclaim chips
+    const heatDepth =
+      sameSession && prev?.heatDepth
+        ? prev.heatDepth
+        : s.sessionMode === "edge_pace" || isDnaPowerTrail({ dnaTreeNodeId, heatDepth: undefined })
+          ? ("edge" as HeatTrailDepth)
+          : undefined;
+
     file.byCharacter[s.characterId] = {
       characterId: s.characterId,
       characterName: s.characterName,
@@ -131,13 +150,15 @@ export function syncResumeCacheFromAccountSessions(
       source: "account",
       resumeExpiresAt: s.resumeExpiresAt || prev?.resumeExpiresAt,
       // Preserve local heat trail when re-syncing the same session
-      recapLine: prev?.sessionId === s.sessionId ? prev.recapLine : prev?.recapLine,
-      heatDepth: prev?.sessionId === s.sessionId ? prev.heatDepth : undefined,
-      heatChips: prev?.sessionId === s.sessionId ? prev.heatChips : undefined,
-      messageCount: prev?.sessionId === s.sessionId ? prev.messageCount : undefined,
-      mindTag: prev?.sessionId === s.sessionId ? prev.mindTag : undefined,
-      dnaTreeNodeId: prev?.sessionId === s.sessionId ? prev.dnaTreeNodeId : undefined,
-      dnaTreeLabel: prev?.sessionId === s.sessionId ? prev.dnaTreeLabel : undefined,
+      recapLine: sameSession ? prev?.recapLine : prev?.recapLine,
+      heatDepth: heatDepth ?? (sameSession ? prev?.heatDepth : undefined),
+      heatChips: sameSession ? prev?.heatChips : undefined,
+      messageCount: sameSession
+        ? prev?.messageCount ?? s.messageCount
+        : s.messageCount || undefined,
+      mindTag: sameSession ? prev?.mindTag : undefined,
+      dnaTreeNodeId,
+      dnaTreeLabel,
     };
   }
   writeCache(file);
@@ -482,6 +503,19 @@ export function getMostRecentResume(): ResumeCacheEntry | null {
     };
   }
   return null;
+}
+
+/** Pretty DNA node label from server node id (multi-device reclaim). */
+export function dnaLabelFromNodeId(nodeId?: string | null): string | undefined {
+  if (!nodeId?.trim()) return undefined;
+  const id = nodeId.trim().toLowerCase();
+  if (id.includes("release")) return "Release";
+  if (id.includes("deny")) return "Deny";
+  if (id.includes("edge")) return "Edge";
+  if (id.includes("tease")) return "Tease";
+  if (id.includes("soft")) return "Soft lock";
+  if (id.includes("spark")) return "Spark";
+  return nodeId.trim();
 }
 
 /** True when heat trail is mid DNA climb — reclaim should reopen Edge Pace. */

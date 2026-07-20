@@ -341,6 +341,10 @@ export interface AccountSessionSummary {
   resumeExpiresAt?: string;
   updatedAt: string;
   createdAt: string;
+  /** Phase 10 mode — used for DNA power / Edge reclaim deep-links. */
+  sessionMode?: "normal" | "edge_pace";
+  /** Studio Forge DNA tree node stamped server-side. */
+  dnaTreeNodeId?: string;
 }
 
 export async function listAccountSessions(

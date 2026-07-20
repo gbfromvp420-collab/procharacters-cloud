@@ -442,6 +442,10 @@ export class SessionManager {
       resumeExpiresAt?: string;
       updatedAt: string;
       createdAt: string;
+      /** Phase 10 mode for DNA power reclaim deep-links. */
+      sessionMode?: SessionMode;
+      /** Studio Forge DNA tree node (spark | tease | edge | …). */
+      dnaTreeNodeId?: string;
     }>
   > {
     await pruneExpiredResumeCodes();
@@ -456,7 +460,27 @@ export class SessionManager {
       resumeExpiresAt?: string;
       updatedAt: string;
       createdAt: string;
+      sessionMode?: SessionMode;
+      dnaTreeNodeId?: string;
     }> = [];
+
+    const toSummary = (
+      record: SessionRecord,
+      resumeCode: string | undefined,
+      resumeExpiresAt: string | undefined,
+    ) => ({
+      sessionId: record.id,
+      characterId: record.characterId,
+      characterName: record.promptSnapshot?.characterName ?? record.characterId,
+      status: record.status,
+      messageCount: record.memory?.messages?.length ?? 0,
+      resumeCode,
+      resumeExpiresAt,
+      updatedAt: record.updatedAt,
+      createdAt: record.createdAt,
+      ...(record.sessionMode ? { sessionMode: record.sessionMode } : {}),
+      ...(record.dnaTreeNodeId ? { dnaTreeNodeId: record.dnaTreeNodeId } : {}),
+    });
 
     // Ensure every account-owned session has a non-expired resume code.
     for (const record of records) {
@@ -478,17 +502,7 @@ export class SessionManager {
         };
         this.sessions.set(record.id, updated);
         await this.persist(updated);
-        out.push({
-          sessionId: updated.id,
-          characterId: updated.characterId,
-          characterName: updated.promptSnapshot?.characterName ?? updated.characterId,
-          status: updated.status,
-          messageCount: updated.memory?.messages?.length ?? 0,
-          resumeCode,
-          resumeExpiresAt: mapping?.expiresAt,
-          updatedAt: updated.updatedAt,
-          createdAt: updated.createdAt,
-        });
+        out.push(toSummary(updated, resumeCode, mapping?.expiresAt));
       } else {
         // Valid code — re-bind + soft-extend TTL on list (keeps active chats usable)
         resumeCode = await registerResumeCode(record.id, accountId, resumeCode, {
@@ -499,20 +513,11 @@ export class SessionManager {
           const updated: SessionRecord = { ...record, resumeCode, accountId };
           this.sessions.set(record.id, updated);
           await this.persist(updated);
+          out.push(toSummary(updated, resumeCode, mapping?.expiresAt));
         } else {
           this.sessions.set(record.id, record);
+          out.push(toSummary(record, resumeCode, mapping?.expiresAt));
         }
-        out.push({
-          sessionId: record.id,
-          characterId: record.characterId,
-          characterName: record.promptSnapshot?.characterName ?? record.characterId,
-          status: record.status,
-          messageCount: record.memory?.messages?.length ?? 0,
-          resumeCode,
-          resumeExpiresAt: mapping?.expiresAt,
-          updatedAt: record.updatedAt,
-          createdAt: record.createdAt,
-        });
       }
     }
 

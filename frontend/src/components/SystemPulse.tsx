@@ -54,6 +54,8 @@ type MetricsPayload = {
   pushTestSent?: number;
   pushSubscribe?: number;
   pushExpirySent?: number;
+  /** Expiry pushes that deep-linked DNA power / Edge reclaim. */
+  pushDnaPowerReclaims?: number;
   startedAt?: string;
 };
 
@@ -343,6 +345,15 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
           title: "Stripe checkout starts → confirms (webhook + return path)",
         });
       }
+    }
+    if ((metrics.pushDnaPowerReclaims ?? 0) > 0) {
+      chips.push({
+        key: "pushDna",
+        label: `${formatCount(metrics.pushDnaPowerReclaims)} DNA push`,
+        ok: true,
+        title:
+          "Expiry push notifications that deep-linked DNA power · Edge reclaim (mode=edge_pace + rehydrate)",
+      });
     }
     if ((metrics.pushSubscribe ?? 0) + (metrics.pushTestSent ?? 0) > 0) {
       chips.push({

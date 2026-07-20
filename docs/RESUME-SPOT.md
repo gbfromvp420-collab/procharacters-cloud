@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**DNA power reclaim complete circuit**)  
+**Updated:** 2026-07-20 (**DNA power on push + multi-device**)  
 **Session:** King Grok CEO · cook · ntfy ✅
 
 ---
@@ -23,10 +23,11 @@
 | **Reclaim everywhere** | ✅ offline · pause · Account hub · hero reel | Ruby token: DNA power on every surface |
 | **Reclaim chrome + share** | ✅ SiteChrome · wire drop · share links · offline net | Nav Continue is DNA power when trail is hot |
 | **Reclaim card + print + account** | ✅ character card · QR print · resume markdown · chat hero | Zero cold resume paths left |
+| **DNA power push + multi-device** | ✅ expiry push deep-links Edge reclaim · account list stamps DNA node · email resumes reclaim | Climb DNA → leave → wait for expiry push (or force Check now) → tap should open Edge Pace |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
-| Railway | ✅ | Live `397284d`+ |
-| **Next** | phone smoke full DNA reclaim circuit | `cook` / `spot` |
+| Railway | ✅ | Ship this cook → redeploy api+web |
+| **Next** | phone smoke: forge → climb → end → push/Continue DNA reclaim | `cook` / `spot` |
 
 ---
 

@@ -70,6 +70,7 @@
 | **Reclaim everywhere** | ✅ offline shell Edge reclaim · End pause DNA power CTA · Account My models DNA power · hero reel DNA power button |
 | **Reclaim chrome + share** | ✅ SiteChrome DNA power · NetworkOfflineBanner · SessionDropRescue DNA rejoin · share URLs carry rehydrate + edge mode |
 | **Reclaim card + print + account** | ✅ Character card DNA power · print/QR Edge reclaim · Account resume markdown DNA · chat idle hero DNA reclaim |
+| **DNA power push + multi-device** | ✅ Expiry Web Push deep-links `mode=edge_pace` + rehydrate when DNA/Edge hot · copy “DNA power · Edge reclaim” · account session list exposes `dnaTreeNodeId`/`sessionMode` · resume cache multi-device stamp · emailed resume links reclaim · metric `pushDnaPowerReclaims` on System pulse |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
