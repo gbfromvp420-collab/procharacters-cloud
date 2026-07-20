@@ -1971,10 +1971,24 @@ export function ChatApp() {
         savedSession?.resumeCode ??
         liveCredsRef.current?.resumeCode ??
         null;
+      const dnaPower =
+        !!modeState?.dnaTreeNodeId ||
+        !!modeState?.dnaTreeLabel ||
+        sessionMode === "edge_pace";
       if (code) {
         setStatus("connecting");
-        const session = await resumeByCode(code);
-        await openLiveSession(session);
+        if (dnaPower) setSessionMode("edge_pace");
+        const session = await resumeByCode(code, {
+          sessionMode: dnaPower ? "edge_pace" : undefined,
+        });
+        if (session.sessionMode === "edge_pace" || session.sessionMode === "normal") {
+          setSessionMode(session.sessionMode);
+        }
+        await openLiveSession(session, { forceRehydrate: true });
+        if (dnaPower) {
+          setCopyNotice("DNA power reclaim · line restored");
+          window.setTimeout(() => setCopyNotice(null), 2800);
+        }
         return;
       }
       const stored: StoredSession | null =
@@ -2016,10 +2030,13 @@ export function ChatApp() {
     character,
     characterName,
     connectResumedSession,
+    modeState?.dnaTreeLabel,
+    modeState?.dnaTreeNodeId,
     openLiveSession,
     resumeCode,
     savedSession,
     sessionId,
+    sessionMode,
     wsToken,
   ]);
 
@@ -2783,6 +2800,11 @@ export function ChatApp() {
             characterName ?? savedSession?.characterName ?? null
           }
           characterId={activeCharacterId ?? character}
+          dnaPower={
+            !!modeState?.dnaTreeNodeId ||
+            !!modeState?.dnaTreeLabel ||
+            sessionMode === "edge_pace"
+          }
           busy={restarting}
           onRejoin={() => void rejoinAfterDrop()}
           onDismiss={() => setConnectionDropped(false)}

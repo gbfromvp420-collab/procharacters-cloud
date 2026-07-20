@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import {
   buildResumeChatPath,
   getMostRecentResume,
+  isDnaPowerTrail,
   isResumeExpiryUrgent,
   listResumeCacheEntries,
 } from "@/lib/resume-cache";
@@ -19,6 +20,7 @@ export function NetworkOfflineBanner({ className = "" }: { className?: string })
   const [continueHref, setContinueHref] = useState<string | null>(null);
   const [continueNick, setContinueNick] = useState<string | null>(null);
   const [urgent, setUrgent] = useState(false);
+  const [dnaPower, setDnaPower] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -33,10 +35,12 @@ export function NetworkOfflineBanner({ className = "" }: { className?: string })
           top.characterName?.trim().split(/\s+/)[0] || top.characterId || "chat",
         );
         setUrgent(isResumeExpiryUrgent(top.resumeExpiresAt));
+        setDnaPower(isDnaPowerTrail(top));
       } else {
         setContinueHref(null);
         setContinueNick(null);
         setUrgent(false);
+        setDnaPower(false);
       }
     };
     sync();
@@ -70,11 +74,13 @@ export function NetworkOfflineBanner({ className = "" }: { className?: string })
         {continueHref && (
           <Link
             href={continueHref}
-            className={`btn-ghost min-h-0 border-amber-400/40 px-3 py-1.5 text-xs text-amber-100 ${
-              urgent ? "ring-1 ring-rose-400/50" : ""
-            }`}
+            className={`btn-ghost min-h-0 px-3 py-1.5 text-xs ${
+              dnaPower
+                ? "border-violet-400/45 text-violet-100"
+                : "border-amber-400/40 text-amber-100"
+            } ${urgent ? "ring-1 ring-rose-400/50" : ""}`}
           >
-            {urgent ? "Reclaim" : "Continue"}
+            {urgent ? "Reclaim" : dnaPower ? "DNA power" : "Continue"}
             {continueNick ? ` · ${continueNick}` : ""}
           </Link>
         )}

@@ -352,7 +352,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   };
 
   const shareResume = async (card: CharacterCard, resume: ResumeCacheEntry) => {
-    const url = buildResumeCodeShareUrl(resume.resumeCode, { origin: siteOrigin, characterId: card.id });
+    const url = buildResumeCodeShareUrl(resume.resumeCode, {
+      origin: siteOrigin,
+      characterId: card.id,
+      rehydrate: true,
+      sessionMode:
+        resume.dnaTreeLabel || resume.dnaTreeNodeId ? "edge_pace" : undefined,
+    });
     const result = await shareOrCopyUrl({
       url,
       title: `Resume chat with ${card.displayName}`,

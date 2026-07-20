@@ -2316,6 +2316,11 @@ export function AccountSettings() {
                     const mind = mindFingerprint(s.characterId);
                     const nick =
                       s.characterName?.trim().split(/\s+/)[0] || s.characterName || "chat";
+                    const trail = getResumeForCharacter(s.characterId);
+                    const dnaPower = !!(
+                      trail?.dnaTreeLabel ||
+                      trail?.dnaTreeNodeId
+                    );
                     return (
                     <li
                       key={s.sessionId}
@@ -2331,6 +2336,11 @@ export function AccountSettings() {
                           {mind ? (
                             <span className="ml-1.5 text-[10px] font-normal text-brand-accent">
                               · {mind.tag}
+                            </span>
+                          ) : null}
+                          {dnaPower && trail?.dnaTreeLabel ? (
+                            <span className="ml-1.5 text-[10px] font-semibold text-violet-200/90">
+                              · DNA {trail.dnaTreeLabel}
                             </span>
                           ) : null}
                         </p>
@@ -2361,12 +2371,22 @@ export function AccountSettings() {
                       </div>
                       {s.resumeCode && (
                         <Link
-                          href={`/chat?resume=${encodeURIComponent(s.resumeCode)}&character=${encodeURIComponent(s.characterId)}&rehydrate=1`}
+                          href={buildResumeChatPath({
+                            characterId: s.characterId,
+                            resumeCode: s.resumeCode,
+                            dnaTreeLabel: trail?.dnaTreeLabel,
+                            dnaTreeNodeId: trail?.dnaTreeNodeId,
+                            heatDepth: trail?.heatDepth,
+                          })}
                           className={`btn-primary min-h-0 px-3 py-1.5 text-[11px] ${
-                            urgent ? "ring-1 ring-rose-400/60" : ""
+                            urgent
+                              ? "ring-1 ring-rose-400/60"
+                              : dnaPower
+                                ? "ring-1 ring-violet-400/50"
+                                : ""
                           }`}
                         >
-                          Continue · {nick}
+                          {dnaPower ? `DNA power · ${nick}` : `Continue · ${nick}`}
                         </Link>
                       )}
                       <button

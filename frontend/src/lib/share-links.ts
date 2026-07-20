@@ -115,7 +115,14 @@ export function buildCharacterShareUrl(
 /** Preferred private resume link — short code only (no raw ws token). */
 export function buildResumeCodeShareUrl(
   resumeCode: string,
-  options: { origin?: string; characterId?: string } = {},
+  options: {
+    origin?: string;
+    characterId?: string;
+    /** Full memory rehydrate (default true for resume codes). */
+    rehydrate?: boolean;
+    /** DNA power reclaim — reopen Edge Pace on mid-climb trails. */
+    sessionMode?: "normal" | "edge_pace";
+  } = {},
 ): string {
   const origin =
     options.origin ??
@@ -126,6 +133,12 @@ export function buildResumeCodeShareUrl(
   url.searchParams.set("resume", resumeCode.toUpperCase());
   if (options.characterId) {
     url.searchParams.set("character", options.characterId);
+  }
+  if (options.rehydrate !== false) {
+    url.searchParams.set("rehydrate", "1");
+  }
+  if (options.sessionMode === "edge_pace") {
+    url.searchParams.set("mode", "edge_pace");
   }
   return url.toString();
 }

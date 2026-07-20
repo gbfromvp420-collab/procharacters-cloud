@@ -21,6 +21,7 @@
 | **DNA climb motion + funnel UI** | ✅ node pulse · shell throb · Account funnel dashboard | Climb feels alive; ops sees expand→pay |
 | **DNA power reclaim** | ✅ Continue → Edge Pace + tree hard rehydrate | Gallery **DNA power · Edge reclaim** is the real climb |
 | **Reclaim everywhere** | ✅ offline · pause · Account hub · hero reel | Ruby token: DNA power on every surface |
+| **Reclaim chrome + share** | ✅ SiteChrome · wire drop · share links · offline net | Nav Continue is DNA power when trail is hot |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Redeploy API after DNA runtime push |

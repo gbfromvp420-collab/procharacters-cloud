@@ -62,6 +62,8 @@ export function ContinueBanner({
               : null;
   const resumeUrl = buildResumeCodeShareUrl(continueTarget.resumeCode, {
     characterId: continueTarget.characterId,
+    rehydrate: true,
+    sessionMode: dnaLabel ? "edge_pace" : undefined,
   });
 
   useEffect(() => {

@@ -6,6 +6,7 @@ import { loadStoredAccount } from "@/lib/account-storage";
 import {
   buildResumeChatPath,
   getMostRecentResume,
+  isDnaPowerTrail,
   isResumeExpiryUrgent,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
@@ -52,6 +53,7 @@ export function SiteChrome({
   }, [resume]);
 
   const urgent = isResumeExpiryUrgent(resume?.resumeExpiresAt);
+  const dnaPower = resume ? isDnaPowerTrail(resume) : false;
   const nick =
     resume?.characterName?.trim().split(/\s+/)[0] ||
     resume?.characterId?.split("-")[0] ||
@@ -127,11 +129,21 @@ export function SiteChrome({
               <Link
                 href={continueHref}
                 className={`btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-                  urgent ? "ring-2 ring-rose-400/55 animate-pulse" : ""
+                  urgent
+                    ? "ring-2 ring-rose-400/55 animate-pulse"
+                    : dnaPower
+                      ? "ring-1 ring-violet-400/55"
+                      : ""
                 }`}
-                title={urgent ? "Resume expiring soon — reclaim" : "Continue last chat"}
+                title={
+                  urgent
+                    ? "Resume expiring soon — reclaim"
+                    : dnaPower
+                      ? "DNA power reclaim · Edge Pace + heat"
+                      : "Continue last chat"
+                }
               >
-                {urgent ? "Reclaim" : "Continue"}
+                {urgent ? "Reclaim" : dnaPower ? "DNA power" : "Continue"}
                 {nick ? ` · ${nick}` : ""}
               </Link>
             ) : active !== "chat" ? (
