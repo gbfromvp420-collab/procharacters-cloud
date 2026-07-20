@@ -14,6 +14,9 @@ const DNA_TREE_NODES: Array<{ id: string; label: string }> = [
   { id: "release-gate", label: "Gate" },
 ];
 
+/** Brief toast lifetime — slightly longer than node flash so the milestone reads. */
+const CLIMB_TOAST_MS = 1800;
+
 function dnaNodeIndex(nodeId?: string | null): number {
   if (!nodeId) return 0;
   const exact = DNA_TREE_NODES.findIndex((n) => n.id === nodeId);
@@ -25,6 +28,45 @@ function dnaNodeIndex(nodeId?: string | null): number {
   if (lower.includes("tease")) return 2;
   if (lower.includes("soft")) return 1;
   return 0;
+}
+
+/** Pretty node name for milestone toast (Edge, Soft lock, …). */
+function dnaClimbDisplayLabel(
+  label?: string | null,
+  nodeId?: string | null,
+): string {
+  if (nodeId) {
+    const known = DNA_TREE_NODES.find((n) => n.id === nodeId);
+    if (known) {
+      if (known.id === "soft-lock") return "Soft lock";
+      if (known.id === "release-gate") return "Gate";
+      return known.label;
+    }
+  }
+  const raw = (label || nodeId || "heat").trim();
+  if (!raw) return "Heat";
+  // Prefer server label when longer than a bare id; else title-case first token
+  if (label?.trim() && label.trim() !== nodeId) {
+    const t = label.trim();
+    return t.length > 18 ? `${t.slice(0, 16)}…` : t;
+  }
+  const first = raw.replace(/[-_]+/g, " ").split(/\s+/)[0] || "Heat";
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+}
+
+/** One-beat fire after climb — soft tease, no ChatApp needed. */
+function climbFireBeat(nodeId?: string | null): string {
+  const idx = dnaNodeIndex(nodeId);
+  if (idx >= 5) return "gate’s open — go slow";
+  if (idx >= 4) return "denied… stay aching";
+  if (idx >= 3) return "edge locked — don’t finish";
+  if (idx >= 2) return "tease deeper — hold";
+  if (idx >= 1) return "soft lock… closer";
+  return "spark caught — climb slow";
+}
+
+function climbWhisperBeat(displayLabel: string): string {
+  return `${displayLabel} locked. Stay right there — don’t rush past it.`;
 }
 
 function whisperForMind(characterId?: string | null): string {
@@ -112,17 +154,6 @@ export function HeatWhisperStrip({
     edge && modeState
       ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
       : null;
-  const line =
-    cue ||
-    (dnaTree && modeState?.fireLine?.trim()
-      ? `Stay in ${modeState.dnaTreeLabel ?? modeState.dnaTreeNodeId} — Fire a chip to climb or soft-lock.`
-      : null) ||
-    whisperForMind(characterId);
-  const fire = fireLineFor(
-    characterId,
-    edge ? modeState?.phase : null,
-    modeState?.fireLine ?? null,
-  );
   const almost = edge && modeState?.phase === "almost";
   const dnaGlow = !!dnaTree && !edge;
   const chips =
@@ -132,6 +163,8 @@ export function HeatWhisperStrip({
   const activeDnaIdx = dnaNodeIndex(modeState?.dnaTreeNodeId);
 
   const [climbFlash, setClimbFlash] = useState(false);
+  /** Display label captured at advance — toast stays stable if props flicker. */
+  const [climbToastLabel, setClimbToastLabel] = useState<string | null>(null);
   const prevNode = useRef(modeState?.dnaTreeNodeId);
   useEffect(() => {
     if (
@@ -139,17 +172,41 @@ export function HeatWhisperStrip({
       prevNode.current &&
       prevNode.current !== modeState.dnaTreeNodeId
     ) {
+      const label = dnaClimbDisplayLabel(
+        modeState.dnaTreeLabel,
+        modeState.dnaTreeNodeId,
+      );
+      setClimbToastLabel(label);
       setClimbFlash(true);
-      const t = window.setTimeout(() => setClimbFlash(false), 1200);
+      const t = window.setTimeout(() => {
+        setClimbFlash(false);
+        setClimbToastLabel(null);
+      }, CLIMB_TOAST_MS);
       prevNode.current = modeState.dnaTreeNodeId;
       return () => window.clearTimeout(t);
     }
     prevNode.current = modeState?.dnaTreeNodeId;
-  }, [modeState?.dnaTreeNodeId]);
+  }, [modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel]);
+
+  const climbBeat = climbFlash && !!climbToastLabel;
+  const line =
+    (climbBeat ? climbWhisperBeat(climbToastLabel!) : null) ||
+    cue ||
+    (dnaTree && modeState?.fireLine?.trim()
+      ? `Stay in ${modeState.dnaTreeLabel ?? modeState.dnaTreeNodeId} — Fire a chip to climb or soft-lock.`
+      : null) ||
+    whisperForMind(characterId);
+  const fire = climbBeat
+    ? climbFireBeat(modeState?.dnaTreeNodeId)
+    : fireLineFor(
+        characterId,
+        edge ? modeState?.phase : null,
+        modeState?.fireLine ?? null,
+      );
 
   return (
     <div
-      className={`mb-2 rounded-lg border px-2.5 py-1.5 text-[10px] leading-snug transition-[border-color,box-shadow] duration-300 ${
+      className={`relative mb-2 rounded-lg border px-2.5 py-1.5 text-[10px] leading-snug transition-[border-color,box-shadow] duration-300 ${
         almost
           ? "border-rose-400/40 bg-rose-500/10 text-rose-50"
           : edge
@@ -164,6 +221,24 @@ export function HeatWhisperStrip({
       }`}
       role="note"
     >
+      {/* Mid-session DNA climb milestone — premium violet toast, auto-dismiss */}
+      {climbBeat && (
+        <div
+          className="pointer-events-none absolute -top-2 left-1/2 z-10 -translate-x-1/2 -translate-y-full"
+          role="status"
+          aria-live="polite"
+        >
+          <span className="dna-climb-toast inline-flex items-center gap-1 whitespace-nowrap rounded-full border border-violet-300/55 bg-violet-950/95 px-2.5 py-1 text-[10px] font-semibold tracking-wide text-violet-50 shadow-[0_0_24px_-2px_rgba(167,139,250,0.75)] backdrop-blur-sm">
+            <span className="text-violet-200/90">DNA</span>
+            <span className="text-violet-400/80">·</span>
+            <span>{climbToastLabel} locked</span>
+            <span className="text-violet-200" aria-hidden>
+              ↑
+            </span>
+          </span>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span
           className={`font-semibold uppercase tracking-[0.16em] ${

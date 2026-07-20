@@ -194,6 +194,25 @@ body {
     box-shadow: 0 0 28px -4px rgba(167, 139, 250, 0.7);
   }
 }
+/* Mid-session milestone toast — float up, soft glow, fade (inner pill only) */
+@keyframes dna-climb-toast {
+  0% {
+    opacity: 0;
+    transform: translateY(6px) scale(0.94);
+  }
+  14% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
 .dna-climb-node {
   animation: dna-climb-node 0.9s ease-out 1;
 }
@@ -203,13 +222,17 @@ body {
 .dna-climb-shell {
   animation: dna-climb-shell 1.1s ease-in-out 2;
 }
+.dna-climb-toast {
+  animation: dna-climb-toast 1.8s ease-out 1 both;
+}
 
 @media (prefers-reduced-motion: reduce) {
   .edge-almost-pulse,
   .composer-edge-almost,
   .dna-climb-node,
   .dna-climb-node-live,
-  .dna-climb-shell {
+  .dna-climb-shell,
+  .dna-climb-toast {
     animation: none !important;
   }
 }
