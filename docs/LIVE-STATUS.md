@@ -1,8 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-20 (**Forge this heat · DNA conversion**)  
+**Updated:** 2026-07-20 EOD (**avatar packs live · stop for rest**)  
 **For:** quick “what’s real right now” — no code required.  
-**Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
+**Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
+**Live deploy SHA:** `f430fc8` (api + web both success on Railway).
 
 ---
 
@@ -44,6 +45,7 @@
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
 | LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse |
+| **Avatar 4-loop packs (EOD 07-20)** | ✅ refreshed `female-default` · `female-playful-brat` · `female-soft-goth` · `twink-default` · `twink-gym` · `twink-shy-boy` (aroused fixed) · all 8 `dedicatedReady` · live web 200 on new MP4s |
 | Account **System pulse** | ✅ `/health` + `/metrics` — deploy, DB, push, Stripe, uptime, sessions, turns, WS, 5xx · **Send test alert** |
 | **Error alerts (5xx)** | ✅ eng: **ntfy** (no Discord) · email · Discord/Slack · [ops-error-webhook.md](./ops-error-webhook.md) · Gary sets topic URL |
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |

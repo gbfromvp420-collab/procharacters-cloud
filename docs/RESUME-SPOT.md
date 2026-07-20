@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**Continue forge + DNA typing**)  
-**Session:** King Grok CEO · cook · ntfy ✅
+**Updated:** 2026-07-20 EOD (**avatar pack refresh live · STOP / rest**)  
+**Session:** King Grok CEO · avatar browser uploads + Railway deploy · ntfy ✅
 
 ### Agent fleet (slash / auto)
 
@@ -28,6 +28,7 @@
 | **Continue forge + DNA typing** | ✅ Home Continue banner Forge this DNA · typing “is climbing…” violet dots | Hot trail on home → forge without hunting gallery |
 | **Pack pipeline** | ✅ Stage1 extract · Stage2 cut-loops v2 · **cut-loops-batch** · id-map.example | Finish primes → batch → `packs ready: <id>` |
 | **GrokBuild 4K v1.0** | ✅ Humanized balanced packs · Pack 01 roster (3F+3M names+tags) · live-folder map | 6 primes → cut-loops → theme defs → `packs ready` |
+| **Avatar clip refresh (EOD)** | ✅ Browser-upload new loops · shy-boy aroused fixed (6.3MB) · root strays deleted · check-packs READY · **web+api live `f430fc8`** | Hard-refresh phone · smoke shy-boy + defaults · optional re-upload athletic-tease / alt-punk if you wanted those swapped |
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |
@@ -45,8 +46,9 @@
 | **DNA dossier climb** | ✅ CharacterSession stamps tree node · new session rehydrates · Edge soft reclaim · return greeting | Sign in → forge → climb past Spark → End → **New chat** same model (not Continue) — DNA should resume mid-tree |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
-| Railway | ✅ | Ship this cook → redeploy web (api unchanged) |
-| **Next** | phone: home Continue → Forge DNA · climb typing · primes → `packs ready` | `cook` / `spot` |
+| Railway | ✅ **EOD ship live** · sha `f430fc8` · api+web success | No deploy needed until next code/pack push |
+| **EOD 2026-07-20** | ✅ STOP · push · deploy · save | **Rest.** Next open: `spot` → phone hard-refresh → smoke new clips |
+| **Next** | phone: hard-refresh → shy-boy / defaults clips · Continue forge · primes → `packs ready` | `cook` / `spot` |
 
 ---
 
