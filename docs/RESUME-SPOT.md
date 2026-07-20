@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**DNA bubbles + pack batch**)  
+**Updated:** 2026-07-20 (**Continue forge + DNA typing**)  
 **Session:** King Grok CEO · cook · ntfy ✅
 
 ### Agent fleet (slash / auto)
@@ -25,7 +25,8 @@
 | **Sexy DNA atmosphere** | ✅ Room wash by tree node · chrome/composer glow · mind DNA chip · afterglow DNA peaks | Climb to Edge — room breathes violet/rose; chips say “edge me / so close” |
 | **Sexy DNA avatar + rejoin** | ✅ Avatar/PiP DNA ring + climb pulse · DNA badge on frame · Return card DNA-hot · rejoin toast reclaim | Climb → avatar thröbs violet · End → Continue → “They kept your DNA climb” |
 | **DNA chat bubbles** | ✅ Assistant/user bubbles violet→rose by tree · mind tag DNA stamp | Climb Tease/Edge — transcript glows with the node |
-| **Pack pipeline** | ✅ Stage1 extract · Stage2 cut-loops v2 · **cut-loops-batch** | Finish primes → batch → `packs ready: <id>` |
+| **Continue forge + DNA typing** | ✅ Home Continue banner Forge this DNA · typing “is climbing…” violet dots | Hot trail on home → forge without hunting gallery |
+| **Pack pipeline** | ✅ Stage1 extract · Stage2 cut-loops v2 · **cut-loops-batch** · id-map.example | Finish primes → batch → `packs ready: <id>` |
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |
@@ -44,7 +45,7 @@
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Ship this cook → redeploy web (api unchanged) |
-| **Next** | phone smoke DNA bubbles · Gary finish primes → batch Stage 2 · `packs ready` | `cook` / `spot` |
+| **Next** | phone: home Continue → Forge DNA · climb typing · primes → `packs ready` | `cook` / `spot` |
 
 ---
 

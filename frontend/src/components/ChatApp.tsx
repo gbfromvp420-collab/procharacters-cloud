@@ -4419,6 +4419,8 @@ export function ChatApp() {
                 <TypingIndicator
                   name={characterName ?? headerCharacterName}
                   characterId={activeCharacterId ?? character}
+                  dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                  dnaTreeLabel={modeState?.dnaTreeLabel}
                 />
               )}
               <div ref={messagesEndRef} />

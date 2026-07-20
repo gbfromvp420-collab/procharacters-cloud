@@ -74,9 +74,16 @@ body {
   @apply inline-block h-2 w-2 rounded-full bg-brand-accent;
   animation: typing-bounce 1.2s ease-in-out infinite;
 }
+.typing-dot-dna {
+  @apply bg-violet-300;
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.65);
+}
 
 .animation-delay-150 {
   animation-delay: 150ms;
+}
+.animation-delay-300 {
+  animation-delay: 300ms;
 }
 
 .animation-delay-300 {

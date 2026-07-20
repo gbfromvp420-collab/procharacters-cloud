@@ -6,6 +6,11 @@ import QRCode from "qrcode";
 import type { CharacterCard } from "@/lib/character-card";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
+  buildForgeFromHeatPath,
+  shouldOfferForgeFromHeat,
+  stashForgeHeatSeed,
+} from "@/lib/forge-from-heat";
+import {
   buildResumeChatPath,
   formatResumeExpiryShort,
   isResumeExpiryUrgent,
@@ -65,6 +70,29 @@ export function ContinueBanner({
     rehydrate: true,
     sessionMode: dnaLabel ? "edge_pace" : undefined,
   });
+
+  const forgeHeatCtx = {
+    characterId: continueTarget.characterId,
+    characterName: displayName,
+    baseModelId:
+      continueCard?.avatarBase ||
+      (continueTarget.characterId.startsWith("custom-")
+        ? undefined
+        : continueTarget.characterId),
+    dnaTreeLabel: continueTarget.dnaTreeLabel,
+    dnaTreeNodeId: continueTarget.dnaTreeNodeId,
+    heatDepth: continueTarget.heatDepth,
+    heatChips: continueTarget.heatChips,
+    recapLine: continueTarget.recapLine,
+    messageCount: continueTarget.messageCount,
+  };
+  const offerForge = shouldOfferForgeFromHeat({
+    messageCount: continueTarget.messageCount,
+    dnaTreeLabel: continueTarget.dnaTreeLabel,
+    dnaTreeNodeId: continueTarget.dnaTreeNodeId,
+    heatDepth: continueTarget.heatDepth,
+  });
+  const forgeHref = offerForge ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   useEffect(() => {
     if (!showQr) return;
@@ -234,11 +262,25 @@ export function ContinueBanner({
           <Link
             href={href}
             className={`btn-primary min-h-touch flex-1 px-4 py-2.5 text-sm sm:flex-none ${
-              urgent ? "ring-2 ring-rose-400/60" : ""
+              urgent ? "ring-2 ring-rose-400/60" : dnaLabel ? "ring-1 ring-violet-300/45" : ""
             }`}
           >
-            {urgent && expiryLabel === "expired" ? "Reclaim chat" : `Continue · ${nick}`}
+            {urgent && expiryLabel === "expired"
+              ? "Reclaim chat"
+              : dnaLabel
+                ? `DNA power · ${nick}`
+                : `Continue · ${nick}`}
           </Link>
+          {forgeHref && (
+            <Link
+              href={forgeHref}
+              onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
+              className="btn-ghost min-h-0 flex-1 border-violet-400/50 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-50 ring-1 ring-violet-300/30 sm:flex-none"
+              title="Mint private DNA from this climb"
+            >
+              {dnaLabel ? `Forge this DNA · ${dnaLabel.split(/\s+/)[0]}` : "Forge this heat"}
+            </Link>
+          )}
           <button
             type="button"
             onClick={() => setShowQr((v) => !v)}
