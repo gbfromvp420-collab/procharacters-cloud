@@ -21,12 +21,14 @@ import { returnGreetingHint } from "../lib/memory/cross-session-dossier.js";
 import {
   getCharacterSession,
   priorNotesFromCharacterSession,
+  type CharacterSessionRecord,
 } from "../lib/memory/character-session-store.js";
 import {
   buildPriorContinuitySeed,
   buildSessionNotes,
 } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
+import { bump } from "../lib/observability/metrics.js";
 import {
   buildAccountSessionsExport,
   buildSessionExport,
@@ -264,6 +266,10 @@ export class SessionManager {
     );
 
     let priorNotes: string | undefined;
+    let durable: CharacterSessionRecord | null = null;
+    if (input.accountId) {
+      durable = await getCharacterSession(input.accountId, characterId);
+    }
     if (input.accountId && input.useCrossSessionMemory) {
       // File dossier is the opt-in gate; Prisma CharacterSession is durable mirror.
       const prior = await getCrossSessionNote(input.accountId, characterId);
@@ -271,23 +277,52 @@ export class SessionManager {
         if (prior.notes?.trim()) {
           priorNotes = prior.notes.trim();
         }
-        const durable = await getCharacterSession(input.accountId, characterId);
         const fromDb = priorNotesFromCharacterSession(durable);
         if (fromDb) {
           // Prefer longer of file vs DB (DB may include kink line)
           if (!priorNotes || fromDb.length > priorNotes.length) {
             priorNotes = fromDb;
-          } else if (durable?.kinkProfile?.tags?.length) {
-            // File dossier won length — still append kink prefs once if missing
+          } else if (
+            durable?.kinkProfile?.tags?.length ||
+            durable?.kinkProfile?.dnaTreeNodeId
+          ) {
+            // File dossier won length — still append kink/DNA prefs once if missing
             const kinkHint = priorNotesFromCharacterSession({
-              ...durable,
+              ...durable!,
               memorySummary: null,
             });
-            if (kinkHint && !priorNotes.includes("Learned heat prefs")) {
+            if (
+              kinkHint &&
+              !priorNotes.includes("Learned heat prefs") &&
+              !priorNotes.includes("DNA power climb")
+            ) {
+              priorNotes = `${priorNotes}\n\n${kinkHint}`.slice(0, 1600);
+            } else if (
+              kinkHint &&
+              durable?.kinkProfile?.dnaTreeNodeId &&
+              !priorNotes.includes("DNA power climb")
+            ) {
               priorNotes = `${priorNotes}\n\n${kinkHint}`.slice(0, 1600);
             }
           }
         }
+      } else if (durable?.kinkProfile?.dnaTreeNodeId) {
+        // DNA climb is gameplay progress — inject even when full dossier opt-in is off
+        const dnaOnly = priorNotesFromCharacterSession({
+          ...durable,
+          memorySummary: null,
+        });
+        if (dnaOnly?.includes("DNA power climb")) {
+          priorNotes = dnaOnly;
+        }
+      }
+    } else if (durable?.kinkProfile?.dnaTreeNodeId) {
+      const dnaOnly = priorNotesFromCharacterSession({
+        ...durable,
+        memorySummary: null,
+      });
+      if (dnaOnly?.includes("DNA power climb")) {
+        priorNotes = dnaOnly;
       }
     }
 
@@ -309,22 +344,59 @@ export class SessionManager {
     const wsToken = randomUUID();
     const resumeCode = await registerResumeCode(sessionId, input.accountId);
 
+    // DNA power dossier reclaim: restore last tree node across sessions / expired codes
+    let dnaTreeNodeId = custom?.dna
+      ? initialDnaTreeNodeId(custom.dna)
+      : undefined;
+    let dnaDossierReclaim = false;
+    let dnaDossierLabel: string | undefined;
+    const dossierNode = durable?.kinkProfile?.dnaTreeNodeId?.trim();
+    if (custom?.dna?.behaviorTree?.nodes?.length && dossierNode) {
+      const node = custom.dna.behaviorTree.nodes.find((n) => n.id === dossierNode);
+      if (node) {
+        dnaTreeNodeId = dossierNode;
+        dnaDossierReclaim = true;
+        dnaDossierLabel =
+          durable?.kinkProfile?.dnaTreeLabel?.trim() || uiForTreeNode(node).label;
+      }
+    }
+
+    // Soft Edge reclaim: only when client didn't pick a mode and dossier left mid-climb
+    const clientForcedMode = input.sessionMode != null;
+    let sessionMode = normalizeSessionMode(input.sessionMode);
+    if (
+      !clientForcedMode &&
+      dnaDossierReclaim &&
+      durable?.kinkProfile?.sessionMode === "edge_pace" &&
+      dnaTreeNodeId &&
+      !/spark/i.test(dnaTreeNodeId)
+    ) {
+      sessionMode = "edge_pace";
+    }
+
     const sessionNotesFromPrior = priorNotes
       ? buildPriorContinuitySeed(priorNotes, promptSnapshot.characterName)
       : undefined;
     // DNA-only sessions still get a sticky "what we remember" strip on turn 0
-    const sessionNotes =
+    let sessionNotes =
       sessionNotesFromPrior ||
       (dnaSeed
         ? `Just starting with ${promptSnapshot.characterName}. ${dnaSeed.slice(0, 400)}`
         : undefined);
+    if (dnaDossierReclaim && dnaDossierLabel) {
+      const beat = `DNA tree · ${dnaDossierLabel}`;
+      sessionNotes = sessionNotes?.trim()
+        ? /DNA tree ·/i.test(sessionNotes)
+          ? sessionNotes.replace(/DNA tree ·[^.]*/i, beat).slice(0, 1200)
+          : `${sessionNotes} ${beat}.`.slice(0, 1200)
+        : beat;
+    }
 
     const memory = SessionMemory.empty(messageWindow, {
       ...(priorNotes ? { priorNotes } : {}),
       ...(sessionNotes ? { sessionNotes } : {}),
     });
 
-    const sessionMode = normalizeSessionMode(input.sessionMode);
     const modeStartedAt = now.toISOString();
 
     // Signature opening line — seeds live chat so the room never feels empty
@@ -341,9 +413,9 @@ export class SessionManager {
       memory.addMessage("assistant", line);
     }
 
-    const dnaTreeNodeId = custom?.dna
-      ? initialDnaTreeNodeId(custom.dna)
-      : undefined;
+    if (dnaDossierReclaim) {
+      bump("dnaDossierReclaims");
+    }
 
     const record: SessionRecord = {
       id: sessionId,
@@ -1214,19 +1286,23 @@ export class SessionManager {
     const memory = SessionMemory.fromData(session.memory, this.maxMessageWindow);
 
     // Refresh opt-in prior dossier from file + CharacterSession so resume isn't stale.
+    let durable: CharacterSessionRecord | null = null;
     if (session.accountId) {
       try {
+        durable = await getCharacterSession(session.accountId, session.characterId);
         const prior = await getCrossSessionNote(session.accountId, session.characterId);
         if (prior?.optIn) {
           let refreshed = prior.notes?.trim() || memory.getPriorNotes() || "";
-          const durable = await getCharacterSession(session.accountId, session.characterId);
           const fromDb = priorNotesFromCharacterSession(durable);
           if (fromDb) {
             if (!refreshed || fromDb.length > refreshed.length) {
               refreshed = fromDb;
-            } else if (durable?.kinkProfile?.tags?.length && !refreshed.includes("Learned heat prefs")) {
+            } else if (
+              (durable?.kinkProfile?.tags?.length && !refreshed.includes("Learned heat prefs")) ||
+              (durable?.kinkProfile?.dnaTreeNodeId && !refreshed.includes("DNA power climb"))
+            ) {
               const kinkHint = priorNotesFromCharacterSession({
-                ...durable,
+                ...durable!,
                 memorySummary: null,
               });
               if (kinkHint) {
@@ -1236,6 +1312,19 @@ export class SessionManager {
           }
           if (refreshed.trim()) {
             memory.setPriorNotes(refreshed);
+          }
+        } else if (durable?.kinkProfile?.dnaTreeNodeId) {
+          const dnaOnly = priorNotesFromCharacterSession({
+            ...durable,
+            memorySummary: null,
+          });
+          if (dnaOnly?.includes("DNA power climb")) {
+            const cur = memory.getPriorNotes() || "";
+            if (!cur.includes("DNA power climb")) {
+              memory.setPriorNotes(
+                cur ? `${cur}\n\n${dnaOnly}`.slice(0, 1600) : dnaOnly,
+              );
+            }
           }
         }
       } catch (error) {
@@ -1271,16 +1360,26 @@ export class SessionManager {
       memory.setSessionNotes(stamped);
     }
 
-    // Hard DNA rehydrate — tree node survives End/Continue
+    // Hard DNA rehydrate — tree node survives End/Continue + dossier when session is cold
     const custom = getCustomCharacter(session.characterId);
     let dnaTreeNodeId = session.dnaTreeNodeId;
+    if (!dnaTreeNodeId && durable?.kinkProfile?.dnaTreeNodeId) {
+      const dossierNode = durable.kinkProfile.dnaTreeNodeId.trim();
+      if (
+        custom?.dna?.behaviorTree?.nodes?.some((n) => n.id === dossierNode)
+      ) {
+        dnaTreeNodeId = dossierNode;
+        bump("dnaDossierReclaims");
+      }
+    }
     if (!dnaTreeNodeId && custom?.dna) {
       dnaTreeNodeId = initialDnaTreeNodeId(custom.dna);
     }
     if (dnaTreeNodeId && custom?.dna?.behaviorTree?.nodes) {
       const node = custom.dna.behaviorTree.nodes.find((n) => n.id === dnaTreeNodeId);
       if (node) {
-        const label = uiForTreeNode(node).label;
+        const label =
+          durable?.kinkProfile?.dnaTreeLabel?.trim() || uiForTreeNode(node).label;
         const beat = `DNA tree · ${label}`;
         const notesNow = memory.getSessionNotes() || "";
         if (!/DNA tree ·/i.test(notesNow)) {

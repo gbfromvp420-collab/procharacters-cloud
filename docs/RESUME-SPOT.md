@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**DNA power on push + multi-device**)  
+**Updated:** 2026-07-20 (**DNA dossier climb · cross-session**)  
 **Session:** King Grok CEO · cook · ntfy ✅
 
 ---
@@ -24,10 +24,11 @@
 | **Reclaim chrome + share** | ✅ SiteChrome · wire drop · share links · offline net | Nav Continue is DNA power when trail is hot |
 | **Reclaim card + print + account** | ✅ character card · QR print · resume markdown · chat hero | Zero cold resume paths left |
 | **DNA power push + multi-device** | ✅ expiry push deep-links Edge reclaim · account list stamps DNA node · email resumes reclaim | Climb DNA → leave → wait for expiry push (or force Check now) → tap should open Edge Pace |
+| **DNA dossier climb** | ✅ CharacterSession stamps tree node · new session rehydrates · Edge soft reclaim · return greeting | Sign in → forge → climb past Spark → End → **New chat** same model (not Continue) — DNA should resume mid-tree |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
 | Railway | ✅ | Ship this cook → redeploy api+web |
-| **Next** | phone smoke: forge → climb → end → push/Continue DNA reclaim | `cook` / `spot` |
+| **Next** | phone smoke: forge → climb → new chat DNA dossier + Continue reclaim | `cook` / `spot` |
 
 ---
 

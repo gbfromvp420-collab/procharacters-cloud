@@ -9,6 +9,14 @@ export type KinkProfile = {
   intensity: "soft" | "medium" | "high" | "edge";
   notes: string[];
   updatedAt: string;
+  /**
+   * DNA power climb (custom-v3) — last behavior-tree node for cross-session reclaim.
+   * Survives expired resume codes when CharacterSession is still warm.
+   */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  /** Last session mode when DNA climb was stamped. */
+  sessionMode?: "normal" | "edge_pace";
 };
 
 const TAG_PATTERNS: Array<{ tag: string; re: RegExp }> = [
@@ -52,15 +60,85 @@ export function evolveKinkProfile(
     intensity,
     notes,
     updatedAt: new Date().toISOString(),
+    // Preserve DNA climb across kink evolution (tags only change here)
+    ...(prior?.dnaTreeNodeId?.trim()
+      ? {
+          dnaTreeNodeId: prior.dnaTreeNodeId.trim(),
+          ...(prior.dnaTreeLabel?.trim()
+            ? { dnaTreeLabel: prior.dnaTreeLabel.trim() }
+            : {}),
+          ...(prior.sessionMode === "edge_pace" || prior.sessionMode === "normal"
+            ? { sessionMode: prior.sessionMode }
+            : {}),
+        }
+      : {}),
+  };
+}
+
+/** Merge DNA power climb into an existing kink profile (or create a slim one). */
+export function stampDnaClimbOnKinkProfile(
+  prior: Partial<KinkProfile> | null | undefined,
+  climb: {
+    dnaTreeNodeId: string;
+    dnaTreeLabel?: string;
+    sessionMode?: "normal" | "edge_pace";
+  },
+): KinkProfile {
+  const nodeId = climb.dnaTreeNodeId.trim();
+  const base: KinkProfile = {
+    tags: Array.isArray(prior?.tags)
+      ? prior!.tags!.filter((t): t is string => typeof t === "string").slice(0, 12)
+      : [],
+    intensity:
+      prior?.intensity === "soft" ||
+      prior?.intensity === "medium" ||
+      prior?.intensity === "high" ||
+      prior?.intensity === "edge"
+        ? prior.intensity
+        : "medium",
+    notes: Array.isArray(prior?.notes)
+      ? prior!.notes!.filter((n): n is string => typeof n === "string").slice(0, 8)
+      : [],
+    updatedAt: new Date().toISOString(),
+  };
+  if (!nodeId) return base;
+  return {
+    ...base,
+    dnaTreeNodeId: nodeId,
+    ...(climb.dnaTreeLabel?.trim()
+      ? { dnaTreeLabel: climb.dnaTreeLabel.trim().slice(0, 48) }
+      : prior?.dnaTreeLabel?.trim()
+        ? { dnaTreeLabel: prior.dnaTreeLabel.trim().slice(0, 48) }
+        : {}),
+    ...(climb.sessionMode === "edge_pace" || climb.sessionMode === "normal"
+      ? { sessionMode: climb.sessionMode }
+      : prior?.sessionMode === "edge_pace" || prior?.sessionMode === "normal"
+        ? { sessionMode: prior.sessionMode }
+        : {}),
   };
 }
 
 /** One short prompt line for memory injection. */
 export function formatKinkProfileLine(profile: KinkProfile | null | undefined): string | null {
-  if (!profile?.tags?.length) return null;
-  const tags = profile.tags.slice(0, 6).join(", ");
-  const intensity = profile.intensity || "medium";
-  return `Learned heat prefs (intensity=${intensity}): ${tags}. Escalate toward these when natural — never invent consent.`;
+  if (!profile) return null;
+  const parts: string[] = [];
+  if (profile.tags?.length) {
+    const tags = profile.tags.slice(0, 6).join(", ");
+    const intensity = profile.intensity || "medium";
+    parts.push(
+      `Learned heat prefs (intensity=${intensity}): ${tags}. Escalate toward these when natural — never invent consent.`,
+    );
+  }
+  if (profile.dnaTreeNodeId?.trim()) {
+    const label = profile.dnaTreeLabel?.trim() || profile.dnaTreeNodeId.trim();
+    const modeBit =
+      profile.sessionMode === "edge_pace" ? " · Edge Pace" : "";
+    parts.push(
+      `DNA power climb: ${label}${modeBit} (node=${profile.dnaTreeNodeId.trim()}). Resume this tree node — do not cold-reset to spark.`,
+    );
+  }
+  if (!parts.length) return null;
+  return parts.join(" ");
 }
 
 function scoreIntensity(corpus: string, tags: Set<string>): KinkProfile["intensity"] {

@@ -12,6 +12,7 @@ import type { MemoryMessage } from "./types.js";
 import {
   evolveKinkProfile,
   formatKinkProfileLine,
+  stampDnaClimbOnKinkProfile,
   type KinkProfile,
 } from "./kink-profile.js";
 
@@ -38,6 +39,18 @@ export function isCharacterSessionDbConfigured(): boolean {
 function asKinkProfile(value: unknown): KinkProfile | null {
   if (!value || typeof value !== "object") return null;
   const v = value as Partial<KinkProfile>;
+  const dnaTreeNodeId =
+    typeof v.dnaTreeNodeId === "string" && v.dnaTreeNodeId.trim()
+      ? v.dnaTreeNodeId.trim()
+      : undefined;
+  const dnaTreeLabel =
+    typeof v.dnaTreeLabel === "string" && v.dnaTreeLabel.trim()
+      ? v.dnaTreeLabel.trim().slice(0, 48)
+      : undefined;
+  const sessionMode =
+    v.sessionMode === "edge_pace" || v.sessionMode === "normal"
+      ? v.sessionMode
+      : undefined;
   return {
     tags: Array.isArray(v.tags) ? v.tags.filter((t): t is string => typeof t === "string") : [],
     intensity:
@@ -49,6 +62,9 @@ function asKinkProfile(value: unknown): KinkProfile | null {
         : "medium",
     notes: Array.isArray(v.notes) ? v.notes.filter((n): n is string => typeof n === "string") : [],
     updatedAt: typeof v.updatedAt === "string" ? v.updatedAt : new Date().toISOString(),
+    ...(dnaTreeNodeId ? { dnaTreeNodeId } : {}),
+    ...(dnaTreeLabel ? { dnaTreeLabel } : {}),
+    ...(sessionMode ? { sessionMode } : {}),
   };
 }
 
@@ -129,6 +145,10 @@ export type UpsertCharacterSessionInput = {
   lastSessionId?: string;
   /** When true, merge kink profile from messages. Default true. */
   evolveKinks?: boolean;
+  /** DNA power climb stamp (custom-v3) — survives expired resumes. */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  sessionMode?: "normal" | "edge_pace";
 };
 
 /**
@@ -155,10 +175,19 @@ export async function upsertCharacterSession(
       .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i)
       .slice(-MAX_HISTORY);
 
-    const kinkProfile =
+    let kinkProfile =
       input.evolveKinks === false
         ? priorKink
         : evolveKinkProfile(incoming.length ? incoming : history, priorKink);
+
+    // DNA climb stamp — merge after kink evolve so node survives tag refreshes
+    if (input.dnaTreeNodeId?.trim()) {
+      kinkProfile = stampDnaClimbOnKinkProfile(kinkProfile, {
+        dnaTreeNodeId: input.dnaTreeNodeId,
+        dnaTreeLabel: input.dnaTreeLabel,
+        sessionMode: input.sessionMode,
+      });
+    }
 
     const summary =
       (input.memorySummary?.trim() || existing?.memorySummary || "").slice(0, MAX_SUMMARY) ||

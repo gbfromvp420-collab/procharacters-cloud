@@ -206,10 +206,23 @@ export class ChatOrchestrator {
         characterName: session.promptSnapshot.characterName,
       });
       priorNotesOut = dossier;
+      const dnaClimb =
+        dnaTreeStep
+          ? {
+              dnaTreeNodeId: dnaTreeStep.nodeId,
+              dnaTreeLabel: dnaTreeStep.ui.label,
+              sessionMode: modeState.mode as "normal" | "edge_pace",
+            }
+          : session.dnaTreeNodeId
+            ? {
+                dnaTreeNodeId: session.dnaTreeNodeId,
+                sessionMode: (session.sessionMode ?? "normal") as "normal" | "edge_pace",
+              }
+            : {};
       void saveCrossSessionNotes(session.accountId, session.characterId, dossier, {
         messageCountHint: recent.messageCount,
       }).then((saved) => {
-        // Only mirror to Postgres when file opt-in actually saved
+        // Only mirror full dossier to Postgres when file opt-in actually saved
         if (!saved) return;
         void upsertCharacterSession({
           userId: session.accountId!,
@@ -218,8 +231,20 @@ export class ChatOrchestrator {
           messages: recent.messages,
           messageCountHint: recent.messageCount,
           lastSessionId: sessionId,
+          ...dnaClimb,
         });
       });
+      // DNA power climb: always stamp when signed-in + tree active (gameplay progress).
+      // Independent of dossier opt-in so expired resumes still rehydrate Edge/Tease.
+      if (dnaClimb.dnaTreeNodeId) {
+        void upsertCharacterSession({
+          userId: session.accountId,
+          characterId: session.characterId,
+          lastSessionId: sessionId,
+          evolveKinks: false,
+          ...dnaClimb,
+        });
+      }
     }
 
     const avatarIntent = this.buildAvatarState(

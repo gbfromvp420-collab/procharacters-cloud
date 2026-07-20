@@ -56,6 +56,8 @@ type MetricsPayload = {
   pushExpirySent?: number;
   /** Expiry pushes that deep-linked DNA power / Edge reclaim. */
   pushDnaPowerReclaims?: number;
+  /** New sessions that rehydrated DNA climb from CharacterSession dossier. */
+  dnaDossierReclaims?: number;
   startedAt?: string;
 };
 
@@ -353,6 +355,15 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         ok: true,
         title:
           "Expiry push notifications that deep-linked DNA power · Edge reclaim (mode=edge_pace + rehydrate)",
+      });
+    }
+    if ((metrics.dnaDossierReclaims ?? 0) > 0) {
+      chips.push({
+        key: "dnaDossier",
+        label: `${formatCount(metrics.dnaDossierReclaims)} DNA dossier`,
+        ok: true,
+        title:
+          "Sessions that rehydrated DNA climb from durable CharacterSession (survives expired resume codes)",
       });
     }
     if ((metrics.pushSubscribe ?? 0) + (metrics.pushTestSent ?? 0) > 0) {

@@ -131,7 +131,31 @@ export function returnGreetingHint(
   const sceneBit = preferSceneBit(sig.lastScene);
   const mind = mindTag(characterId);
 
+  // DNA power climb from durable dossier (survives expired resume)
+  const dnaMatch =
+    priorDossier.match(/DNA power climb:\s*([^(\n]+)/i) ||
+    priorDossier.match(/DNA tree ·\s*([^.]+)/i);
+  const dnaLabel = dnaMatch?.[1]?.trim().replace(/\s*·\s*Edge Pace\s*$/i, "") || null;
+
   // Highest specificity first
+  if (name && dnaLabel) {
+    return softLine(
+      `i still remember you, ${name} — we left DNA · ${clip(dnaLabel, 28)}. climb with me.`,
+      mind,
+    );
+  }
+  if (dnaLabel && sceneBit) {
+    return softLine(
+      `DNA · ${clip(dnaLabel, 24)} is still live — last pose ${sceneBit}. don’t cold-reset.`,
+      mind,
+    );
+  }
+  if (dnaLabel) {
+    return softLine(
+      `your DNA climb is still at ${clip(dnaLabel, 28)} — i kept the node. pick up with me.`,
+      mind,
+    );
+  }
   if (name && sceneBit) {
     return softLine(
       `i still remember you, ${name} — last time we left it ${sceneBit}. pick up with me.`,
@@ -181,6 +205,13 @@ export function returnGreetingHint(
 export function returnPickupSeeds(priorDossier?: string | null): string[] {
   const sig = parseReturnSignals(priorDossier);
   const seeds: string[] = [];
+  const dnaMatch =
+    priorDossier?.match(/DNA power climb:\s*([^(\n]+)/i) ||
+    priorDossier?.match(/DNA tree ·\s*([^.]+)/i);
+  const dnaLabel = dnaMatch?.[1]?.trim().replace(/\s*·\s*Edge Pace\s*$/i, "") || null;
+  if (dnaLabel) {
+    seeds.push(`DNA · ${clip(dnaLabel, 24)} — keep climbing, don’t reset`);
+  }
   if (sig.name) {
     seeds.push(`you remembered… call me ${sig.name} again while you edge me`);
   }

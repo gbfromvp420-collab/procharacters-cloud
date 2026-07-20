@@ -34,6 +34,8 @@ export type MetricCounters = {
   pushExpiryCronTicks: number;
   /** Expiry pushes that deep-linked DNA power / Edge reclaim. */
   pushDnaPowerReclaims: number;
+  /** New sessions that rehydrated DNA climb from CharacterSession dossier. */
+  dnaDossierReclaims: number;
   startedAt: string;
 };
 
@@ -62,6 +64,7 @@ const counters: MetricCounters = {
   pushExpirySkipped: 0,
   pushExpiryCronTicks: 0,
   pushDnaPowerReclaims: 0,
+  dnaDossierReclaims: 0,
   startedAt: new Date().toISOString(),
 };
 
