@@ -30,6 +30,77 @@ Match **vibe**, not real names. “Anna” playful → `female-playful-brat`.
 
 ---
 
+## New characters · master list (edit as you go)
+
+Track each prime → Stage 2 pack here as we hit **6–10**. Copy a block per vibe.  
+**Status values:** `Themed in other Grok` · `Packs ready` · `Integrated` · `Needs retweak`
+
+### Template (copy for each new cut)
+
+```markdown
+### <model-id> (e.g. female-soft-goth or twink-alt-punk)
+- **Prime clip**: path/to/whatever_prime_25s.mp4
+- **Loops generated**: packs/<model-id>/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5 (or your tweaks)
+- **Status**: Themed in other Grok | Packs ready | Integrated
+- **Notes**: Hot AF teasing loop, good for Phase 4
+```
+
+### Phase 4 roster (fill in)
+
+### female-playful-brat
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/female-playful-brat/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: _(empty — cut when prime lands)_
+- **Notes**: brat / almost-good-girl
+
+### twink-gym
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/twink-gym/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: _(empty — cut when prime lands)_
+- **Notes**: post-set / flex / burn
+
+### female-soft-goth
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/female-soft-goth/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: _(empty — cut when prime lands)_
+- **Notes**: soft candle / hover / edge
+
+### twink-shy-boy
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/twink-shy-boy/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: _(empty — cut when prime lands)_
+- **Notes**: shy still / peek / nervous
+
+### female-athletic-tease
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/female-athletic-tease/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: _(empty — cut when prime lands)_
+- **Notes**: mat cool-down / stretch / hold
+
+### twink-alt-punk
+- **Prime clip**: _(TBD)_
+- **Loops generated**: packs/twink-alt-punk/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**: _(empty — cut when prime lands)_
+- **Notes**: bored-hot / mesh / brat edge
+
+### Extra slots (7–10 — library beyond Phase 4)
+
+### _(model-id)_
+- **Prime clip**:
+- **Loops generated**: packs/_/{idle,teasing,playful,aroused}.mp4
+- **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
+- **Status**:
+- **Notes**:
+
+---
+
 ## Files (only these)
 
 ```
