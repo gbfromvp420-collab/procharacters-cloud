@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { forgeExpandAction } from "@/app/models/studio/actions";
 import { loadStoredAccount, type StoredAccount } from "@/lib/account-storage";
 import {
@@ -22,6 +22,7 @@ import {
   sentimentToBand,
   type NaughtySyntaxDna,
 } from "@/lib/forge-dna";
+import { takeForgeHeatSeed } from "@/lib/forge-from-heat";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type {
   CustomSceneInput,
@@ -176,6 +177,40 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   const [forgeSource, setForgeSource] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [manualBandLock, setManualBandLock] = useState(false);
+  /** Heat→Forge conversion banner (from chat End / win toast). */
+  const [heatSeedBanner, setHeatSeedBanner] = useState<string | null>(null);
+  const heatSeedApplied = useRef(false);
+
+  // Forge this heat — one-shot prefill fantasy + base from chat climb
+  useEffect(() => {
+    if (heatSeedApplied.current) return;
+    if (editId) return;
+    if (search.get("from") !== "heat") return;
+    heatSeedApplied.current = true;
+    const stashed = takeForgeHeatSeed();
+    const qBase = search.get("base")?.trim();
+    const qSeed = search.get("seed")?.trim();
+    const qNick = search.get("nick")?.trim();
+    const qDna = search.get("dna")?.trim();
+    const fantasyText = stashed?.fantasy?.trim() || qSeed || "";
+    if (fantasyText.length >= 8) {
+      setFantasy(fantasyText);
+    }
+    if (stashed?.baseModelId?.trim() || qBase) {
+      setBaseModelId(stashed?.baseModelId?.trim() || qBase || "twink-default");
+    }
+    if (qNick) {
+      setName(`${qNick} DNA`.slice(0, 40));
+    }
+    const dnaBit = stashed?.dnaTreeLabel || stashed?.dnaTreeNodeId || qDna;
+    setHeatSeedBanner(
+      dnaBit
+        ? `Heat seed loaded · DNA · ${dnaBit} — Forge model to lock the climb`
+        : "Heat seed loaded from chat — Forge model to mint private DNA",
+    );
+    // Clean query so refresh doesn't re-apply empty stash
+    router.replace("/models/studio", { scroll: false });
+  }, [editId, search, router]);
 
   const defaults = useMemo(
     () => characters.filter((c) => c.kind === "default"),
@@ -825,6 +860,14 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
               Type the fantasy. Forge expands identity, branches, behavior tree,
               LiveKit reactivity, and memory seeds — then Chat Now.
             </p>
+            {heatSeedBanner && (
+              <p
+                className="mt-2 max-w-xl rounded-lg border border-violet-400/40 bg-violet-500/15 px-3 py-2 text-[11px] leading-relaxed text-violet-50"
+                role="status"
+              >
+                {heatSeedBanner}
+              </p>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {account ? (

@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-20 (**DNA dossier climb · cross-session**)  
+**Updated:** 2026-07-20 (**Forge this heat · DNA conversion**)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).
 
@@ -72,6 +72,7 @@
 | **Reclaim card + print + account** | ✅ Character card DNA power · print/QR Edge reclaim · Account resume markdown DNA · chat idle hero DNA reclaim |
 | **DNA power push + multi-device** | ✅ Expiry Web Push deep-links `mode=edge_pace` + rehydrate when DNA/Edge hot · copy “DNA power · Edge reclaim” · account session list exposes `dnaTreeNodeId`/`sessionMode` · resume cache multi-device stamp · emailed resume links reclaim · metric `pushDnaPowerReclaims` on System pulse |
 | **DNA dossier climb** | ✅ CharacterSession kinkProfile stamps `dnaTreeNodeId`/`label`/`sessionMode` each DNA turn · new session + cold resume rehydrate tree (not cold spark) · soft Edge when left mid-climb · return greeting + pick-up seeds · metric `dnaDossierReclaims` |
+| **Forge this heat** | ✅ Session win toast + End pause banner CTA → Studio Forge with heat/DNA fantasy seed (sessionStorage + query) · base/nick/DNA prefill · violet banner “Heat seed loaded” |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
 | Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |

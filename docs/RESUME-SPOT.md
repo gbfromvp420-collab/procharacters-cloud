@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**DNA dossier climb · cross-session**)  
+**Updated:** 2026-07-20 (**Forge this heat · DNA conversion**)  
 **Session:** King Grok CEO · cook · ntfy ✅
 
 ---
@@ -10,6 +10,7 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **Studio Forge v3** | ✅ Conversational forge + DNA + canvas + export | Sign in → Studio → type fantasy → **Forge model** → **Save · Chat Now** |
+| **Forge this heat** | ✅ Win toast + End banner → Studio with heat/DNA seed | Deep chat → **Forge this DNA** → fantasy prefilled → Forge model |
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |
@@ -27,8 +28,8 @@
 | **DNA dossier climb** | ✅ CharacterSession stamps tree node · new session rehydrates · Edge soft reclaim · return greeting | Sign in → forge → climb past Spark → End → **New chat** same model (not Continue) — DNA should resume mid-tree |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
-| Railway | ✅ | Ship this cook → redeploy api+web |
-| **Next** | phone smoke: forge → climb → new chat DNA dossier + Continue reclaim | `cook` / `spot` |
+| Railway | ✅ | Ship this cook → redeploy web (api unchanged) |
+| **Next** | phone smoke: deep heat → Forge this DNA → save → Chat Now | `cook` / `spot` |
 
 ---
 

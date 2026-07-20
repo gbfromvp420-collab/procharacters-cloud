@@ -2743,6 +2743,13 @@ export function ChatApp() {
             recapLine={pauseSnapshot.recapLine}
             dnaTreeLabel={pauseSnapshot.dnaTreeLabel}
             dnaTreeNodeId={pauseSnapshot.dnaTreeNodeId}
+            baseModelId={
+              characters.find((c) => c.id === pauseSnapshot.characterId)?.baseModelId ||
+              characters.find((c) => c.id === pauseSnapshot.characterId)?.avatarBase ||
+              (pauseSnapshot.characterId.startsWith("custom-")
+                ? undefined
+                : pauseSnapshot.characterId)
+            }
             isMine={
               characters.find((c) => c.id === pauseSnapshot.characterId)?.mine === true ||
               pauseSnapshot.characterId.startsWith("custom-")
@@ -4128,6 +4135,24 @@ export function ChatApp() {
                 messageCount={messages.length}
                 dnaTreeLabel={modeState?.dnaTreeLabel}
                 dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                heatDepth={heatDepth.label}
+                heatChips={modeState?.phaseChips}
+                recapLine={
+                  recapFromSessionNotes(sessionNotes) ||
+                  getResumeForCharacter(activeCharacterId ?? character)?.recapLine
+                }
+                baseModelId={
+                  characters.find((c) => c.id === (activeCharacterId ?? character))
+                    ?.baseModelId ||
+                  characters.find((c) => c.id === (activeCharacterId ?? character))
+                    ?.avatarBase ||
+                  (activeCharacterId ?? character)
+                }
+                isMine={
+                  characters.find((c) => c.id === (activeCharacterId ?? character))
+                    ?.mine === true ||
+                  (activeCharacterId ?? character).startsWith("custom-")
+                }
               />
               {(status === "ready" ||
                 messages.length > 0 ||

@@ -14,6 +14,12 @@ import {
   setSessionWinActive,
 } from "@/lib/conversion-flags";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
+import {
+  buildForgeFromHeatPath,
+  shouldOfferForgeFromHeat,
+  stashForgeHeatSeed,
+  type ForgeHeatContext,
+} from "@/lib/forge-from-heat";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
 
 const SEEN_KEY = "procharacters.sessionWin.seen.v1";
@@ -23,6 +29,7 @@ const SEEN_KEY = "procharacters.sessionWin.seen.v1";
  * Celebrates, copies code, points at push/install without blocking free chat.
  * Soft Day Pass CTA only when signed in + Stripe ready + not already premium.
  * Owns the heat→pay moment — Soft Support yields while this is visible.
+ * Deep / DNA heat: Forge this heat → Studio DNA seed.
  */
 export function SessionWinToast({
   show,
@@ -32,6 +39,11 @@ export function SessionWinToast({
   messageCount,
   dnaTreeLabel,
   dnaTreeNodeId,
+  heatDepth,
+  heatChips,
+  recapLine,
+  baseModelId,
+  isMine = false,
 }: {
   show: boolean;
   characterId?: string | null;
@@ -41,6 +53,11 @@ export function SessionWinToast({
   /** Studio Forge DNA node when heat climbed mid-session. */
   dnaTreeLabel?: string | null;
   dnaTreeNodeId?: string | null;
+  heatDepth?: string | null;
+  heatChips?: string[] | null;
+  recapLine?: string | null;
+  baseModelId?: string | null;
+  isMine?: boolean;
 }) {
   const [visible, setVisible] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -55,6 +72,30 @@ export function SessionWinToast({
   const deepDna =
     !!dnaLabel &&
     /edge|deny|release|gate|tease/i.test(dnaLabel);
+  const forgeHeatCtx: ForgeHeatContext | null =
+    characterId
+      ? {
+          characterId,
+          characterName,
+          baseModelId: baseModelId || characterId,
+          dnaTreeLabel,
+          dnaTreeNodeId,
+          heatDepth,
+          heatChips,
+          recapLine,
+          messageCount,
+          isMine,
+        }
+      : null;
+  const offerForge =
+    !!forgeHeatCtx &&
+    shouldOfferForgeFromHeat({
+      messageCount,
+      dnaTreeLabel,
+      dnaTreeNodeId,
+      heatDepth,
+    });
+  const forgeHref = offerForge && forgeHeatCtx ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   useEffect(() => {
     // DNA climbs count as heat faster — unlock win toast at 2 msgs if tree is deep
@@ -232,6 +273,19 @@ export function SessionWinToast({
             >
               {copied ? "Copied!" : canNativeShare() ? "Share code" : "Copy code"}
             </button>
+            {forgeHref && forgeHeatCtx && (
+              <Link
+                href={forgeHref}
+                className="btn-ghost min-h-0 border-violet-400/55 bg-violet-500/20 px-3 py-1.5 text-xs font-semibold text-violet-50 ring-1 ring-violet-300/35"
+                title="Mint private DNA from this climb"
+                onClick={() => {
+                  stashForgeHeatSeed(forgeHeatCtx);
+                  dismiss(true);
+                }}
+              >
+                {dnaLabel ? `Forge this DNA · ${dnaLabel}` : "Forge this heat"}
+              </Link>
+            )}
             {offerCheckout && (
               <button
                 type="button"
