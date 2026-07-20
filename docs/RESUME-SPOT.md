@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**Agent fleet live · parallel cook ready**)  
+**Updated:** 2026-07-20 (**Fleet parallel cook · gallery + climb toast**)  
 **Session:** King Grok CEO · cook · ntfy ✅
 
 ### Agent fleet (slash / auto)
@@ -11,7 +11,7 @@
 | `/kgc-forge` | Studio DNA · heat→forge |
 | `/kgc-return` | DNA power reclaim · trail · dossier |
 | `/kgc-ops` | health · metrics · ntfy · doc truth |
-| `/kgc-smoke` | Gary phone checklists |
+| `/kgc-smoke` | Gary phone checklists · `docs/smoke-fleet-checklist.md` |
 
 ---
 
@@ -20,7 +20,8 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **Studio Forge v3** | ✅ Conversational forge + DNA + canvas + export | Sign in → Studio → type fantasy → **Forge model** → **Save · Chat Now** |
-| **Forge this heat** | ✅ Win toast + End banner → Studio with heat/DNA seed | Deep chat → **Forge this DNA** → fantasy prefilled → Forge model |
+| **Forge this heat** | ✅ Win toast + End banner + **gallery tiles/hero** → Studio seed | Deep chat → gallery **Forge this DNA** → Studio |
+| **DNA climb toast** | ✅ Mid-session `DNA · {node} locked ↑` on tree advance | Climb Soft→Tease→Edge — toast should fire once per node |
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |
