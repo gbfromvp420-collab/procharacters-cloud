@@ -64,6 +64,22 @@ IN_DIR=. OUT_DIR=./new_chars_batch DURATION=25 MAX_CHARS=10 \
 
 Gives one ~25s prime per file. **Then** cut each prime into the 4 engine slots below (product does **not** play 25s primes as avatar bands).
 
+### Stage 2 — prime → 4 engine loops (ffmpeg)
+
+```bash
+# Default windows into a ~25s prime → idle / teasing / playful / aroused
+bash scripts/prime-to-pack-loops.sh ./new_chars_batch/foo_prime_25s.mp4 female-playful-brat
+
+# Tweak starts/lengths per character
+OFFSETS='2 8 14 20' DURATIONS='5 6 6 7' \
+  bash scripts/prime-to-pack-loops.sh ./primes/gym_prime_25s.mp4 twink-gym
+```
+
+Outputs `packs/<model-id>/{idle,teasing,playful,aroused}.mp4` with soft in/out fades.  
+Then: `cp packs/<id>/*.mp4 frontend/public/avatar/<id>/` → **`packs ready: <id>`**
+
+Manual CapCut still fine if you prefer eye-cut energy marks.
+
 ## Edit each clip
 
 | Slot | Feel | Length |
