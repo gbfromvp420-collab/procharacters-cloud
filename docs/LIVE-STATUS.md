@@ -76,6 +76,8 @@
 | **DNA climb toast** | ✅ Mid-session milestone pill `DNA · {node} locked ↑` on tree advance · whisper/fire one-beat · reduced-motion safe |
 | **Sexy DNA atmosphere** | ✅ Live chat room wash + chrome by DNA node · composer ring · mind banner DNA chip · afterglow chips biased to tree (edge/deny/tease) · sexy placeholders |
 | **Sexy DNA avatar + rejoin** | ✅ AvatarVideo/PiP DNA ring + node-advance pulse · DNA · chip on frame · arousal bar DNA-tinted · ReturnHeatCard violet DNA reclaim · RejoinRecapToast DNA power copy |
+| **DNA chat bubbles** | ✅ Assistant/user message chrome tracks DNA tree · mind tag stamps DNA · arrival/stream rings violet when hot |
+| **Pack pipeline scripts** | ✅ `extract-prime-clips` · `cut-loops` v2 · `cut-loops-batch` · [PACK-CHEAT-SHEET.md](./PACK-CHEAT-SHEET.md) |
 | **Agent fleet** | ✅ `/kgc-delegate` · `/kgc-forge` · `/kgc-return` · `/kgc-ops` · `/kgc-smoke` · parallel cook protocol · [smoke-fleet-checklist.md](./smoke-fleet-checklist.md) |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |

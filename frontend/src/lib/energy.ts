@@ -204,3 +204,39 @@ export function dnaNodeShortLabel(
   if (!raw) return null;
   return raw.split(/\s+/)[0] || raw.slice(0, 16);
 }
+
+/** Assistant bubble chrome when DNA tree is live. */
+export function dnaAssistantBubbleClass(
+  nodeId?: string | null,
+  label?: string | null,
+): string {
+  const level = dnaTreeHeatLevel(nodeId, label);
+  if (level >= 4) {
+    return "border-violet-400/45 bg-gradient-to-br from-violet-500/20 via-brand-panel to-rose-500/10 shadow-[0_0_24px_-10px_rgba(167,139,250,0.45)]";
+  }
+  if (level >= 3) {
+    return "border-rose-400/40 bg-gradient-to-br from-rose-500/15 via-brand-panel to-violet-500/10 shadow-[0_0_20px_-10px_rgba(244,63,94,0.4)]";
+  }
+  if (level >= 2) {
+    return "border-violet-400/35 bg-gradient-to-br from-violet-500/12 via-brand-panel to-brand-panel";
+  }
+  if (level >= 0) {
+    return "border-violet-400/25 bg-brand-panel/95";
+  }
+  return "";
+}
+
+/** User bubble ring when DNA is mid-climb+ (your heat is in the tree). */
+export function dnaUserBubbleClass(
+  nodeId?: string | null,
+  label?: string | null,
+): string {
+  const level = dnaTreeHeatLevel(nodeId, label);
+  if (level >= 3) {
+    return "ring-1 ring-violet-300/40 shadow-[0_0_18px_-6px_rgba(167,139,250,0.5)]";
+  }
+  if (level >= 1) {
+    return "ring-1 ring-violet-400/25";
+  }
+  return "";
+}

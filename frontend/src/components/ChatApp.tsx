@@ -115,9 +115,11 @@ import {
   energyBandBadgeClass,
   energyBandFromAvatar,
   energyBandLabel,
+  dnaAssistantBubbleClass,
   dnaChromeClass,
   dnaComposerClass,
   dnaTreeHeatLevel,
+  dnaUserBubbleClass,
   liveRoomWashClass,
   type EnergyBand,
 } from "@/lib/energy";
@@ -2558,7 +2560,16 @@ export function ChatApp() {
     avatarState?.presenceSkin,
     activeCharacterId ?? character,
   );
-  const assistantBubbleClass = presenceBubbleClass(chatPresenceSkin);
+  const assistantBubbleBase = presenceBubbleClass(chatPresenceSkin);
+  const dnaBubbleAsst = dnaAssistantBubbleClass(
+    modeState?.dnaTreeNodeId,
+    modeState?.dnaTreeLabel,
+  );
+  const assistantBubbleClass = dnaBubbleAsst || assistantBubbleBase;
+  const dnaBubbleUser = dnaUserBubbleClass(
+    modeState?.dnaTreeNodeId,
+    modeState?.dnaTreeLabel,
+  );
   const transcriptAmbient = presenceAmbientClass(chatPresenceSkin);
 
   const onMessagesScroll = () => {
@@ -4329,21 +4340,34 @@ export function ChatApp() {
                   <div
                     className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed transition-[box-shadow,ring] duration-500 sm:max-w-[80%] sm:px-4 ${
                       msg.role === "user"
-                        ? `bg-brand-accent text-white shadow-glow-sm ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
+                        ? `bg-brand-accent text-white shadow-glow-sm ${dnaBubbleUser} ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
                         : `border text-brand-text ${assistantBubbleClass} ${
                             msg.streaming
-                              ? "ring-1 ring-brand-accent/30"
+                              ? dnaLevel >= 0
+                                ? "ring-1 ring-violet-400/40"
+                                : "ring-1 ring-brand-accent/30"
                               : arrivalId === msg.id
-                                ? "ring-2 ring-brand-accent/50 shadow-glow-sm"
+                                ? dnaLevel >= 0
+                                  ? "ring-2 ring-violet-400/55 shadow-glow-sm"
+                                  : "ring-2 ring-brand-accent/50 shadow-glow-sm"
                                 : ""
                           }`
                     }`}
                   >
                     {showMindTag && (
-                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-brand-accent/80">
+                      <p
+                        className={`mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] ${
+                          dnaLevel >= 0 ? "text-violet-200/90" : "text-brand-accent/80"
+                        }`}
+                      >
                         {headerCharacterName?.split(/\s+/)[0] || "Them"}
                         {" · "}
                         {headerMind!.tag}
+                        {dnaLevel >= 0 && modeState?.dnaTreeLabel
+                          ? ` · DNA ${String(modeState.dnaTreeLabel).split(/\s+/)[0]}`
+                          : dnaLevel >= 0 && modeState?.dnaTreeNodeId
+                            ? ` · DNA ${String(modeState.dnaTreeNodeId).split(/\s+/)[0]}`
+                            : ""}
                       </p>
                     )}
                     <span className="whitespace-pre-wrap break-words">{msg.content}</span>

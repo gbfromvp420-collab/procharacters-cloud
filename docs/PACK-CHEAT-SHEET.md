@@ -79,6 +79,10 @@ OFFSETS='2 8 14 20' DURATIONS='6 5 7 5' \
 
 # Optional force 9:16 1080×1920 (pad):
 SCALE_9_16=1 bash scripts/cut-loops.sh ./primes/x_prime_25s.mp4 twink-shy-boy
+
+# Batch all primes in a folder (optional id-map.txt: filename  model-id)
+bash scripts/cut-loops-batch.sh ./new_chars_batch
+bash scripts/cut-loops-batch.sh ./new_chars_batch ./id-map.txt
 ```
 
 Defaults: offsets `0 6 12 18`, durations `6 5 7 5`, fade **0.4s**, CRF **22**, silent H.264, even dims.  
