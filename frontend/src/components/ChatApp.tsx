@@ -115,7 +115,10 @@ import {
   energyBandBadgeClass,
   energyBandFromAvatar,
   energyBandLabel,
-  energyBandRoomClass,
+  dnaChromeClass,
+  dnaComposerClass,
+  dnaTreeHeatLevel,
+  liveRoomWashClass,
   type EnergyBand,
 } from "@/lib/energy";
 import {
@@ -2589,8 +2592,23 @@ export function ChatApp() {
 
   const liveBand =
     status === "ready" ? energyBandFromAvatar(avatarState) : ("idle" as EnergyBand);
-  const roomWash = energyBandRoomClass(liveBand);
+  const dnaNodeLive =
+    status === "ready" ? modeState?.dnaTreeNodeId : null;
+  const dnaLabelLive =
+    status === "ready" ? modeState?.dnaTreeLabel : null;
+  const dnaLevel = dnaTreeHeatLevel(dnaNodeLive, dnaLabelLive);
+  const roomWash = liveRoomWashClass(liveBand, dnaNodeLive, dnaLabelLive);
   const heatDepth = heatDepthFromMessages(messages.length);
+  const dnaChrome =
+    status === "ready" ? dnaChromeClass(dnaNodeLive, dnaLabelLive) : "";
+  const bandChrome =
+    !dnaChrome && status === "ready" && liveBand === "edge"
+      ? "border-b-rose-400/40 shadow-[0_8px_28px_-12px_rgba(244,63,94,0.35)]"
+      : !dnaChrome && status === "ready" && liveBand === "play"
+        ? "border-b-amber-400/30"
+        : !dnaChrome && status === "ready" && liveBand === "tease"
+          ? "border-b-brand-accent/35"
+          : "";
 
   return (
     <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
@@ -2605,20 +2623,18 @@ export function ChatApp() {
         subtitle={
           [
             headerMind?.tag,
-            status === "ready" && liveBand !== "idle" ? liveBand : null,
+            status === "ready" && dnaLevel >= 0
+              ? `DNA · ${dnaLabelLive || dnaNodeLive}`
+              : status === "ready" && liveBand !== "idle"
+                ? liveBand
+                : null,
             statusLabel,
           ]
             .filter(Boolean)
             .join(" · ") || null
         }
         className={`pt-[env(safe-area-inset-top,0px)] transition-[box-shadow,border-color] duration-500 ${
-          status === "ready" && liveBand === "edge"
-            ? "border-b-rose-400/40 shadow-[0_8px_28px_-12px_rgba(244,63,94,0.35)]"
-            : status === "ready" && liveBand === "play"
-              ? "border-b-amber-400/30"
-              : status === "ready" && liveBand === "tease"
-                ? "border-b-brand-accent/35"
-                : ""
+          dnaChrome || bandChrome
         }`}
         trailing={
           <>
@@ -4063,23 +4079,47 @@ export function ChatApp() {
             >
               {(() => {
                 const mind = mindFingerprint(activeCharacterId ?? character);
-                if (!mind) return null;
+                const dnaLive = dnaLevel >= 0;
+                if (!mind && !dnaLive) return null;
                 return (
                   <div
-                    className="rounded-xl border border-brand-accent/25 bg-brand-accent/5 px-3 py-2 text-[11px] leading-relaxed"
+                    className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${
+                      dnaLive
+                        ? "border-violet-400/40 bg-gradient-to-r from-violet-500/15 via-rose-500/10 to-brand-panel/80"
+                        : "border-brand-accent/25 bg-brand-accent/5"
+                    }`}
                     role="status"
                   >
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                        Mind · {mind.tag}
-                      </p>
-                      {mind.bilingual && (
+                      {mind && (
+                        <p
+                          className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                            dnaLive ? "text-violet-200/95" : "text-brand-accent"
+                          }`}
+                        >
+                          Mind · {mind.tag}
+                        </p>
+                      )}
+                      {dnaLive && (
+                        <span className="rounded-full border border-violet-300/50 bg-violet-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50">
+                          DNA · {dnaLabelLive || dnaNodeLive}
+                          {dnaLevel >= 3 ? " · hot" : ""}
+                        </span>
+                      )}
+                      {mind?.bilingual && (
                         <span className="rounded-full border border-brand-border/80 px-2 py-0.5 text-[9px] text-brand-muted">
                           Soft ES spice
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 text-brand-muted">{mind.blurb}</p>
+                    {mind && (
+                      <p className="mt-1 text-brand-muted">{mind.blurb}</p>
+                    )}
+                    {dnaLive && dnaLevel >= 2 && (
+                      <p className="mt-1 text-[10px] text-violet-100/85">
+                        Stay in the climb — Fire chips and afterglow keep you on this node.
+                      </p>
+                    )}
                   </div>
                 );
               })()}
@@ -4327,6 +4367,8 @@ export function ChatApp() {
                           modeState.phase === "almost"
                         }
                         heatDepth={heatDepth.label}
+                        dnaTreeLabel={modeState?.dnaTreeLabel}
+                        dnaTreeNodeId={modeState?.dnaTreeNodeId}
                         onFire={(text) => sendMessage(text)}
                         onPick={(text) => {
                           setInput((prev) => {
@@ -4468,9 +4510,15 @@ export function ChatApp() {
                     status === "ready"
                       ? modeState?.mode === "edge_pace" && modeState.phase
                         ? `Reply in ${modeState.phase}… (Enter to send)`
-                        : headerCharacterName
-                          ? `Message ${headerCharacterName.split(/\s+/)[0]}… (draft saves)`
-                          : "Message… (draft saves)"
+                        : dnaLevel >= 3
+                          ? `Stay on DNA · ${dnaLabelLive || "Edge"}… (Enter)`
+                          : dnaLevel >= 0
+                            ? `Climb with ${
+                                (headerCharacterName || "them").split(/\s+/)[0]
+                              }… (Enter)`
+                            : headerCharacterName
+                              ? `Message ${headerCharacterName.split(/\s+/)[0]}… (draft saves)`
+                              : "Message… (draft saves)"
                       : connectionDropped
                         ? "Rejoin to keep chatting"
                         : input.trim()
@@ -4488,7 +4536,9 @@ export function ChatApp() {
                       ? "border-rose-400/50 focus:ring-rose-400/30"
                       : modeState?.mode === "edge_pace" && modeState.phase === "breathe" && status === "ready"
                         ? "border-sky-400/40 focus:ring-sky-400/25"
-                        : ""
+                        : status === "ready" && dnaLevel >= 0
+                          ? dnaComposerClass(dnaNodeLive, dnaLabelLive)
+                          : ""
                   }`}
                 />
                 <button

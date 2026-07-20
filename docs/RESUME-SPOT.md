@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-20 (**Fleet parallel cook · gallery + climb toast**)  
+**Updated:** 2026-07-20 (**Sexy DNA atmosphere**)  
 **Session:** King Grok CEO · cook · ntfy ✅
 
 ### Agent fleet (slash / auto)
@@ -22,6 +22,7 @@
 | **Studio Forge v3** | ✅ Conversational forge + DNA + canvas + export | Sign in → Studio → type fantasy → **Forge model** → **Save · Chat Now** |
 | **Forge this heat** | ✅ Win toast + End banner + **gallery tiles/hero** → Studio seed | Deep chat → gallery **Forge this DNA** → Studio |
 | **DNA climb toast** | ✅ Mid-session `DNA · {node} locked ↑` on tree advance | Climb Soft→Tease→Edge — toast should fire once per node |
+| **Sexy DNA atmosphere** | ✅ Room wash by tree node · chrome/composer glow · mind DNA chip · afterglow DNA peaks | Climb to Edge — room breathes violet/rose; chips say “edge me / so close” |
 | **DNA runtime** | ✅ seeds → session · starter · presence · clips · mode bias | Phone: forge → Chat Now — opening + heat should feel forged, not generic |
 | **DNA tree stepper** | ✅ soft mid-session node advance + whisper UI | Chat a forged model — watch **DNA · Tease/Edge** climb |
 | **DNA chip bar + trail** | ✅ path strip · Fire chips · heat trail DNA stamp | Forge → climb chips → End → Continue shows DNA node |

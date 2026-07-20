@@ -74,6 +74,7 @@
 | **DNA dossier climb** | ✅ CharacterSession kinkProfile stamps `dnaTreeNodeId`/`label`/`sessionMode` each DNA turn · new session + cold resume rehydrate tree (not cold spark) · soft Edge when left mid-climb · return greeting + pick-up seeds · metric `dnaDossierReclaims` |
 | **Forge this heat** | ✅ Session win toast + End pause + **gallery tiles/hero** → Studio heat/DNA seed · base/nick/DNA prefill · violet “Heat seed loaded” |
 | **DNA climb toast** | ✅ Mid-session milestone pill `DNA · {node} locked ↑` on tree advance · whisper/fire one-beat · reduced-motion safe |
+| **Sexy DNA atmosphere** | ✅ Live chat room wash + chrome by DNA node · composer ring · mind banner DNA chip · afterglow chips biased to tree (edge/deny/tease) · sexy placeholders |
 | **Agent fleet** | ✅ `/kgc-delegate` · `/kgc-forge` · `/kgc-return` · `/kgc-ops` · `/kgc-smoke` · parallel cook protocol · [smoke-fleet-checklist.md](./smoke-fleet-checklist.md) |
 | Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
 | Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |

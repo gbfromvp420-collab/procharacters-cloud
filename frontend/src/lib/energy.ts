@@ -77,3 +77,99 @@ export function energyBandRoomClass(band: EnergyBand): string {
       return "bg-[radial-gradient(ellipse_at_70%_10%,rgba(225,29,143,0.06),transparent_45%)]";
   }
 }
+
+/** DNA tree depth 0=spark … 5=gate — for sexy atmosphere. */
+export function dnaTreeHeatLevel(
+  nodeId?: string | null,
+  label?: string | null,
+): number {
+  const key = `${nodeId ?? ""} ${label ?? ""}`.toLowerCase();
+  if (!key.trim()) return -1;
+  if (/release|gate/.test(key)) return 5;
+  if (/deny/.test(key)) return 4;
+  if (/edge/.test(key)) return 3;
+  if (/tease/.test(key)) return 2;
+  if (/soft/.test(key)) return 1;
+  if (/spark/.test(key)) return 0;
+  // Unknown DNA node — treat as soft heat
+  return 1;
+}
+
+/**
+ * Sexy DNA room wash layered on energy band — violet→rose as the tree climbs.
+ * Returns extra class(es); empty when no DNA.
+ */
+export function dnaHeatRoomClass(
+  nodeId?: string | null,
+  label?: string | null,
+): string {
+  const level = dnaTreeHeatLevel(nodeId, label);
+  if (level < 0) return "";
+  switch (level) {
+    case 5:
+      return "dna-room-gate bg-[radial-gradient(ellipse_at_50%_0%,rgba(244,63,94,0.28),transparent_55%),radial-gradient(ellipse_at_80%_40%,rgba(167,139,250,0.16),transparent_50%)]";
+    case 4:
+      return "dna-room-deny bg-[radial-gradient(ellipse_at_60%_5%,rgba(139,92,246,0.26),transparent_52%),radial-gradient(ellipse_at_30%_80%,rgba(244,63,94,0.12),transparent_45%)]";
+    case 3:
+      return "dna-room-edge bg-[radial-gradient(ellipse_at_70%_8%,rgba(244,63,94,0.22),transparent_50%),radial-gradient(ellipse_at_20%_60%,rgba(167,139,250,0.14),transparent_48%)]";
+    case 2:
+      return "dna-room-tease bg-[radial-gradient(ellipse_at_65%_10%,rgba(192,132,252,0.2),transparent_52%),radial-gradient(ellipse_at_40%_90%,rgba(244,114,182,0.1),transparent_45%)]";
+    case 1:
+      return "bg-[radial-gradient(ellipse_at_60%_12%,rgba(167,139,250,0.14),transparent_50%)]";
+    default:
+      return "bg-[radial-gradient(ellipse_at_60%_12%,rgba(167,139,250,0.1),transparent_48%)]";
+  }
+}
+
+/** Blend avatar energy wash with DNA climb atmosphere. */
+export function liveRoomWashClass(
+  band: EnergyBand,
+  dnaNodeId?: string | null,
+  dnaLabel?: string | null,
+): string {
+  const dna = dnaHeatRoomClass(dnaNodeId, dnaLabel);
+  if (dna) return dna;
+  return energyBandRoomClass(band);
+}
+
+/** SiteChrome / shell border heat when DNA is live. */
+export function dnaChromeClass(
+  nodeId?: string | null,
+  label?: string | null,
+): string {
+  const level = dnaTreeHeatLevel(nodeId, label);
+  if (level >= 4) {
+    return "border-b-violet-400/50 shadow-[0_8px_32px_-10px_rgba(167,139,250,0.45)]";
+  }
+  if (level >= 3) {
+    return "border-b-rose-400/45 shadow-[0_8px_28px_-12px_rgba(244,63,94,0.4)]";
+  }
+  if (level >= 2) {
+    return "border-b-violet-400/40 shadow-[0_6px_24px_-12px_rgba(192,132,252,0.35)]";
+  }
+  if (level >= 0) {
+    return "border-b-violet-400/30";
+  }
+  return "";
+}
+
+/** Composer field ring when DNA climb is hot. */
+export function dnaComposerClass(
+  nodeId?: string | null,
+  label?: string | null,
+): string {
+  const level = dnaTreeHeatLevel(nodeId, label);
+  if (level >= 4) {
+    return "border-violet-400/55 focus:ring-violet-400/35 shadow-[0_0_24px_-8px_rgba(167,139,250,0.45)]";
+  }
+  if (level >= 3) {
+    return "border-rose-400/50 focus:ring-rose-400/30 shadow-[0_0_20px_-8px_rgba(244,63,94,0.4)]";
+  }
+  if (level >= 2) {
+    return "border-violet-400/45 focus:ring-violet-400/25";
+  }
+  if (level >= 0) {
+    return "border-violet-400/30 focus:ring-violet-400/20";
+  }
+  return "";
+}

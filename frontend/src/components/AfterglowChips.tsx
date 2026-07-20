@@ -14,6 +14,9 @@ export function AfterglowChips({
   intense = false,
   /** Session depth label — deep/locked get denser chips even outside Edge almost */
   heatDepth,
+  /** Studio Forge DNA node — sexy chip bias when climbing */
+  dnaTreeLabel,
+  dnaTreeNodeId,
 }: {
   characterId?: string | null;
   onPick: (text: string) => void;
@@ -23,10 +26,16 @@ export function AfterglowChips({
   /** Edge Pace almost / high heat — denser chips + fire bias */
   intense?: boolean;
   heatDepth?: "spark" | "warm" | "edge" | "deep" | "locked" | null;
+  dnaTreeLabel?: string | null;
+  dnaTreeNodeId?: string | null;
 }) {
   const mind = mindFingerprint(characterId);
   const deep = heatDepth === "deep" || heatDepth === "locked";
-  const hot = intense || deep || heatDepth === "edge";
+  const dnaKey = `${dnaTreeLabel ?? ""} ${dnaTreeNodeId ?? ""}`.toLowerCase();
+  const dnaHot =
+    !!dnaKey.trim() &&
+    /edge|deny|release|gate|tease|soft/.test(dnaKey);
+  const hot = intense || deep || heatDepth === "edge" || dnaHot;
   const chips = (() => {
     const core = (() => {
       switch (mind?.tag) {
@@ -50,15 +59,35 @@ export function AfterglowChips({
           return ["yes", "more", "slower", "don’t stop", "fuck…", "keep going"];
       }
     })();
+    const dnaPeak = (() => {
+      if (/release|gate/.test(dnaKey)) {
+        return ["please let me", "i need it", "not yet hold me", "right there"];
+      }
+      if (/deny/.test(dnaKey)) {
+        return ["not yet", "deny me", "edge harder", "make me wait"];
+      }
+      if (/edge/.test(dnaKey)) {
+        return ["edge me", "don’t stop", "so close", "stay…"];
+      }
+      if (/tease/.test(dnaKey)) {
+        return ["tease me", "show more", "slow stroke", "look at me"];
+      }
+      if (/soft/.test(dnaKey)) {
+        return ["go slow", "whisper", "kiss me", "hold me"];
+      }
+      return [] as string[];
+    })();
     if (hot) {
       const peak =
-        heatDepth === "locked"
-          ? ["don’t finish", "right there", "stay with me", "hold…"]
-          : ["don’t finish", "right there", "hold…"];
+        dnaPeak.length > 0
+          ? dnaPeak
+          : heatDepth === "locked"
+            ? ["don’t finish", "right there", "stay with me", "hold…"]
+            : ["don’t finish", "right there", "hold…"];
       return [
         ...peak,
         ...core.filter((c) => !peak.includes(c)),
-      ].slice(0, deep || intense ? 8 : 6);
+      ].slice(0, deep || intense || dnaHot ? 8 : 6);
     }
     return core.slice(0, 5);
   })();
@@ -72,8 +101,20 @@ export function AfterglowChips({
       aria-label="Quick reactions"
     >
       {hot && (
-        <span className="mr-0.5 self-center text-[9px] font-semibold uppercase tracking-wide text-rose-200/80">
-          {intense ? "Almost" : heatDepth === "locked" ? "Locked" : heatDepth === "deep" ? "Deep" : "Heat"}
+        <span
+          className={`mr-0.5 self-center text-[9px] font-semibold uppercase tracking-wide ${
+            dnaHot ? "text-violet-200/90" : "text-rose-200/80"
+          }`}
+        >
+          {dnaHot
+            ? `DNA · ${(dnaTreeLabel || dnaTreeNodeId || "heat").toString().split(/\s+/)[0]}`
+            : intense
+              ? "Almost"
+              : heatDepth === "locked"
+                ? "Locked"
+                : heatDepth === "deep"
+                  ? "Deep"
+                  : "Heat"}
         </span>
       )}
       {chips.map((chip, i) => {

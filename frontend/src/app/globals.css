@@ -226,13 +226,36 @@ body {
   animation: dna-climb-toast 1.8s ease-out 1 both;
 }
 
+/* DNA sexy room breathe — soft pulse when tree is mid-edge+ */
+@keyframes dna-room-breathe {
+  0%,
+  100% {
+    opacity: 0.88;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+.dna-room-edge,
+.dna-room-deny,
+.dna-room-gate {
+  animation: dna-room-breathe 3.2s ease-in-out infinite;
+}
+.dna-room-tease {
+  animation: dna-room-breathe 4.2s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .edge-almost-pulse,
   .composer-edge-almost,
   .dna-climb-node,
   .dna-climb-node-live,
   .dna-climb-shell,
-  .dna-climb-toast {
+  .dna-climb-toast,
+  .dna-room-edge,
+  .dna-room-deny,
+  .dna-room-gate,
+  .dna-room-tease {
     animation: none !important;
   }
 }
