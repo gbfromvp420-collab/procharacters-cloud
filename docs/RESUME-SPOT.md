@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-19 (**Studio Forge Revolution v3 Unchained**)  
-**Session:** King Grok CEO directive · GrokBuild ship · ntfy ✅
+**Updated:** 2026-07-20 (**DNA power reclaim complete circuit**)  
+**Session:** King Grok CEO · cook · ntfy ✅
 
 ---
 
@@ -22,10 +22,11 @@
 | **DNA power reclaim** | ✅ Continue → Edge Pace + tree hard rehydrate | Gallery **DNA power · Edge reclaim** is the real climb |
 | **Reclaim everywhere** | ✅ offline · pause · Account hub · hero reel | Ruby token: DNA power on every surface |
 | **Reclaim chrome + share** | ✅ SiteChrome · wire drop · share links · offline net | Nav Continue is DNA power when trail is hot |
+| **Reclaim card + print + account** | ✅ character card · QR print · resume markdown · chat hero | Zero cold resume paths left |
 | **Error alerts** | ✅ ntfy | Optional System pulse re-test |
 | **Return loop** | ✅ full stack | Smoke heat → end → gallery trail |
-| Railway | ✅ | Redeploy API after DNA runtime push |
-| **Next** | phone smoke forge→chat path | `cook` / `spot` |
+| Railway | ✅ | Live `397284d`+ |
+| **Next** | phone smoke full DNA reclaim circuit | `cook` / `spot` |
 
 ---
 

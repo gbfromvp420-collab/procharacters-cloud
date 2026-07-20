@@ -10,6 +10,9 @@ export type ResumePrintCardProps = {
   characterName: string;
   resumeExpiresAt?: string;
   messageCount?: number;
+  dnaTreeLabel?: string;
+  dnaTreeNodeId?: string;
+  heatDepth?: string;
   onClose: () => void;
 };
 
@@ -38,12 +41,20 @@ export function ResumePrintCard({
   characterName,
   resumeExpiresAt,
   messageCount,
+  dnaTreeLabel,
+  dnaTreeNodeId,
+  heatDepth,
   onClose,
 }: ResumePrintCardProps) {
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrError, setQrError] = useState<string | null>(null);
 
-  const resumeUrl = buildResumeCodeShareUrl(resumeCode, { characterId });
+  const dnaPower = !!(dnaTreeLabel || dnaTreeNodeId);
+  const resumeUrl = buildResumeCodeShareUrl(resumeCode, {
+    characterId,
+    rehydrate: true,
+    sessionMode: dnaPower ? "edge_pace" : undefined,
+  });
   const expiryLabel = formatExpiryLabel(resumeExpiresAt);
 
   useEffect(() => {
@@ -120,7 +131,15 @@ return (
             <p className="mt-1 text-xs text-brand-muted print:text-neutral-600">
               Scan or open to continue this chat on any device
               {typeof messageCount === "number" ? ` · ${messageCount} msgs` : ""}
+              {dnaPower
+                ? ` · DNA ${dnaTreeLabel || dnaTreeNodeId}${heatDepth ? ` · ${heatDepth}` : ""}`
+                : ""}
             </p>
+            {dnaPower ? (
+              <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-violet-600 print:text-violet-700">
+                DNA power · Edge Pace reclaim
+              </p>
+            ) : null}
           </header>
 
           <div className="mx-auto flex h-64 w-64 items-center justify-center rounded-xl border border-brand-border bg-white p-3 print:border-neutral-300">

@@ -57,9 +57,17 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   const resumeUrl = useMemo(
     () =>
       resumeCode
-        ? buildResumeCodeShareUrl(resumeCode, { origin: siteOrigin, characterId: card.id })
+        ? buildResumeCodeShareUrl(resumeCode, {
+            origin: siteOrigin,
+            characterId: card.id,
+            rehydrate: true,
+            sessionMode:
+              resumeEntry?.dnaTreeLabel || resumeEntry?.dnaTreeNodeId
+                ? "edge_pace"
+                : undefined,
+          })
         : null,
-    [resumeCode, siteOrigin, card.id],
+    [resumeCode, siteOrigin, card.id, resumeEntry?.dnaTreeLabel, resumeEntry?.dnaTreeNodeId],
   );
 
   const poster = card.posterClip.startsWith("http")
@@ -296,9 +304,15 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 <>
                   <Link
                     href={buildResumeChatPath(resumeEntry)}
-                    className="btn-primary px-6 ring-1 ring-amber-400/45"
+                    className={`btn-primary px-6 ring-1 ${
+                      resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
+                        ? "ring-violet-400/50"
+                        : "ring-amber-400/45"
+                    }`}
                   >
-                    Continue with {nick}
+                    {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
+                      ? `DNA power · ${nick}`
+                      : `Continue with ${nick}`}
                   </Link>
                   <Link href={card.ctaPath} className="btn-ghost px-6">
                     New chat
@@ -410,9 +424,15 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
             <>
               <Link
                 href={buildResumeChatPath(resumeEntry)}
-                className="btn-primary min-w-[5rem] flex-1 ring-1 ring-amber-400/45"
+                className={`btn-primary min-w-[5rem] flex-1 ring-1 ${
+                  resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
+                    ? "ring-violet-400/50"
+                    : "ring-amber-400/45"
+                }`}
               >
-                Continue
+                {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
+                  ? "DNA power"
+                  : "Continue"}
               </Link>
               <Link href={card.ctaPath} className="btn-ghost min-w-[4.5rem] flex-1">
                 New

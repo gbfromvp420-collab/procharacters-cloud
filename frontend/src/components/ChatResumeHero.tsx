@@ -145,10 +145,16 @@ export function ChatResumeHero({
             disabled={busy}
             onClick={onResume}
             className={`btn-primary min-h-0 px-4 py-2 text-xs sm:text-sm disabled:opacity-50 ${
-              urgent ? "ring-1 ring-rose-400/60" : ""
+              urgent
+                ? "ring-1 ring-rose-400/60"
+                : trail?.dnaTreeLabel || trail?.dnaTreeNodeId
+                  ? "ring-1 ring-violet-400/50"
+                  : ""
             }`}
           >
-            Continue · {nick}
+            {trail?.dnaTreeLabel || trail?.dnaTreeNodeId
+              ? `DNA power · ${nick}`
+              : `Continue · ${nick}`}
           </button>
           <button
             type="button"

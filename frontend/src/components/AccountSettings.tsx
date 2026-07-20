@@ -588,18 +588,25 @@ export function AccountSettings() {
     flash("Signed out");
   };
 
-  const onResumeSession = async (sessionId: string) => {
+  const onResumeSession = async (sessionId: string, characterId?: string) => {
     if (!account) return;
     setBusy(true);
     setError(null);
     try {
       const session = await resumeAccountSession(account.token, sessionId);
-      // Hand off to chat via resume code when possible
+      // Hand off to chat via resume code when possible — DNA power when trail is hot
       if (session.resumeCode) {
-        window.location.href = `/chat?resume=${encodeURIComponent(session.resumeCode)}`;
+        const trail = getResumeForCharacter(characterId || session.characterId);
+        window.location.href = buildResumeChatPath({
+          characterId: session.characterId,
+          resumeCode: session.resumeCode,
+          dnaTreeLabel: trail?.dnaTreeLabel,
+          dnaTreeNodeId: trail?.dnaTreeNodeId,
+          heatDepth: trail?.heatDepth,
+        });
         return;
       }
-      window.location.href = `/chat?character=${encodeURIComponent(session.characterId)}`;
+      window.location.href = `/chat?character=${encodeURIComponent(session.characterId)}&autostart=1&rehydrate=1`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not resume session");
       setBusy(false);
@@ -615,16 +622,22 @@ export function AccountSettings() {
     setBusy(true);
     setError(null);
     try {
-      await resumeByCode(code);
-      window.location.href = `/chat?resume=${encodeURIComponent(code)}`;
+      // Navigate with full reclaim flags — chat deep-link owns resume + mode
+      window.location.href = `/chat?resume=${encodeURIComponent(code)}&rehydrate=1`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid resume code");
       setBusy(false);
     }
   };
 
-  const copyResume = async (code: string, characterName?: string) => {
-    const url = buildResumeCodeShareUrl(code);
+  const copyResume = async (code: string, characterName?: string, characterId?: string) => {
+    const trail = characterId ? getResumeForCharacter(characterId) : null;
+    const url = buildResumeCodeShareUrl(code, {
+      characterId,
+      rehydrate: true,
+      sessionMode:
+        trail?.dnaTreeLabel || trail?.dnaTreeNodeId ? "edge_pace" : undefined,
+    });
     const result = await shareOrCopyUrl({
       url,
       title: characterName
@@ -758,18 +771,29 @@ export function AccountSettings() {
     ];
     for (const s of list) {
       const code = s.resumeCode!;
-      const url = buildResumeCodeShareUrl(code, { characterId: s.characterId });
+      const trail = getResumeForCharacter(s.characterId);
+      const dnaPower = !!(trail?.dnaTreeLabel || trail?.dnaTreeNodeId);
+      const url = buildResumeCodeShareUrl(code, {
+        characterId: s.characterId,
+        rehydrate: true,
+        sessionMode: dnaPower ? "edge_pace" : undefined,
+      });
       lines.push(`## ${s.characterName}`);
       lines.push(`- Code: \`${code}\``);
       lines.push(`- Messages: ${s.messageCount}`);
       lines.push(`- Status: ${s.status}`);
+      if (trail?.dnaTreeLabel || trail?.dnaTreeNodeId) {
+        lines.push(
+          `- DNA: ${trail.dnaTreeLabel || trail.dnaTreeNodeId}${trail.heatDepth ? ` · heat ${trail.heatDepth}` : ""}`,
+        );
+      }
       if (s.resumeExpiresAt) {
         lines.push(`- Expires: ${s.resumeExpiresAt}`);
       }
-      lines.push(`- Link: ${url}`);
+      lines.push(`- Link: ${url}${dnaPower ? " (DNA power · Edge Pace)" : ""}`);
       lines.push(``);
     }
-    lines.push(`_Open a link on any device to continue that chat._`);
+    lines.push(`_Open a link on any device to continue that chat. DNA power links restore Edge Pace._`);
     lines.push(``);
 
     return {
@@ -825,7 +849,13 @@ export function AccountSettings() {
       setError("No resume code for this chat");
       return;
     }
-    const url = buildResumeCodeShareUrl(s.resumeCode, { characterId: s.characterId });
+    const trail = getResumeForCharacter(s.characterId);
+    const dnaPower = !!(trail?.dnaTreeLabel || trail?.dnaTreeNodeId);
+    const url = buildResumeCodeShareUrl(s.resumeCode, {
+      characterId: s.characterId,
+      rehydrate: true,
+      sessionMode: dnaPower ? "edge_pace" : undefined,
+    });
     const day = new Date().toISOString().slice(0, 10);
     const safe = s.characterName
       .toLowerCase()
@@ -839,10 +869,15 @@ export function AccountSettings() {
       `- Character: ${s.characterId}`,
       `- Messages: ${s.messageCount}`,
       `- Status: ${s.status}`,
+      trail?.dnaTreeLabel || trail?.dnaTreeNodeId
+        ? `- DNA: ${trail.dnaTreeLabel || trail.dnaTreeNodeId}${trail.heatDepth ? ` · heat ${trail.heatDepth}` : ""}`
+        : null,
       s.resumeExpiresAt ? `- Expires: ${s.resumeExpiresAt}` : null,
-      `- Link: ${url}`,
+      `- Link: ${url}${dnaPower ? " (DNA power · Edge Pace)" : ""}`,
       ``,
-      `_Open the link on any device to continue this chat._`,
+      dnaPower
+        ? `_Open the link on any device — DNA power restores Edge Pace + climb._`
+        : `_Open the link on any device to continue this chat._`,
       ``,
     ]
       .filter((l) => l != null)
@@ -2424,7 +2459,9 @@ export function AccountSettings() {
                         <>
                           <button
                             type="button"
-                            onClick={() => void copyResume(s.resumeCode!, s.characterName)}
+                            onClick={() =>
+                              void copyResume(s.resumeCode!, s.characterName, s.characterId)
+                            }
                             className="text-brand-muted hover:text-brand-accent"
                           >
                             {canNativeShare() ? "Share code" : "Copy code"}
@@ -2526,6 +2563,9 @@ export function AccountSettings() {
           characterName={printCard.characterName}
           resumeExpiresAt={printCard.resumeExpiresAt}
           messageCount={printCard.messageCount}
+          dnaTreeLabel={getResumeForCharacter(printCard.characterId)?.dnaTreeLabel}
+          dnaTreeNodeId={getResumeForCharacter(printCard.characterId)?.dnaTreeNodeId}
+          heatDepth={getResumeForCharacter(printCard.characterId)?.heatDepth}
           onClose={() => setPrintCard(null)}
         />
       ) : null}

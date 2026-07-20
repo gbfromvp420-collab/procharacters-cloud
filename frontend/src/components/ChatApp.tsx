@@ -126,6 +126,7 @@ import {
 import {
   getResumeForCharacter,
   heatTrailFromSession,
+  isDnaPowerTrail,
   recapFromSessionNotes,
   rememberResumeRecap,
 } from "@/lib/resume-cache";
@@ -3144,7 +3145,36 @@ export function ChatApp() {
               <ChatResumeHero
                 saved={savedSession}
                 busy={restarting}
-                onResume={() => void resumeLastSession()}
+                onResume={() => {
+                  void (async () => {
+                    const trail = getResumeForCharacter(savedSession.characterId);
+                    const dnaPower = trail ? isDnaPowerTrail(trail) : false;
+                    if (savedSession.resumeCode) {
+                      try {
+                        setStatus("connecting");
+                        if (dnaPower) setSessionMode("edge_pace");
+                        const session = await resumeByCode(savedSession.resumeCode, {
+                          sessionMode: dnaPower ? "edge_pace" : undefined,
+                        });
+                        if (
+                          session.sessionMode === "edge_pace" ||
+                          session.sessionMode === "normal"
+                        ) {
+                          setSessionMode(session.sessionMode);
+                        }
+                        await openLiveSession(session, { forceRehydrate: true });
+                        if (dnaPower) {
+                          setCopyNotice("DNA power reclaim · Edge Pace + heat restored");
+                          window.setTimeout(() => setCopyNotice(null), 3200);
+                        }
+                        return;
+                      } catch {
+                        /* fall through */
+                      }
+                    }
+                    await resumeLastSession();
+                  })();
+                }}
                 onStartFresh={() => {
                   setCharacter(savedSession.characterId);
                   void startSession();
