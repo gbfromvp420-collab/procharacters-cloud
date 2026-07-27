@@ -1,13 +1,27 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-20 EOD (**avatar packs live · stop for rest**)  
+**Updated:** 2026-07-27 cold open (**🔴 prod offline — Railway trial expired**)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** `f430fc8` (api + web both success on Railway).
+**Live deploy SHA:** *none serving* — last successful ship ~`f430fc8` / git HEAD `c9fd651` (docs EOD). Redeploy blocked until Railway plan is selected.
 
 ---
 
-## Open the product
+## 🔴 Live product is DOWN
+
+| Check | Result (2026-07-27) |
+|-------|---------------------|
+| Web / API public URLs | **404** `Application not found` |
+| Railway project `captivating-vision` | Still exists (api + web + Postgres-Hw0Y) |
+| Deployments | All recent = **REMOVED** |
+| Redeploy attempt | **Blocked:** *“Your trial has expired. Please select a plan…”* |
+| Git `main` + avatar packs | Healthy · **8/8 packs READY** |
+
+**Unblock:** Railway → project **captivating-vision** → choose a plan / billing → tell King Grok **`redeploy`**.
+
+---
+
+## Open the product (when live again)
 
 | | URL |
 |--|-----|
@@ -24,8 +38,8 @@
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat (Grok) | ✅ |
-| Gallery + character cards | ✅ |
+| Live NSFW chat (Grok) | 🔴 **hosting down** · eng ✅ on `main` |
+| Gallery + character cards | 🔴 hosting · eng ✅ |
 | Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` |
 | Resume codes (multi-device) | ✅ |
 | Edge Pace mode (phase strip) | ✅ |
