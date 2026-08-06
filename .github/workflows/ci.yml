@@ -1,23 +1,49 @@
 # =============================================================================
-# CI — smoke suites + WebRTC concurrency stress
-# Triggers on pushes to main / webrtc-engine and on all pull requests.
+# CI WebRTC — Python smoke suites + concurrency stress (side service only)
+# Product gates: ci-backend.yml · ci-frontend.yml
 # =============================================================================
 
-name: CI
+name: CI WebRTC
 
 on:
   push:
     branches: [main, webrtc-engine]
+    paths:
+      - "app/**"
+      - "scripts/run_all_tests.py"
+      - "scripts/smoke_full_pipeline.py"
+      - "scripts/smoke_trainer_pipeline.py"
+      - "scripts/smoke_runpod_provider.py"
+      - "scripts/smoke_static_webrtc.py"
+      - "scripts/stress_webrtc_sessions.py"
+      - "requirements.txt"
+      - "Dockerfile"
+      - ".env.example"
+      - "docs/WEBRTC-ENGINE.md"
+      - ".github/workflows/ci.yml"
   pull_request:
+    paths:
+      - "app/**"
+      - "scripts/run_all_tests.py"
+      - "scripts/smoke_full_pipeline.py"
+      - "scripts/smoke_trainer_pipeline.py"
+      - "scripts/smoke_runpod_provider.py"
+      - "scripts/smoke_static_webrtc.py"
+      - "scripts/stress_webrtc_sessions.py"
+      - "requirements.txt"
+      - "Dockerfile"
+      - ".env.example"
+      - "docs/WEBRTC-ENGINE.md"
+      - ".github/workflows/ci.yml"
   workflow_dispatch:
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-webrtc-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   test:
-    name: Python 3.11 test suite
+    name: Python 3.11 WebRTC suite
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -26,7 +52,7 @@ jobs:
       VIDEO_PROVIDER: mock
       LLM_PROVIDER: mock
       RUNPOD_FALLBACK_TO_MOCK: "true"
-      # Stress suite size (CI-friendly; override via workflow_dispatch inputs later if needed)
+      # Stress suite size (CI-friendly)
       STRESS_SESSIONS: "20"
       STRESS_CONCURRENCY: "20"
       STRESS_BASE_URL: "http://127.0.0.1:8000"

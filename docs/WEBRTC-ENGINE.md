@@ -215,12 +215,16 @@ python3 scripts/stress_webrtc_sessions.py --sessions 20 --concurrency 20
 
 ### CI
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on **pushes to `main`** and **pull requests**:
+GitHub Actions workflow **`CI WebRTC`** (`.github/workflows/ci.yml`) runs when WebRTC paths change
+(`app/**`, root `Dockerfile` / `requirements.txt`, WebRTC smoke scripts, this doc) — **not** on pure product/docs PRs:
 
 - Ubuntu + **Python 3.11**
 - System libs for FFmpeg / PyAV / aiortc
 - `pip install -r requirements.txt`
 - `python3 scripts/run_all_tests.py --verbose`
+- Manual: **workflow_dispatch** anytime
+
+Product gates remain separate: `ci-backend.yml` · `ci-frontend.yml`.
 
 ---
 

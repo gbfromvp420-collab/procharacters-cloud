@@ -76,7 +76,9 @@
 | Create My Character deep-link | ✅ **`/models/studio`** create · **`/models/studio/edit/:id`** edit · `/chat?create=1` + `?edit=` redirect |
 | **My Models Studio** | ✅ **Slim v2** foundation retained under advanced fields |
 | **Studio Forge v3 Unchained** | ✅ Conversational fantasy → DNA (adaptive prompt + behavior tree + LiveKit meta + memory seeds) · canvas composer · sentiment clips · Export DNA · Server Action + `POST /characters/forge/expand` · save as `custom-v3` · [STUDIO-FORGE-V3.md](./STUDIO-FORGE-V3.md) |
-| **WebRTC + trainer (side service)** | ✅ merged #30 · FastAPI signaling + hot-swap UI + trainer registry · CI Python suite · compose profile `webrtc` · [WEBRTC-ENGINE.md](./WEBRTC-ENGINE.md) · **not** Railway product chat |
+| **WebRTC + trainer (side service)** | ✅ merged #30 · FastAPI signaling + hot-swap UI + trainer registry · compose profile `webrtc` · [WEBRTC-ENGINE.md](./WEBRTC-ENGINE.md) · **not** Railway product chat |
+| **Monorepo dual-stack hygiene** | ✅ #31 · product vs root Dockerfile documented · compose profile |
+| **CI gates** | Backend / Frontend path-filtered · **CI WebRTC** path-filtered (shipping) — docs-only PRs skip heavy Python |
 | **DNA runtime (live chat)** | ✅ custom-v3: memory seeds → prior/session notes · DNA starter opening · presence from LiveKit meta · clip intensity map · evolution bias in session mode · richer adaptive prompt |
 | **DNA behavior-tree stepper** | ✅ soft spark→tease→edge→deny/release mid-session · prompt + avatar floors · whisper strip DNA node · Seed/Fire chips |
 | **DNA chip bar + Heat Trail** | ✅ 6-node path strip · one-tap Fire chips · climb flash · gallery/Continue/resume hero show DNA node |

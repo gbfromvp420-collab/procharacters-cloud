@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-06 cold continue (**🔴 Railway trial expired · prod offline** · WebRTC side service on `main`)  
-**Session:** King Grok CEO · post-#30 monorepo dual-stack hygiene · ops first when plan unlocks
+**Updated:** 2026-08-06 next (**🔴 Railway trial expired · prod offline** · #30+#31 on `main`)  
+**Session:** King Grok CEO · CI path-filter + phase list · ops first when plan unlocks
 
 ### Agent fleet (slash / auto)
 
@@ -24,7 +24,7 @@
 | **Project still exists** | `captivating-vision` · services: `procharacters-api`, `procharacters-web`, `Postgres-Hw0Y` |
 | **Domains still registered** | `procharacters-api-production-0417.up.railway.app` · `procharacters-web-production-7288.up.railway.app` |
 | **Deployments** | All recent deploys `REMOVED` (last good ship was 2026-07-20 ~`f430fc8` / docs note) |
-| **Repo / packs** | ✅ `main` · WebRTC engine merged (#30) · dual-stack compose documented · **8 avatar packs READY** |
+| **Repo / packs** | ✅ `main` · WebRTC (#30) + dual-stack hygiene (#31) · **8 avatar packs READY** · CI path-filter shipping |
 | **Gary move** | Railway dashboard → **pick a plan / add billing** on project `captivating-vision` → say **`redeploy`** (or I trigger redeploy the moment trial unlocks) |
 | **Eng move after plan** | Redeploy api+web from `main` with **`backend/Dockerfile`** + **`frontend/Dockerfile` only** (never root `Dockerfile`) → curl `/health` → phone hard-refresh → shy-boy + defaults smoke |
 
@@ -38,7 +38,7 @@
 |-------|--------|-----------------|
 | **🔴 Railway / live** | **OFFLINE** — trial expired · project+domains intact · deploys REMOVED | **Select paid plan** → redeploy api+web |
 | **WebRTC side service** | ✅ merged #30 · root `app/` + CI · compose profile `webrtc` | Local: `docker compose --profile webrtc up --build webrtc` — not prod chat |
-| **Monorepo dual-stack** | ✅ README / DEPLOY / WEBRTC-ENGINE / compose clarify product vs side service | Keep Railway Dockerfile paths product-only |
+| **Monorepo dual-stack** | ✅ #31 merged · compose profile + docs | Keep Railway Dockerfile paths product-only |
 | **Studio Forge v3** | ✅ code shipped (DNA + canvas + export) | After live: Sign in → Studio → fantasy → **Forge model** → **Save · Chat Now** |
 | **Forge this heat** | ✅ code shipped | Deep chat → gallery **Forge this DNA** → Studio |
 | **DNA climb toast** | ✅ code shipped | Climb Soft→Tease→Edge — toast once per node |

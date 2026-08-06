@@ -40,6 +40,16 @@ Project: **captivating-vision** · services **procharacters-api** + **procharact
 
 Do not attach this Dockerfile to `procharacters-api` or `procharacters-web`.
 
+### CI gates (monorepo)
+
+| Workflow | When it runs | What it proves |
+|----------|--------------|----------------|
+| **CI Backend** | `backend/**`, `prisma/**`, prompts/characters | typecheck · build · `/health` |
+| **CI Frontend** | `frontend/**` | Next.js build |
+| **CI WebRTC** | `app/**`, root `Dockerfile`, WebRTC smokes | Python smoke + stress |
+
+Docs-only or dual-stack compose edits do **not** need the heavy WebRTC job.
+
 ### 1. Backend service (`procharacters-api`)
 
 1. Connect GitHub repo **`procharacters-cloud`**
