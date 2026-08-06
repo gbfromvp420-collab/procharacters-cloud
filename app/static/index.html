@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WebRTC Client · Character Hot-Swap</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f1419;
+      --panel: #1a2332;
+      --border: #2d3a4d;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #e7ecf3;
+      --muted: #8b9bb4;
+      --ok: #22c55e;
+      --err: #ef4444;
+      --warn: #f59e0b;
+      --chip: #1e3a5f;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    .status-dot.connected { background: var(--ok); }
+    .status-dot.connecting { background: var(--warn); }
+    .status-dot.failed { background: var(--err); }
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      padding: 1rem 1.5rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    @media (max-width: 800px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .panel h2 {
+      margin: 0;
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .panel h2 .hint {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+    }
+    video {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    button {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: #243044;
+      color: var(--text);
+      border-radius: 8px;
+      padding: 0.5rem 0.9rem;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    button:hover:not(:disabled) { border-color: var(--accent); }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+    button.swap {
+      background: #7c3aed;
+      border-color: #7c3aed;
+    }
+    button.swap:hover:not(:disabled) {
+      background: #6d28d9;
+      border-color: #6d28d9;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 0.25rem;
+    }
+    textarea, input, select {
+      width: 100%;
+      background: #0f1419;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 0.55rem 0.7rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+    }
+    select {
+      cursor: pointer;
+      appearance: auto;
+    }
+    select:focus, input:focus, textarea:focus {
+      outline: 2px solid color-mix(in srgb, var(--accent) 50%, transparent);
+      border-color: var(--accent);
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .log {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.75rem;
+      background: #0f1419;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+      min-height: 140px;
+      max-height: 240px;
+      overflow: auto;
+      white-space: pre-wrap;
+      color: var(--muted);
+    }
+    .full { grid-column: 1 / -1; }
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+    .row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0.75rem;
+    }
+    @media (max-width: 700px) {
+      .row, .row-3 { grid-template-columns: 1fr; }
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: var(--chip);
+      border: 1px solid #2b4a75;
+      color: #bfdbfe;
+      border-radius: 999px;
+      padding: 0.2rem 0.6rem;
+      font-size: 0.72rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+    .chip strong { color: #fff; font-weight: 600; }
+    .chip.muted {
+      background: #1f2937;
+      border-color: var(--border);
+      color: var(--muted);
+    }
+    .chip.ok { border-color: #166534; background: #14532d; color: #bbf7d0; }
+    .chip.warn { border-color: #92400e; background: #451a03; color: #fde68a; }
+    .chip.err { border-color: #991b1b; background: #450a0a; color: #fecaca; }
+    .weights-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.45;
+      background: #121a24;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.6rem 0.75rem;
+    }
+    .weights-meta code {
+      color: #93c5fd;
+      font-size: 0.72rem;
+      word-break: break-all;
+    }
+    .field-note {
+      margin: 0.25rem 0 0;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WebRTC Browser Client</h1>
+    <div class="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="connectionState">idle</span>
+      <span class="chip muted" id="activeBindingChip" title="Active character / LoRA binding">
+        char: <strong id="chipCharacter">default</strong>
+        · lora: <strong id="chipLora">—</strong>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Local preview</h2>
+      <video id="localVideo" autoplay playsinline muted></video>
+      <div class="controls">
+        <button id="btnStartMedia" class="primary">Start camera/mic</button>
+        <button id="btnStopMedia">Stop media</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Remote playback</h2>
+      <video id="remoteVideo" autoplay playsinline></video>
+      <div class="controls">
+        <button id="btnConnect" class="primary" disabled>Connect (offer)</button>
+        <button id="btnHangup" disabled>Hang up</button>
+      </div>
+    </section>
+
+    <section class="panel full">
+      <h2>
+        Character / LoRA
+        <span class="hint">from GET /api/v1/trainer/weights · hot-swap without dropping media</span>
+      </h2>
+
+      <div class="row-3">
+        <div>
+          <label for="characterSelect">Character</label>
+          <select id="characterSelect" aria-label="Select character">
+            <option value="default">default (no trained weights)</option>
+          </select>
+          <p class="field-note" id="characterCount">Loading weights…</p>
+        </div>
+        <div>
+          <label for="loraSelect">Visual LoRA</label>
+          <select id="loraSelect" aria-label="Select visual LoRA">
+            <option value="">— none / active default —</option>
+          </select>
+          <p class="field-note">Optional override of the character’s active LoRA</p>
+        </div>
+        <div>
+          <label for="sessionId">Session ID</label>
+          <input id="sessionId" placeholder="auto-generated if empty" autocomplete="off" />
+          <p class="field-note">Shared across connect, swap, and chat</p>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="characterId">Character ID (manual)</label>
+          <input id="characterId" value="default" autocomplete="off" />
+        </div>
+        <div>
+          <label for="loraId">LoRA ID (manual)</label>
+          <input id="loraId" value="" placeholder="optional weight / lora id" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="weights-meta" id="weightsDetail">
+        No weight details yet. Boot load or click <strong>Refresh weights</strong>.
+      </div>
+
+      <div class="controls">
+        <button type="button" id="btnRefreshWeights">Refresh weights</button>
+        <button type="button" id="btnInitSession">Init session</button>
+        <button type="button" id="btnSwap" class="swap"
+          title="Hot-swap weights on the active session without renegotiating WebRTC">
+          Swap Character
+        </button>
+        <span id="swapStatus" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <section class="panel full">
+      <h2>Session / chat</h2>
+      <div>
+        <label for="chatMessage">Chat message (POST /api/v1/chat/perform)</label>
+        <textarea id="chatMessage" placeholder="Say something to trigger a performance..."></textarea>
+      </div>
+      <div class="controls">
+        <button type="button" id="btnChat" class="primary">Send chat/perform</button>
+        <button type="button" id="btnRefreshIce">Refresh ICE servers</button>
+      </div>
+    </section>
+
+    <section class="panel full">
+      <h2>Event log</h2>
+      <div class="log" id="log" role="log" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = window.location.origin;
+    const WEBRTC_BASE = `${API_BASE}/api/v1/webrtc`;
+    const TRAINER_BASE = `${API_BASE}/api/v1/trainer`;
+    const CHAT_PATH = `${API_BASE}/api/v1/chat/perform`;
+
+    const els = {
+      localVideo: document.getElementById("localVideo"),
+      remoteVideo: document.getElementById("remoteVideo"),
+      statusDot: document.getElementById("statusDot"),
+      connectionState: document.getElementById("connectionState"),
+      btnStartMedia: document.getElementById("btnStartMedia"),
+      btnStopMedia: document.getElementById("btnStopMedia"),
+      btnConnect: document.getElementById("btnConnect"),
+      btnHangup: document.getElementById("btnHangup"),
+      btnChat: document.getElementById("btnChat"),
+      btnRefreshIce: document.getElementById("btnRefreshIce"),
+      btnRefreshWeights: document.getElementById("btnRefreshWeights"),
+      btnInitSession: document.getElementById("btnInitSession"),
+      btnSwap: document.getElementById("btnSwap"),
+      sessionId: document.getElementById("sessionId"),
+      characterId: document.getElementById("characterId"),
+      loraId: document.getElementById("loraId"),
+      characterSelect: document.getElementById("characterSelect"),
+      loraSelect: document.getElementById("loraSelect"),
+      characterCount: document.getElementById("characterCount"),
+      weightsDetail: document.getElementById("weightsDetail"),
+      swapStatus: document.getElementById("swapStatus"),
+      chipCharacter: document.getElementById("chipCharacter"),
+      chipLora: document.getElementById("chipLora"),
+      activeBindingChip: document.getElementById("activeBindingChip"),
+      chatMessage: document.getElementById("chatMessage"),
+      log: document.getElementById("log"),
+    };
+
+    /** @type {RTCPeerConnection | null} */
+    let pc = null;
+    /** @type {MediaStream | null} */
+    let localStream = null;
+    let iceServers = [{ urls: "stun:stun.l.google.com:19302" }];
+    /** @type {Array<Record<string, any>>} */
+    let weightEntries = [];
+    let boundCharacterId = "default";
+    /** @type {string | null} */
+    let boundLoraId = null;
+    let syncingSelectors = false;
+    let pollTimer = null;
+
+    // -----------------------------------------------------------------------
+    // Logging / UI helpers
+    // -----------------------------------------------------------------------
+
+    function log(msg, data) {
+      const ts = new Date().toISOString().slice(11, 19);
+      const line = data !== undefined
+        ? `[${ts}] ${msg} ${typeof data === "string" ? data : JSON.stringify(data, null, 2)}`
+        : `[${ts}] ${msg}`;
+      els.log.textContent = `${line}\n${els.log.textContent}`.slice(0, 12000);
+      console.log(msg, data ?? "");
+    }
+
+    function setConnectionState(state) {
+      els.connectionState.textContent = state;
+      els.statusDot.className = "status-dot";
+      if (state === "connected" || state === "completed") {
+        els.statusDot.classList.add("connected");
+      } else if (state === "connecting" || state === "checking" || state === "new") {
+        els.statusDot.classList.add("connecting");
+      } else if (state === "failed" || state === "disconnected" || state === "closed") {
+        els.statusDot.classList.add("failed");
+      }
+    }
+
+    function updateBindingChips(characterId, loraId) {
+      boundCharacterId = characterId || "default";
+      boundLoraId = loraId || null;
+      els.chipCharacter.textContent = boundCharacterId;
+      els.chipLora.textContent = boundLoraId || "—";
+      els.activeBindingChip.classList.toggle("ok", Boolean(boundLoraId));
+      els.activeBindingChip.classList.toggle("muted", !boundLoraId);
+    }
+
+    function setSwapStatus(text, kind) {
+      if (!text) {
+        els.swapStatus.innerHTML = "";
+        return;
+      }
+      const cls = kind === "ok" ? "ok" : kind === "warn" ? "warn" : kind === "err" ? "err" : "muted";
+      els.swapStatus.innerHTML = `<span class="chip ${cls}">${escapeHtml(text)}</span>`;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function ensureSessionId() {
+      if (!els.sessionId.value.trim()) {
+        els.sessionId.value = crypto.randomUUID();
+      }
+      return els.sessionId.value.trim();
+    }
+
+    /** Current identity from controls. */
+    function getSelectedIdentity() {
+      const characterId =
+        (els.characterId.value || els.characterSelect.value || "default").trim() || "default";
+      const loraRaw = (els.loraId.value || els.loraSelect.value || "").trim();
+      return {
+        character_id: characterId,
+        lora_id: loraRaw || null,
+      };
+    }
+
+    // -----------------------------------------------------------------------
+    // HTTP
+    // -----------------------------------------------------------------------
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options,
+      });
+      const text = await res.text();
+      let body = null;
+      try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+      if (!res.ok) {
+        const err = new Error(`HTTP ${res.status}`);
+        err.status = res.status;
+        err.body = body;
+        throw err;
+      }
+      return body;
+    }
+
+    // -----------------------------------------------------------------------
+    // Weights registry → character / LoRA selectors
+    // -----------------------------------------------------------------------
+
+    function isVisualLora(entry) {
+      const kind = String(entry.kind || "").toLowerCase();
+      return kind === "visual_lora" || kind === "kohya_ss" || kind === "lora";
+    }
+
+    function populateCharacterSelect(entries) {
+      const characters = new Set(["default"]);
+      for (const e of entries) {
+        if (e && e.character_id) characters.add(String(e.character_id));
+      }
+      const sorted = Array.from(characters).sort((a, b) => {
+        if (a === "default") return -1;
+        if (b === "default") return 1;
+        return a.localeCompare(b);
+      });
+
+      const prev = els.characterSelect.value || els.characterId.value || "default";
+      syncingSelectors = true;
+      els.characterSelect.innerHTML = "";
+      for (const cid of sorted) {
+        const opt = document.createElement("option");
+        opt.value = cid;
+        const total = entries.filter((e) => e.character_id === cid).length;
+        const loraCount = entries.filter(
+          (e) => e.character_id === cid && isVisualLora(e)
+        ).length;
+        if (cid === "default" && total === 0) {
+          opt.textContent = "default (no trained weights)";
+        } else {
+          opt.textContent = `${cid}${total ? ` · ${total} weight${total === 1 ? "" : "s"}` : ""}${
+            loraCount ? ` (${loraCount} LoRA)` : ""
+          }`;
+        }
+        els.characterSelect.appendChild(opt);
+      }
+      els.characterSelect.value = sorted.includes(prev) ? prev : (sorted[0] || "default");
+      syncingSelectors = false;
+
+      els.characterCount.textContent =
+        entries.length === 0
+          ? "No trained weights yet — using default"
+          : `${entries.length} weight${entries.length === 1 ? "" : "s"} · ${sorted.length} character${
+              sorted.length === 1 ? "" : "s"
+            }`;
+    }
+
+    function populateLoraSelect(characterId) {
+      const prev = els.loraSelect.value || els.loraId.value || "";
+      const loras = weightEntries.filter(
+        (e) => e.character_id === characterId && isVisualLora(e)
+      );
+
+      syncingSelectors = true;
+      els.loraSelect.innerHTML = "";
+      const none = document.createElement("option");
+      none.value = "";
+      none.textContent = "— none / active default —";
+      els.loraSelect.appendChild(none);
+
+      for (const e of loras) {
+        const id = e.lora_id || e.weight_id || "";
+        if (!id) continue;
+        const opt = document.createElement("option");
+        opt.value = id;
+        const label = e.label || id;
+        const trigger = e.trigger_word ? ` · ${e.trigger_word}` : "";
+        opt.textContent = `${label}${trigger}`;
+        opt.title = e.uri || "";
+        els.loraSelect.appendChild(opt);
+      }
+
+      const values = Array.from(els.loraSelect.options).map((o) => o.value);
+      els.loraSelect.value = values.includes(prev) ? prev : "";
+      syncingSelectors = false;
+    }
+
+    function renderWeightsDetail(characterId, loraId) {
+      const forChar = weightEntries.filter((e) => e.character_id === characterId);
+      if (!forChar.length) {
+        els.weightsDetail.innerHTML =
+          characterId === "default"
+            ? "Character <code>default</code> has no registered weights. Inference uses base models."
+            : `No weights indexed for <code>${escapeHtml(characterId)}</code>.`;
+        return;
+      }
+
+      const visual = forChar.filter(isVisualLora);
+      const llm = forChar.filter((e) => String(e.kind).toLowerCase() === "llm" || String(e.kind).toLowerCase() === "unsloth");
+      const voice = forChar.filter((e) => String(e.kind).toLowerCase() === "voice" || String(e.kind).toLowerCase() === "xtts");
+
+      let selected = null;
+      if (loraId) {
+        selected = visual.find((e) => e.lora_id === loraId || e.weight_id === loraId) || null;
+      }
+
+      const lines = [
+        `<strong>${escapeHtml(characterId)}</strong>: ` +
+          `${visual.length} LoRA · ${llm.length} LLM · ${voice.length} voice`,
+      ];
+      if (selected) {
+        lines.push(
+          `Selected LoRA <code>${escapeHtml(selected.lora_id || selected.weight_id)}</code>` +
+            (selected.trigger_word ? ` trigger=<code>${escapeHtml(selected.trigger_word)}</code>` : "") +
+            (selected.uri ? `<br/>uri <code>${escapeHtml(selected.uri)}</code>` : "")
+        );
+      } else if (visual[0]) {
+        lines.push(
+          `Active/default LoRA candidate <code>${escapeHtml(visual[0].lora_id || visual[0].weight_id)}</code>` +
+            (visual[0].uri ? `<br/>uri <code>${escapeHtml(visual[0].uri)}</code>` : "")
+        );
+      }
+      if (llm[0]?.uri) {
+        lines.push(`LLM <code>${escapeHtml(llm[0].uri)}</code>`);
+      }
+      if (voice[0]?.uri) {
+        lines.push(`Voice <code>${escapeHtml(voice[0].uri)}</code>`);
+      }
+      els.weightsDetail.innerHTML = lines.join("<br/>");
+    }
+
+    function syncManualFromSelects() {
+      if (syncingSelectors) return;
+      els.characterId.value = els.characterSelect.value || "default";
+      els.loraId.value = els.loraSelect.value || "";
+      renderWeightsDetail(els.characterId.value, els.loraId.value || null);
+    }
+
+    function syncSelectsFromManual() {
+      if (syncingSelectors) return;
+      const cid = els.characterId.value.trim() || "default";
+      const lid = els.loraId.value.trim();
+
+      // Ensure character option exists for free-typed IDs
+      const hasChar = Array.from(els.characterSelect.options).some((o) => o.value === cid);
+      if (!hasChar && cid) {
+        const opt = document.createElement("option");
+        opt.value = cid;
+        opt.textContent = `${cid} (custom)`;
+        els.characterSelect.appendChild(opt);
+      }
+      syncingSelectors = true;
+      if (Array.from(els.characterSelect.options).some((o) => o.value === cid)) {
+        els.characterSelect.value = cid;
+      }
+      populateLoraSelect(cid);
+      if (lid) {
+        const hasLora = Array.from(els.loraSelect.options).some((o) => o.value === lid);
+        if (!hasLora) {
+          const opt = document.createElement("option");
+          opt.value = lid;
+          opt.textContent = `${lid} (custom)`;
+          els.loraSelect.appendChild(opt);
+        }
+        els.loraSelect.value = lid;
+      }
+      syncingSelectors = false;
+      renderWeightsDetail(cid, lid || null);
+    }
+
+    async function loadWeights() {
+      els.characterCount.textContent = "Loading weights…";
+      try {
+        const data = await api(`${TRAINER_BASE}/weights`);
+        weightEntries = Array.isArray(data?.weights) ? data.weights : [];
+        populateCharacterSelect(weightEntries);
+        const cid = els.characterSelect.value || "default";
+        populateLoraSelect(cid);
+        syncManualFromSelects();
+        log("Loaded trainer weights", {
+          count: weightEntries.length,
+          characters: data?.summary?.characters || [],
+          bucket: data?.summary?.bucket || null,
+        });
+        setSwapStatus(
+          weightEntries.length
+            ? `${weightEntries.length} weights ready`
+            : "registry empty",
+          weightEntries.length ? "ok" : "warn"
+        );
+        return data;
+      } catch (e) {
+        weightEntries = [];
+        populateCharacterSelect([]);
+        populateLoraSelect("default");
+        els.characterCount.textContent = "Weights API unavailable";
+        els.weightsDetail.innerHTML =
+          "Could not load <code>/api/v1/trainer/weights</code>. You can still type character/lora IDs manually.";
+        log("Weights load failed", e.body || String(e));
+        setSwapStatus("weights load failed", "err");
+        return null;
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Session identity (no media teardown)
+    // -----------------------------------------------------------------------
+
+    /**
+     * POST /api/v1/webrtc/session with character_id + lora_id.
+     * Does not touch RTCPeerConnection — safe hot-swap path.
+     */
+    async function bindSessionIdentity({ quiet } = {}) {
+      const sessionId = ensureSessionId();
+      const identity = getSelectedIdentity();
+      const body = {
+        session_id: sessionId,
+        character_id: identity.character_id,
+        lora_id: identity.lora_id,
+      };
+      const result = await api(`${WEBRTC_BASE}/session`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const cid = result.character_id || identity.character_id;
+      const lid = result.lora_id != null ? result.lora_id : identity.lora_id;
+      updateBindingChips(cid, lid);
+      if (!quiet) {
+        log("Session identity bound", {
+          session_id: sessionId,
+          character_id: cid,
+          lora_id: lid,
+          weights: result.weights,
+          media_intact: Boolean(pc),
+          pc_state: pc ? pc.connectionState : "none",
+        });
+      }
+      return result;
+    }
+
+    async function initSession() {
+      try {
+        els.btnInitSession.disabled = true;
+        const result = await bindSessionIdentity();
+        setSwapStatus(`session ready · ${result.character_id}`, "ok");
+      } catch (e) {
+        log("Init session failed", e.body || String(e));
+        setSwapStatus("init failed", "err");
+      } finally {
+        els.btnInitSession.disabled = false;
+      }
+    }
+
+    /**
+     * Hot-swap: rebind character/LoRA on the live session without hangup / renegotiation.
+     */
+    async function swapCharacter() {
+      const mediaLive = Boolean(pc) && !["closed", "failed"].includes(pc.connectionState);
+      try {
+        els.btnSwap.disabled = true;
+        setSwapStatus("swapping…", "warn");
+        const beforePc = pc ? pc.connectionState : "none";
+        const result = await bindSessionIdentity();
+
+        // Optional: confirm resolve endpoint for richer detail
+        let resolved = null;
+        try {
+          const q = new URLSearchParams({
+            character_id: result.character_id || getSelectedIdentity().character_id,
+          });
+          if (result.lora_id) q.set("lora_id", result.lora_id);
+          resolved = await api(`${TRAINER_BASE}/weights/resolve?${q.toString()}`);
+        } catch {
+          /* resolve is optional enrichment */
+        }
+
+        const afterPc = pc ? pc.connectionState : "none";
+        const intact = !mediaLive || (pc && afterPc === beforePc && afterPc !== "closed");
+        log("Character hot-swap complete", {
+          character_id: result.character_id,
+          lora_id: result.lora_id,
+          weights: result.weights || resolved?.inference,
+          peer_connection_before: beforePc,
+          peer_connection_after: afterPc,
+          media_connection_preserved: intact,
+        });
+        setSwapStatus(
+          intact && mediaLive
+            ? `swapped → ${result.character_id} (media live)`
+            : `bound → ${result.character_id}`,
+          "ok"
+        );
+        renderWeightsDetail(result.character_id, result.lora_id || null);
+      } catch (e) {
+        log("Swap Character failed", e.body || String(e));
+        setSwapStatus("swap failed", "err");
+      } finally {
+        els.btnSwap.disabled = false;
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // ICE / media / WebRTC
+    // -----------------------------------------------------------------------
+
+    async function refreshIceServers() {
+      try {
+        const data = await api(`${WEBRTC_BASE}/ice-servers`);
+        if (data && Array.isArray(data.iceServers) && data.iceServers.length) {
+          iceServers = data.iceServers;
+        }
+        log("ICE servers loaded", iceServers);
+      } catch (e) {
+        log("ICE servers fetch failed; using default STUN", String(e));
+      }
+    }
+
+    async function startMedia() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+        });
+        els.localVideo.srcObject = localStream;
+        els.btnConnect.disabled = false;
+        log("Local media started");
+      } catch (e) {
+        log("getUserMedia failed", String(e));
+        alert("Could not access camera/microphone: " + e.message);
+      }
+    }
+
+    function stopMedia() {
+      if (localStream) {
+        localStream.getTracks().forEach((t) => t.stop());
+        localStream = null;
+      }
+      els.localVideo.srcObject = null;
+      els.btnConnect.disabled = true;
+      log("Local media stopped");
+    }
+
+    function createPeerConnection() {
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+      pc = new RTCPeerConnection({ iceServers });
+
+      pc.onicecandidate = async (event) => {
+        if (!event.candidate) return;
+        const sessionId = ensureSessionId();
+        try {
+          await api(`${WEBRTC_BASE}/ice-candidate`, {
+            method: "POST",
+            body: JSON.stringify({
+              session_id: sessionId,
+              candidate: event.candidate.toJSON(),
+            }),
+          });
+          log("Sent ICE candidate");
+        } catch (e) {
+          log("ICE candidate POST failed", String(e));
+        }
+      };
+
+      pc.ontrack = (event) => {
+        log("Remote track received", {
+          kind: event.track.kind,
+          id: event.track.id,
+          streams: event.streams.length,
+        });
+        const [stream] = event.streams;
+        els.remoteVideo.srcObject = stream || new MediaStream([event.track]);
+      };
+
+      pc.onconnectionstatechange = () => {
+        setConnectionState(pc.connectionState);
+        log("connectionState", pc.connectionState);
+      };
+
+      pc.oniceconnectionstatechange = () => {
+        log("iceConnectionState", pc.iceConnectionState);
+      };
+
+      if (localStream) {
+        localStream.getTracks().forEach((track) => pc.addTrack(track, localStream));
+      }
+
+      return pc;
+    }
+
+    async function connect() {
+      const sessionId = ensureSessionId();
+      const identity = getSelectedIdentity();
+      els.btnConnect.disabled = true;
+      els.btnHangup.disabled = false;
+      setConnectionState("connecting");
+
+      try {
+        // Bind character/LoRA before SDP so the session already has weights.
+        try {
+          await bindSessionIdentity({ quiet: true });
+          log("Pre-connect session bound", identity);
+        } catch (e) {
+          log("Pre-connect session bind note", e.body || String(e));
+        }
+
+        createPeerConnection();
+        const offer = await pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true,
+        });
+        await pc.setLocalDescription(offer);
+        log("Created local offer");
+
+        const answer = await api(`${WEBRTC_BASE}/offer`, {
+          method: "POST",
+          body: JSON.stringify({
+            session_id: sessionId,
+            sdp: offer.sdp,
+            type: offer.type,
+            character_id: identity.character_id,
+            lora_id: identity.lora_id,
+          }),
+        });
+
+        if (!answer || !answer.sdp) {
+          throw new Error("Server returned no SDP answer");
+        }
+
+        await pc.setRemoteDescription({
+          type: answer.type || "answer",
+          sdp: answer.sdp,
+        });
+        updateBindingChips(
+          answer.character_id || identity.character_id,
+          answer.lora_id != null ? answer.lora_id : identity.lora_id
+        );
+        log("Applied remote answer", {
+          character_id: answer.character_id,
+          lora_id: answer.lora_id,
+        });
+
+        pollRemoteCandidates(sessionId);
+      } catch (e) {
+        log("Connect failed", e.body || String(e));
+        setConnectionState("failed");
+        els.btnConnect.disabled = false;
+      }
+    }
+
+    async function pollRemoteCandidates(sessionId) {
+      if (pollTimer) clearInterval(pollTimer);
+      let attempts = 0;
+      pollTimer = setInterval(async () => {
+        attempts += 1;
+        if (!pc || attempts > 30) {
+          clearInterval(pollTimer);
+          pollTimer = null;
+          return;
+        }
+        try {
+          const data = await api(
+            `${WEBRTC_BASE}/ice-candidate?session_id=${encodeURIComponent(sessionId)}`
+          );
+          const candidates = data?.candidates || [];
+          for (const c of candidates) {
+            if (c && c.candidate) {
+              await pc.addIceCandidate(c);
+              log("Applied remote ICE candidate");
+            }
+          }
+        } catch {
+          // Optional endpoint
+        }
+      }, 1000);
+    }
+
+    async function hangup() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+      const sessionId = els.sessionId.value.trim();
+      if (sessionId) {
+        try {
+          await api(`${WEBRTC_BASE}/hangup`, {
+            method: "POST",
+            body: JSON.stringify({ session_id: sessionId }),
+          });
+        } catch (e) {
+          log("Hangup API note", String(e));
+        }
+      }
+      if (pc) {
+        pc.close();
+        pc = null;
+      }
+      els.remoteVideo.srcObject = null;
+      els.btnHangup.disabled = true;
+      els.btnConnect.disabled = !localStream;
+      setConnectionState("closed");
+      log("Hung up");
+    }
+
+    async function sendChat() {
+      const sessionId = ensureSessionId();
+      const message = els.chatMessage.value.trim();
+      if (!message) {
+        alert("Enter a chat message");
+        return;
+      }
+      const identity = getSelectedIdentity();
+      try {
+        // Keep session binding in sync (no media impact).
+        try {
+          await bindSessionIdentity({ quiet: true });
+        } catch {
+          /* chat still sends explicit ids */
+        }
+
+        const result = await api(CHAT_PATH, {
+          method: "POST",
+          body: JSON.stringify({
+            session_id: sessionId,
+            character_id: identity.character_id,
+            lora_id: identity.lora_id,
+            message,
+          }),
+        });
+        updateBindingChips(
+          result.character_id || identity.character_id,
+          result.lora_id != null ? result.lora_id : identity.lora_id
+        );
+        log("chat/perform response", result);
+        if (result.weights) {
+          setSwapStatus(
+            `chat used ${result.character_id}${result.lora_id ? " / " + result.lora_id : ""}`,
+            "ok"
+          );
+        }
+      } catch (e) {
+        log("chat/perform failed", e.body || String(e));
+        setSwapStatus("chat failed", "err");
+      }
+    }
+
+    // -----------------------------------------------------------------------
+    // Events
+    // -----------------------------------------------------------------------
+
+    els.btnStartMedia.addEventListener("click", startMedia);
+    els.btnStopMedia.addEventListener("click", stopMedia);
+    els.btnConnect.addEventListener("click", connect);
+    els.btnHangup.addEventListener("click", hangup);
+    els.btnChat.addEventListener("click", sendChat);
+    els.btnRefreshIce.addEventListener("click", refreshIceServers);
+    els.btnRefreshWeights.addEventListener("click", () => loadWeights());
+    els.btnInitSession.addEventListener("click", initSession);
+    els.btnSwap.addEventListener("click", swapCharacter);
+
+    els.characterSelect.addEventListener("change", () => {
+      if (syncingSelectors) return;
+      populateLoraSelect(els.characterSelect.value);
+      syncManualFromSelects();
+    });
+    els.loraSelect.addEventListener("change", () => {
+      if (syncingSelectors) return;
+      syncManualFromSelects();
+    });
+    els.characterId.addEventListener("change", syncSelectsFromManual);
+    els.characterId.addEventListener("blur", syncSelectsFromManual);
+    els.loraId.addEventListener("change", syncSelectsFromManual);
+    els.loraId.addEventListener("blur", syncSelectsFromManual);
+
+    // -----------------------------------------------------------------------
+    // Boot
+    // -----------------------------------------------------------------------
+
+    (async function boot() {
+      log("WebRTC client ready", {
+        webrtc: WEBRTC_BASE,
+        trainer: TRAINER_BASE,
+        chat: CHAT_PATH,
+      });
+      await refreshIceServers();
+      await loadWeights();
+      updateBindingChips(
+        getSelectedIdentity().character_id,
+        getSelectedIdentity().lora_id
+      );
+    })();
+  </script>
+</body>
+</html>
