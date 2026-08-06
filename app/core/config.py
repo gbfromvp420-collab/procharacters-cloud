@@ -10,12 +10,14 @@ Toggles:
   RUNPOD_TRAINING_URL
   RUNPOD_TRAINING_API_KEY
   WEIGHTS_STORAGE_BUCKET
+  WEBRTC_STUN_URLS
+  WEBRTC_TURN_URLS / WEBRTC_TURN_USERNAME / WEBRTC_TURN_CREDENTIAL
 """
 
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -97,6 +99,28 @@ class Settings(BaseSettings):
         validation_alias="RUNPOD_CONNECT_TIMEOUT_SECONDS",
     )
 
+    # --- WebRTC ICE (STUN / TURN) for external peer connectivity -------------
+    # Comma-separated STUN URLs (defaults to public Google STUN)
+    webrtc_stun_urls: str = Field(
+        default="stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302",
+        validation_alias="WEBRTC_STUN_URLS",
+        description="Comma-separated STUN server URLs for RTCPeerConnection",
+    )
+    # Optional TURN (required for many NAT/firewall topologies beyond LAN)
+    webrtc_turn_urls: str = Field(
+        default="",
+        validation_alias="WEBRTC_TURN_URLS",
+        description="Comma-separated TURN URLs, e.g. turn:turn.example.com:3478",
+    )
+    webrtc_turn_username: str = Field(
+        default="",
+        validation_alias="WEBRTC_TURN_USERNAME",
+    )
+    webrtc_turn_credential: str = Field(
+        default="",
+        validation_alias="WEBRTC_TURN_CREDENTIAL",
+    )
+
     @field_validator("video_provider", "llm_provider", mode="before")
     @classmethod
     def _normalize_provider(cls, v: object) -> object:
@@ -129,6 +153,36 @@ class Settings(BaseSettings):
         if key:
             headers["Authorization"] = f"Bearer {key}"
         return headers
+
+    def ice_servers(self) -> list[dict[str, Any]]:
+        """
+        Build RTCPeerConfiguration.iceServers for browser / aiortc clients.
+
+        Always includes STUN (public defaults if unset). When TURN URL(s) are
+        configured, appends a credentialed TURN entry so peers behind symmetric
+        NAT can still form a media path.
+        """
+        servers: list[dict[str, Any]] = []
+        stun = [u.strip() for u in (self.webrtc_stun_urls or "").split(",") if u.strip()]
+        if not stun:
+            stun = [
+                "stun:stun.l.google.com:19302",
+                "stun:stun1.l.google.com:19302",
+            ]
+        for url in stun:
+            servers.append({"urls": url})
+
+        turn_urls = [
+            u.strip() for u in (self.webrtc_turn_urls or "").split(",") if u.strip()
+        ]
+        if turn_urls:
+            entry: dict[str, Any] = {"urls": turn_urls if len(turn_urls) > 1 else turn_urls[0]}
+            if self.webrtc_turn_username:
+                entry["username"] = self.webrtc_turn_username
+            if self.webrtc_turn_credential:
+                entry["credential"] = self.webrtc_turn_credential
+            servers.append(entry)
+        return servers
 
 
 @lru_cache(maxsize=1)

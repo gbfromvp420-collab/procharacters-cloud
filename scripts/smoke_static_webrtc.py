@@ -125,6 +125,14 @@ def main() -> int:
                 failures.append(f"session lora_id: {sess}")
             if not isinstance(sess.get("weights"), dict):
                 failures.append(f"session missing weights: {sess}")
+            ice = sess.get("iceServers") or []
+            if not ice:
+                failures.append(f"session missing iceServers: {sess}")
+            elif not any(
+                "stun:" in str(e.get("urls") or "")
+                for e in ice
+            ):
+                failures.append(f"session iceServers missing STUN: {ice}")
 
         # 5e) Hot-swap to another lora without offer/hangup
         r = client.post(

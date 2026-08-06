@@ -690,12 +690,18 @@
       const cid = result.character_id || identity.character_id;
       const lid = result.lora_id != null ? result.lora_id : identity.lora_id;
       updateBindingChips(cid, lid);
+      // Prefer iceServers from session (STUN + optional TURN) for external peers
+      if (Array.isArray(result.iceServers) && result.iceServers.length) {
+        iceServers = result.iceServers;
+        if (!quiet) log("ICE servers from session", iceServers);
+      }
       if (!quiet) {
         log("Session identity bound", {
           session_id: sessionId,
           character_id: cid,
           lora_id: lid,
           weights: result.weights,
+          iceServers: result.iceServers,
           media_intact: Boolean(pc),
           pc_state: pc ? pc.connectionState : "none",
         });

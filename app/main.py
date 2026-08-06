@@ -195,12 +195,8 @@ async def health() -> dict[str, Any]:
 @app.get("/api/v1/webrtc/ice-servers")
 async def webrtc_ice_servers() -> dict[str, list[dict[str, Any]]]:
     """Return STUN (and optional TURN) servers for RTCPeerConnection."""
-    return {
-        "iceServers": [
-            {"urls": "stun:stun.l.google.com:19302"},
-            {"urls": "stun:stun1.l.google.com:19302"},
-        ]
-    }
+    settings = get_settings()
+    return {"iceServers": settings.ice_servers()}
 
 
 @app.post("/api/v1/webrtc/offer", response_model=SDPAnswer)
@@ -267,12 +263,14 @@ async def webrtc_session_get(session_id: str) -> dict[str, Any]:
     session = _sessions.get(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="session not found")
+    ice = get_settings().ice_servers()
     return {
         "session_id": session_id,
         "state": session.get("state"),
         "character_id": session.get("character_id"),
         "lora_id": session.get("lora_id"),
         "weights": session.get("weights"),
+        "iceServers": ice,
         "has_offer": session.get("offer") is not None,
         "has_answer": session.get("answer") is not None,
         "local_candidate_count": len(session.get("local_candidates") or []),
@@ -286,6 +284,9 @@ async def webrtc_session_post(payload: SessionUpdatePayload) -> dict[str, Any]:
 
     Accepts optional character_id and/or lora_id so the browser can hot-swap
     trained weights without renegotiating SDP.
+
+    Always returns current STUN/TURN `iceServers` so remote peers can form
+    ICE candidates beyond localhost without a separate round-trip.
     """
     session = _get_or_create_session(payload.session_id)
     _apply_session_identity(
@@ -295,6 +296,8 @@ async def webrtc_session_post(payload: SessionUpdatePayload) -> dict[str, Any]:
     )
     if session.get("state") == "new" and not session.get("offer"):
         session["state"] = "ready"
+    ice = get_settings().ice_servers()
+    session["iceServers"] = ice
     return {
         "ok": True,
         "session_id": payload.session_id,
@@ -302,6 +305,7 @@ async def webrtc_session_post(payload: SessionUpdatePayload) -> dict[str, Any]:
         "character_id": session.get("character_id"),
         "lora_id": session.get("lora_id"),
         "weights": session.get("weights"),
+        "iceServers": ice,
     }
 
 

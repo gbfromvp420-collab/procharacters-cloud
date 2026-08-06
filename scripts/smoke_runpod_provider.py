@@ -319,9 +319,11 @@ async def _run() -> int:
     # ------------------------------------------------------------------
     # 6) LLM_PROVIDER inherits VIDEO_PROVIDER when unset
     # ------------------------------------------------------------------
+    # Use empty string (not pop) so a project .env LLM_PROVIDER=mock cannot
+    # re-populate the field via pydantic-settings env_file loading.
     prev = _set_env(
         VIDEO_PROVIDER="runpod",
-        LLM_PROVIDER=None,
+        LLM_PROVIDER="",
         RUNPOD_MUSETALK_URL="https://example.invalid/m",
         RUNPOD_LLM_URL="https://example.invalid/l",
         RUNPOD_API_KEY="k",

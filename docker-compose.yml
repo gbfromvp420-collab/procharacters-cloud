@@ -31,6 +31,10 @@ services:
       RUNPOD_TIMEOUT_SECONDS: ${RUNPOD_TIMEOUT_SECONDS:-30}
       RUNPOD_CONNECT_TIMEOUT_SECONDS: ${RUNPOD_CONNECT_TIMEOUT_SECONDS:-5}
       RUNPOD_FALLBACK_TO_MOCK: ${RUNPOD_FALLBACK_TO_MOCK:-true}
+      WEBRTC_STUN_URLS: ${WEBRTC_STUN_URLS:-stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302}
+      WEBRTC_TURN_URLS: ${WEBRTC_TURN_URLS:-}
+      WEBRTC_TURN_USERNAME: ${WEBRTC_TURN_USERNAME:-}
+      WEBRTC_TURN_CREDENTIAL: ${WEBRTC_TURN_CREDENTIAL:-}
     volumes:
       # Persist trainer datasets + weight registry index across restarts
       - trainer_data:/app/data/trainer

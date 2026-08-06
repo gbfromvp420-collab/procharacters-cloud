@@ -1,0 +1,84 @@
+# =============================================================================
+# CI — smoke suites + WebRTC concurrency stress
+# Triggers on pushes to main and on all pull requests.
+# =============================================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python 3.11 test suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      # Deterministic mock providers (no live RunPod)
+      VIDEO_PROVIDER: mock
+      LLM_PROVIDER: mock
+      RUNPOD_FALLBACK_TO_MOCK: "true"
+      # Stress suite size (CI-friendly; override via workflow_dispatch inputs later if needed)
+      STRESS_SESSIONS: "20"
+      STRESS_CONCURRENCY: "20"
+      STRESS_BASE_URL: "http://127.0.0.1:8000"
+      PYTHONUNBUFFERED: "1"
+      PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+
+      - name: Install system libraries (PyAV / aiortc)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            pkg-config \
+            ffmpeg \
+            libavformat-dev \
+            libavcodec-dev \
+            libavdevice-dev \
+            libavutil-dev \
+            libavfilter-dev \
+            libswscale-dev \
+            libswresample-dev \
+            libopus-dev \
+            libvpx-dev \
+            libsrtp2-dev
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -r requirements.txt
+
+      - name: Sanity import check
+        run: |
+          python -c "import fastapi, httpx, uvicorn, pydantic, pydantic_settings; print('imports ok')"
+
+      - name: Run all tests
+        run: python3 scripts/run_all_tests.py --verbose
+
+      - name: Upload uvicorn log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uvicorn-test-log
+          path: .uvicorn-test.log
+          if-no-files-found: ignore
