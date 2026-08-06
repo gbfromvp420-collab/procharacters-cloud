@@ -1,6 +1,8 @@
 # Deploying Procharacters.cloud v2
 
-Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + avatar video).
+**Production product** is two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + avatar video).
+
+**Optional side service** (not on Railway prod today): Python **WebRTC + trainer** (`Dockerfile` at repo root, `app/`). Local/demo only unless you deliberately add a third Railway service. See [WEBRTC-ENGINE.md](./WEBRTC-ENGINE.md).
 
 ## Prerequisites
 
@@ -12,17 +14,31 @@ Two services: **backend** (REST + WebSocket + Grok) and **frontend** (Next.js + 
 
 ## Option A — Railway (recommended)
 
-**Live production (July 2026):**
+**Live production (when plan is active):**
 
 | Service | URL | Dockerfile |
 |---------|-----|------------|
 | API | https://procharacters-api-production-0417.up.railway.app | `backend/Dockerfile` |
 | Web | https://procharacters-web-production-7288.up.railway.app | `frontend/Dockerfile` |
 
-Project: **captivating-vision** · services **procharacters-api** + **procharacters-web**.
+Project: **captivating-vision** · services **procharacters-api** + **procharacters-web** (+ Postgres).
 
-> **Monorepo note:** each service must set its own **Dockerfile path** in Railway settings  
-> (`backend/Dockerfile` vs `frontend/Dockerfile`). The root `railway.toml` alone is not enough for both.
+> **Monorepo note:** each product service must set its own **Dockerfile path** in Railway settings  
+> (`backend/Dockerfile` vs `frontend/Dockerfile`). Do **not** point either service at the root  
+> `Dockerfile` — that image is the Python WebRTC side service only. Root `railway.toml` is  
+> intentionally absent (see `railway.toml.monorepo-note`).
+
+### Optional third service — WebRTC (local / future)
+
+| Item | Value |
+|------|--------|
+| Dockerfile | `Dockerfile` (repo root) |
+| Port | `8000` |
+| Health | `GET /health` |
+| Env template | root `.env.example` |
+| Local compose | `docker compose --profile webrtc up --build webrtc` |
+
+Do not attach this Dockerfile to `procharacters-api` or `procharacters-web`.
 
 ### 1. Backend service (`procharacters-api`)
 

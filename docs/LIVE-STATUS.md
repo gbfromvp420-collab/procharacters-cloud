@@ -1,23 +1,26 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-07-27 cold open (**🔴 prod offline — Railway trial expired**)  
+**Updated:** 2026-08-06 cold continue (**🔴 prod offline — Railway trial expired** · WebRTC #30 on `main`)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** *none serving* — last successful ship ~`f430fc8` / git HEAD `c9fd651` (docs EOD). Redeploy blocked until Railway plan is selected.
+**Live deploy SHA:** *none serving* — last successful product ship ~`f430fc8` (docs EOD 07-20). Git `main` includes WebRTC side service merge (#30). Redeploy blocked until Railway plan is selected.
 
 ---
 
 ## 🔴 Live product is DOWN
 
-| Check | Result (2026-07-27) |
+| Check | Result (2026-08-06) |
 |-------|---------------------|
-| Web / API public URLs | **404** `Application not found` |
+| Web / API public URLs | **404** `Application not found` (expect same until plan) |
 | Railway project `captivating-vision` | Still exists (api + web + Postgres-Hw0Y) |
 | Deployments | All recent = **REMOVED** |
 | Redeploy attempt | **Blocked:** *“Your trial has expired. Please select a plan…”* |
-| Git `main` + avatar packs | Healthy · **8/8 packs READY** |
+| Git `main` + avatar packs | Healthy · **8/8 packs READY** · dual-stack monorepo documented |
+| WebRTC side service | On `main` (`app/`) — **local/demo only**, not the live chat URLs |
 
 **Unblock:** Railway → project **captivating-vision** → choose a plan / billing → tell King Grok **`redeploy`**.
+
+**Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never point product services at the root `Dockerfile` (that’s Python WebRTC).
 
 ---
 
@@ -73,6 +76,7 @@
 | Create My Character deep-link | ✅ **`/models/studio`** create · **`/models/studio/edit/:id`** edit · `/chat?create=1` + `?edit=` redirect |
 | **My Models Studio** | ✅ **Slim v2** foundation retained under advanced fields |
 | **Studio Forge v3 Unchained** | ✅ Conversational fantasy → DNA (adaptive prompt + behavior tree + LiveKit meta + memory seeds) · canvas composer · sentiment clips · Export DNA · Server Action + `POST /characters/forge/expand` · save as `custom-v3` · [STUDIO-FORGE-V3.md](./STUDIO-FORGE-V3.md) |
+| **WebRTC + trainer (side service)** | ✅ merged #30 · FastAPI signaling + hot-swap UI + trainer registry · CI Python suite · compose profile `webrtc` · [WEBRTC-ENGINE.md](./WEBRTC-ENGINE.md) · **not** Railway product chat |
 | **DNA runtime (live chat)** | ✅ custom-v3: memory seeds → prior/session notes · DNA starter opening · presence from LiveKit meta · clip intensity map · evolution bias in session mode · richer adaptive prompt |
 | **DNA behavior-tree stepper** | ✅ soft spark→tease→edge→deny/release mid-session · prompt + avatar floors · whisper strip DNA node · Seed/Fire chips |
 | **DNA chip bar + Heat Trail** | ✅ 6-node path strip · one-tap Fire chips · climb flash · gallery/Continue/resume hero show DNA node |

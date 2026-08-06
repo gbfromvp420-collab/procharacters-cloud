@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-07-27 cold open (**🔴 Railway trial expired · prod offline**)  
-**Session:** King Grok CEO · rehydrate after EOD 07-20 rest · ops first
+**Updated:** 2026-08-06 cold continue (**🔴 Railway trial expired · prod offline** · WebRTC side service on `main`)  
+**Session:** King Grok CEO · post-#30 monorepo dual-stack hygiene · ops first when plan unlocks
 
 ### Agent fleet (slash / auto)
 
@@ -23,10 +23,10 @@
 | **Cause** | Railway **trial expired** — redeploy mutations return: *“Your trial has expired. Please select a plan to continue using Railway.”* |
 | **Project still exists** | `captivating-vision` · services: `procharacters-api`, `procharacters-web`, `Postgres-Hw0Y` |
 | **Domains still registered** | `procharacters-api-production-0417.up.railway.app` · `procharacters-web-production-7288.up.railway.app` |
-| **Deployments** | All recent deploys `REMOVED` (last good ship was 2026-07-20 ~`f430fc8` / docs note; git HEAD `c9fd651`) |
-| **Repo / packs** | ✅ `main` clean · all **8 avatar packs READY** (local `avatar:check-packs`) |
+| **Deployments** | All recent deploys `REMOVED` (last good ship was 2026-07-20 ~`f430fc8` / docs note) |
+| **Repo / packs** | ✅ `main` · WebRTC engine merged (#30) · dual-stack compose documented · **8 avatar packs READY** |
 | **Gary move** | Railway dashboard → **pick a plan / add billing** on project `captivating-vision` → say **`redeploy`** (or I trigger redeploy the moment trial unlocks) |
-| **Eng move after plan** | Redeploy api+web from `main` → curl `/health` → phone hard-refresh → shy-boy + defaults smoke |
+| **Eng move after plan** | Redeploy api+web from `main` with **`backend/Dockerfile`** + **`frontend/Dockerfile` only** (never root `Dockerfile`) → curl `/health` → phone hard-refresh → shy-boy + defaults smoke |
 
 **Until plan is active, no public chat/gallery/Studio.** Code and packs are fine; hosting is the gate.
 
@@ -37,6 +37,8 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **🔴 Railway / live** | **OFFLINE** — trial expired · project+domains intact · deploys REMOVED | **Select paid plan** → redeploy api+web |
+| **WebRTC side service** | ✅ merged #30 · root `app/` + CI · compose profile `webrtc` | Local: `docker compose --profile webrtc up --build webrtc` — not prod chat |
+| **Monorepo dual-stack** | ✅ README / DEPLOY / WEBRTC-ENGINE / compose clarify product vs side service | Keep Railway Dockerfile paths product-only |
 | **Studio Forge v3** | ✅ code shipped (DNA + canvas + export) | After live: Sign in → Studio → fantasy → **Forge model** → **Save · Chat Now** |
 | **Forge this heat** | ✅ code shipped | Deep chat → gallery **Forge this DNA** → Studio |
 | **DNA climb toast** | ✅ code shipped | Climb Soft→Tease→Edge — toast once per node |
@@ -65,13 +67,13 @@
 | `/chat?create=1` | → Studio create |
 | `/chat?edit=1&character=id` | → Studio edit path |
 
-**Live:** https://procharacters-web-production-7288.up.railway.app/models/studio  
+**Live (when hosting up):** https://procharacters-web-production-7288.up.railway.app/models/studio  
 
 **API:** `POST /api/v1/characters/forge/expand`
 
 ---
 
-## v3 Unchained checklist (shipped eng)
+## Studio Forge v3 Unchained checklist (shipped eng)
 
 1. Conversational primary input → LLM/heuristic expand  
 2. Naughty Syntax DNA: adaptive prompt + branches + behavior tree + LiveKit meta + clip tags + memory seeds  

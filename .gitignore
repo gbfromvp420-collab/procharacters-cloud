@@ -39,8 +39,13 @@ frontend/out/
 data/custom-characters.json
 data/sessions/
 data/uploads/
+data/trainer/
 data/*.json
 !data/.gitkeep
+
+# Local WebRTC test / uvicorn junk
+.uvicorn-test.log
+.uvicorn-*.log
 
 # Cursor / local tooling
 terminals/
