@@ -14,8 +14,12 @@ room metadata sync for the video layer.
 
 ## Status
 
-**v2.1 Live** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
+**v2.2 product surface** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
 Defaults: 8 signature models (`twink-default` / `female-default` at prompt `v1.3.0`, plus Phase 4 pack at `v1.0.0`) and **runtime custom characters**.
+
+**Hosting:** Railway prod may be offline when the trial lapses — see [`docs/LIVE-STATUS.md`](docs/LIVE-STATUS.md). Code + packs live on `main`.
+
+**Side service (merged #30):** Python FastAPI **WebRTC signaling + trainer studio** at repo root (`app/`). Not the live chat product path; optional local/demo GPU hot-swap. Docs: [`docs/WEBRTC-ENGINE.md`](docs/WEBRTC-ENGINE.md).
 
 What works today:
 - `POST /api/v1/sessions` creates a session and returns a WebSocket URL
@@ -36,11 +40,11 @@ What works today:
 - Stub / credit-aware errors when xAI is unavailable
 - Session-scoped memory (cleared on session end)
 
-What's next (v2.2+): persistent memory, voice I/O, dedicated custom avatar footage.
+What's next: keep return loop + ops healthy in prod after Railway plan; content packs; optional WebRTC/trainer demos offline.
 
-Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md)
+Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md), [`docs/v2.2-roadmap.md`](docs/v2.2-roadmap.md)
 
-## Quick start
+## Quick start (product)
 
 ```bash
 # Backend
@@ -56,15 +60,30 @@ npm install
 npm run dev                # http://localhost:3000
 ```
 
-Or run both in Docker:
+Or run the product pair in Docker:
 
 ```bash
 docker compose up --build
+# backend :3001 · frontend :3000
+```
+
+### Optional — WebRTC + trainer studio
+
+Separate Python service (mock providers by default). Does **not** replace the Node chat API.
+
+```bash
+cp .env.example .env
+python3 -m pip install -r requirements.txt
+python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+# http://127.0.0.1:8000/
+
+# or
+docker compose --profile webrtc up --build webrtc
 ```
 
 ## Smoke tests
 
-With backend running:
+Product (backend running):
 
 ```bash
 cd backend
@@ -72,10 +91,19 @@ npm run test:memory        # WebSocket loop + memory inspection
 npm run test:livekit       # verifies LiveKit credentials (skipped if not configured)
 ```
 
+WebRTC / trainer (from repo root, deps installed):
+
+```bash
+python3 scripts/run_all_tests.py --skip-stress
+```
+
 ## Project structure
 
 | Path | Purpose |
 |------|---------|
+| `backend/` | **Product API** — Fastify REST + WS + Grok + accounts |
+| `frontend/` | **Product web** — Next.js gallery, chat, Studio, account |
+| `app/` | **WebRTC side service** — FastAPI signaling + trainer studio |
 | `backend/src/routes/` | HTTP endpoints (`/api/v1/sessions`, `/characters`, `/health`) |
 | `backend/src/ws/` | WebSocket handler (`/ws/sessions/:sessionId?token=...`) |
 | `backend/src/services/` | Session, chat, media orchestration |
@@ -86,13 +114,17 @@ npm run test:livekit       # verifies LiveKit credentials (skipped if not config
 | `frontend/public/avatar/` | Pre-rendered avatar loops (idle/teasing/aroused/playful) |
 | `prompts/library/` | Versioned character + system-core prompts |
 | `characters/` | Character model registry |
+| `scripts/` | Pack pipeline + WebRTC smoke/stress runners |
 | `docs/` | Planning + architecture docs |
+| `Dockerfile` | **WebRTC service only** (Python 3.11) |
+| `backend/Dockerfile` / `frontend/Dockerfile` | Railway / Render product images |
 
 ## Deployment
 
-Railway and Render configs are committed (`render.yaml`, `railway.toml`,
-`backend/railway.toml`, `frontend/railway.toml`).
-See [`docs/DEPLOY.md`](docs/DEPLOY.md) for environment variables and rollout notes.
+Railway and Render configs are committed (`render.yaml`,
+`backend/railway.toml`, `frontend/railway.toml`). Root `railway.toml` is
+intentionally absent so GitHub deploys do not pin both services to one Dockerfile.
+See [`docs/DEPLOY.md`](docs/DEPLOY.md) and [`RAILWAY.md`](RAILWAY.md).
 
 ## For Gary
 

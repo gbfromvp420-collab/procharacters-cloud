@@ -2,6 +2,8 @@
 
 FastAPI service for **WebRTC signaling**, **character chat / performance**, and a **model fine-tuning (trainer) studio** with live **character / LoRA hot-swapping** in the browser client.
 
+> **Monorepo placement (post-#30):** this tree lives at the **repo root** (`app/`, root `Dockerfile`, root `requirements.txt`, root `.env.example`). It is a **side service** next to the product stack (`backend/` Fastify + `frontend/` Next.js). It does **not** replace live Railway chat. Product deploys must keep using `backend/Dockerfile` and `frontend/Dockerfile` only.
+
 | Layer | What it does |
 |-------|----------------|
 | WebRTC API | SDP offer/answer, ICE candidates, session bind, hangup |
@@ -222,9 +224,10 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on **pushes to `main`** and **p
 
 ---
 
-## Project layout
+## Project layout (inside monorepo)
 
 ```
+# WebRTC side service (this doc)
 app/
   main.py                 # FastAPI app, WebRTC + chat routes
   media_bridge.py         # Provider-agnostic LLM + video orchestration
@@ -236,14 +239,26 @@ app/
     trainer/              # dataset, RunPod jobs, weight registry
   static/index.html       # Browser client (hot-swap UI)
 scripts/
-  run_all_tests.py        # Unified test runner
-  smoke_*.py              # Smoke suites
+  run_all_tests.py        # Unified WebRTC test runner
+  smoke_*.py              # Smoke suites (also pack scripts for product)
   stress_webrtc_sessions.py
-Dockerfile
-docker-compose.yml
-.env.example
+Dockerfile                # WebRTC image ONLY
 requirements.txt
-.github/workflows/ci.yml
+.env.example              # WebRTC / RunPod / ICE template
+.github/workflows/ci.yml  # Python 3.11 smoke + stress
+
+# Product stack (separate — do not confuse)
+backend/                  # Fastify live chat API (Railway procharacters-api)
+frontend/                 # Next.js gallery/chat/studio (Railway procharacters-web)
+docker-compose.yml        # product default; profile "webrtc" starts this service
+```
+
+### Compose profile
+
+```bash
+cp .env.example .env
+docker compose --profile webrtc up --build webrtc
+# http://127.0.0.1:8000/
 ```
 
 ---

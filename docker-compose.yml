@@ -1,4 +1,20 @@
-# Local production-style stack (docker compose up --build)
+# Local production-style stack
+#
+# Product (default):
+#   docker compose up --build
+#   → backend :3001 · frontend :3000
+#
+# WebRTC signaling + trainer studio (optional profile):
+#   cp .env.example .env   # mock providers by default
+#   docker compose --profile webrtc up --build webrtc
+#   → http://127.0.0.1:8000/
+#
+# Everything:
+#   docker compose --profile webrtc up --build
+#
+# Root Dockerfile = Python WebRTC only.
+# Product images: backend/Dockerfile + frontend/Dockerfile (Railway/Render).
+
 services:
   backend:
     build:
@@ -7,7 +23,8 @@ services:
     ports:
       - "3001:3001"
     env_file:
-      - backend/.env
+      - path: backend/.env
+        required: false
     environment:
       PORT: "3001"
       PUBLIC_API_URL: http://localhost:3001
@@ -24,3 +41,32 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+
+  webrtc:
+    profiles: ["webrtc"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      VIDEO_PROVIDER: ${VIDEO_PROVIDER:-mock}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      RUNPOD_FALLBACK_TO_MOCK: ${RUNPOD_FALLBACK_TO_MOCK:-true}
+    volumes:
+      - webrtc-trainer-data:/app/data/trainer
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  webrtc-trainer-data:
