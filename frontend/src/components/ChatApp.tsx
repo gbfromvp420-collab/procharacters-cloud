@@ -4654,12 +4654,12 @@ export function ChatApp() {
                 <span className="text-brand-muted">{headerMind.blurb}</span>
               </>
             ) : (
-              "Uncensored 18+ · Procharacters.cloud"
+              "Uncensored 21+ · Procharacters.cloud"
             )}
           </span>
           {sessionId && <span className="font-mono">#{sessionId.slice(0, 8)}</span>}
           <span className="sm:hidden">
-            {status === "ready" && headerMind ? headerMind.tag : "18+ · KGC"}
+            {status === "ready" && headerMind ? headerMind.tag : "21+ · KGC"}
           </span>
         </footer>
       </div>

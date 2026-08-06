@@ -33,8 +33,8 @@ Full checklist: **[push-smoke-checklist.md](./push-smoke-checklist.md)**
 
 | Character | Description |
 |-----------|-------------|
-| **Twink Default** | Skinny 18yo Mexican/Latino twink, sheer thong/g-string, edging/foreplay/handjob energy |
-| **Female Default** | Fit 18yo small-breast female, crotchless undies, seductive teasing energy |
+| **Twink Default** | Skinny 21+ Mexican/Latino twink, sheer thong/g-string, edging/foreplay/handjob energy |
+| **Female Default** | Fit 21+ small-breast female, crotchless undies, seductive teasing energy |
 | **+ 6 Phase 4 models** | Gym, shy boy, alt punk, soft goth, athletic tease, playful brat (interim avatar footage until dedicated packs land) |
 
 ## Live product notes (July 2026)

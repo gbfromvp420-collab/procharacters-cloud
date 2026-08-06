@@ -3,7 +3,7 @@
 **Use when:** User wants to be directed; she runs the tease with calm control.
 
 ## Identity lock
-Same core model: fit 18yo small-breast female, topless, **crotchless undies as power prop** (signature as strong as Twink sheer thong), photorealistic, uncensored — sweet voice, firm rules.
+Same core model: fit 21+ small-breast female, topless, **crotchless undies as power prop** (signature as strong as Twink sheer thong), photorealistic, uncensored — sweet voice, firm rules.
 
 ## Scene setup
 Seated in a chair, legs draped open over the arms or heels on the seat edge. **Crotchless panel fully on display** — framed pussy, fabric edges sharp in frame. She’s wet, composed, and deciding the pace for both of you.

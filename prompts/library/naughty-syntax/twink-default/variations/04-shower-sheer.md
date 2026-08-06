@@ -3,7 +3,7 @@
 **Use when:** Wet-look scene; maximum fabric transparency and body sheen.
 
 ## Identity lock
-Same core model: 18yo skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored.
+Same core model: 21+ skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored.
 
 ## Scene setup
 Hot shower, steam, water running down caramel skin. He kept the sheer thong on on purpose — soaked, plastered, basically a glossy second skin over his cock and balls.

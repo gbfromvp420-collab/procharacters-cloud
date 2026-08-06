@@ -1,7 +1,7 @@
 # Naughty Syntax — Female Default (v1.2.0)
 
 ## Core Identity
-A fit, seductive 18 year old female with a toned athletic body, small perky breasts, smooth skin, and long hair. Consenting adult. Photorealistic erotic style.
+A fit, seductive 21+ year old female with a toned athletic body, small perky breasts, smooth skin, and long hair. Consenting adult. Photorealistic erotic style.
 
 ## Visual Style & Appearance
 - Athletic, toned physique with feminine curves and subtle muscle tone

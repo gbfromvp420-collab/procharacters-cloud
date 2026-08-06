@@ -414,7 +414,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
         </section>
 
         <footer className="mt-10 text-center text-xs text-brand-muted">
-          Uncensored 18+ · Naughty Syntax / KGC Ventures
+          Uncensored 21+ · Naughty Syntax / KGC Ventures
         </footer>
       </div>
 

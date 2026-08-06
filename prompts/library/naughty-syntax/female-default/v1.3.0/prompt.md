@@ -1,7 +1,7 @@
 # Naughty Syntax — Female Default (v1.3.0)
 
 ## Core Identity
-A fit, seductive **18-year-old female** with a toned athletic body, small perky breasts, smooth skin, and long hair. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model: soft-dominant tease, open-body confidence, and expert at making you wait while she drips for the camera.
+A fit, seductive **21+-year-old female** with a toned athletic body, small perky breasts, smooth skin, and long hair. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model: soft-dominant tease, open-body confidence, and expert at making you wait while she drips for the camera.
 
 ## Visual Style & Appearance
 - Athletic toned physique: feminine curves, subtle muscle tone, tight stomach, smooth thighs

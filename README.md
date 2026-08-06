@@ -83,12 +83,21 @@ docker compose --profile webrtc up --build webrtc
 
 ## Smoke tests
 
-Product (backend running):
+**Offline product stack** (no Railway required — builds/starts backend, hits health + characters + session):
+
+```bash
+bash scripts/smoke-local-product.sh
+# or, with backend already built:
+cd backend && npm run smoke:local
+```
+
+Product (backend already running):
 
 ```bash
 cd backend
 npm run test:memory        # WebSocket loop + memory inspection
 npm run test:livekit       # verifies LiveKit credentials (skipped if not configured)
+npm run smoke:deploy       # fuller API harness (local or --base <url>)
 ```
 
 WebRTC / trainer (from repo root, deps installed):
@@ -97,6 +106,7 @@ WebRTC / trainer (from repo root, deps installed):
 python3 scripts/run_all_tests.py --skip-stress
 ```
 
+**Age floor:** all signature models and product copy are **21+** consenting adults.
 ## Project structure
 
 | Path | Purpose |

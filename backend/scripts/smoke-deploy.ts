@@ -312,7 +312,7 @@ async function main() {
         body: JSON.stringify({
           name: "Smoke MyChar",
           appearance:
-            "18yo skinny Latino twink, sheer thong, photorealistic Naughty Syntax model",
+            "21+ skinny Latino twink, sheer thong, photorealistic Naughty Syntax model",
           baseModelId: "twink-gym",
           energy: "gym cool-down edging",
           keyPhrases: ["hold the burn"],

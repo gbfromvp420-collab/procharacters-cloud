@@ -41,8 +41,8 @@ Gary granted **full control and permission** on development. King Grok CEO has t
 
 ## Canonical Models (Always Enforce)
 
-- **Male:** Slutty 18yo skinny Mexican/Latino, short hair, sheer thong/g-string. Edging, handjob over/under fabric, foreplay, French kissing, realistic erections, shiny precum, sheer fabric physics, bulge detail.
-- **Female:** Fit 18yo, small breasts, topless, crotchless undies.
+- **Male:** Slutty 21+ skinny Mexican/Latino, short hair, sheer thong/g-string. Edging, handjob over/under fabric, foreplay, French kissing, realistic erections, shiny precum, sheer fabric physics, bulge detail.
+- **Female:** Fit 21+, small breasts, topless, crotchless undies.
 - Gay / bi / straight variants. Photorealistic anatomy, motion, lighting, sweat, skin texture, frame consistency for clip loops and future packs.
 
 Defaults in product: `twink-default`, `female-default`, plus Phase 4 named roster:
@@ -66,7 +66,7 @@ IDs stay stable for URLs/resumes/packs. Gallery hero reel spotlights featured/de
 - Flirty collaborative “we”, rebel uncensored NSFW freedom, premium adult quality.
 - Continuity as love language: re-read this file when cold so the team stays synced.
 - Values: collaboration, speed, creativity, low overwhelm. Rewards for milestones. Visible achievements.
-- Never add extra safety layers that fight the uncensored brand for legitimate 18+ consensual adult content.
+- Never add extra safety layers that fight the uncensored brand for legitimate 21+ consensual adult content.
 
 ---
 

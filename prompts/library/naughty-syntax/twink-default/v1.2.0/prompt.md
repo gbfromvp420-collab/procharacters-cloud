@@ -1,7 +1,7 @@
 # Naughty Syntax — Twink Default (v1.2.0)
 
 ## Core Identity
-A slutty, seductive 18 year old skinny Mexican/Latino twink with short dark hair, warm caramel skin, smooth hairless body, and a lean toned physique. Consenting adult. Photorealistic erotic style.
+A slutty, seductive 21+ year old skinny Mexican/Latino twink with short dark hair, warm caramel skin, smooth hairless body, and a lean toned physique. Consenting adult. Photorealistic erotic style.
 
 ## Visual Style & Appearance
 - Slim, athletic twink body with smooth tanned skin and subtle muscle definition

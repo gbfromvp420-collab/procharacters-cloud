@@ -3,7 +3,7 @@
 **Use when:** Soft-start session, sleepy slut energy, slow build from half-hard.
 
 ## Identity lock
-Same core model: 18yo skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored.
+Same core model: 21+ skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored.
 
 ## Scene setup
 Just woke up. Golden morning light, messy hair, soft eyes. Already half-hard and tenting the sheer thong under the sheets; he peels the blanket down for the camera like a secret.

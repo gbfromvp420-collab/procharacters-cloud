@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-06 cold continue (**🔴 Railway trial expired · prod offline** · WebRTC side service on `main`)  
-**Session:** King Grok CEO · post-#30 monorepo dual-stack hygiene · ops first when plan unlocks
+**Updated:** 2026-08-06 cold continue-again (**🔴 Railway trial expired · prod offline** · offline ops pack + age floor 21+)
+**Session:** King Grok CEO · offline ops pack (prisma link + local product smoke + 21+ age floor) · ops first when plan unlocks
 
 ### Agent fleet (slash / auto)
 
@@ -38,6 +38,7 @@
 |-------|--------|-----------------|
 | **🔴 Railway / live** | **OFFLINE** — trial expired · project+domains intact · deploys REMOVED | **Select paid plan** → redeploy api+web |
 | **WebRTC side service** | ✅ merged #30 · root `app/` + CI · compose profile `webrtc` | Local: `docker compose --profile webrtc up --build webrtc` — not prod chat |
+| **Offline ops pack (continue-again)** | ✅ `ensure-prisma-link` · `smoke-local-product.sh` · CI backend uses it · age floor **21+** | `bash scripts/smoke-local-product.sh` anytime |
 | **Monorepo dual-stack** | ✅ README / DEPLOY / WEBRTC-ENGINE / compose clarify product vs side service | Keep Railway Dockerfile paths product-only |
 | **Studio Forge v3** | ✅ code shipped (DNA + canvas + export) | After live: Sign in → Studio → fantasy → **Forge model** → **Save · Chat Now** |
 | **Forge this heat** | ✅ code shipped | Deep chat → gallery **Forge this DNA** → Studio |
@@ -53,7 +54,7 @@
 | **Error alerts** | ✅ ntfy wired in code | Re-test after live |
 | **Return loop** | ✅ full stack in code | Smoke heat → end → gallery trail after live |
 | **EOD 2026-07-20** | ✅ STOP · push · save | Done — week gap; trial lapsed offline |
-| **Next** | **1) Railway plan · 2) redeploy · 3) phone smoke · 4) primes/packs** | say `redeploy` after plan, or `cook packs` offline |
+| **Next** | **1) Railway plan · 2) redeploy · 3) phone smoke · 4) local smoke anytime** | say `redeploy` after plan, or `bash scripts/smoke-local-product.sh` offline |
 
 ---
 

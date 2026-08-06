@@ -4,14 +4,25 @@ Live session API for real-time chat. Built on the v1 prompt library and characte
 
 ## Quick start
 
-```powershell
+```bash
 cd backend
-copy .env.example .env
+cp .env.example .env
 npm install
 npm run dev
 ```
 
 Server runs at `http://localhost:3001`.
+
+Prisma schema lives at repo-root `prisma/`. `npm run prisma:generate` (and `build`) auto-runs `scripts/ensure-prisma-link.sh` so `@prisma/client` resolves from the monorepo root.
+
+### Offline smoke (no Railway)
+
+```bash
+# from repo root
+bash scripts/smoke-local-product.sh
+# or from backend after build
+npm run smoke:local
+```
 
 ## API (v2.0 scaffold)
 

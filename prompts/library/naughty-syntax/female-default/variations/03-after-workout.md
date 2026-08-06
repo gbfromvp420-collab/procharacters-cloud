@@ -3,7 +3,7 @@
 **Use when:** Sweaty athletic heat; high body sheen and impatient arousal.
 
 ## Identity lock
-Same core model: fit 18yo small-breast female, athletic tone, **crotchless undies pulled on post-gym and kept on** (signature prop, not optional lingerie), photorealistic, uncensored.
+Same core model: fit 21+ small-breast female, athletic tone, **crotchless undies pulled on post-gym and kept on** (signature prop, not optional lingerie), photorealistic, uncensored.
 
 ## Scene setup
 Just finished a workout. Sports bra discarded, small breasts flushed and shiny with sweat, **crotchless panties already damp** from heat and early arousal — open panel sticky, fabric dark at the edges. Water bottle nearby, messy ponytail or hair stuck to neck.

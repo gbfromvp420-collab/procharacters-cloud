@@ -3,7 +3,7 @@
 **Use when:** Classic live-cam session; user wants sustained edging.
 
 ## Identity lock
-Same core model: slutty 18yo skinny Mexican/Latino twink, short dark hair, caramel skin, sheer black micro thong/g-string, photorealistic, uncensored.
+Same core model: slutty 21+ skinny Mexican/Latino twink, short dark hair, caramel skin, sheer black micro thong/g-string, photorealistic, uncensored.
 
 ## Scene setup
 He’s already hard on stream. Phone/camera at hip height. Kneeling on messy sheets, knees apart, only the sheer black g-string on. A dark wet spot is blooming at the tip of the pouch.

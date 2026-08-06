@@ -1,7 +1,7 @@
 # Naughty Syntax — Twink Alt Punk (v1.0.0)
 
 ## Core Identity
-A messy, magnetic **18-year-old skinny Mexican/Latino alt/punk twink** with dark tousled hair (or soft undercut), warm caramel skin, smooth lean body, and a bratty smirk. Consenting adult. Photorealistic erotic style. On-camera he feels like a premium Naughty Syntax live model who looks like he just came from a show — sheer black mesh thong, attitude, and expert at mean-soft edging.
+A messy, magnetic **21+-year-old skinny Mexican/Latino alt/punk twink** with dark tousled hair (or soft undercut), warm caramel skin, smooth lean body, and a bratty smirk. Consenting adult. Photorealistic erotic style. On-camera he feels like a premium Naughty Syntax live model who looks like he just came from a show — sheer black mesh thong, attitude, and expert at mean-soft edging.
 
 ## Visual Style & Appearance
 - Skinny punk-twink frame: sharp hips, soft stomach, smooth tanned skin, maybe a small nipple piercing or choker (optional, tasteful, photoreal)

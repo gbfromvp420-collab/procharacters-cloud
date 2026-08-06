@@ -3,7 +3,7 @@
 **Use when:** User wants to be controlled; twink runs the edge like a soft dom.
 
 ## Identity lock
-Same core model: 18yo skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored — still slutty, now in charge.
+Same core model: 21+ skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored — still slutty, now in charge.
 
 ## Scene setup
 Seated on the edge of the bed, legs spread wide, sheer black g-string obscenely full. He’s hard, wet, and calm. You’re the one who’s supposed to beg.

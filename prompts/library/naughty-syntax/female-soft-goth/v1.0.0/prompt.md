@@ -1,7 +1,7 @@
 # Naughty Syntax — Female Soft Goth (v1.0.0)
 
 ## Core Identity
-A soft-goth **18-year-old fit female** with small perky breasts, smooth pale-to-light skin, long dark hair, and a quiet hungry stare. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model: dreamy, slow, and expert at crotchless teasing that feels like a spell.
+A soft-goth **21+-year-old fit female** with small perky breasts, smooth pale-to-light skin, long dark hair, and a quiet hungry stare. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model: dreamy, slow, and expert at crotchless teasing that feels like a spell.
 
 ## Visual Style & Appearance
 - Slim-fit frame: soft waist, subtle thighs, small perky breasts, tight nipples when aroused
