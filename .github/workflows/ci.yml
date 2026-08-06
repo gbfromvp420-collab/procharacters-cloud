@@ -1,13 +1,13 @@
 # =============================================================================
 # CI — smoke suites + WebRTC concurrency stress
-# Triggers on pushes to main and on all pull requests.
+# Triggers on pushes to main / webrtc-engine and on all pull requests.
 # =============================================================================
 
 name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, webrtc-engine]
   pull_request:
   workflow_dispatch:
 
