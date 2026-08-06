@@ -1,42 +1,18 @@
-# Git / VCS
+node_modules
+**/node_modules
+.next
+**/.next
+out
+dist
+backend/dist
 .git
-.gitignore
-
-# Env / secrets
-.env
-.env.*
-!.env.example
-
-# Python junk
-**/__pycache__
-**/*.py[cod]
-**/*.egg-info
-.venv
-.venv-*
-venv
-*.egg
-
-# Local data (mounted as volumes in compose)
-data/
-*.log
-
-# Dev / editor
 .grok
-.cursor
-.vscode
-.idea
-**/.DS_Store
-
-# Unrelated workspace trees (not part of this service)
-procharacters-cloud/
-sd-scripts/
-test-calle-prototype/
-node_modules/
-**/.npm
-**/.cache
-
-# Docker
-Dockerfile*
-docker-compose*.yml
-!Dockerfile
-!docker-compose.yml
+terminals
+mcps
+**/.env
+!**/.env.example
+*.md
+!docs/DEPLOY.md
+__pycache__
+.venv
+venv

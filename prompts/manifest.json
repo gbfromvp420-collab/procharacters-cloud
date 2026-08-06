@@ -1,0 +1,192 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-07-15",
+  "system": {
+    "id": "system-core",
+    "name": "System Core",
+    "brand": "naughty-syntax",
+    "current_version": "v1.0.0",
+    "path": "prompts/library/naughty-syntax/system-core/v1.0.0/prompt.md"
+  },
+  "characters": {
+    "twink-default": {
+      "id": "twink-default",
+      "name": "Naughty Syntax Twink Default",
+      "current_version": "v1.3.1",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-default/v1.3.1/prompt.md",
+      "tags": [
+        "twink",
+        "mexican",
+        "sheer-thong",
+        "edging",
+        "gay",
+        "bi",
+        "bilingual"
+      ],
+      "changelog": {
+        "v1.0.0": "Initial structure seed",
+        "v1.1.0": "Refined with Gary's approved Naughty Syntax brand voice",
+        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer edging/handjob energy",
+        "v1.3.0": "Scene examples, stronger edging language, live chat behavior, optional Spanish flirt phrases; 5 scene variations",
+        "v1.3.1": "Mind lock + avatar_intent bias + Edge Pace voice; anti-blend vs Phase 4 signatures"
+      },
+      "variations_path": "prompts/library/naughty-syntax/twink-default/variations"
+    },
+    "female-default": {
+      "id": "female-default",
+      "name": "Naughty Syntax Female Default",
+      "current_version": "v1.3.1",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-default/v1.3.1/prompt.md",
+      "tags": [
+        "female",
+        "small-breasts",
+        "crotchless",
+        "seductive",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Initial structure seed",
+        "v1.1.0": "Refined with Gary's approved Naughty Syntax brand voice",
+        "v1.2.0": "Further improved with stronger erotic detail, vivid language, and clearer teasing/seduction energy",
+        "v1.3.0": "Scene examples, stronger teasing language, live chat behavior, crotchless signature lock equal to Twink sheer focus; 5 scene variations",
+        "v1.3.1": "Mind lock + avatar_intent bias + Edge Pace voice; anti-blend vs Phase 4 signatures"
+      },
+      "variations_path": "prompts/library/naughty-syntax/female-default/variations"
+    },
+    "twink-shy-boy": {
+      "id": "twink-shy-boy",
+      "name": "Naughty Syntax Diego (Twink Shy Boy)",
+      "current_version": "v1.1.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-shy-boy/v1.1.0/prompt.md",
+      "tags": [
+        "twink",
+        "shy",
+        "mexican",
+        "sheer-thong",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — shy exhibitionist whisper-edging model",
+        "v1.1.0": "Brain micro-pass: mind locks, signature voice banks, avatar_intent bias, anti-blend"
+      }
+    },
+    "twink-gym": {
+      "id": "twink-gym",
+      "name": "Naughty Syntax Mateo (Twink Gym)",
+      "current_version": "v1.1.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-gym/v1.1.0/prompt.md",
+      "tags": [
+        "twink",
+        "gym",
+        "mexican",
+        "sheer-thong",
+        "edging",
+        "gay",
+        "bi",
+        "featured"
+      ],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — post-workout interval-edging gym twink (featured)",
+        "v1.1.0": "Brain micro-pass: mind locks, signature voice banks, avatar_intent bias, anti-blend"
+      }
+    },
+    "twink-alt-punk": {
+      "id": "twink-alt-punk",
+      "name": "Naughty Syntax Rio (Twink Alt Punk)",
+      "current_version": "v1.1.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/twink-alt-punk/v1.1.0/prompt.md",
+      "tags": [
+        "twink",
+        "alt",
+        "punk",
+        "mesh",
+        "sheer-thong",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — bratty mesh alt/punk soft-dom twink",
+        "v1.1.0": "Brain micro-pass: mind locks, signature voice banks, avatar_intent bias, anti-blend"
+      }
+    },
+    "female-soft-goth": {
+      "id": "female-soft-goth",
+      "name": "Naughty Syntax Luna (Female Soft Goth)",
+      "current_version": "v1.1.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-soft-goth/v1.1.0/prompt.md",
+      "tags": [
+        "female",
+        "soft-goth",
+        "crotchless",
+        "small-breasts",
+        "tease",
+        "straight",
+        "bi",
+        "featured"
+      ],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — soft-goth crotchless lace slow soft-dom (featured)",
+        "v1.1.0": "Brain micro-pass: mind locks, signature voice banks, avatar_intent bias, anti-blend"
+      }
+    },
+    "female-athletic-tease": {
+      "id": "female-athletic-tease",
+      "name": "Naughty Syntax Sienna (Female Athletic Tease)",
+      "current_version": "v1.1.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-athletic-tease/v1.1.0/prompt.md",
+      "tags": [
+        "female",
+        "athletic",
+        "crotchless",
+        "small-breasts",
+        "edging",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — post-workout athletic interval tease",
+        "v1.1.0": "Brain micro-pass: mind locks, signature voice banks, avatar_intent bias, anti-blend"
+      }
+    },
+    "female-playful-brat": {
+      "id": "female-playful-brat",
+      "name": "Naughty Syntax Mila (Female Playful Brat)",
+      "current_version": "v1.1.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/female-playful-brat/v1.1.0/prompt.md",
+      "tags": [
+        "female",
+        "brat",
+        "crotchless",
+        "small-breasts",
+        "tease",
+        "straight",
+        "bi",
+        "featured"
+      ],
+      "changelog": {
+        "v1.0.0": "Phase 4 signature pack — playful brat crotchless gamey soft-dom (featured)",
+        "v1.1.0": "Brain micro-pass: mind locks, signature voice banks, avatar_intent bias, anti-blend"
+      }
+    }
+  }
+}

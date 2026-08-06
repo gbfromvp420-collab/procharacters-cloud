@@ -1,0 +1,25 @@
+{
+  "id": "female-default",
+  "name": "Female Default",
+  "brand": "naughty-syntax",
+  "version": "1.0.0",
+  "status": "active",
+  "prompt_ref": "female-default",
+  "description": "Signature fit 18yo small-breast female in crotchless undies. Seductive teasing energy.",
+  "appearance": {
+    "body_type": "fit, athletic, toned",
+    "breasts": "small",
+    "age_presentation": "18yo adult",
+    "clothing": "crotchless undies",
+    "clothing_detail": "deliberate provocative styling"
+  },
+  "personality": {
+    "energy": ["seductive teasing", "foreplay", "anticipation"],
+    "tone": "confident, inviting, playful"
+  },
+  "content_policy": {
+    "rating": "nsfw",
+    "uncensored": true,
+    "audiences": ["straight", "bi"]
+  }
+}

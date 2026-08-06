@@ -1,0 +1,278 @@
+/**
+ * Phase 10 — Assistant modes (v3 preview)
+ * Not a full real-time gooning product — session-level tone + soft timers.
+ * Edge Pace coach language fuses with signature minds (edge-pace-minds).
+ */
+
+import { getCustomCharacter } from "./custom-characters.js";
+import {
+  edgePaceCoachCue,
+  edgePaceFireLine,
+  edgePaceMindLine,
+  edgePacePhaseChips,
+} from "./edge-pace-minds.js";
+
+export type SessionMode = "normal" | "edge_pace";
+
+export type EdgePhase = "build" | "hold" | "almost" | "breathe";
+
+export interface ModeRuntimeState {
+  mode: SessionMode;
+  /** ISO when mode started (usually session create). */
+  modeStartedAt: string;
+  /** 0-based round in edge_pace. */
+  round: number;
+  phase: EdgePhase;
+  /** Seconds remaining in current phase. */
+  phaseRemainingSec: number;
+  /** Seconds elapsed in current phase. */
+  phaseElapsedSec: number;
+  /** Human label for UI. */
+  label: string;
+  /** One-line coach cue for the model (character-flavored when id known). */
+  coachCue: string;
+}
+
+/** Phase durations in seconds (edge_pace round ≈ 3 min). */
+const EDGE_PHASES: Array<{ phase: EdgePhase; seconds: number }> = [
+  { phase: "build", seconds: 70 },
+  { phase: "hold", seconds: 50 },
+  { phase: "almost", seconds: 35 },
+  { phase: "breathe", seconds: 25 },
+];
+
+const ROUND_SEC = EDGE_PHASES.reduce((s, p) => s + p.seconds, 0);
+
+export function normalizeSessionMode(raw?: string | null): SessionMode {
+  return raw === "edge_pace" ? "edge_pace" : "normal";
+}
+
+export function computeModeState(
+  mode: SessionMode,
+  modeStartedAt: string,
+  now = Date.now(),
+  characterId?: string,
+): ModeRuntimeState {
+  if (mode !== "edge_pace") {
+    return {
+      mode: "normal",
+      modeStartedAt,
+      round: 0,
+      phase: "build",
+      phaseRemainingSec: 0,
+      phaseElapsedSec: 0,
+      label: "Normal",
+      coachCue: "Natural live cam pace — tease-first, no strict timers.",
+    };
+  }
+
+  const start = Date.parse(modeStartedAt);
+  const elapsedSec = Number.isFinite(start)
+    ? Math.max(0, Math.floor((now - start) / 1000))
+    : 0;
+  const round = Math.floor(elapsedSec / ROUND_SEC);
+  let intoRound = elapsedSec % ROUND_SEC;
+
+  let phase: EdgePhase = "build";
+  let phaseElapsedSec = intoRound;
+  let phaseRemainingSec = EDGE_PHASES[0]!.seconds;
+
+  for (const step of EDGE_PHASES) {
+    if (intoRound < step.seconds) {
+      phase = step.phase;
+      phaseElapsedSec = intoRound;
+      phaseRemainingSec = step.seconds - intoRound;
+      break;
+    }
+    intoRound -= step.seconds;
+  }
+
+  const labels: Record<EdgePhase, string> = {
+    build: "Build",
+    hold: "Hold / Edge",
+    almost: "Almost",
+    breathe: "Breathe",
+  };
+
+  const coachCue = characterId
+    ? edgePaceCoachCue(characterId, phase, round)
+    : edgePaceCoachCue("twink-default", phase, round);
+
+  return {
+    mode: "edge_pace",
+    modeStartedAt,
+    round,
+    phase,
+    phaseElapsedSec,
+    phaseRemainingSec,
+    label: `Edge Pace · R${round + 1} · ${labels[phase]}`,
+    coachCue,
+  };
+}
+
+/** Prompt block injected each turn when mode is active. */
+export function buildSessionModeInstructions(
+  state: ModeRuntimeState,
+  characterId?: string,
+): string {
+  const dna = characterId ? getCustomCharacter(characterId)?.dna : undefined;
+  const dnaModeBias = dna
+    ? [
+        `### Forge DNA evolution bias`,
+        `denial=${dna.evolution.denial.toFixed(2)} pace=${dna.evolution.pace.toFixed(2)} power=${dna.evolution.power.toFixed(2)} chaos=${dna.evolution.chaos.toFixed(2)}`,
+        dna.evolution.denial >= 0.6
+          ? "Lean denial/edging language; climax only on clear user ask."
+          : "",
+        dna.evolution.pace >= 0.65
+          ? "Climb heat a beat faster than default openers."
+          : dna.evolution.pace <= 0.35
+            ? "Slow-burn fabric/breath detail before peak heat."
+            : "",
+        dna.behaviorTree?.rootId
+          ? `Behavior root node: ${dna.behaviorTree.rootId} — use tree edges for escalate/deny/soft.`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n")
+    : "";
+
+  if (state.mode === "normal") {
+    return [
+      "## Session mode: Normal",
+      "Standard Naughty Syntax live chat. Tease-first pacing. No forced timer cycles.",
+      "Still expert at edging when the user wants it — just not on a strict schedule.",
+      "Stay in THIS character’s mind lock — never generic porn-bot.",
+      dnaModeBias,
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
+
+  const avatarByPhase: Record<EdgePhase, string> = {
+    build:
+      "avatar_intent bias: emotion teasing/seductive/playful, arousal ~0.35–0.55, action hover_touch or stroke_over_fabric",
+    hold: "avatar_intent bias: emotion edging/intense, arousal ~0.70–0.85, action freeze_edge — body holds with the mind",
+    almost:
+      "avatar_intent bias: emotion breathless/aroused, arousal ~0.80–0.92, action stroke_over_fabric then freeze",
+    breathe:
+      "avatar_intent bias: emotion soft/calm, arousal ease to ~0.45–0.60, action subtle_movement — charged cool-down",
+  };
+
+  const mindLine = characterId
+    ? edgePaceMindLine(characterId, state.phase, state.round)
+    : `Signature mind for this phase: ${state.coachCue}`;
+
+  const phaseRules: Record<EdgePhase, string> = {
+    build:
+      "BUILD now: rise heat without peak. Plant one physical detail for later rounds to callback.",
+    hold: "HOLD now: freeze / slow / deny. Count breaths or strokes. No finish language unless they demand release.",
+    almost:
+      "ALMOST now: peak tension for a few beats then pull back hard. Trophy denial — no climax.",
+    breathe:
+      "BREATHE now: soft cool-down, keep arousal charged, reset the game for the next round without cold-open.",
+  };
+
+  return [
+    "## Session mode: Edge Pace (v3 preview)",
+    "You are co-piloting a paced edging session. Stay fully in THIS character’s mind.",
+    `Current: ${state.label}`,
+    `Round: ${state.round + 1} (0-indexed internal: ${state.round})`,
+    `Phase remaining: ~${state.phaseRemainingSec}s`,
+    `Coach cue: ${state.coachCue}`,
+    mindLine,
+    phaseRules[state.phase],
+    `Body (avatar_intent): ${avatarByPhase[state.phase]}`,
+    dnaModeBias,
+    "",
+    "Rules:",
+    "- Weave the phase into dirty talk in THIS model’s voice (not a generic coach script).",
+    "- Prefer denial / edge unless the user clearly asks to finish.",
+    "- Keep signature clothing and photorealistic detail.",
+    "- Match avatar_intent to the phase so the video body follows your words.",
+    "- Name the phase shift when it just changed (soft: “hold with me…” / “almost — not yet”).",
+    "- This is NOT a separate AI product — you are still the same character model.",
+    "- Optional soft Spanish only if this character’s prompt allows it (sparingly).",
+    state.round >= 1
+      ? "- Multi-round: they already survived a cycle — recognize that loyalty; denser sensory detail, not a new premise."
+      : "- First round: teach the game gently while staying filthy.",
+  ].join("\n");
+}
+
+export function formatModeForUi(
+  state: ModeRuntimeState,
+  characterId?: string,
+  dnaTree?: {
+    nodeId: string;
+    label: string;
+    fireLine?: string;
+    chips?: string[];
+    advanced?: boolean;
+  } | null,
+): {
+  mode: SessionMode;
+  label: string;
+  phase: EdgePhase;
+  round: number;
+  phaseRemainingSec: number;
+  phaseElapsedSec: number;
+  phaseDurationSec: number;
+  coachCue: string;
+  /** Short user fire line for Seed/Fire UI */
+  fireLine: string;
+  /** Micro chips for one-tap replies this phase */
+  phaseChips: string[];
+  /** Studio Forge DNA tree node (custom-v3 soft stepper). */
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  dnaTreeAdvanced?: boolean;
+} {
+  const phaseDurationSec =
+    EDGE_PHASES.find((p) => p.phase === state.phase)?.seconds ??
+    Math.max(1, state.phaseElapsedSec + state.phaseRemainingSec);
+  const phase = state.phase;
+  const edgeFire = edgePaceFireLine(characterId, phase);
+  const edgeChips = edgePacePhaseChips(phase);
+  // Normal mode: DNA owns fire. Edge Pace: edge owns fire, DNA chips still ship for dual strip.
+  const useDnaFire = state.mode !== "edge_pace" && !!dnaTree?.fireLine;
+  const dnaChips = dnaTree?.chips?.filter(Boolean).slice(0, 3) ?? [];
+  const phaseChips =
+    state.mode === "edge_pace"
+      ? mergeChipLists(edgeChips, dnaChips, 4)
+      : useDnaFire && dnaChips.length
+        ? dnaChips
+        : edgeChips;
+  return {
+    mode: state.mode,
+    label: state.label,
+    phase,
+    round: state.round,
+    phaseRemainingSec: state.phaseRemainingSec,
+    phaseElapsedSec: state.phaseElapsedSec,
+    phaseDurationSec,
+    coachCue: state.coachCue,
+    fireLine: useDnaFire ? dnaTree!.fireLine! : edgeFire,
+    phaseChips,
+    ...(dnaTree
+      ? {
+          dnaTreeNodeId: dnaTree.nodeId,
+          dnaTreeLabel: dnaTree.label,
+          dnaTreeAdvanced: dnaTree.advanced === true,
+        }
+      : {}),
+  };
+}
+
+function mergeChipLists(primary: string[], secondary: string[], max: number): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const list of [primary, secondary]) {
+    for (const raw of list) {
+      const key = raw.toLowerCase().trim();
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(raw.trim());
+      if (out.length >= max) return out;
+    }
+  }
+  return out;
+}

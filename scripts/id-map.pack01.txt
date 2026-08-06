@@ -1,0 +1,20 @@
+# Pack 01 · Humanized Balanced — prime filename → live drop folder
+# Usage: bash scripts/cut-loops-batch.sh ./new_chars_batch ./scripts/id-map.pack01.txt
+#
+# Rename left column to match your actual prime filenames.
+# Right column = frontend/public/avatar/<folder>/  (path-stable live ids)
+#
+# Slot → Name (reference only)
+# female-default1 → Maria Murillo (playful-brat)
+# female-default2 → Sofia Reyes (soft-goth)
+# female-default3 → Luna Vargas (athletic-tease)
+# male-default1 → Hector Garcia (gym-rat)
+# male-default2 → Diego Morales (shy-twink)
+# male-default3 → Alex Rivera (alt-punk)
+
+maria_prime_25s.mp4          female-playful-brat
+sofia_prime_25s.mp4          female-soft-goth
+luna_prime_25s.mp4           female-athletic-tease
+hector_prime_25s.mp4         twink-gym
+diego_prime_25s.mp4          twink-shy-boy
+alex_prime_25s.mp4           twink-alt-punk

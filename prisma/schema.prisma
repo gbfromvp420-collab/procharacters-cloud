@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model UserAccount {
+  id                    String           @id @default(cuid())
+  /** Display / login handle (always present; magic-link accounts included). */
+  handle                String           @unique
+  email                 String?          @unique
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  plan                  String?
+  planExpiresAt         DateTime?
+  stripeCustomerId      String?
+  lastCheckoutSessionId String?
+
+  credentials AuthCredential[]
+  tokens      AuthToken[]
+  linkTargets MagicLink[]  @relation("MagicLinkTarget")
+  resumeCodes ResumeCode[]
+}
+
+model AuthCredential {
+  id             String      @id @default(cuid())
+  accountId      String
+  handle         String      @unique
+  passphraseHash String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  account UserAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId])
+}
+
+model AuthToken {
+  id        String    @id @default(cuid())
+  accountId String
+  /** SHA-256 hex of bearer token — never store raw. */
+  token     String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  account UserAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, expiresAt])
+}
+
+model MagicLink {
+  id            String    @id @default(cuid())
+  tokenHash     String    @unique
+  email         String
+  createdAt     DateTime  @default(now())
+  expiresAt     DateTime
+  consumedAt    DateTime?
+  /** When set, verify attaches email to this existing account (link flow). */
+  linkAccountId String?
+  linkAccount   UserAccount? @relation("MagicLinkTarget", fields: [linkAccountId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([expiresAt])
+  @@index([linkAccountId])
+}
+
+model ResumeCode {
+  id        String    @id @default(cuid())
+  code      String    @unique
+  sessionId String
+  accountId String?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  account UserAccount? @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([sessionId])
+  @@index([accountId])
+  @@index([expiresAt])
+}
+
+/**
+ * Durable per-account + character memory (Phase 5 evolution).
+ * Complements file cross-session notes; written when opt-in dossier saves.
+ */
+model CharacterSession {
+  id            String   @id @default(cuid())
+  characterId   String
+  /** Account id (UserAccount.id) — required for durable memory. */
+  userId        String
+  memorySummary String?
+  kinkProfile   Json?
+  /** Recent message slice (JSON array of MemoryMessage). */
+  history       Json     @default("[]")
+  messageCount  Int      @default(0)
+  lastSessionId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, characterId])
+  @@index([characterId])
+  @@index([updatedAt])
+}

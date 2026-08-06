@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "corePrompt": "../../prompts/naughty-syntax/unchained-core.md",
+  "appliesTo": ["twink-default", "female-default", "female-playful-brat", "all-featured"],
+  "overrides": {
+    "temperature": 1.2,
+    "maxTokens": 2048,
+    "uncensored": true
+  },
+  "liveKitSync": true
+}

@@ -1,0 +1,137 @@
+{
+  "version": "1.1.0",
+  "registry": "procharacters-cloud-characters",
+  "active_models": {
+    "default_male": "twink-default",
+    "default_female": "female-default"
+  },
+  "featured": [
+    "twink-default",
+    "female-default",
+    "twink-gym",
+    "female-soft-goth",
+    "female-playful-brat"
+  ],
+  "entries": [
+    {
+      "id": "twink-default",
+      "name": "Twink Default",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/twink-default/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["gay", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "female-default",
+      "name": "Female Default",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/female-default/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["straight", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "twink-shy-boy",
+      "name": "Diego",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/twink-shy-boy/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["gay", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "twink-gym",
+      "name": "Mateo",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/twink-gym/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["gay", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "twink-alt-punk",
+      "name": "Rio",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/twink-alt-punk/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["gay", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "female-soft-goth",
+      "name": "Luna",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/female-soft-goth/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["straight", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "female-athletic-tease",
+      "name": "Sienna",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/female-athletic-tease/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["straight", "bi"],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "female-playful-brat",
+      "name": "Mila",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/female-playful-brat/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": ["straight", "bi"],
+        "uncensored": true
+      }
+    }
+  ]
+}

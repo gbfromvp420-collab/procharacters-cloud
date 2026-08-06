@@ -1,104 +1,58 @@
-# Secrets
-.env
-.env.local
-.env.*.local
-!.env.example
+﻿# OS
+.DS_Store
+Thumbs.db
+desktop.ini
 
-# Home-directory shell/noise when repo lives under /root
-.bash_history
-.bashrc
-.gitconfig
-.gnupg/
-.rnd
-.conduit-welcomed
-.ssh/
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
 .venv/
-.venv-*/
 venv/
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-htmlcov/
+.env
+.env.*
+!.env.example
+!**/.env.example
 
-# Runtime / local trainer state
-data/
-*.log
+# Secrets (never commit API keys or credentials)
+secrets/
+*.key
+*.pem
 
-# OS / editor
-.DS_Store
-.idea/
-.vscode/
-*.swp
+# Local overrides
+*.local.json
+*.local.yaml
 
-# Workspace noise (this home-dir workspace hosts more than the service)
-.grok/
-.cursor/
-.cache/
-.local/
-.npm/
-.agents/
-.adal/
-.aider-desk/
-.astrbot/
-.augment/
-.autohand/
-.bob/
-.calle-mcp/
-.claude/
-.codeartsdoer/
-.codebuddy/
-.codeium/
-.codemaker/
-.codestudio/
-.commandcode/
-.config/
-.continue/
-.factory/
-.forge/
-.hermes/
-.iflow/
-.inferencesh/
-.jazz/
-.junie/
-.kilocode/
-.kiro/
-.kode/
-.lingma/
-.mcpjam/
-.moxby/
-.mux/
-.neovate/
-.ona/
-.openclaw/
-.openhands/
-.pi/
-.pochi/
-.qoder/
-.qoder-cn/
-.qwen/
-.railway/
-.reasonix/
-.roo/
-.rovodev/
-.snowflake/
-.ssh/
-.tabnine/
-.terramind/
-.tinycloud/
-.trae/
-.trae-cn/
-.vibe/
-.zcode/
-.zencoder/
-procharacters-cloud/
-sd-scripts/
-test-calle-prototype/
+# Node
+node_modules/
+backend/dist/
+backend/.env
+frontend/.next/
+frontend/out/
+
+# Runtime custom character store (local + volume-backed on Railway)
+data/custom-characters.json
+data/sessions/
+data/uploads/
+data/*.json
+!data/.gitkeep
+
+# Cursor / local tooling
+terminals/
+mcps/
+
+# Railway local pull junk
+.railway-config-pull-*/
+frontend/tsconfig.tsbuildinfo
+
+
+railway.toml.deploytmp
+railway.toml
+
+
+/generated/prisma

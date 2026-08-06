@@ -1,0 +1,720 @@
+            }
+          : savedSession ??
+            (liveCredsRef.current
+              ? {
+                  sessionId: liveCredsRef.current.sessionId,
+                  wsToken: liveCredsRef.current.wsToken,
+                  characterId: liveCredsRef.current.characterId,
+                  characterName:
+                    liveCredsRef.current.characterName ?? undefined,
+                  resumeCode: liveCredsRef.current.resumeCode ?? undefined,
+                  savedAt: new Date().toISOString(),
+                }
+              : null);
+      if (stored) {
+        await connectResumedSession(stored);
+        return;
+      }
+      throw new Error("Nothing to rejoin — start a new session");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Rejoin failed");
+      setStatus("error");
+      setConnectionDropped(true);
+    } finally {
+      setRestarting(false);
+    }
+  }, [
+    activeCharacterId,
+    character,
+    characterName,
+    connectResumedSession,
+    openLiveSession,
+    resumeCode,
+    savedSession,
+    sessionId,
+    wsToken,
+  ]);
+
+  const buildMediaOverrides = () => {
+    const mediaOverrides: {
+      idle?: string;
+      teasing?: string;
+      playful?: string;
+      aroused?: string;
+    } = {};
+    if (clipIdle.trim()) mediaOverrides.idle = clipIdle.trim();
+    if (clipTeasing.trim()) mediaOverrides.teasing = clipTeasing.trim();
+    if (clipPlayful.trim()) mediaOverrides.playful = clipPlayful.trim();
+    if (clipAroused.trim()) mediaOverrides.aroused = clipAroused.trim();
+    return Object.keys(mediaOverrides).length > 0 ? mediaOverrides : undefined;
+  };
+
+  const handleCreateCustom = async () => {
+    if (!account?.token) {
+      setError("Sign in to save a My Character (private)");
+      setShowAccount(true);
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const keyPhrases = [customPhrase1, customPhrase2, customPhrase3]
+        .map((p) => p.trim())
+        .filter((p) => p.length >= 2);
+      const scenes = [
+        { title: customScene1Title, body: customScene1Body },
+        { title: customScene2Title, body: customScene2Body },
+        { title: customScene3Title, body: customScene3Body },
+      ]
+        .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
+        .filter((s) => s.title.length >= 2 && s.body.length >= 12);
+
+      const created = await createCustomCharacter(
+        {
+          name: customName.trim(),
+          appearance: customAppearance.trim(),
+          energy: customEnergy.trim() || undefined,
+          clothing: customClothing.trim() || undefined,
+          baseModelId: customBaseModel,
+          avatarBase: customBase,
+          audience: customBase === "female-default" ? "straight" : "gay",
+          keyPhrases: keyPhrases.length ? keyPhrases : undefined,
+          scenes: scenes.length ? scenes : undefined,
+          mediaBase: mediaBase.trim() || undefined,
+          mediaOverrides: buildMediaOverrides(),
+        },
+        account.token,
+      );
+      const option: LiveCharacterOption = {
+        id: created.id,
+        displayName: created.displayName,
+        defaultVersion: created.defaultVersion,
+        kind: "custom",
+        avatarBase: created.avatarBase,
+        energyLabel: created.energyLabel,
+        mediaBase: created.mediaBase,
+        mediaOverrides: created.mediaOverrides,
+        clips: created.clips,
+      };
+      setCharacters((prev) => {
+        if (prev.some((c) => c.id === option.id)) return prev;
+        return [...prev, option];
+      });
+      setCharacter(created.id);
+      replaceCharacterInUrl(created.id);
+      setShowCreate(false);
+      setCustomName("");
+      setCustomAppearance("");
+      setCustomEnergy("");
+      setCustomClothing("");
+      setCustomPhrase1("");
+      setCustomPhrase2("");
+      setCustomPhrase3("");
+      setCustomScene1Title("");
+      setCustomScene1Body("");
+      setCustomScene2Title("");
+      setCustomScene2Body("");
+      setCustomScene3Title("");
+      setCustomScene3Body("");
+      setMediaBase("");
+      setClipIdle("");
+      setClipTeasing("");
+      setClipPlayful("");
+      setClipAroused("");
+      setShowMediaAdvanced(false);
+      flashCopy("My Character saved (private) — ready to chat");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create My Character");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleSaveMediaForSelected = async () => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character to update clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const updated = await updateCustomCharacter(selected.id, {
+        mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
+        mediaOverrides: buildMediaOverrides() ?? null,
+      });
+      setCharacters((prev) =>
+        prev.map((c) =>
+          c.id === selected.id
+            ? {
+                ...c,
+                mediaBase: updated.mediaBase,
+                mediaOverrides: updated.mediaOverrides,
+                clips: updated.clips,
+              }
+            : c,
+        ),
+      );
+      flashCopy("Clip pack updated");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update clips");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const applyClipResult = (
+    selectedId: string,
+    mediaOverrides?: { idle?: string; teasing?: string; playful?: string; aroused?: string },
+    clips?: LiveCharacterOption["clips"],
+  ) => {
+    if (mediaOverrides?.idle) setClipIdle(mediaOverrides.idle);
+    if (mediaOverrides?.teasing) setClipTeasing(mediaOverrides.teasing);
+    if (mediaOverrides?.playful) setClipPlayful(mediaOverrides.playful);
+    if (mediaOverrides?.aroused) setClipAroused(mediaOverrides.aroused);
+    setCharacters((prev) =>
+      prev.map((c) =>
+        c.id === selectedId
+          ? {
+              ...c,
+              mediaOverrides: mediaOverrides ?? c.mediaOverrides,
+              clips: clips ?? c.clips,
+            }
+          : c,
+      ),
+    );
+  };
+
+  const handleUploadClip = async (emotion: MediaClipKey, file: File | null) => {
+    if (!file) return;
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character before uploading clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const result = await uploadCharacterClip(selected.id, emotion, file);
+      applyClipResult(selected.id, result.mediaOverrides, result.clips);
+      flashCopy(`Uploaded ${emotion} clip`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleBatchUpload = async (fileList: FileList | null) => {
+    if (!fileList?.length) return;
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") {
+      setError("Select a custom character before uploading clips");
+      return;
+    }
+    setCreating(true);
+    setError(null);
+    try {
+      const files = Array.from(fileList);
+      const result = await uploadCharacterClipsBatch(selected.id, files);
+      applyClipResult(selected.id, result.mediaOverrides, result.clips);
+      const n = result.uploaded.length;
+      const skip = result.skipped.length;
+      flashCopy(
+        skip > 0
+          ? `Uploaded ${n} clip(s), skipped ${skip}`
+          : `Uploaded ${n} clip(s)`,
+      );
+      if (skip > 0) {
+        setError(
+          result.skipped.map((s) => `${s.filename}: ${s.reason}`).join(" · "),
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Batch upload failed");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleDeleteCustom = async () => {
+    const selected = characters.find((c) => c.id === character);
+    if (!selected || selected.kind !== "custom") return;
+    if (!window.confirm(`Delete custom character “${selected.displayName}”?`)) return;
+
+    setError(null);
+    try {
+      await deleteCustomCharacter(selected.id, account?.token);
+      setCharacters((prev) => prev.filter((c) => c.id !== selected.id));
+      setCharacter("twink-default");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete character");
+    }
+  };
+
+  const sendMessage = () => {
+    const ws = wsRef.current;
+    const text = input.trim();
+    if (!ws || ws.readyState !== WebSocket.OPEN || !text || sending) return;
+
+    const userMessage: ChatMessage = {
+      id: makeId(),
+      role: "user",
+      content: text,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setSending(true);
+    setIsTyping(true);
+
+    ws.send(JSON.stringify({ type: "user_message", content: text }));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const sessionActive = status === "ready" || status === "connecting" || restarting;
+  const canSend = status === "ready" && !sending && input.trim().length > 0;
+  const statusLabel =
+    status === "ready"
+      ? "Connected"
+      : status === "connecting" || restarting
+        ? "Connecting…"
+        : status === "ended"
+          ? "Session ended"
+          : status === "error"
+            ? "Error"
+            : "Disconnected";
+
+  return (
+    <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
+      <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_0%,rgba(225,29,143,0.08),transparent_40%)]" />
+
+      {/* Sticky glass top chrome */}
+      <header className="glass-bar sticky top-0 z-30 pt-[env(safe-area-inset-top,0px)]">
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-3 py-2.5 sm:px-4 sm:py-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">Naughty Syntax</p>
+            <h1 className="truncate bg-gradient-to-r from-brand-text to-brand-accent bg-clip-text text-base font-semibold tracking-tight text-transparent sm:text-xl">
+              Live chat
+            </h1>
+          </div>
+          <span className="hidden items-center gap-1.5 rounded-full border border-brand-border bg-brand-panel/80 px-2.5 py-1 text-[11px] text-brand-muted sm:inline-flex">
+            <StatusDot status={status} />
+            {statusLabel}
+          </span>
+          <span className="hidden sm:inline-flex">
+            <LiveKitBadge roomStatus={livekitRoomStatus} compact />
+          </span>
+          {copyNotice && (
+            <span className="hidden max-w-[10rem] truncate text-[11px] text-brand-accent sm:inline" role="status">
+              {copyNotice}
+            </span>
+          )}
+          <a href="/" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
+            Gallery
+          </a>
+          <a href="/account" className="btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm">
+            Settings
+          </a>
+          <button
+            type="button"
+            onClick={() => setShowAccount((v) => !v)}
+            className={`btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
+              showAccount ? "border-brand-accent text-brand-accent" : ""
+            }`}
+          >
+            {account ? `@${account.handle}` : "Account"}
+          </button>
+        </div>
+        {copyNotice && (
+          <p className="border-t border-brand-border/50 px-3 py-1 text-center text-[11px] text-brand-accent sm:hidden" role="status">
+            {copyNotice}
+          </p>
+        )}
+      </header>
+
+      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
+        <SessionAuthBanner
+          className="mb-3"
+          onInvalidated={() => {
+            setAccount(null);
+            setAccountSessions([]);
+            setAccountEmailLinked(null);
+          }}
+        />
+        <InstallAppHint className="mb-3" />
+        <SessionDropRescue
+          className="mb-3"
+          show={connectionDropped}
+          resumeCode={
+            resumeCode ??
+            savedSession?.resumeCode ??
+            liveCredsRef.current?.resumeCode ??
+            null
+          }
+          characterName={
+            characterName ?? savedSession?.characterName ?? null
+          }
+          busy={restarting}
+          onRejoin={() => void rejoinAfterDrop()}
+          onDismiss={() => setConnectionDropped(false)}
+        />
+        {showAccount && (
+          <div className="mb-3 rounded-xl border border-brand-border bg-brand-panel/95 p-3 shadow-card backdrop-blur-sm animate-fade-in">
+            {account ? (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-brand-text">
+                    Signed in as <strong>@{account.handle}</strong>
+                    {accountEmailLinked && (
+                      <span className="ml-2 text-xs text-brand-muted">· {accountEmailLinked}</span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleAccountLogout}
+                    className="rounded-lg border border-brand-border px-3 py-1 text-xs hover:border-brand-accent"
+                  >
+                    Sign out
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => account && void refreshAccountSessions(account.token)}
+                    className="rounded-lg border border-brand-border px-3 py-1 text-xs hover:border-brand-accent"
+                  >
+                    Refresh chats
+                  </button>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    placeholder={
+                      accountEmailLinked
+                        ? "Change linked email"
+                        : "Link email for magic sign-in"
+                    }
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <button
+                    type="button"
+                    disabled={accountBusy || !accountEmail.includes("@")}
+                    onClick={() => void handleLinkEmail()}
+                    className="rounded-lg border border-brand-accent/50 px-3 py-2 text-sm text-brand-text hover:border-brand-accent disabled:opacity-50"
+                  >
+                    {accountEmailLinked ? "Update email" : "Link email"}
+                  </button>
+                </div>
+                {magicDevLink && (
+                  <div className="rounded-lg border border-brand-accent/40 bg-brand-bg p-2 text-xs">
+                    <p className="text-brand-muted">Confirm link (open to attach email):</p>
+                    <a
+                      href={magicDevLink}
+                      className="mt-1 block break-all text-brand-accent hover:underline"
+                    >
+                      {magicDevLink}
+                    </a>
+                  </div>
+                )}
+                {accountSessions.length === 0 ? (
+                  <p className="text-xs text-brand-muted">
+                    No saved chats on this account yet. Start a session while signed in.
+                  </p>
+                ) : (
+                  <ul className="max-h-40 space-y-1 overflow-y-auto text-xs">
+                    {accountSessions.map((s) => (
+                      <li
+                        key={s.sessionId}
+                        className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-border/60 bg-brand-bg px-2 py-1.5"
+                      >
+                        <span className="text-brand-text">
+                          {s.characterName} · {s.messageCount} msgs · {s.status}
+                        </span>
+                        {s.resumeCode && (
+                          <span className="font-mono text-brand-muted">{s.resumeCode}</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void handleAccountSessionResume(s.sessionId)}
+                          className="ml-auto text-brand-accent hover:underline"
+                        >
+                          Resume
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    type="email"
+                    value={accountEmail}
+                    onChange={(e) => setAccountEmail(e.target.value)}
+                    placeholder="Email for magic link"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <button
+                    type="button"
+                    disabled={accountBusy || !accountEmail.includes("@")}
+                    onClick={() => void handleMagicRequest()}
+                    className="rounded-lg bg-brand-accent px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    {accountBusy ? "Sending…" : "Email magic link"}
+                  </button>
+                </div>
+                {magicDevLink && (
+                  <div className="rounded-lg border border-brand-accent/40 bg-brand-bg p-2 text-xs">
+                    <p className="text-brand-muted">
+                      Email provider not configured — open this link to sign in:
+                    </p>
+                    <a
+                      href={magicDevLink}
+                      className="mt-1 block break-all text-brand-accent hover:underline"
+                    >
+                      {magicDevLink}
+                    </a>
+                  </div>
+                )}
+                <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto_auto]">
+                  <input
+                    value={accountHandle}
+                    onChange={(e) => setAccountHandle(e.target.value)}
+                    placeholder="Handle (optional)"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <input
+                    type="password"
+                    value={accountPass}
+                    onChange={(e) => setAccountPass(e.target.value)}
+                    placeholder="Passphrase (6+)"
+                    className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                  />
+                  <button
+                    type="button"
+                    disabled={
+                      accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6
+                    }
+                    onClick={() => void handleAccountAuth("login")}
+                    className="rounded-lg border border-brand-border px-3 py-2 text-sm disabled:opacity-50"
+                  >
+                    Sign in
+                  </button>
+                  <button
+                    type="button"
+                    disabled={
+                      accountBusy || accountHandle.trim().length < 3 || accountPass.length < 6
+                    }
+                    onClick={() => void handleAccountAuth("register")}
+                    className="rounded-lg border border-brand-border px-3 py-2 text-sm disabled:opacity-50"
+                  >
+                    Register
+                  </button>
+                </div>
+              </div>
+            )}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                value={resumeCodeInput}
+                onChange={(e) => setResumeCodeInput(e.target.value.toUpperCase())}
+                placeholder="Resume code (e.g. AB3K9MPQ)"
+                className="min-w-[12rem] flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
+              />
+              <button
+                type="button"
+                onClick={() => void handleResumeCodeSubmit()}
+                className="rounded-lg border border-brand-accent/50 px-3 py-2 text-sm text-brand-text hover:border-brand-accent"
+              >
+                Open code
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] text-brand-muted">
+              Prefer email magic link for multi-device sign-in. Passphrase still works. Resume codes
+              share chats without raw tokens.
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div
+            className="mb-3 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200 animate-fade-in"
+            role="alert"
+          >
+            {error}
+          </div>
+        )}
+
+        {importDoc != null && importPreview && (
+          <div className="mb-3">
+            <ImportPreviewPanel
+              preview={importPreview}
+              missing={importMissing}
+              characterMap={importCharacterMap}
+              onCharacterMapChange={setImportCharacterMap}
+              fallbackId={importFallbackId}
+              onFallbackChange={setImportFallbackId}
+              liveCharacters={characters}
+              busy={importBusy}
+              confirmLabel={`Open import (${importPreview.willSucceed})`}
+              onRefreshPreview={() => void onRefreshChatImportPreview()}
+              onConfirm={() => void confirmChatImport()}
+              onCancel={clearImportDraft}
+              showOpenPicker
+              openIndex={importOpenIndex}
+              onOpenIndexChange={setImportOpenIndex}
+            />
+          </div>
+        )}
+
+        <div
+          className={`flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:gap-4 ${
+            avatarCollapsed ? "lg:flex-col" : "lg:flex-row"
+          }`}
+        >
+          {/* LiveKit stays mounted even when collapsed so avatar state keeps syncing */}
+          <div className="sr-only" aria-hidden>
+            <LiveKitAvatarSync
+              livekit={livekit}
+              onAvatarSync={handleAvatarSync}
+              onStatusChange={setLivekitRoomStatus}
+            />
+          </div>
+
+          {avatarCollapsed ? (
+            <div className="flex w-full shrink-0 items-center gap-2 rounded-xl border border-brand-border bg-brand-panel/95 px-2.5 py-2 shadow-card backdrop-blur-sm">
+              <div
+                className={`avatar-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white ${
+                  avatarState
+                    ? "from-brand-accentDim to-brand-accent"
+                    : "from-brand-border to-brand-accentDim"
+                }`}
+              >
+                {(characterName ?? "?").charAt(0)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-brand-text">
+                  {characterName ?? "Avatar hidden"}
+                </p>
+                <p className="truncate text-[11px] text-brand-muted">
+                  {avatarState
+                    ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}%`
+                    : "Video collapsed for more chat space"}
+                  {avatarPip ? " · PiP on" : " · PiP off"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAvatarPipPersist(!avatarPip)}
+                className="btn-ghost min-h-0 shrink-0 px-2.5 py-1.5 text-xs"
+                title={avatarPip ? "Hide floating mini avatar" : "Show floating mini avatar"}
+              >
+                {avatarPip ? "PiP off" : "PiP on"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setAvatarCollapsedPersist(false)}
+                className="btn-ghost min-h-0 shrink-0 px-3 py-1.5 text-xs"
+                title="Show avatar video and status"
+              >
+                Expand
+              </button>
+            </div>
+          ) : (
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 lg:max-w-xs">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted">Avatar</p>
+                <button
+                  type="button"
+                  onClick={() => setAvatarCollapsedPersist(true)}
+                  className="text-[11px] text-brand-muted transition hover:text-brand-accent"
+                  title="Hide avatar for more chat space"
+                >
+                  Hide · more chat
+                </button>
+              </div>
+              <div className="flex flex-row gap-2 sm:gap-3 lg:flex-col">
+                <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
+                  <AvatarVideo
+                    avatar={avatarState}
+                    characterName={characterName}
+                    characterId={activeCharacterId ?? character}
+                    compact
+                  />
+                </div>
+                <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
+                  <AvatarPanel
+                    characterName={characterName}
+                    characterId={activeCharacterId}
+                    avatar={avatarState}
+                    status={status}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
+              <label className="shrink-0 text-xs text-brand-muted sm:text-sm" htmlFor="character">
+                Character
+              </label>
+              <select
+                id="character"
+                value={character}
+                onChange={(e) => {
+                  const next = e.target.value as CharacterId;
+                  setCharacter(next);
+                  replaceCharacterInUrl(next);
+                }}
+                disabled={status === "connecting" || restarting}
+                className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
+              >
+                {characters.map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.kind === "custom" ? "✦ " : ""}
+                    {opt.displayName}
+                    {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
+                  </option>
+                ))}
+              </select>
+              </div>
+
+              {!sessionActive && (
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
+                  <label className="flex items-center gap-1.5">
+                    Mode
+                    <select
+                      value={sessionMode}
+                      onChange={(e) => setSessionMode(e.target.value as SessionMode)}
+                      className={`field min-h-0 py-1 text-xs ${
+                        sessionMode === "edge_pace"
+                          ? "border-rose-400/50 text-rose-100"
+                          : ""
+                      }`}
+                      title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="edge_pace">Edge Pace</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-1.5">
+                    Memory window
+                    <select
+                      value={messageWindow}
+                      onChange={(e) =>
+                        setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
+                      }
+                      className="field min-h-0 py-1 text-xs"
+                    >
+                      <option value={20}>20 msgs</option>

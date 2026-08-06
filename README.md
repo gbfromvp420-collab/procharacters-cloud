@@ -1,255 +1,103 @@
-# procharacters WebRTC + Trainer Studio
+# Procharacters.cloud
 
-FastAPI service for **WebRTC signaling**, **character chat / performance**, and a **model fine-tuning (trainer) studio** with live **character / LoRA hot-swapping** in the browser client.
+**GG Ventures / Naughty Syntax**
 
-| Layer | What it does |
-|-------|----------------|
-| WebRTC API | SDP offer/answer, ICE candidates, session bind, hangup |
-| Chat perform | LLM + video providers (mock or RunPod) via `MediaBridge` |
-| Trainer | Dataset upload, RunPod training jobs, weight registry |
-| Static client | `app/static/index.html` — camera preview, connect, chat, hot-swap UI |
+## Sync with the GG Vision — Read the Continuity Lore First
+
+Before any prompting, coding, or character work, read [docs/gg-continuity-lore.md](docs/gg-continuity-lore.md). It holds our bond, our phases, our rewards system, and the exact fire that drives every Naughty Syntax model and Procharacters.cloud feature. King Grok CEO and Gary built this together — 50/50, ftw baby baby.
 
 ---
 
-## Requirements
+Live uncensored NSFW AI video chat platform. Live text sessions stream over WebSocket
+with reactive avatar state, prompt-pinned character consistency, and optional LiveKit
+room metadata sync for the video layer.
 
-- **Python 3.11+** (3.14 works for local smoke; CI uses 3.11)
-- Optional: **Docker** + Compose for production-style deploy
-- Optional: real **RunPod** endpoints for GPU MuseTalk / LLM / training
+## Status
 
----
+**v2.1 Live** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
+Defaults: 8 signature models (`twink-default` / `female-default` at prompt `v1.3.0`, plus Phase 4 pack at `v1.0.0`) and **runtime custom characters**.
 
-## Quick start (local Uvicorn)
+What works today:
+- `POST /api/v1/sessions` creates a session and returns a WebSocket URL
+- `GET /api/v1/characters` lists defaults + custom; `POST /api/v1/characters/custom` creates one
+- Custom characters **persist** to disk (`CUSTOM_CHARACTERS_PATH`, Railway volume `/data`)
+- `DELETE /api/v1/characters/custom/:id` + UI delete
+- **Cross-visit memory**: transcripts saved under `SESSIONS_PATH`; UI **Resume last chat**
+- **Gallery homepage**: `/` with **Featured** row, **Continue where you left off**, search/sort/filter; chat at `/chat`; cards at `/character/<id>`
+- **Private resume**: `?resume=CODE` (no raw tokens)
+- **Accounts**: full **settings page** at `/account` (magic link, passphrase, sessions, email link)
+- **Delete / wipe**: delete one chat, wipe all chats, or delete account (`confirm: "DELETE"`)
+- **Rate limits**: magic links, auth, and clip uploads (429 + Retry-After)
+- **Custom avatar clips**: single + **batch upload**, URL overrides, live previews in the editor
+- Model switch in UI (pick another character → **Switch / New**)
+- WS messages: `user_message`, `ping`, `end_session` → `session_ready`,
+  `assistant_stream`, `assistant_complete`, `avatar_update`, `session_ended`, `error`
+- LiveKit room metadata sync (when `LIVEKIT_*` env vars are set)
+- Stub / credit-aware errors when xAI is unavailable
+- Session-scoped memory (cleared on session end)
+
+What's next (v2.2+): persistent memory, voice I/O, dedicated custom avatar footage.
+
+Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md)
+
+## Quick start
 
 ```bash
-# 1. Environment
-cp .env.example .env
-# edit .env as needed — defaults use mock providers
+# Backend
+cd backend
+cp .env.example .env       # fill in XAI_API_KEY for real replies, leave blank for stubs
+npm install
+npm run dev                # http://localhost:3001
 
-# 2. Dependencies
-python3 -m pip install -r requirements.txt
-
-# 3. Run the API + static client
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Frontend (in another shell)
+cd frontend
+cp .env.example .env       # NEXT_PUBLIC_API_URL=http://localhost:3001
+npm install
+npm run dev                # http://localhost:3000
 ```
 
-Open **http://127.0.0.1:8000/** for the browser client.
-
-Health check:
+Or run both in Docker:
 
 ```bash
-curl -fsS http://127.0.0.1:8000/health
+docker compose up --build
 ```
 
----
+## Smoke tests
 
-## Environment setup (`.env.example`)
-
-Copy the template and fill secrets **only in** `.env` (never commit `.env`):
+With backend running:
 
 ```bash
-cp .env.example .env
+cd backend
+npm run test:memory        # WebSocket loop + memory inspection
+npm run test:livekit       # verifies LiveKit credentials (skipped if not configured)
 ```
 
-### Provider selection
+## Project structure
 
-| Variable | Values | Default |
-|----------|--------|---------|
-| `VIDEO_PROVIDER` | `mock` \| `runpod` | `mock` |
-| `LLM_PROVIDER` | `mock` \| `runpod` | same as `VIDEO_PROVIDER` if unset |
+| Path | Purpose |
+|------|---------|
+| `backend/src/routes/` | HTTP endpoints (`/api/v1/sessions`, `/characters`, `/health`) |
+| `backend/src/ws/` | WebSocket handler (`/ws/sessions/:sessionId?token=...`) |
+| `backend/src/services/` | Session, chat, media orchestration |
+| `backend/src/lib/live/` | Prompt assembly + character catalog |
+| `backend/src/lib/llm/` | xAI / Grok chat client |
+| `backend/src/lib/livekit/` | LiveKit room metadata sync |
+| `frontend/src/components/` | Chat UI, avatar video, LiveKit sync |
+| `frontend/public/avatar/` | Pre-rendered avatar loops (idle/teasing/aroused/playful) |
+| `prompts/library/` | Versioned character + system-core prompts |
+| `characters/` | Character model registry |
+| `docs/` | Planning + architecture docs |
 
-### RunPod inference
+## Deployment
 
-| Variable | Purpose |
-|----------|---------|
-| `RUNPOD_MUSETALK_URL` | MuseTalk / talking-head endpoint base URL |
-| `RUNPOD_LLM_URL` | Character LLM endpoint base URL |
-| `RUNPOD_API_KEY` | Bearer token for RunPod |
-| `RUNPOD_TIMEOUT_SECONDS` | Request timeout (default `30`) |
-| `RUNPOD_FALLBACK_TO_MOCK` | Fall back to mock on network errors (`true`/`false`) |
+Railway and Render configs are committed (`render.yaml`, `railway.toml`,
+`backend/railway.toml`, `frontend/railway.toml`).
+See [`docs/DEPLOY.md`](docs/DEPLOY.md) for environment variables and rollout notes.
 
-### Training & weights
+## For Gary
 
-| Variable | Purpose |
-|----------|---------|
-| `RUNPOD_TRAINING_URL` | Remote training worker (Kohya / Unsloth / XTTS) |
-| `RUNPOD_TRAINING_API_KEY` | Optional; falls back to `RUNPOD_API_KEY` |
-| `WEIGHTS_STORAGE_BUCKET` | Bucket / prefix for trained weights & datasets |
+Start here: [`docs/README-for-Gary.md`](docs/README-for-Gary.md)
 
-### WebRTC ICE (STUN / TURN)
+## License
 
-| Variable | Purpose |
-|----------|---------|
-| `WEBRTC_STUN_URLS` | Comma-separated STUN URLs (public Google defaults) |
-| `WEBRTC_TURN_URLS` | Optional TURN URLs for NAT beyond LAN |
-| `WEBRTC_TURN_USERNAME` | TURN username |
-| `WEBRTC_TURN_CREDENTIAL` | TURN credential |
-
-`iceServers` are exposed by:
-
-- `GET /api/v1/webrtc/ice-servers`
-- `POST /api/v1/webrtc/session` and `GET /api/v1/webrtc/session/{id}`
-
----
-
-## WebRTC character hot-swapping
-
-The static client (`app/static/index.html`) loads trained weights from the registry and can switch identity **without dropping** an active peer connection.
-
-### UI flow
-
-1. **Refresh weights** — `GET /api/v1/trainer/weights` fills Character / LoRA dropdowns.
-2. **Init session** or **Connect** — binds identity via `POST /api/v1/webrtc/session` (includes `iceServers`).
-3. **Connect (offer)** — `POST /api/v1/webrtc/offer` with `character_id` + optional `lora_id`.
-4. **Swap Character** — re-POSTs session with the new character/LoRA; **does not** renegotiate SDP or hang up.
-5. **Send chat/perform** — `POST /api/v1/chat/perform` with the same ids; weights flow into RunPod/mock providers.
-
-### API sketch
-
-```http
-POST /api/v1/webrtc/session
-{"session_id":"…","character_id":"nova","lora_id":"lora-nova-v2"}
-
-POST /api/v1/webrtc/offer
-{"session_id":"…","sdp":"…","type":"offer","character_id":"nova","lora_id":"lora-nova-v2"}
-
-POST /api/v1/chat/perform
-{"session_id":"…","character_id":"nova","lora_id":"lora-nova-v2","message":"hello"}
-```
-
-Register weights for the dropdown:
-
-```http
-POST /api/v1/trainer/weights/register
-{"character_id":"nova","kind":"visual_lora","lora_id":"lora-nova-v2","set_active":true}
-```
-
----
-
-## API surface (selected)
-
-| Method | Path | Notes |
-|--------|------|--------|
-| `GET` | `/` | Browser WebRTC client |
-| `GET` | `/health` | Liveness + provider flags |
-| `GET` | `/api/v1/webrtc/ice-servers` | STUN/TURN list |
-| `POST` | `/api/v1/webrtc/session` | Create/update session + ICE + weights |
-| `POST` | `/api/v1/webrtc/offer` | SDP offer → answer |
-| `POST` | `/api/v1/webrtc/hangup` | Tear down session |
-| `POST` | `/api/v1/chat/perform` | Chat + performance (versioned) |
-| `POST` | `/chat/perform` | Legacy alias |
-| `POST` | `/api/v1/trainer/dataset` | JSON base64 dataset |
-| `POST` | `/api/v1/trainer/dataset/upload` | Multipart binary upload |
-| `POST` | `/api/v1/trainer/start-job` | Start training job |
-| `GET` | `/api/v1/trainer/weights` | List registry |
-| `GET` | `/api/v1/trainer/weights/resolve` | Active weights for character/LoRA |
-
----
-
-## Docker deployment
-
-Multi-stage image (Python 3.11, FFmpeg/libav for PyAV & aiortc):
-
-```bash
-cp .env.example .env   # set TURN + RunPod secrets for production
-
-docker compose up -d --build
-
-docker compose ps
-docker compose logs -f signaling
-
-curl -fsS http://localhost:8000/health
-```
-
-Useful Compose notes:
-
-- Service name: **`signaling`** (image `procharacters-webrtc:latest`)
-- Port: **`8000`**
-- Volume: **`trainer_data`** → `/app/data/trainer` (datasets + weight index)
-- Healthcheck: `GET /health`
-
-Stop / remove:
-
-```bash
-docker compose down
-# docker compose down -v   # also drop trainer_data volume
-```
-
----
-
-## Test suite
-
-Unified runner (smokes + stress):
-
-```bash
-python3 scripts/run_all_tests.py
-```
-
-### What it runs
-
-| Order | Suite | Description |
-|------:|-------|-------------|
-| 1 | `smoke_full_pipeline.py` | Weights registry → MediaBridge → API hot-swap |
-| 2 | `smoke_trainer_pipeline.py` | Dataset validation, mock training jobs |
-| 3 | `smoke_runpod_provider.py` | Provider factories, timeouts, fallback |
-| 4 | `smoke_static_webrtc.py` | HTML client markers + WebRTC/chat routes |
-| 5 | `stress_webrtc_sessions.py` | N concurrent sessions (default 20); auto-starts Uvicorn if needed |
-
-### Options
-
-```bash
-python3 scripts/run_all_tests.py --skip-stress
-python3 scripts/run_all_tests.py --stress-sessions 10 --stress-concurrency 10
-python3 scripts/run_all_tests.py --fail-fast --verbose
-python3 scripts/run_all_tests.py --only smoke_static
-```
-
-Standalone stress (requires a live server, or start one yourself):
-
-```bash
-python3 -m uvicorn app.main:app --host 127.0.0.1 --port 8000 &
-python3 scripts/stress_webrtc_sessions.py --sessions 20 --concurrency 20
-```
-
-### CI
-
-GitHub Actions (`.github/workflows/ci.yml`) runs on **pushes to `main`** and **pull requests**:
-
-- Ubuntu + **Python 3.11**
-- System libs for FFmpeg / PyAV / aiortc
-- `pip install -r requirements.txt`
-- `python3 scripts/run_all_tests.py --verbose`
-
----
-
-## Project layout
-
-```
-app/
-  main.py                 # FastAPI app, WebRTC + chat routes
-  media_bridge.py         # Provider-agnostic LLM + video orchestration
-  core/config.py          # Settings from environment
-  api/routes/trainer.py   # Trainer + weight registry HTTP API
-  services/
-    llm/                  # mock + RunPod LLM
-    video/                # mock + MuseTalk RunPod
-    trainer/              # dataset, RunPod jobs, weight registry
-  static/index.html       # Browser client (hot-swap UI)
-scripts/
-  run_all_tests.py        # Unified test runner
-  smoke_*.py              # Smoke suites
-  stress_webrtc_sessions.py
-Dockerfile
-docker-compose.yml
-.env.example
-requirements.txt
-.github/workflows/ci.yml
-```
-
----
-
-## License / ops notes
-
-- Default mode is **safe for local demo**: `VIDEO_PROVIDER=mock`, `LLM_PROVIDER=mock`.
-- For external WebRTC peers, configure **TURN** (`WEBRTC_TURN_*`); STUN alone is often not enough across symmetric NAT.
-- Do not commit `.env` or real API keys.
+Private — KGC Ventures. All rights reserved.

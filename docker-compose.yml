@@ -1,73 +1,26 @@
-# -----------------------------------------------------------------------------
-# Production-oriented compose for the WebRTC signaling + trainer studio.
-# Serves FastAPI (signaling, chat, trainer APIs) and static browser client.
-# -----------------------------------------------------------------------------
-
+# Local production-style stack (docker compose up --build)
 services:
-  signaling:
+  backend:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: runtime
-    image: procharacters-webrtc:latest
-    container_name: procharacters-signaling
-    restart: unless-stopped
+      dockerfile: backend/Dockerfile
     ports:
-      - "${PORT:-8000}:8000"
-    # Optional: `cp .env.example .env` then uncomment:
-    # env_file:
-    #   - .env
+      - "3001:3001"
+    env_file:
+      - backend/.env
     environment:
-      HOST: "0.0.0.0"
-      PORT: "8000"
-      VIDEO_PROVIDER: ${VIDEO_PROVIDER:-mock}
-      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
-      RUNPOD_MUSETALK_URL: ${RUNPOD_MUSETALK_URL:-}
-      RUNPOD_LLM_URL: ${RUNPOD_LLM_URL:-}
-      RUNPOD_API_KEY: ${RUNPOD_API_KEY:-}
-      RUNPOD_TRAINING_URL: ${RUNPOD_TRAINING_URL:-}
-      RUNPOD_TRAINING_API_KEY: ${RUNPOD_TRAINING_API_KEY:-}
-      WEIGHTS_STORAGE_BUCKET: ${WEIGHTS_STORAGE_BUCKET:-}
-      RUNPOD_TIMEOUT_SECONDS: ${RUNPOD_TIMEOUT_SECONDS:-30}
-      RUNPOD_CONNECT_TIMEOUT_SECONDS: ${RUNPOD_CONNECT_TIMEOUT_SECONDS:-5}
-      RUNPOD_FALLBACK_TO_MOCK: ${RUNPOD_FALLBACK_TO_MOCK:-true}
-      WEBRTC_STUN_URLS: ${WEBRTC_STUN_URLS:-stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302}
-      WEBRTC_TURN_URLS: ${WEBRTC_TURN_URLS:-}
-      WEBRTC_TURN_USERNAME: ${WEBRTC_TURN_USERNAME:-}
-      WEBRTC_TURN_CREDENTIAL: ${WEBRTC_TURN_CREDENTIAL:-}
-    volumes:
-      # Persist trainer datasets + weight registry index across restarts
-      - trainer_data:/app/data/trainer
-      # Optional: mount local static overrides without rebuild
-      # - ./app/static:/app/app/static:ro
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 25s
-    # Resource hints for hosts that honor them (Compose v2 / Swarm)
-    deploy:
-      resources:
-        limits:
-          cpus: "2.0"
-          memory: 2G
-        reservations:
-          cpus: "0.25"
-          memory: 256M
-    logging:
-      driver: json-file
-      options:
-        max-size: "20m"
-        max-file: "5"
-    networks:
-      - webrtc_net
+      PORT: "3001"
+      PUBLIC_API_URL: http://localhost:3001
+    restart: unless-stopped
 
-volumes:
-  trainer_data:
-    name: procharacters_trainer_data
-
-networks:
-  webrtc_net:
-    name: procharacters_webrtc
-    driver: bridge
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped

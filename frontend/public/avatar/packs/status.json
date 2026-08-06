@@ -1,0 +1,55 @@
+{
+  "updatedAt": "2026-07-20T07:15:08.612Z",
+  "ready": [
+    "female-athletic-tease",
+    "female-default",
+    "female-playful-brat",
+    "female-soft-goth",
+    "twink-alt-punk",
+    "twink-default",
+    "twink-gym",
+    "twink-shy-boy"
+  ],
+  "packs": {
+    "female-athletic-tease": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "female-default": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "female-playful-brat": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "female-soft-goth": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "twink-alt-punk": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "twink-default": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "twink-gym": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "twink-shy-boy": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    }
+  }
+}

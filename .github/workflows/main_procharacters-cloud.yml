@@ -1,0 +1,75 @@
+# LEGACY — Azure Web App deploy.
+# Production is Railway (procharacters-api + procharacters-web).
+# Kept as manual-only so accidental pushes stop failing the Actions board.
+#
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/actions
+# (Do not re-enable on:push unless Azure is intentionally the deploy target again.)
+
+name: Build and deploy Node.js app to Azure Web App - procharacters-cloud
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Note — Railway is production
+        run: |
+          echo "This workflow is manual-only."
+          echo "Prod: Railway procharacters-api + procharacters-web"
+          echo "CI gates: ci-backend.yml + ci-frontend.yml"
+
+      - name: npm install, build, and test
+        run: |
+          if [ -f package.json ]; then
+            npm install
+            npm run build --if-present
+            npm run test --if-present
+          else
+            echo "No root package.json — monorepo uses backend/ + frontend/ (see CI Backend / CI Frontend)"
+          fi
+
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-app
+          path: .
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: node-app
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_39D1456A3C604AC6B8C13D3A318BF181 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C4E9419C6F86459DA5CDD512D516687B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0B28A8ABC8D84AF490EF3C898D8EE136 }}
+
+      - name: "Deploy to Azure Web App"
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: "procharacters-cloud"
+          slot-name: "Production"
+          package: .

@@ -1,0 +1,14 @@
+# Stage 2 batch map: prime filename → Phase 4 model-id
+# Usage: bash scripts/cut-loops-batch.sh ./new_chars_batch ./scripts/id-map.example.txt
+# Lines: <prime-file-or-stem>  <model-id>
+#
+# female-playful-brat
+# twink-gym
+# female-soft-goth
+# twink-shy-boy
+# female-athletic-tease
+# twink-alt-punk
+#
+# Example:
+# brat_heat_prime_25s.mp4  female-playful-brat
+# gym_cool_prime_25s.mp4   twink-gym

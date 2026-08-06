@@ -1,0 +1,41 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploy: connect repo → New Blueprint → select render.yaml
+services:
+  - type: web
+    name: procharacters-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: REPO_ROOT
+        value: /app
+      - key: PUBLIC_API_URL
+        sync: false
+      - key: XAI_API_KEY
+        sync: false
+      - key: XAI_MODEL
+        value: grok-3
+      - key: LIVEKIT_URL
+        sync: false
+      - key: LIVEKIT_API_KEY
+        sync: false
+      - key: LIVEKIT_API_SECRET
+        sync: false
+
+  - type: web
+    name: procharacters-web
+    runtime: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
