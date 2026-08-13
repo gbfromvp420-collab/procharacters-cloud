@@ -1,8 +1,7 @@
-# One-shot: leftover 21+ in forge/export + sessionsResumed counter.
 name: cook-return-21
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -16,85 +15,16 @@ jobs:
         with:
           fetch-depth: 1
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Patch
+      - run: python3 scripts/cook-return-21.py
+      - name: Push branch
         run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path("backend/src/lib/live/forge-dna.ts")
-          t = p.read_text()
-          n = t.replace(
-              "consenting adult 18+, photorealistic, uncensored, first-person cam.",
-              "consenting adult 21+, photorealistic, uncensored, first-person cam.",
-          ).replace(
-              "complete uncensored adult (18+) custom character model.",
-              "complete uncensored adult (21+) custom character model.",
-          )
-          assert "0.18 +" in n
-          p.write_text(n)
-          print("forge-dna", n != t)
-
-          p = Path("backend/src/lib/memory/session-export.ts")
-          t = p.read_text()
-          n = t.replace("Uncensored 18+ · KGC Ventures", "Uncensored 21+ · KGC Ventures")
-          assert "Uncensored 18+" not in n
-          p.write_text(n)
-          print("session-export", n != t)
-
-          p = Path("backend/src/lib/observability/metrics.ts")
-          t = p.read_text()
-          if "sessionsResumed" not in t:
-              t = t.replace(
-                  "  sessionsCreated: number;\n  chatTurns: number;",
-                  "  sessionsCreated: number;\n  /** Successful resume-code / Continue re-entry. */\n  sessionsResumed: number;\n  chatTurns: number;",
-                  1,
-              )
-              t = t.replace(
-                  "  sessionsCreated: 0,\n  chatTurns: 0,",
-                  "  sessionsCreated: 0,\n  sessionsResumed: 0,\n  chatTurns: 0,",
-                  1,
-              )
-              p.write_text(t)
-              print("metrics added")
-          else:
-              print("metrics already")
-
-          p = Path("backend/src/routes/sessions.ts")
-          t = p.read_text()
-          needle = '''        if (body.sessionMode === "edge_pace" && session.sessionMode === "edge_pace") {
-          bump("sessionsEdgePace");
-        }
-
-        return { ...session, avatarState, livekit: livekitJoin };'''
-          insert = '''        bump("sessionsResumed");
-        if (body.sessionMode === "edge_pace" && session.sessionMode === "edge_pace") {
-          bump("sessionsEdgePace");
-        }
-
-        return { ...session, avatarState, livekit: livekitJoin };'''
-          if 'bump("sessionsResumed")' not in t:
-              assert needle in t
-              p.write_text(t.replace(needle, insert, 1))
-              print("sessions bump added")
-          else:
-              print("sessions already")
-          PY
-
-      - name: Commit
-        run: |
-          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/src/lib/live/forge-dna.ts \
                   backend/src/lib/memory/session-export.ts \
                   backend/src/lib/observability/metrics.ts \
                   backend/src/routes/sessions.ts
-          if git diff --cached --quiet; then
-            echo "No changes"
-            exit 0
-          fi
+          if git diff --cached --quiet; then echo No changes; exit 0; fi
           git commit -m "fix(return): 21+ forge/export + count Continue resumes"
           git checkout -B ops/cook-return-21
           git push -u origin ops/cook-return-21 --force
