@@ -12,7 +12,7 @@ Say **`unpack packs`** when a zip lands, or **`packs ready: <folder>`** when 4 l
 | Live folder | Who you see | Clips |
 |-------------|-------------|-------|
 | `female-playful-brat` | Mila | 4/4 live · **new loops cut, deploy pending** |
-| `female-soft-goth` | Luna | 4/4 |
+| `female-soft-goth` | Luna | 4/4 live · **new loops cut, deploy pending** |
 | `female-athletic-tease` | Sienna | 4/4 |
 | `twink-gym` | Mateo | 4/4 |
 | `twink-shy-boy` | Diego | 4/4 |
@@ -65,7 +65,7 @@ Live **ids stay** (Diego/Mateo/Rio/Luna/Sienna/Mila). Human names on the cheat s
 
 ## One character tonight (if you only have time for one)
 
-**Mila / Maria is cut.** Next prime: `sofia_prime_25s.mp4` (Luna).
+**Mila + Luna are cut.** Next: Sienna (`luna_prime_25s.mp4` on the sheet — say **Sienna**).
 
 ---
 

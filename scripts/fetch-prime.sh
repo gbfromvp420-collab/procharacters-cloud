@@ -55,13 +55,36 @@ echo "Fetch → $DEST"
 echo "  $URL"
 
 tmp=$(mktemp "$INBOX/.fetch.XXXXXX")
-trap 'rm -f "$tmp"' EXIT
+ck=$(mktemp "$INBOX/.fetch.ck.XXXXXX")
+trap 'rm -f "$tmp" "$ck"' EXIT
 
-if ! curl -L --fail --retry 2 --max-filesize 209715200 --connect-timeout 20 \
-    -A "procharacters-pack-fetch/1.0" \
-    -o "$tmp" "$URL"; then
+curl_get() {
+  curl -L --retry 2 --max-filesize 209715200 --connect-timeout 20 \
+    -A "Mozilla/5.0 procharacters-pack-fetch/1.1" \
+    -c "$ck" -b "$ck" \
+    -o "$tmp" "$1"
+}
+
+if ! curl_get "$URL"; then
   echo "Download failed." >&2
   exit 1
+fi
+
+# Google Drive virus-scan interstitial for large files
+if grep -q 'Virus scan warning\|drive.usercontent.google.com/download' "$tmp" 2>/dev/null; then
+  confirm_id=$(sed -n 's/.*name="id" value="\([^"]*\)".*/\1/p' "$tmp" | head -1)
+  confirm_uuid=$(sed -n 's/.*name="uuid" value="\([^"]*\)".*/\1/p' "$tmp" | head -1)
+  if [ -n "${confirm_id:-}" ]; then
+    echo "Drive confirm page — downloading file $confirm_id"
+    URL="https://drive.usercontent.google.com/download?id=${confirm_id}&export=download&confirm=t"
+    if [ -n "${confirm_uuid:-}" ]; then
+      URL="${URL}&uuid=${confirm_uuid}"
+    fi
+    if ! curl_get "$URL"; then
+      echo "Download failed after Drive confirm." >&2
+      exit 1
+    fi
+  fi
 fi
 
 size=$(wc -c < "$tmp" | tr -d ' ')
@@ -93,5 +116,6 @@ case "$NAME" in
 esac
 
 mv -f "$tmp" "$DEST"
+rm -f "$ck"
 trap - EXIT
 echo "Saved ${size} bytes → $DEST"
