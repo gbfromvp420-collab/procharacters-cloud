@@ -6,10 +6,13 @@ on:
   workflow_dispatch:
     inputs:
       who:
-        description: mila, luna, sienna, or both
+        description: mila, luna, sienna, mateo, diego, rio
         required: true
-        default: both
-  # Dispatch only — do not push binaries straight to main (GitHub 500'd).
+        default: mateo
+      drive_url:
+        description: Drive share link (required for mateo/diego/rio)
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -27,7 +30,8 @@ jobs:
 
       - name: Cut loops
         env:
-          WHO: ${{ github.event.inputs.who || 'both' }}
+          WHO: ${{ github.event.inputs.who || 'mateo' }}
+          DRIVE_URL: ${{ github.event.inputs.drive_url || '' }}
         run: |
           set -euo pipefail
           sudo apt-get update -qq
@@ -35,38 +39,51 @@ jobs:
           ffmpeg -version | head -1
 
           cook() {
-            local name="$1" url="$2" folder="$3" offsets="$4" durs="$5"
+            local name="$1" url="$2" folder="$3"
             echo "══ $name → $folder"
             bash scripts/fetch-prime.sh "$url" "${name}.mp4"
-            OFFSETS="$offsets" DURATIONS="$durs" FADE=0.4 SCALE_9_16=1 \
-              bash scripts/cut-loops.sh "packs/inbox/${name}.mp4" "$folder"
+            local prime="packs/inbox/${name}.mp4"
+            local dur
+            dur=$(ffprobe -v error -show_entries format=duration -of default=nk=1:nw=1 "$prime")
+            echo "duration ${dur}s"
+            mapfile -t WIN < <(python3 scripts/prime-windows.py "$dur")
+            echo "offsets ${WIN[0]}"
+            echo "durs    ${WIN[1]}"
+            OFFSETS="${WIN[0]}" DURATIONS="${WIN[1]}" FADE=0.4 SCALE_9_16=1 \
+              bash scripts/cut-loops.sh "$prime" "$folder"
             mkdir -p "frontend/public/avatar/${folder}"
             cp -f "packs/${folder}/"*.mp4 "frontend/public/avatar/${folder}/"
           }
 
+          url_or() {
+            if [ -n "${DRIVE_URL}" ]; then echo "${DRIVE_URL}"; else echo "$1"; fi
+          }
+
           case "$WHO" in
             mila)
-              cook maria_prime_25s \
-                "https://drive.google.com/file/d/1sGGu0_AzMaxZSZyenwGdmJGmjSnPlzaE/view" \
-                female-playful-brat "0 6 12 17.8" "6 5 6 4.9"
+              cook maria_prime_25s "$(url_or https://drive.google.com/file/d/1sGGu0_AzMaxZSZyenwGdmJGmjSnPlzaE/view)" female-playful-brat
               ;;
             luna)
-              cook sofia_prime_25s \
-                "https://drive.google.com/file/d/1KdZ6SiyoipErVoqDW0Si-oY0llqXdoo2/view" \
-                female-soft-goth "0 6 12 19.8" "6 5 7 5.9"
+              cook sofia_prime_25s "$(url_or https://drive.google.com/file/d/1KdZ6SiyoipErVoqDW0Si-oY0llqXdoo2/view)" female-soft-goth
               ;;
             sienna)
-              cook luna_prime_25s \
-                "https://drive.google.com/file/d/1dpt3JNEnOeNqBbWy68doJfWyIST59KlL/view" \
-                female-athletic-tease "0 6 12 24" "6 5 7 6.7"
+              cook luna_prime_25s "$(url_or https://drive.google.com/file/d/1dpt3JNEnOeNqBbWy68doJfWyIST59KlL/view)" female-athletic-tease
               ;;
-            both|*)
-              cook maria_prime_25s \
-                "https://drive.google.com/file/d/1sGGu0_AzMaxZSZyenwGdmJGmjSnPlzaE/view" \
-                female-playful-brat "0 6 12 17.8" "6 5 6 4.9"
-              cook sofia_prime_25s \
-                "https://drive.google.com/file/d/1KdZ6SiyoipErVoqDW0Si-oY0llqXdoo2/view" \
-                female-soft-goth "0 6 12 19.8" "6 5 7 5.9"
+            mateo)
+              [ -n "${DRIVE_URL}" ] || { echo "drive_url required for mateo"; exit 2; }
+              cook hector_prime_25s "$DRIVE_URL" twink-gym
+              ;;
+            diego)
+              [ -n "${DRIVE_URL}" ] || { echo "drive_url required for diego"; exit 2; }
+              cook diego_prime_25s "$DRIVE_URL" twink-shy-boy
+              ;;
+            rio)
+              [ -n "${DRIVE_URL}" ] || { echo "drive_url required for rio"; exit 2; }
+              cook alex_prime_25s "$DRIVE_URL" twink-alt-punk
+              ;;
+            *)
+              echo "unknown who=$WHO"
+              exit 2
               ;;
           esac
 
@@ -84,7 +101,7 @@ jobs:
 
       - name: Commit loops
         env:
-          WHO: ${{ github.event.inputs.who || 'sienna' }}
+          WHO: ${{ github.event.inputs.who || 'mateo' }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -92,13 +109,16 @@ jobs:
           git add frontend/public/avatar/female-playful-brat/*.mp4 \
                   frontend/public/avatar/female-soft-goth/*.mp4 \
                   frontend/public/avatar/female-athletic-tease/*.mp4 \
+                  frontend/public/avatar/twink-gym/*.mp4 \
+                  frontend/public/avatar/twink-shy-boy/*.mp4 \
+                  frontend/public/avatar/twink-alt-punk/*.mp4 \
                   frontend/public/avatar/packs/status.json
           if git diff --cached --quiet; then
             echo "No loop changes"
             exit 0
           fi
-          git commit -m "feat(packs): Pack 01 loops from Gary Drive (${WHO:-sienna})"
-          BRANCH="ops/gha-pack-${WHO:-sienna}"
+          git commit -m "feat(packs): Pack 01 loops from Gary Drive (${WHO})"
+          BRANCH="ops/gha-pack-${WHO}"
           git checkout -B "$BRANCH"
           for i in 1 2 3; do
             git push -u origin "$BRANCH" && break
