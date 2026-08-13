@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live** at `7cd409f`. **21+** shipped. Dedicated packs **8/8 live**. Next human drop: Pack 01 primes (`maria_prime_25s.mp4` first) or optional Stripe smoke.
+Railway is **live** at `74f76ea`. **21+** shipped including leftover source this cook. Dedicated packs **8/8 live**. Next human: Pack 01 primes or Stripe smoke.
 
 ---
 
@@ -23,7 +23,8 @@ Railway is **live** at `7cd409f`. **21+** shipped. Dedicated packs **8/8 live**.
 | 5 | **Local product smoke** — `scripts/smoke-local-product.sh` | ✅ `59cd5c8` |
 | 6 | **Age floor 21+ models** | ✅ `59cd5c8` |
 | 7 | Dual-stack monorepo docs after WebRTC #30 | ✅ `#31` |
-| 8 | **Age floor 21+ prompts + UI + forge** | ✅ this cook |
+| 8 | **Age floor 21+ prompts + UI + forge** | ✅ |
+| 9 | **Age floor leftover source** (gallery/chat/export/forge/studio + archive prompts) | ✅ this cook |
 
 ---
 

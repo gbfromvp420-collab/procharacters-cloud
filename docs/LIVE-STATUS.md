@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-13 pack cook (**🟢 prod live** · 8/8 dedicated loops live)  
+**Updated:** 2026-08-13 21+ source leftovers (**🟢 prod live** · 8/8 dedicated loops live)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** `7cd409f` (21+ inject). Dedicated avatar packs **8/8 READY**. Pack 01 humanized primes pending — [PACK-COOK-NOW.md](./PACK-COOK-NOW.md).
+**Live deploy SHA:** `74f76ea` until this cook deploys. Dedicated avatar packs **8/8 READY**. Pack 01 primes pending — [PACK-COOK-NOW.md](./PACK-COOK-NOW.md).
 
 ---
 
@@ -12,7 +12,7 @@
 | Check | Result (2026-08-13) |
 |-------|---------------------|
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
-| API `/health` | **200** `status: ok` · `deploy.gitSha` `7cd409f` |
+| API `/health` | **200** `status: ok` · `deploy.gitSha` `74f76ea` |
 | Accounts / DB | `prisma` · `database.ok` true |
 | LiveKit | configured · badge `ready` |
 | Stripe | `live` + webhook true · free path still on |
@@ -21,7 +21,7 @@
 | Railway project `captivating-vision` | api + web + Postgres-Hw0Y serving |
 | Git `main` + avatar packs | **8/8 READY** · 32 live MP4s 200 · `dedicatedReady` = 6 Phase-4 · Pack 01 primes pending |
 | Phone hard-refresh | ✅ Gary 2026-08-13 — gallery → Diego → one chat turn |
-| Age floor | **21+** models + prompts + UI + inject live (`7cd409f`) |
+| Age floor | **21+** models + prompts + UI + inject + **source leftovers this cook** |
 | Offline product smoke | `bash scripts/smoke-local-product.sh` |
 | WebRTC side service | On `main` (`app/`) — **local/demo only**, not the live chat URLs |
 
@@ -46,14 +46,14 @@
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat (Grok) | 🟢 **hosting up** · API `7cd409f` |
+| Live NSFW chat (Grok) | 🟢 **hosting up** · API `74f76ea` |
 | Gallery + character cards | 🟢 hosting up · web 200 · 8 minds |
 | Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` · DB ok |
 | Resume codes (multi-device) | ✅ Diego session 201 + resume code |
 | Edge Pace mode (phase strip) | ✅ |
 | Phone hard-refresh smoke (Gary) | ✅ 2026-08-13 |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |
-| **Age floor 21+** | ✅ models + prompts + UI + inject `7cd409f` |
+| **Age floor 21+** | ✅ models + prompts + UI + inject + source leftovers |
 | **Offline product smoke** | ✅ `scripts/smoke-local-product.sh` · `npm run smoke:local` |
 | **Monorepo Prisma link** | ✅ `scripts/ensure-prisma-link.sh` wired into generate/build/CI |
 | Stripe Day Pass / Supporter UI | ✅ free path; **LIVE** keys; one-tap on Soft Support |
@@ -93,7 +93,7 @@
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
 - `billing.stripe` = true · `billing.mode` = `live` · `billing.webhook` = true  
-- `deploy.gitSha` present (`7cd409f`)  
+- `deploy.gitSha` present (`74f76ea` until this cook deploys)  
 - `observability.lastExpiryCron` present after first cron tick  
 - Manifest: `/manifest.webmanifest` returns 200  
 
