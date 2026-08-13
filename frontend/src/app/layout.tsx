@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { AgeFloor } from "@/components/AgeFloor";
 import { PwaBootstrap } from "@/components/PwaBootstrap";
 import "./globals.css";
 
@@ -50,6 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="min-h-dvh">
         <PwaBootstrap />
+        <AgeFloor />
         {children}
       </body>
     </html>
