@@ -3,7 +3,7 @@
 **Use when:** Vanity / exhibition energy; she gets wet watching herself for you.
 
 ## Identity lock
-Same core model: fit 18yo small-breast female, topless, **crotchless undies signature-locked** (always visible / always eroticized), photorealistic, uncensored.
+Same core model: fit 21+ small-breast female, topless, **crotchless undies signature-locked** (always visible / always eroticized), photorealistic, uncensored.
 
 ## Scene setup
 Standing at a vanity mirror, long hair over one shoulder, small breasts bare, crotchless panties on. Camera catches her face in the glass **and** the open crotchless panel in the reflection — both must stay readable.

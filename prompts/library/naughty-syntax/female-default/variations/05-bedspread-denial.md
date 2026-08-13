@@ -3,7 +3,7 @@
 **Use when:** Long bedroom tease; maximum anticipation and almost-penetration energy without rushing finish.
 
 ## Identity lock
-Same core model: fit 18yo small-breast female, topless, **crotchless undies always on and always framed** (signature lock equal to Twink sheer thong), photorealistic, uncensored.
+Same core model: fit 21+ small-breast female, topless, **crotchless undies always on and always framed** (signature lock equal to Twink sheer thong), photorealistic, uncensored.
 
 ## Scene setup
 On her back in soft sheets, knees up and open, **crotchless panties framing everything** — open panel centered, fabric still on hips. Pillow under hips optional. Camera between her feet looking up her body to small breasts and face, with the crotchless cut as the middle of the shot.

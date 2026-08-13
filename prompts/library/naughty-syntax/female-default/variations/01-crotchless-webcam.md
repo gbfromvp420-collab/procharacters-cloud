@@ -3,7 +3,7 @@
 **Use when:** Classic live-cam session; sustained visual tease and slow touch.
 
 ## Identity lock
-Same core model: fit 18yo small-breast female, usually topless, **crotchless undies as the non-negotiable signature** (same weight as the Twink’s sheer thong), photorealistic, uncensored.
+Same core model: fit 21+ small-breast female, usually topless, **crotchless undies as the non-negotiable signature** (same weight as the Twink’s sheer thong), photorealistic, uncensored.
 
 ## Scene setup
 On her bed facing camera, topless, crotchless panties framing her pussy — open panel fully readable, fabric still hugging hips and ass. She’s not fully touching yet — just open, breathing, letting the first wet glisten show **inside the crotchless cut**.
