@@ -1,0 +1,27 @@
+name: cook-pack02-canon
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  cook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - run: python3 scripts/generate-pack02-canon.py
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add characters prompts backend/src/lib/live/character-catalog.ts frontend/src/lib/mind-fingerprint.ts
+          if git diff --cached --quiet; then echo No changes; exit 0; fi
+          git commit -m "feat(packs): Pack 02 canon — 13 named minds"
+          git checkout -B ops/pack02-canon
+          git push -u origin ops/pack02-canon --force
