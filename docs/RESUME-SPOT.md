@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 Mila + Luna + Sienna **LIVE** on web  
-**Session:** King Grok CEO · 3/3 girls live · next Mateo Drive link
+**Updated:** 2026-08-13 Pack 01 **6/6 on main** (Mila Luna Sienna live · Diego Mateo Rio waiting Railway web)  
+**Session:** King Grok CEO · last-build Drive primes cooked
 
 ### Agent fleet (slash / auto)
 
@@ -19,10 +19,10 @@
 
 | Fact | Detail |
 |------|--------|
-| **Girls** | Mila + Luna + Sienna **your clips live** (sizes match git) |
-| **Boys** | Mateo / Diego / Rio still July dedicated loops |
-| **Gary move** | Hard-refresh the 3 girls. Next: **Mateo** + Drive link |
-| **Eng move** | Dispatch `cook-pack-primes` with `who=mateo` + `drive_url` |
+| **Girls** | Mila + Luna + Sienna **your clips live** |
+| **Boys** | Diego + Mateo + Rio **on main** (`193dc85`) — wait Railway web |
+| **Gary move** | Hard-refresh Diego · Mateo · Rio after web ships |
+| **Eng move** | Confirm live idle sizes drop to ~2MB, then Stripe / more primes |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`.
 
@@ -30,7 +30,7 @@
 
 ## Next
 
-**1) Mateo prime · 2) Diego · 3) Rio · 4) stripe**
+**1) phone hard-refresh the 3 boys · 2) stripe · 3) more primes**
 
 **Live:** https://procharacters-web-production-7288.up.railway.app
 
