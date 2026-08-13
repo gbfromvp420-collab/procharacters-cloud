@@ -2,9 +2,12 @@
 # Unpack packs/inbox → (optional) cut loops → copy into live avatar folders.
 # Usage:
 #   bash scripts/unpack-packs.sh
+#   bash scripts/unpack-packs.sh https://share-link
+#   bash scripts/unpack-packs.sh https://share-link maria_prime_25s.mp4
 #   INBOX=./packs/inbox bash scripts/unpack-packs.sh
 #
 # Does not invent MP4s. Empty inbox = print the 6 prime names and exit 0.
+# A URL arg fetches into inbox first (default name: maria_prime_25s.mp4).
 
 set -euo pipefail
 
@@ -16,6 +19,18 @@ LIVE_ROOT="$ROOT/frontend/public/avatar"
 VIBES=(idle teasing playful aroused)
 
 mkdir -p "$INBOX"
+
+if [ "${1:-}" != "" ]; then
+  case "$1" in
+    http://*|https://*)
+      bash "$ROOT/scripts/fetch-prime.sh" "$1" "${2:-maria_prime_25s.mp4}"
+      ;;
+    *)
+      echo "Unknown arg: $1 (pass an http(s) URL or nothing)" >&2
+      exit 2
+      ;;
+  esac
+fi
 
 echo "Pack unpack — inbox: $INBOX"
 echo ""
@@ -73,7 +88,7 @@ done
 placed=0
 if [ ${#found_primes[@]} -gt 0 ]; then
   echo "Found ${#found_primes[@]} prime(s)."
-  if command -v ffmpeg >/dev/null 2>&1; then
+  if command -v ffmpeg >/dev/null 2>&1 && ffmpeg -version >/dev/null 2>&1; then
     bash "$CUT_BATCH" "$INBOX" "$MAP"
     for p in "${found_primes[@]}"; do
       mid=$(lookup_id "$p")
