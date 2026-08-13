@@ -8,6 +8,8 @@ on:
       - "prisma.config.ts"
       - "prompts/**"
       - "characters/**"
+      - "scripts/ensure-prisma-link.sh"
+      - "scripts/smoke-local-product.sh"
       - ".github/workflows/ci-backend.yml"
   push:
     branches: [main]
@@ -17,6 +19,8 @@ on:
       - "prisma.config.ts"
       - "prompts/**"
       - "characters/**"
+      - "scripts/ensure-prisma-link.sh"
+      - "scripts/smoke-local-product.sh"
       - ".github/workflows/ci-backend.yml"
 
 jobs:
@@ -41,16 +45,7 @@ jobs:
           # Prisma generate may read config; no real DB in CI
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
 
-      # Schema lives at repo-root prisma/; Prisma resolves @prisma/client from there.
-      # Local dev has a root node_modules link — recreate it for CI.
-      - name: Link Prisma packages for monorepo schema
-        working-directory: .
-        run: |
-          mkdir -p node_modules
-          ln -sfn "$GITHUB_WORKSPACE/backend/node_modules/@prisma" node_modules/@prisma
-          ln -sfn "$GITHUB_WORKSPACE/backend/node_modules/prisma" node_modules/prisma
-
-      # Client is gitignored — typecheck needs generate before tsc
+      # Schema at repo-root prisma/ — prisma:generate runs scripts/ensure-prisma-link.sh
       - name: Prisma generate
         run: npm run prisma:generate
         env:
@@ -66,25 +61,12 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
 
-      - name: Smoke health check
+      - name: Local product smoke (health + characters + session)
         env:
-          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+          DATABASE_URL: ""
           PORT: "3001"
           HOST: "127.0.0.1"
           NODE_ENV: test
           ACCOUNTS_PROVIDER: json
-        run: |
-          node dist/index.js &
-          PID=$!
-          cleanup() { kill "$PID" 2>/dev/null || true; }
-          trap cleanup EXIT
-          for i in $(seq 1 30); do
-            if curl -fsS "http://127.0.0.1:3001/health" > /tmp/health.json; then
-              echo "Health OK"
-              cat /tmp/health.json
-              exit 0
-            fi
-            sleep 1
-          done
-          echo "Health check failed"
-          exit 1
+        working-directory: .
+        run: bash scripts/smoke-local-product.sh --skip-install

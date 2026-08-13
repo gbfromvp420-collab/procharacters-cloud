@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-13 Railway plan unlock (**🟢 prod live**)  
+**Updated:** 2026-08-13 next ship (**🟢 prod live** · phone smoke ✅ · 21+ + local smoke landing)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** `c9fd651d64931c4468a00b6b3f313dc334e9a12b` (2026-07-20 EOD product ship). Git `main` is later (`c77f155`, WebRTC #30 + dual-stack docs). Product services are **not** the root WebRTC Dockerfile.
+**Live deploy SHA:** `554c484` (Railway plan-unlock docs commit). Product services are Fastify API + Next.js web — **not** the root WebRTC Dockerfile. This cook adds 21+ canon + local smoke scripts.
 
 ---
 
@@ -12,7 +12,7 @@
 | Check | Result (2026-08-13) |
 |-------|---------------------|
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
-| API `/health` | **200** `status: ok` · `deploy.gitSha` `c9fd651` · `startedAt` 2026-08-13T12:37:20Z |
+| API `/health` | **200** `status: ok` · `deploy.gitSha` `554c484` · `startedAt` 2026-08-13T12:46:12Z |
 | Accounts / DB | `prisma` · `database.ok` true |
 | LiveKit | configured · badge `ready` |
 | Stripe | `live` + webhook true · free path still on |
@@ -20,11 +20,12 @@
 | Error alerts | ntfy wired (`alertChannel: ntfy`) |
 | Railway project `captivating-vision` | api + web + Postgres-Hw0Y serving |
 | Git `main` + avatar packs | Healthy · **8/8 packs READY** in git · live `dedicatedReady` = 6 Phase-4 packs |
+| Phone hard-refresh | ✅ Gary 2026-08-13 — gallery → Diego → one chat turn |
+| Age floor | **21+** shipping this cook (models, prompts, forge, UI footers) |
+| Offline product smoke | `bash scripts/smoke-local-product.sh` |
 | WebRTC side service | On `main` (`app/`) — **local/demo only**, not the live chat URLs |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never point product services at the root `Dockerfile` (that’s Python WebRTC).
-
-**Optional next ship:** say **`redeploy`** to rebuild api+web from latest `main` (docs/WebRTC only vs this SHA). Not required for chat/gallery/Studio.
 
 ---
 
@@ -45,91 +46,34 @@
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat (Grok) | 🟢 **hosting up** · API `c9fd651` |
-| Gallery + character cards | 🟢 hosting up · web 200 |
+| Live NSFW chat (Grok) | 🟢 **hosting up** · API `554c484` |
+| Gallery + character cards | 🟢 hosting up · web 200 · 8 minds |
 | Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` · DB ok |
-| Resume codes (multi-device) | ✅ |
+| Resume codes (multi-device) | ✅ Diego session 201 + resume code |
 | Edge Pace mode (phase strip) | ✅ |
-| “What we remember” memory strip | ✅ scene lock chips + structured prior |
-| Phase 5 anti-loop + restore rehydrate | ✅ `f4218eb` |
-| Memory stickiness (2026-07-18 night) | ✅ scene lock every turn · sticky Remember default · resume dossier refresh |
-| **Heat Arc continuity** | ✅ scene lock v2 (pose/act/name) · spark→locked pacing · tappable lock chips · mid-session vibe chips |
-| **Edge Pace feel** | ✅ round-aware coach · strip Seed/Fire · phase chips · last-8s urgency · multi-cycle mind lines |
-| **Return Intelligence** | ✅ last-scene dossier · named return greetings · **They remember you** card + pick-up seeds |
-| **Heat Trail** | ✅ resume stamps depth/chips · gallery tiles + Continue + hero show where you left heat |
-| **End Ritual** | ✅ pause banner + chat resume hero show full heat trail (depth/chips/recap) |
-| **Error alerts (ntfy)** | ✅ live on API · channel ntfy |
-| CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
-| Web Push (VAPID) + **Send test** | ✅ server configured |
+| Phone hard-refresh smoke (Gary) | ✅ 2026-08-13 |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |
-| Send test **429 UX** (retry-after copy) | ✅ |
-| Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
-| Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
-| LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse · health badge `ready` |
-| **Avatar 4-loop packs (EOD 07-20)** | ✅ refreshed `female-default` · `female-playful-brat` · `female-soft-goth` · `twink-default` · `twink-gym` · `twink-shy-boy` (aroused fixed) · all 8 `dedicatedReady` in git · live health lists 6 Phase-4 packs |
-| Account **System pulse** | ✅ `/health` + `/metrics` — deploy, DB, push, Stripe, uptime, sessions, turns, WS, 5xx · **Send test alert** |
-| **Error alerts (5xx)** | ✅ eng: **ntfy** (no Discord) · email · Discord/Slack · [ops-error-webhook.md](./ops-error-webhook.md) · Gary sets topic URL |
-| Continue **Copy code** | ✅ one-tap resume code on gallery banner |
-| PWA install / Home Screen | ✅ manifest 200 + install tip + offline shell |
-| Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
-| Soft Day Pass after heat win | ✅ Session win toast offers Day Pass when signed-in + not premium (never blocks) |
-| **Post-checkout unlock ceremony** | ✅ Account `#premium-unlocked` · Create / My models / hub · cap headroom |
-| **Heat→pay no double-ask** | ✅ Session win owns Day Pass; Soft Support yields + 6h cooldown after win |
-| **Return seed after End** | ✅ “We’ll hold this heat” + Enable alerts / Sign in when deep session |
-| **My models** gallery filter | ✅ private My Characters merge for signed-in (`/?filter=owned`) |
-| Create My Character deep-link | ✅ **`/models/studio`** create · **`/models/studio/edit/:id`** edit · `/chat?create=1` + `?edit=` redirect |
-| **My Models Studio** | ✅ **Slim v2** foundation retained under advanced fields |
-| **Studio Forge v3 Unchained** | ✅ Conversational fantasy → DNA (adaptive prompt + behavior tree + LiveKit meta + memory seeds) · canvas composer · sentiment clips · Export DNA · Server Action + `POST /characters/forge/expand` · save as `custom-v3` · [STUDIO-FORGE-V3.md](./STUDIO-FORGE-V3.md) |
-| **WebRTC + trainer (side service)** | ✅ merged #30 · FastAPI signaling + hot-swap UI + trainer registry · CI Python suite · compose profile `webrtc` · [WEBRTC-ENGINE.md](./WEBRTC-ENGINE.md) · **not** Railway product chat |
-| **DNA runtime (live chat)** | ✅ custom-v3: memory seeds → prior/session notes · DNA starter opening · presence from LiveKit meta · clip intensity map · evolution bias in session mode · richer adaptive prompt |
-| **DNA behavior-tree stepper** | ✅ soft spark→tease→edge→deny/release mid-session · prompt + avatar floors · whisper strip DNA node · Seed/Fire chips |
-| **DNA chip bar + Heat Trail** | ✅ 6-node path strip · one-tap Fire chips · climb flash · gallery/Continue/resume hero show DNA node |
-| **DNA gallery badges** | ✅ gallery tiles + hero reel + End pause banner · DNA · node violet · return loop stamps node every turn |
-| **DNA conversion close** | ✅ Session win “DNA heat locked” + Day Pass CTA · Soft Support forge headroom · Account My models DNA trail · offline shell DNA Continue |
-| **Unlock → Forge + Edge×DNA** | ✅ Premium ceremony primary **Forge another model** · Edge Pace strip dual DNA path + merged chips |
-| **Post-forge Edge + funnel metrics** | ✅ DNA win toast **Edge Pace · climb DNA** primary · `/metrics` forge→DNA→edge→climbs→checkout · System pulse funnel chips |
-| **Sexy first open + pay funnel** | ✅ Studio starter auto-seeds chat composer on session_ready · Stripe webhook bumps checkoutConfirms · pulse conversion % ratios |
-| **DNA climb motion + funnel UI** | ✅ `dna-climb-node` / shell animations on whisper + Edge×DNA · System pulse funnel dashboard strip |
-| **DNA power reclaim** | ✅ Continue deep-link `mode=edge_pace` on DNA trails · resume API mode switch · tree node stamped on rehydrate · gallery **DNA power · Edge reclaim** |
-| **Reclaim everywhere** | ✅ offline shell Edge reclaim · End pause DNA power CTA · Account My models DNA power · hero reel DNA power button |
-| **Reclaim chrome + share** | ✅ SiteChrome DNA power · NetworkOfflineBanner · SessionDropRescue DNA rejoin · share URLs carry rehydrate + edge mode |
-| **Reclaim card + print + account** | ✅ Character card DNA power · print/QR Edge reclaim · Account resume markdown DNA · chat idle hero DNA reclaim |
-| **DNA power push + multi-device** | ✅ Expiry Web Push deep-links `mode=edge_pace` + rehydrate when DNA/Edge hot · copy “DNA power · Edge reclaim” · account session list exposes `dnaTreeNodeId`/`sessionMode` · resume cache multi-device stamp · emailed resume links reclaim · metric `pushDnaPowerReclaims` on System pulse |
-| **DNA dossier climb** | ✅ CharacterSession kinkProfile stamps `dnaTreeNodeId`/`label`/`sessionMode` each DNA turn · new session + cold resume rehydrate tree (not cold spark) · soft Edge when left mid-climb · return greeting + pick-up seeds · metric `dnaDossierReclaims` |
-| **Forge this heat** | ✅ Session win toast + End pause + **gallery tiles/hero** → Studio heat/DNA seed · base/nick/DNA prefill · violet “Heat seed loaded” |
-| **DNA climb toast** | ✅ Mid-session milestone pill `DNA · {node} locked ↑` on tree advance · whisper/fire one-beat · reduced-motion safe |
-| **Sexy DNA atmosphere** | ✅ Live chat room wash + chrome by DNA node · composer ring · mind banner DNA chip · afterglow chips biased to tree (edge/deny/tease) · sexy placeholders |
-| **Sexy DNA avatar + rejoin** | ✅ AvatarVideo/PiP DNA ring + node-advance pulse · DNA · chip on frame · arousal bar DNA-tinted · ReturnHeatCard violet DNA reclaim · RejoinRecapToast DNA power copy |
-| **DNA chat bubbles** | ✅ Assistant/user message chrome tracks DNA tree · mind tag stamps DNA · arrival/stream rings violet when hot |
-| **Continue forge + DNA typing** | ✅ Gallery Continue banner **Forge this DNA** when trail is hot · TypingIndicator “is climbing…” + violet dots when DNA ≥ Tease |
-| **Pack pipeline scripts** | ✅ `extract-prime-clips` · `cut-loops` v2 · `cut-loops-batch` · [PACK-CHEAT-SHEET.md](./PACK-CHEAT-SHEET.md) |
-| **Agent fleet** | ✅ `/kgc-delegate` · `/kgc-forge` · `/kgc-return` · `/kgc-ops` · `/kgc-smoke` · parallel cook protocol · [smoke-fleet-checklist.md](./smoke-fleet-checklist.md) |
-| Premium Account payoff | ✅ use-the-headroom strip · free vs premium caps display fixed |
-| Post-create My Character win | ✅ Start heat / Edge Pace toast · Mine tile badge · picker “My models” group |
-| Edit My Character | ✅ Edit identity/vibe/phrases/scenes · Save changes · owner list fields · PATCH requires sign-in |
-| Clip uploads (private) | ✅ owner Bearer required · batch + single · gallery Edit deep-link · Pack n/4 chips |
-| Account **My models** hub | ✅ list · cap · Chat/Continue/Edit/**Duplicate**/Edge/Delete · `#my-models` |
-| Duplicate My Character | ✅ clone identity/vibe/phrases/scenes (new private id · uses cap slot) |
-| Private share guard | ✅ share card on mine → resume code (not public gallery link) |
-| Create cap UX | ✅ using n/limit · almost-full / cap-full · Save disabled at cap |
-| Pause after End (mine) | ✅ Edit model · My models CTAs on session paused banner |
-| **SiteChrome** sticky nav | ✅ Gallery / Chat / Account / Models · Continue/Reclaim on every surface |
-| Offline shell v2 | ✅ cached resumes · Continue/Reclaim · auto-reload on reconnect · PWA Models shortcut |
-| Offline banner | ✅ Continue chip + resume count while wire is down |
-| Phase 4 models (6) | ✅ minds live · **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
-| Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web; API badges via `status.json` |
-| Gallery hero reel | ✅ cinematic crossfade · swipe · progress · resume CTAs · **tonight’s cast** day-seed · mind fingerprints on tiles/cards/chat |
-| Chat continuity pack | ✅ night stack + morning conversion CTAs · first-live flash · win toast · Seed/Fire · room wash · Reclaim · Export/Share heat |
+| **Age floor 21+** | ✅ canon / prompts / forge / UI (this cook) |
+| **Offline product smoke** | ✅ `scripts/smoke-local-product.sh` · `npm run smoke:local` |
+| **Monorepo Prisma link** | ✅ `scripts/ensure-prisma-link.sh` wired into generate/build/CI |
+| Stripe Day Pass / Supporter UI | ✅ free path; **LIVE** keys; one-tap on Soft Support |
+| **Studio Forge v3 Unchained** | ✅ conversational fantasy → DNA · [STUDIO-FORGE-V3.md](./STUDIO-FORGE-V3.md) |
+| **WebRTC + trainer (side service)** | ✅ merged #30 · **not** Railway product chat |
+| **Agent fleet** | ✅ `/kgc-delegate` · `/kgc-forge` · `/kgc-return` · `/kgc-ops` · `/kgc-smoke` |
+| Phase 4 models (6) | ✅ **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
+| Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web |
+
+(Full DNA / return / pay funnel stack remains shipped as of EOD 07-20 — see git history if you need the long table.)
 
 ---
 
 ## Your quick wins (no engineer needed)
 
 1. ~~**Phone push**~~ ✅ done  
-2. **Hard-refresh the site** (this boot is new) — gallery, shy-boy, one default, one chat turn  
-3. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
-4. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap, or Account checkout — free path always works  
-5. **Avatar packs (content):** cut your library into 4 loops — start with 6 featured models → [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
+2. ~~**Hard-refresh the site**~~ ✅ done 2026-08-13  
+3. After this deploy: **hard-refresh again** (21+ copy)  
+4. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap — free path always works  
+5. **Avatar packs (content):** cut your library into 4 loops — [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
 
 ---
 
@@ -137,13 +81,11 @@
 
 1. ~~Gary: phone push smoke~~ ✅  
 2. ~~Railway plan / bring live back~~ ✅ 2026-08-13  
-3. **Gary: phone hard-refresh smoke** (gallery + shy-boy + one chat)  
-4. Eng: keep return loop + ops healthy (deploy fingerprint on `/health`)  
-5. ~~Housekeeping: close stale PRs `#1` `#2` `#3` `#4` `#29`~~ ✅ + CI workflows on `main`  
-6. ~~Ops noise: Azure workflow manual-only + Account System pulse~~ ✅  
-7. Content: dedicated packs when footage exists  
-8. Optional: say **`redeploy`** to pin latest `main` (docs/WebRTC only) — keep Dockerfile paths product-only  
-9. Optional: more footage packs when ready
+3. ~~Gary: phone hard-refresh smoke~~ ✅ 2026-08-13  
+4. ~~Eng: 21+ age floor + local product smoke~~ ✅ this cook  
+5. Content: dedicated packs when footage exists  
+6. Optional: Stripe Day Pass smoke (live money)  
+7. Optional: Studio DNA phone pass (sign in → Forge → Chat Now)
 
 ---
 
@@ -151,8 +93,8 @@
 
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
-- `billing.stripe` = true · `billing.mode` = `live` · `billing.webhook` = true (2026-08-13)  
-- `deploy.gitSha` present (`c9fd651`)  
+- `billing.stripe` = true · `billing.mode` = `live` · `billing.webhook` = true  
+- `deploy.gitSha` present (`554c484` until this cook deploys)  
 - `observability.lastExpiryCron` present after first cron tick  
 - Manifest: `/manifest.webmanifest` returns 200  
 
