@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 21+ live-prompt sweep (**🟢 prod live** · API `59cd5c8`)  
-**Session:** King Grok CEO · 21+ on live prompts (Diego, defaults, Mateo, Luna, Mila)
+**Updated:** 2026-08-13 pack cook (**🟢 prod live** · 8/8 dedicated loops live · Pack 01 primes pending)  
+**Session:** King Grok CEO · cook packs — kitchen open, waiting on Gary primes
 
 ### Agent fleet (slash / auto)
 
@@ -21,11 +21,10 @@
 |------|--------|
 | **Now** | Both public URLs **200**. API `/health` `status: ok` |
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
-| **Domains** | `procharacters-api-production-0417.up.railway.app` · `procharacters-web-production-7288.up.railway.app` |
-| **Live API SHA** | `59cd5c8` (ops + 21+ models) |
-| **This cook** | 21+ live prompts + system-core |
-| **Gary move** | Hard-refresh after this deploy · optional Stripe Day Pass or `cook packs` |
-| **Eng move** | Gallery/chat footer 18+→21+ still leftover if not in this PR |
+| **Avatar packs** | **8/8 READY** · 32 MP4s live 200 · Phase-4 `dedicatedReady` = 6 |
+| **This cook** | Pack kitchen: `docs/PACK-COOK-NOW.md` + `packs/inbox/` |
+| **Gary move** | Drop 6 Pack 01 primes in `packs/inbox/` (start with `maria_prime_25s.mp4`) or say `unpack packs` |
+| **Eng move** | On drop: cut-loops → check-packs → deploy web+api |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -35,11 +34,11 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **🟢 Railway / live** | **LIVE** · API `59cd5c8` | Optional Stripe Day Pass smoke |
-| **Phone hard-refresh** | ✅ 2026-08-13 | Hard-refresh after this deploy |
-| **21+ models** | ✅ `59cd5c8` | — |
-| **21+ live prompts** | ✅ Diego / defaults / Mateo / Luna / Mila / system-core | New chat to pick up prompt |
-| **Next** | **1) gallery footer 21+ if leftover · 2) cook packs · 3) stripe** | say `cook packs` or `stripe` |
+| **🟢 Railway / live** | **LIVE** | Optional Stripe Day Pass smoke |
+| **21+ age floor** | ✅ roster + forge + chat inject | New chat after last API deploy |
+| **Dedicated packs** | ✅ 8/8 live (2026-07-20 loops) | Optional refresh from library |
+| **Pack 01 primes** | ⏳ pending | 6 named primes → `packs/inbox/` |
+| **Next** | **1) unpack packs / packs ready · 2) stripe · 3) Studio DNA** | say `unpack packs` or `stripe` |
 
 ---
 
