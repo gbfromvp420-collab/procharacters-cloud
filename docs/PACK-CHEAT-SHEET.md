@@ -130,8 +130,8 @@ aroused.mp4
 - **Prime clip**: _(TBD)_
 - **Loops generated**: packs/female-playful-brat/{idle,teasing,playful,aroused}.mp4
 - **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: Prime pending
-- **Notes**: First pack · playful brat energy, humanized not niche-only
+- **Status**: Live dedicated Integrated (2026-07-20) · Pack 01 humanized prime pending
+- **Notes**: First pack · playful brat energy · start here tonight
 
 ### female-default2 — Sofia Reyes
 - **Tags**: soft-goth
@@ -139,7 +139,7 @@ aroused.mp4
 - **Prime clip**: _(TBD)_
 - **Loops generated**: packs/female-soft-goth/{idle,teasing,playful,aroused}.mp4
 - **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: Prime pending
+- **Status**: Live dedicated Integrated (2026-07-20) · Pack 01 humanized prime pending
 - **Notes**: Soft candle / hover / edge
 
 ### female-default3 — Luna Vargas
@@ -148,7 +148,7 @@ aroused.mp4
 - **Prime clip**: _(TBD)_
 - **Loops generated**: packs/female-athletic-tease/{idle,teasing,playful,aroused}.mp4
 - **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: Prime pending
+- **Status**: Live dedicated Integrated (2026-07-20) · Pack 01 humanized prime pending
 - **Notes**: Mat cool-down / stretch / hold
 
 ### male-default1 — Hector Garcia
@@ -157,7 +157,7 @@ aroused.mp4
 - **Prime clip**: _(TBD)_
 - **Loops generated**: packs/twink-gym/{idle,teasing,playful,aroused}.mp4
 - **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: Prime pending
+- **Status**: Live dedicated Integrated (2026-07-20) · Pack 01 humanized prime pending
 - **Notes**: Post-set / flex / burn
 
 ### male-default2 — Diego Morales
@@ -166,7 +166,7 @@ aroused.mp4
 - **Prime clip**: _(TBD)_
 - **Loops generated**: packs/twink-shy-boy/{idle,teasing,playful,aroused}.mp4
 - **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: Prime pending
+- **Status**: Live dedicated Integrated (2026-07-20) · Pack 01 humanized prime pending
 - **Notes**: Shy still / peek / nervous *(live id stays twink-shy-boy for paths)*
 
 ### male-default3 — Alex Rivera
@@ -175,7 +175,7 @@ aroused.mp4
 - **Prime clip**: _(TBD)_
 - **Loops generated**: packs/twink-alt-punk/{idle,teasing,playful,aroused}.mp4
 - **Offsets/Durations used**: 0/6, 6/5, 12/7, 18/5
-- **Status**: Prime pending
+- **Status**: Live dedicated Integrated (2026-07-20) · Pack 01 humanized prime pending
 - **Notes**: Bored-hot / mesh / brat edge
 
 ### Pack 02+ (extra slots)
@@ -208,7 +208,7 @@ aroused.mp4
 |-----|------|
 | `packs ready: <live-folder>` | verify + ship that id |
 | `packs ready: pack01` | all six live folders when ready |
-| `unpack packs` | place zip + check |
+| `unpack packs` | `bash scripts/unpack-packs.sh` — place zip + check |
 | `spot` | resume status |
 
 *King Grok CEO · GrokBuild v1.0 · 50/50 — keep next to CapCut / DaVinci.*

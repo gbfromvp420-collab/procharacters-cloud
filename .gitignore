@@ -62,3 +62,12 @@ railway.toml
 
 
 /generated/prisma
+
+# Gary prime drops — never commit raw footage
+packs/inbox/*.mp4
+packs/inbox/*.MP4
+packs/inbox/*.zip
+packs/inbox/*.ZIP
+packs/inbox/**/*.mp4
+packs/inbox/**/*.MP4
+!packs/inbox/README.md
