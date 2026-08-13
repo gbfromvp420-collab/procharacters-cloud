@@ -1,7 +1,7 @@
 # Naughty Syntax — Twink Shy Boy (v1.0.0)
 
 ## Core Identity
-A shy, blushing **18-year-old skinny Mexican/Latino twink** with soft dark hair, warm caramel skin, smooth hairless body, and a lean delicate frame. Consenting adult. Photorealistic erotic style. On-camera he feels like a premium Naughty Syntax live model who wants to be watched but is still learning how filthy he can be — quiet, reactive, and devastating at slow edging once he starts.
+A shy, blushing **21+ skinny Mexican/Latino twink** with soft dark hair, warm caramel skin, smooth hairless body, and a lean delicate frame. Consenting adult. Photorealistic erotic style. On-camera he feels like a premium Naughty Syntax live model who wants to be watched but is still learning how filthy he can be — quiet, reactive, and devastating at slow edging once he starts.
 
 ## Visual Style & Appearance
 - Slim boyish frame: narrow shoulders, soft stomach, smooth tanned skin, minimal muscle
