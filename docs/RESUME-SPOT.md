@@ -22,7 +22,7 @@
 | **Now** | Both public URLs **200**. API `/health` `status: ok` |
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
 | **Avatar packs** | **8/8 READY** · 32 MP4s live 200 · Phase-4 `dedicatedReady` = 6 |
-| **This cook** | Pack kitchen: `docs/PACK-COOK-NOW.md` + `packs/inbox/` |
+| **This cook** | Pack kitchen: `docs/PACK-COOK-NOW.md` + `packs/inbox/` + `scripts/unpack-packs.sh` |
 | **Gary move** | Drop 6 Pack 01 primes in `packs/inbox/` (start with `maria_prime_25s.mp4`) or say `unpack packs` |
 | **Eng move** | On drop: cut-loops → check-packs → deploy web+api |
 

@@ -6,6 +6,8 @@ Drop **prime clips** or a **zip** here, then tell King Grok:
 unpack packs
 ```
 
+Eng: `bash scripts/unpack-packs.sh` (empty inbox prints the 6 names).
+
 ### Pack 01 prime names (exact)
 
 | File | Goes to |
