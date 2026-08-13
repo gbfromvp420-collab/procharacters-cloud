@@ -44,9 +44,20 @@ else:
 
 p = Path("backend/src/routes/sessions.ts")
 t = p.read_text()
-needle = """        if (body.sessionMode === \"edge_pace\" && session.sessionMode === \"edge_pace\") {\n          bump(\"sessionsEdgePace\");\n        }\n\n        return { ...session, avatarState, livekit: livekitJoin };"""
-insert = """        bump(\"sessionsResumed\");\n        if (body.sessionMode === \"edge_pace\" && session.sessionMode === \"edge_pace\") {\n          bump(\"sessionsEdgePace\");\n        }\n\n        return { ...session, avatarState, livekit: livekitJoin };"""
-if 'bump(\"sessionsResumed\")' not in t:
+needle = (
+    "        if (body.sessionMode === \"edge_pace\" && session.sessionMode === \"edge_pace\") {\n"
+    "          bump(\"sessionsEdgePace\");\n"
+    "        }\n\n"
+    "        return { ...session, avatarState, livekit: livekitJoin };"
+)
+insert = (
+    "        bump(\"sessionsResumed\");\n"
+    "        if (body.sessionMode === \"edge_pace\" && session.sessionMode === \"edge_pace\") {\n"
+    "          bump(\"sessionsEdgePace\");\n"
+    "        }\n\n"
+    "        return { ...session, avatarState, livekit: livekitJoin };"
+)
+if "bump(\"sessionsResumed\")" not in t:
     if needle not in t:
         raise SystemExit("sessions.ts needle not found")
     p.write_text(t.replace(needle, insert, 1))
