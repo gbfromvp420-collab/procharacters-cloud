@@ -176,7 +176,7 @@ return (
           </div>
 
           <p className="text-[10px] text-brand-soft print:text-neutral-500">
-            Uncensored 18+ · Opening this chat extends the code automatically · KGC Ventures
+            Uncensored 21+ · Opening this chat extends the code automatically · KGC Ventures
           </p>
         </article>
       </div>
