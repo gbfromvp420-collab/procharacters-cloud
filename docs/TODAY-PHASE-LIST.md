@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. **21+** in source. Pack 01 **6/6 LIVE** + phone-passed. Studio DNA **phone-passed**. Next human: more primes or Stripe.
+Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named minds + 52 loops live**. Studio DNA **phone-passed**. Next human: phone-pass Pack 02 or more primes or Stripe.
 
 ---
 
@@ -28,6 +28,8 @@ Railway is **live**. **21+** in source. Pack 01 **6/6 LIVE** + phone-passed. Stu
 | 10 | **Pack 01 last-build loops** Mila Luna Sienna Diego Mateo Rio | ✅ live |
 | 11 | Gary phone hard-refresh Diego / Mateo / Rio | ✅ passed |
 | 12 | Gary Studio DNA phone pass (Forge → Save · Chat Now) | ✅ passed |
+| 13 | **Pack 02 canon** 13 named minds | ✅ `#57` `2a3f48a` |
+| 14 | **Pack 02 loops** 13×4 from Gary Drive | ✅ `#58` `57277ca` live 200 |
 
 ---
 
@@ -35,8 +37,9 @@ Railway is **live**. **21+** in source. Pack 01 **6/6 LIVE** + phone-passed. Stu
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | More library primes | Content | Same drop: `Name + Drive link` |
-| B | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
+| A | Phone-pass Pack 02 | Human | Hard-refresh → Jenny / Peter → one turn |
+| B | More library primes | Content | Same drop: `Name + Drive link` |
+| C | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
 
 ---
 
@@ -45,8 +48,9 @@ Railway is **live**. **21+** in source. Pack 01 **6/6 LIVE** + phone-passed. Stu
 1. ~~Hard-refresh gallery → Diego → one chat~~ ✅  
 2. ~~Hard-refresh last-build boys (Diego / Mateo / Rio)~~ ✅  
 3. ~~Studio DNA phone pass~~ ✅  
-4. Optional: next prime (`Name + Drive link`)  
-5. Optional: Stripe Day Pass smoke
+4. Hard-refresh Pack 02 names (Jenny / Sarah / Peter / Justin first)  
+5. Optional: next prime (`Name + Drive link`)  
+6. Optional: Stripe Day Pass smoke
 
 ---
 
@@ -64,10 +68,4 @@ Railway is **live**. **21+** in source. Pack 01 **6/6 LIVE** + phone-passed. Stu
 next
 ```
 
-Offline proof anytime:
-
-```bash
-bash scripts/smoke-local-product.sh
-```
-
-Related: [LIVE-STATUS.md](./LIVE-STATUS.md) · [RESUME-SPOT.md](./RESUME-SPOT.md) · [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md)
+Related: [LIVE-STATUS.md](./LIVE-STATUS.md) · [RESUME-SPOT.md](./RESUME-SPOT.md) · [PACK-COOK-NOW.md](./PACK-COOK-NOW.md)
