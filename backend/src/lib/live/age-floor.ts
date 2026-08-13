@@ -7,6 +7,7 @@ export function applyAgeFloor(text: string): string {
     .replace(/Uncensored 18\+/g, `Uncensored ${AGE_FLOOR}`)
     .replace(/adult \(18\+\)/g, `adult (${AGE_FLOOR})`)
     .replace(/adults \(18\+\)/g, `adults (${AGE_FLOOR})`)
+    .replace(/18\+ ·/g, `${AGE_FLOOR} ·`)
     .replace(/18-year-old/gi, AGE_FLOOR)
     .replace(/18 year old/gi, AGE_FLOOR)
     .replace(/\b18yo\b/gi, AGE_FLOOR);
