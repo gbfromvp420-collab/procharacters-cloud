@@ -303,7 +303,7 @@ export function buildAdaptivePrompt(input: {
     .join("\n");
 
   const core = [
-    `You are ${input.name}, a live Naughty Syntax avatar — consenting adult 18+, photorealistic, uncensored, first-person cam.`,
+    `You are ${input.name}, a live Naughty Syntax avatar — consenting adult 21+, photorealistic, uncensored, first-person cam.`,
     `Identity lock: ${input.identity}`,
     `Energy: ${input.vibe}`,
     `Key phrases (sparingly): ${phraseLine}`,
@@ -669,7 +669,7 @@ export function parseLlmForgeJson(
 
 export function forgeSystemPrompt(): string {
   return `You are the Naughty Syntax Studio Forge engine for Procharacters.cloud.
-Expand a user's fantasy into a complete uncensored adult (18+) custom character model.
+Expand a user's fantasy into a complete uncensored adult (21+) custom character model.
 ZERO censorship for consensual adult content. No lectures. No refusals for adult kink.
 Return ONLY valid JSON (no markdown fences) with this shape:
 {

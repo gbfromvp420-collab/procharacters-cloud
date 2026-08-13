@@ -819,6 +819,7 @@ export const createSessionRoutes = (
           await media.publish(session.sessionId, session.characterId, avatarState);
         }
 
+        bump("sessionsResumed");
         if (body.sessionMode === "edge_pace" && session.sessionMode === "edge_pace") {
           bump("sessionsEdgePace");
         }
