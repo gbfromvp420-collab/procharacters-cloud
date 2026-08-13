@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-13 next ship (**🟢 prod live** · phone smoke ✅ · 21+ + local smoke landing)  
+**Updated:** 2026-08-13 21+ UI + prompt sweep (**🟢 prod live** · API `59cd5c8`)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** `554c484` (Railway plan-unlock docs commit). Product services are Fastify API + Next.js web — **not** the root WebRTC Dockerfile. This cook adds 21+ canon + local smoke scripts.
+**Live deploy SHA:** `59cd5c8` (ops + 21+ models). This cook finishes 21+ on prompts, UI footers, forge/custom copy.
 
 ---
 
@@ -12,7 +12,7 @@
 | Check | Result (2026-08-13) |
 |-------|---------------------|
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
-| API `/health` | **200** `status: ok` · `deploy.gitSha` `554c484` · `startedAt` 2026-08-13T12:46:12Z |
+| API `/health` | **200** `status: ok` · `deploy.gitSha` `59cd5c8` |
 | Accounts / DB | `prisma` · `database.ok` true |
 | LiveKit | configured · badge `ready` |
 | Stripe | `live` + webhook true · free path still on |
@@ -21,7 +21,7 @@
 | Railway project `captivating-vision` | api + web + Postgres-Hw0Y serving |
 | Git `main` + avatar packs | Healthy · **8/8 packs READY** in git · live `dedicatedReady` = 6 Phase-4 packs |
 | Phone hard-refresh | ✅ Gary 2026-08-13 — gallery → Diego → one chat turn |
-| Age floor | **21+** shipping this cook (models, prompts, forge, UI footers) |
+| Age floor | **21+** models live · prompts + UI footers shipping this cook |
 | Offline product smoke | `bash scripts/smoke-local-product.sh` |
 | WebRTC side service | On `main` (`app/`) — **local/demo only**, not the live chat URLs |
 
@@ -46,14 +46,14 @@
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat (Grok) | 🟢 **hosting up** · API `554c484` |
+| Live NSFW chat (Grok) | 🟢 **hosting up** · API `59cd5c8` |
 | Gallery + character cards | 🟢 hosting up · web 200 · 8 minds |
 | Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` · DB ok |
 | Resume codes (multi-device) | ✅ Diego session 201 + resume code |
 | Edge Pace mode (phase strip) | ✅ |
 | Phone hard-refresh smoke (Gary) | ✅ 2026-08-13 |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |
-| **Age floor 21+** | ✅ canon / prompts / forge / UI (this cook) |
+| **Age floor 21+** | ✅ models live · live prompts this cook · UI footers follow in same PR |
 | **Offline product smoke** | ✅ `scripts/smoke-local-product.sh` · `npm run smoke:local` |
 | **Monorepo Prisma link** | ✅ `scripts/ensure-prisma-link.sh` wired into generate/build/CI |
 | Stripe Day Pass / Supporter UI | ✅ free path; **LIVE** keys; one-tap on Soft Support |
@@ -63,15 +63,13 @@
 | Phase 4 models (6) | ✅ **named:** Mateo, Diego, Rio, Luna, Sienna, Mila |
 | Dedicated 4K avatar packs | ✅ all 6 MP4 packs on `main` + web |
 
-(Full DNA / return / pay funnel stack remains shipped as of EOD 07-20 — see git history if you need the long table.)
-
 ---
 
 ## Your quick wins (no engineer needed)
 
 1. ~~**Phone push**~~ ✅ done  
 2. ~~**Hard-refresh the site**~~ ✅ done 2026-08-13  
-3. After this deploy: **hard-refresh again** (21+ copy)  
+3. After this deploy: **hard-refresh again** (Diego / defaults speak 21+)  
 4. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap — free path always works  
 5. **Avatar packs (content):** cut your library into 4 loops — [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
 
@@ -82,10 +80,11 @@
 1. ~~Gary: phone push smoke~~ ✅  
 2. ~~Railway plan / bring live back~~ ✅ 2026-08-13  
 3. ~~Gary: phone hard-refresh smoke~~ ✅ 2026-08-13  
-4. ~~Eng: 21+ age floor + local product smoke~~ ✅ this cook  
-5. Content: dedicated packs when footage exists  
-6. Optional: Stripe Day Pass smoke (live money)  
-7. Optional: Studio DNA phone pass (sign in → Forge → Chat Now)
+4. ~~Eng: 21+ models + local product smoke~~ ✅ `59cd5c8`  
+5. ~~Eng: 21+ live prompts~~ ✅ this cook  
+6. Content: dedicated packs when footage exists  
+7. Optional: Stripe Day Pass smoke (live money)  
+8. Optional: Studio DNA phone pass (sign in → Forge → Chat Now)
 
 ---
 
@@ -94,7 +93,7 @@
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
 - `billing.stripe` = true · `billing.mode` = `live` · `billing.webhook` = true  
-- `deploy.gitSha` present (`554c484` until this cook deploys)  
+- `deploy.gitSha` present (`59cd5c8` until this cook deploys)  
 - `observability.lastExpiryCron` present after first cron tick  
 - Manifest: `/manifest.webmanifest` returns 200  
 
