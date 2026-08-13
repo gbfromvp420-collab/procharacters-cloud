@@ -9,10 +9,7 @@ on:
         description: mila, luna, or both
         required: true
         default: both
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/cook-pack-primes.yml"
+  # Dispatch only — do not push binaries straight to main (GitHub 500'd).
 
 permissions:
   contents: write
@@ -93,4 +90,9 @@ jobs:
             exit 0
           fi
           git commit -m "feat(packs): Mila + Luna Pack 01 loops from Gary Drive"
-          git push
+          git checkout -B ops/gha-pack-loops
+          for i in 1 2 3; do
+            git push -u origin ops/gha-pack-loops && break
+            echo "push retry $i"
+            sleep 5
+          done
