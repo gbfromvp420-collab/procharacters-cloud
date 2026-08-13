@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { formatMemoryBlock, toLlmMessages } from "../memory/prompt-formatter.js";
+import { applyAgeFloor } from "./age-floor.js";
 import { getLiveCharacterProfile } from "./character-catalog.js";
 import { buildPresenceAvatarHint } from "./presence-profiles.js";
 import { buildConsistencyBlock, buildLiveFormatInstructions } from "./system-instructions.js";
@@ -22,11 +23,11 @@ export class LivePromptInjector {
       rehydrating: memory.rehydrating === true,
     };
 
-    const platform = snapshot.systemCorePrompt;
-    const character = snapshot.characterPrompt;
+    const platform = applyAgeFloor(snapshot.systemCorePrompt);
+    const character = applyAgeFloor(snapshot.characterPrompt);
     const consistency = buildConsistencyBlock(
       snapshot.consistencyTraits,
-      snapshot.appearanceAnchor,
+      applyAgeFloor(snapshot.appearanceAnchor),
     );
     const memoryBlock = formatMemoryBlock(memory.context, formatOptions);
     const liveFormat = buildLiveFormatInstructions(energyLabel, presenceHint);
