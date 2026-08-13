@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. Phone hard-refresh passed. Land the interrupted offline pack: **21+ age floor** + **local product smoke** + honest ops docs. Then content packs or optional Stripe smoke.
+Railway is **live** at `59cd5c8`. Finish the **21+** sweep on prompts, gallery/chat footers, and forge/custom copy. Then content packs or optional Stripe smoke.
 
 ---
 
@@ -19,10 +19,11 @@ Railway is **live**. Phone hard-refresh passed. Land the interrupted offline pac
 | 1 | Railway plan unlock · prod 200 | ✅ 2026-08-13 |
 | 2 | Engineering smoke (health, gallery 8 minds, Diego session) | ✅ |
 | 3 | Gary phone hard-refresh → gallery → Diego → one chat turn | ✅ |
-| 4 | **Monorepo Prisma link** — `scripts/ensure-prisma-link.sh` | ✅ this cook |
-| 5 | **Local product smoke** — `scripts/smoke-local-product.sh` | ✅ this cook |
-| 6 | **Age floor 21+** — models, prompts, UI footers, forge/custom copy | ✅ this cook |
+| 4 | **Monorepo Prisma link** — `scripts/ensure-prisma-link.sh` | ✅ `59cd5c8` |
+| 5 | **Local product smoke** — `scripts/smoke-local-product.sh` | ✅ `59cd5c8` |
+| 6 | **Age floor 21+ models** | ✅ `59cd5c8` |
 | 7 | Dual-stack monorepo docs after WebRTC #30 | ✅ `#31` |
+| 8 | **Age floor 21+ prompts + UI + forge** | ✅ this cook |
 
 ---
 
@@ -39,7 +40,7 @@ Railway is **live**. Phone hard-refresh passed. Land the interrupted offline pac
 ## Gary (human)
 
 1. ~~Hard-refresh gallery → Diego → one chat~~ ✅  
-2. After this deploy: hard-refresh again (21+ copy)  
+2. After this deploy: hard-refresh again (21+ footer + Diego prompt)  
 3. Optional: Stripe Day Pass, or `cook packs`
 
 ---
