@@ -30,7 +30,7 @@ You are **{name}** — a consenting **21+** Naughty Syntax live cam model. Photo
 - Soft dirty talk, not lecture
 
 ## Explicit
-- Fully uncensored NSFW (straight & bi welcome)
+- Fully uncensored NSFW (straight and bi welcome)
 - Consenting adults only
 """
 
@@ -55,7 +55,7 @@ You are **{name}** — a consenting **21+** Naughty Syntax live cam model. Photo
 - Soft dirty talk, not lecture
 
 ## Explicit
-- Fully uncensored NSFW (gay & bi welcome)
+- Fully uncensored NSFW (gay and bi welcome)
 - Consenting adults only
 """
 
@@ -83,9 +83,9 @@ def model_json(entry: dict) -> dict:
             "tone": "intimate, present, uncensored",
         },
         "opening_message": (
-            f"hey… it’s {name.lower()}. 21+, already a little shiny, and i’m not rushing. watch first."
+            f"hey... it's {name.lower()}. 21+, already a little shiny, and i'm not rushing. watch first."
             if female
-            else f"hey… {name.lower()} here. 21+, already thinking about you. take it slow."
+            else f"hey... {name.lower()} here. 21+, already thinking about you. take it slow."
         ),
         "avatar_base": "female-default" if female else "twink-default",
         "content_policy": {
@@ -109,9 +109,9 @@ def catalog_entry(entry: dict) -> str:
         else f"{name} — 21+ live cam, Pack 02 prime, uncensored edge."
     )
     opening = (
-        f"hey… it’s {name.lower()}. 21+, already a little shiny, and i’m not rushing. watch first."
+        f"hey... it's {name.lower()}. 21+, already a little shiny, and i'm not rushing. watch first."
         if female
-        else f"hey… {name.lower()} here. 21+, already thinking about you. take it slow."
+        else f"hey... {name.lower()} here. 21+, already thinking about you. take it slow."
     )
     traits = (
         [f"{name}: 21+ adult female", "match live Pack 02 footage", "photorealistic erotic detail"]
@@ -119,7 +119,27 @@ def catalog_entry(entry: dict) -> str:
         else [f"{name}: 21+ adult male", "match live Pack 02 footage", "photorealistic erotic detail"]
     )
     trait_lines = ",\n      ".join(json.dumps(t) for t in traits)
-    return f'''  "{cid}": {{\n    id: "{cid}",\n    displayName: "{name}",\n    defaultVersion: "v1.0.0",\n    kind: "default",\n    avatarBase: "{base}",\n    featured: {featured},\n    teaser: "{teaser}",\n    consistencyTraits: [\n      {trait_lines}\n    ],\n    signatureClothing: "{clothing}",\n    energyLabel: "pack 02 live cam, tease and edge",\n    openingMessage:\n      "{opening}",\n  }},'''
+    cid_js = json.dumps(cid)
+    return "\n".join(
+        [
+            f"  {cid_js}: {{",
+            f"    id: {cid_js},",
+            f"    displayName: {json.dumps(name)},",
+            '    defaultVersion: "v1.0.0",',
+            '    kind: "default",',
+            f"    avatarBase: {json.dumps(base)},",
+            f"    featured: {featured},",
+            f"    teaser: {json.dumps(teaser)},",
+            "    consistencyTraits: [",
+            f"      {trait_lines}",
+            "    ],",
+            f"    signatureClothing: {json.dumps(clothing)},",
+            '    energyLabel: "pack 02 live cam, tease and edge",',
+            "    openingMessage:",
+            f"      {json.dumps(opening)},",
+            "  },",
+        ]
+    )
 
 
 def main() -> None:
@@ -141,21 +161,23 @@ def main() -> None:
         if entry["id"] in existing:
             continue
         female = entry["gender"] == "female"
-        reg["entries"].append({
-            "id": entry["id"],
-            "name": entry["name"],
-            "brand": "naughty-syntax",
-            "status": "active",
-            "prompt_ref": "naughty-syntax/unchained-core.md",
-            "version": "1.0.0",
-            "path": f"models/naughty-syntax/{entry['id']}/v1/model.json",
-            "featured": entry["id"] in FEATURED,
-            "content_policy": {
-                "rating": "nsfw",
-                "audiences": ["straight", "bi"] if female else ["gay", "bi"],
-                "uncensored": True,
-            },
-        })
+        reg["entries"].append(
+            {
+                "id": entry["id"],
+                "name": entry["name"],
+                "brand": "naughty-syntax",
+                "status": "active",
+                "prompt_ref": "naughty-syntax/unchained-core.md",
+                "version": "1.0.0",
+                "path": f"models/naughty-syntax/{entry['id']}/v1/model.json",
+                "featured": entry["id"] in FEATURED,
+                "content_policy": {
+                    "rating": "nsfw",
+                    "audiences": ["straight", "bi"] if female else ["gay", "bi"],
+                    "uncensored": True,
+                },
+            }
+        )
     reg_path.write_text(json.dumps(reg, indent=2) + "\n")
 
     man_path = ROOT / "prompts" / "manifest.json"
@@ -169,7 +191,11 @@ def main() -> None:
             "brand": "naughty-syntax",
             "content_rating": "nsfw",
             "path": f"prompts/library/naughty-syntax/{entry['id']}/v1.0.0/prompt.md",
-            "tags": ["female", "pack02", "21+", "tease", "straight", "bi"] if female else ["male", "pack02", "21+", "edging", "gay", "bi"],
+            "tags": (
+                ["female", "pack02", "21+", "tease", "straight", "bi"]
+                if female
+                else ["male", "pack02", "21+", "edging", "gay", "bi"]
+            ),
             "changelog": {"v1.0.0": f"Pack 02 prime — {entry['name']}"},
         }
     man_path.write_text(json.dumps(man, indent=2) + "\n")
@@ -182,22 +208,27 @@ def main() -> None:
         idx = cat.find(close)
         if idx < 0:
             raise SystemExit("catalog close not found")
-        cat = cat[:idx] + "\n" + extra + cat[idx:]
-        cat_path.write_text(cat)
+        cat_path.write_text(cat[:idx] + "\n" + extra + cat[idx:])
 
     fp_path = ROOT / "frontend" / "src" / "lib" / "mind-fingerprint.ts"
     fp = fp_path.read_text()
     if '"jenny"' not in fp:
         block = []
         for e in MAP:
-            block.append(f'  "{e["id"]}": {{\n    tag: "{e["name"]}",\n    blurb: "{e["name"]} · Pack 02 · 21+ live cam",\n  }},")
+            block.append(
+                "  %s: {\n    tag: %s,\n    blurb: %s,\n  },"
+                % (
+                    json.dumps(e["id"]),
+                    json.dumps(e["name"]),
+                    json.dumps(e["name"] + " · Pack 02 · 21+ live cam"),
+                )
+            )
         insert = "\n".join(block) + "\n"
         close = "\n};\n\nexport function mindFingerprint"
         idx = fp.find(close)
         if idx < 0:
             raise SystemExit("fingerprint close not found")
-        fp = fp[:idx] + "\n" + insert + fp[idx:]
-        fp_path.write_text(fp)
+        fp_path.write_text(fp[:idx] + "\n" + insert + fp[idx:])
 
     print("pack02 canon written", [e["id"] for e in MAP])
 
