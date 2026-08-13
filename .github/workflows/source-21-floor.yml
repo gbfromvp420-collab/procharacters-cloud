@@ -1,0 +1,74 @@
+# Floor leftover 18+ in large product files. This runner can commit them;
+# the Grok cook machine cannot push 30–187KB blobs reliably.
+name: source-21-floor
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Replace leftover 18+ strings
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          files = [
+            "frontend/src/components/GalleryView.tsx",
+            "frontend/src/components/ChatApp.tsx",
+            "frontend/src/components/ModelsStudio.tsx",
+            "backend/src/lib/live/custom-characters.ts",
+          ]
+          reps = [
+            ("Uncensored 18+ · Procharacters.cloud / KGC Ventures", "Uncensored 21+ · Procharacters.cloud / KGC Ventures"),
+            ("Uncensored 18+ · Procharacters.cloud", "Uncensored 21+ · Procharacters.cloud"),
+            ("Consenting adult 18+.", "Consenting adult 21+."),
+            ('"18+ · KGC"', '"21+ · KGC"'),
+            (". Consenting adult 18+. Photorealistic.", ". Consenting adult 21+. Photorealistic."),
+          ]
+          changed = 0
+          for f in files:
+              p = Path(f)
+              t = p.read_text()
+              n = t
+              for a, b in reps:
+                  n = n.replace(a, b)
+              leftover = [f"{i}:{line.strip()[:100]}" for i, line in enumerate(n.splitlines(), 1) if "18+" in line]
+              if leftover:
+                  print("leftover", f, leftover)
+              if n != t:
+                  p.write_text(n)
+                  changed += 1
+                  print("patched", f)
+              else:
+                  print("no change", f)
+          print("changed", changed)
+          PY
+
+      - name: Commit branch
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/src/components/GalleryView.tsx \
+                  frontend/src/components/ChatApp.tsx \
+                  frontend/src/components/ModelsStudio.tsx \
+                  backend/src/lib/live/custom-characters.ts
+          if git diff --cached --quiet; then
+            echo "No source changes"
+            exit 0
+          fi
+          git commit -m "fix(canon): leftover 18+ source in gallery, chat, studio, custom DNA"
+          git checkout -B ops/source-21-floor
+          git push -u origin ops/source-21-floor --force
