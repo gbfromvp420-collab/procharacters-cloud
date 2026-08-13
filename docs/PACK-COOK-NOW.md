@@ -1,7 +1,7 @@
 # Pack cook — now (Gary)
 
 **Updated:** 2026-08-13  
-**Truth:** Pack 01 refresh is **6/6 LIVE** and **phone-passed**. Mila, Luna, Sienna, Diego, Mateo, Rio are your last-build clips on the site.
+**Truth:** Pack 01 refresh is **6/6 LIVE** and **phone-passed**. Studio DNA is **phone-passed**. Kitchen is open for the next library drop.
 
 ---
 
@@ -22,8 +22,8 @@
 
 ## Tonight
 
-Kitchen is open for the next library drop (`Name + Drive link`).
+Next drop: `Name + Drive link` (same as Diego / Mateo / Rio).
 
-Optional: **stripe** / Studio DNA.
+Optional: **stripe** (your card).
 
 *King Grok · 50/50 · kitchen is open.*

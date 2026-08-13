@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. **21+** shipped. Pack 01 last-build clips **6/6 LIVE** + phone-passed. Next human: Stripe smoke or more primes.
+Railway is **live**. **21+** in source. Pack 01 **6/6 LIVE** + phone-passed. Studio DNA **phone-passed**. Next human: more primes or Stripe.
 
 ---
 
@@ -24,9 +24,10 @@ Railway is **live**. **21+** shipped. Pack 01 last-build clips **6/6 LIVE** + ph
 | 6 | **Age floor 21+ models** | ✅ `59cd5c8` |
 | 7 | Dual-stack monorepo docs after WebRTC #30 | ✅ `#31` |
 | 8 | **Age floor 21+ prompts + UI + forge** | ✅ |
-| 9 | **Age floor leftover source** (gallery/chat/export/forge/studio + archive prompts) | ✅ |
+| 9 | **Age floor leftover source** (gallery/chat/studio/custom) | ✅ `cad9ff6` |
 | 10 | **Pack 01 last-build loops** Mila Luna Sienna Diego Mateo Rio | ✅ live |
 | 11 | Gary phone hard-refresh Diego / Mateo / Rio | ✅ passed |
+| 12 | Gary Studio DNA phone pass (Forge → Save · Chat Now) | ✅ passed |
 
 ---
 
@@ -34,18 +35,18 @@ Railway is **live**. **21+** shipped. Pack 01 last-build clips **6/6 LIVE** + ph
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
-| B | More library primes | Content | Same drop: `Name + Drive link` |
-| C | Studio DNA phone pass | S | Sign in → Forge → Save · Chat Now |
+| A | More library primes | Content | Same drop: `Name + Drive link` |
+| B | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
 
 ---
 
 ## Gary (human)
 
 1. ~~Hard-refresh gallery → Diego → one chat~~ ✅  
-2. ~~Hard-refresh last-build boys (Diego / Mateo / Rio)~~ ✅ passed  
-3. Optional: Stripe Day Pass smoke  
-4. Optional: next prime (`Name + Drive link`)
+2. ~~Hard-refresh last-build boys (Diego / Mateo / Rio)~~ ✅  
+3. ~~Studio DNA phone pass~~ ✅  
+4. Optional: next prime (`Name + Drive link`)  
+5. Optional: Stripe Day Pass smoke
 
 ---
 
