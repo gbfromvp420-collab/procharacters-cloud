@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-06 cold continue (**🔴 Railway trial expired · prod offline** · WebRTC side service on `main`)  
-**Session:** King Grok CEO · post-#30 monorepo dual-stack hygiene · ops first when plan unlocks
+**Updated:** 2026-08-13 Railway plan unlock (**🟢 prod live** · API `c9fd651` · web 200)  
+**Session:** King Grok CEO · hosting back · phone smoke next
 
 ### Agent fleet (slash / auto)
 
@@ -15,20 +15,21 @@
 
 ---
 
-## 🔴 BLOCKER — bring live back (do this first)
+## 🟢 LIVE — plan unlocked, product serving
 
 | Fact | Detail |
 |------|--------|
-| **Symptom** | API + Web public URLs → `404 Application not found` |
-| **Cause** | Railway **trial expired** — redeploy mutations return: *“Your trial has expired. Please select a plan to continue using Railway.”* |
-| **Project still exists** | `captivating-vision` · services: `procharacters-api`, `procharacters-web`, `Postgres-Hw0Y` |
-| **Domains still registered** | `procharacters-api-production-0417.up.railway.app` · `procharacters-web-production-7288.up.railway.app` |
-| **Deployments** | All recent deploys `REMOVED` (last good ship was 2026-07-20 ~`f430fc8` / docs note) |
-| **Repo / packs** | ✅ `main` · WebRTC engine merged (#30) · dual-stack compose documented · **8 avatar packs READY** |
-| **Gary move** | Railway dashboard → **pick a plan / add billing** on project `captivating-vision` → say **`redeploy`** (or I trigger redeploy the moment trial unlocks) |
-| **Eng move after plan** | Redeploy api+web from `main` with **`backend/Dockerfile`** + **`frontend/Dockerfile` only** (never root `Dockerfile`) → curl `/health` → phone hard-refresh → shy-boy + defaults smoke |
+| **Symptom (old)** | API + Web were `404 Application not found` while trial was expired |
+| **Now** | Both public URLs **200**. API `/health` `status: ok` |
+| **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
+| **Domains** | `procharacters-api-production-0417.up.railway.app` · `procharacters-web-production-7288.up.railway.app` |
+| **Live API SHA** | `c9fd651` (2026-07-20 EOD product ship — last good avatar-pack refresh) |
+| **Git `main`** | `c77f155` — WebRTC #30 + dual-stack docs only. **Do not** point product services at root `Dockerfile` |
+| **Boot** | API `startedAt` 2026-08-13T12:37:20Z |
+| **Gary move** | Phone **hard-refresh** → gallery + shy-boy + a default → one chat turn |
+| **Eng move** | Docs truth shipped. Say **`redeploy`** only if you want api+web rebuilt from latest `main` (still `backend/Dockerfile` + `frontend/Dockerfile`) |
 
-**Until plan is active, no public chat/gallery/Studio.** Code and packs are fine; hosting is the gate.
+**Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
 ---
 
@@ -36,10 +37,10 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **🔴 Railway / live** | **OFFLINE** — trial expired · project+domains intact · deploys REMOVED | **Select paid plan** → redeploy api+web |
+| **🟢 Railway / live** | **LIVE** · plan active · API `c9fd651` · prisma/LiveKit/Stripe/ntfy/push ok | Phone hard-refresh · shy-boy + defaults smoke |
 | **WebRTC side service** | ✅ merged #30 · root `app/` + CI · compose profile `webrtc` | Local: `docker compose --profile webrtc up --build webrtc` — not prod chat |
 | **Monorepo dual-stack** | ✅ README / DEPLOY / WEBRTC-ENGINE / compose clarify product vs side service | Keep Railway Dockerfile paths product-only |
-| **Studio Forge v3** | ✅ code shipped (DNA + canvas + export) | After live: Sign in → Studio → fantasy → **Forge model** → **Save · Chat Now** |
+| **Studio Forge v3** | ✅ code shipped (DNA + canvas + export) | Sign in → Studio → fantasy → **Forge model** → **Save · Chat Now** |
 | **Forge this heat** | ✅ code shipped | Deep chat → gallery **Forge this DNA** → Studio |
 | **DNA climb toast** | ✅ code shipped | Climb Soft→Tease→Edge — toast once per node |
 | **Sexy DNA atmosphere** | ✅ code shipped | Climb to Edge — room / chips track tree |
@@ -48,26 +49,26 @@
 | **Continue forge + DNA typing** | ✅ code shipped | Hot trail home → forge without hunting gallery |
 | **Pack pipeline** | ✅ Stage1 extract · Stage2 cut-loops v2 · batch · id-map.example | Finish primes → batch → `packs ready: <id>` |
 | **GrokBuild 4K v1.0** | ✅ Humanized packs · Pack 01 roster · live-folder map | 6 primes → cut-loops → theme defs → `packs ready` |
-| **Avatar clip refresh (EOD 07-20)** | ✅ shy-boy aroused fixed · 8 packs READY in git | After live: hard-refresh · smoke shy-boy + defaults |
-| **DNA runtime / tree / trail / reclaim stack** | ✅ full eng stack on `main` | Smoke after redeploy |
-| **Error alerts** | ✅ ntfy wired in code | Re-test after live |
-| **Return loop** | ✅ full stack in code | Smoke heat → end → gallery trail after live |
-| **EOD 2026-07-20** | ✅ STOP · push · save | Done — week gap; trial lapsed offline |
-| **Next** | **1) Railway plan · 2) redeploy · 3) phone smoke · 4) primes/packs** | say `redeploy` after plan, or `cook packs` offline |
+| **Avatar clip refresh (EOD 07-20)** | ✅ shy-boy aroused fixed · 8 packs READY in git | Hard-refresh · smoke shy-boy + defaults |
+| **DNA runtime / tree / trail / reclaim stack** | ✅ full eng stack on `main` | Smoke on live |
+| **Error alerts** | ✅ ntfy live on API (`alertChannel: ntfy`) | Optional: Account **Send test alert** |
+| **Return loop** | ✅ full stack in code | Smoke heat → end → gallery trail |
+| **EOD 2026-07-20** | ✅ STOP · push · save | Closed — trial gap over |
+| **Next** | **1) phone smoke · 2) optional `redeploy` to latest main · 3) primes/packs** | say `smoke` after phone pass, or `cook packs` |
 
 ---
 
 ## Studio routes (canonical)
 
 | Path | Purpose |
-|------|---------|
+|-------|---------|
 | `/models/studio` | **Studio Forge v3** — conversational create |
 | `/models/studio/edit/:id` | Edit owned model (+ DNA if present) |
 | `/models/studio?edit=id` | Legacy → redirects to edit path |
 | `/chat?create=1` | → Studio create |
 | `/chat?edit=1&character=id` | → Studio edit path |
 
-**Live (when hosting up):** https://procharacters-web-production-7288.up.railway.app/models/studio  
+**Live:** https://procharacters-web-production-7288.up.railway.app/models/studio  
 
 **API:** `POST /api/v1/characters/forge/expand`
 

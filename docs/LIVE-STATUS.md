@@ -1,30 +1,34 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-06 cold continue (**🔴 prod offline — Railway trial expired** · WebRTC #30 on `main`)  
+**Updated:** 2026-08-13 Railway plan unlock (**🟢 prod live**)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** *none serving* — last successful product ship ~`f430fc8` (docs EOD 07-20). Git `main` includes WebRTC side service merge (#30). Redeploy blocked until Railway plan is selected.
+**Live deploy SHA:** `c9fd651d64931c4468a00b6b3f313dc334e9a12b` (2026-07-20 EOD product ship). Git `main` is later (`c77f155`, WebRTC #30 + dual-stack docs). Product services are **not** the root WebRTC Dockerfile.
 
 ---
 
-## 🔴 Live product is DOWN
+## 🟢 Live product is UP
 
-| Check | Result (2026-08-06) |
+| Check | Result (2026-08-13) |
 |-------|---------------------|
-| Web / API public URLs | **404** `Application not found` (expect same until plan) |
-| Railway project `captivating-vision` | Still exists (api + web + Postgres-Hw0Y) |
-| Deployments | All recent = **REMOVED** |
-| Redeploy attempt | **Blocked:** *“Your trial has expired. Please select a plan…”* |
-| Git `main` + avatar packs | Healthy · **8/8 packs READY** · dual-stack monorepo documented |
+| Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
+| API `/health` | **200** `status: ok` · `deploy.gitSha` `c9fd651` · `startedAt` 2026-08-13T12:37:20Z |
+| Accounts / DB | `prisma` · `database.ok` true |
+| LiveKit | configured · badge `ready` |
+| Stripe | `live` + webhook true · free path still on |
+| Web Push | true · expiry cron ticked (2 accounts) |
+| Error alerts | ntfy wired (`alertChannel: ntfy`) |
+| Railway project `captivating-vision` | api + web + Postgres-Hw0Y serving |
+| Git `main` + avatar packs | Healthy · **8/8 packs READY** in git · live `dedicatedReady` = 6 Phase-4 packs |
 | WebRTC side service | On `main` (`app/`) — **local/demo only**, not the live chat URLs |
-
-**Unblock:** Railway → project **captivating-vision** → choose a plan / billing → tell King Grok **`redeploy`**.
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never point product services at the root `Dockerfile` (that’s Python WebRTC).
 
+**Optional next ship:** say **`redeploy`** to rebuild api+web from latest `main` (docs/WebRTC only vs this SHA). Not required for chat/gallery/Studio.
+
 ---
 
-## Open the product (when live again)
+## Open the product
 
 | | URL |
 |--|-----|
@@ -41,9 +45,9 @@
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat (Grok) | 🔴 **hosting down** · eng ✅ on `main` |
-| Gallery + character cards | 🔴 hosting · eng ✅ |
-| Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` |
+| Live NSFW chat (Grok) | 🟢 **hosting up** · API `c9fd651` |
+| Gallery + character cards | 🟢 hosting up · web 200 |
+| Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` · DB ok |
 | Resume codes (multi-device) | ✅ |
 | Edge Pace mode (phase strip) | ✅ |
 | “What we remember” memory strip | ✅ scene lock chips + structured prior |
@@ -54,19 +58,19 @@
 | **Return Intelligence** | ✅ last-scene dossier · named return greetings · **They remember you** card + pick-up seeds |
 | **Heat Trail** | ✅ resume stamps depth/chips · gallery tiles + Continue + hero show where you left heat |
 | **End Ritual** | ✅ pause banner + chat resume hero show full heat trail (depth/chips/recap) |
-| **Error alerts (ntfy)** | ✅ Gary live · channel ntfy · test 200 |
+| **Error alerts (ntfy)** | ✅ live on API · channel ntfy |
 | CharacterSession Prisma (durable memory) | ✅ migration `20260717_character_session` |
 | Web Push (VAPID) + **Send test** | ✅ server configured |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |
 | Send test **429 UX** (retry-after copy) | ✅ |
 | Chat + gallery push strip | ✅ Enable / Send test / sign-in CTA |
 | Gallery tile **Continue** primary | ✅ when resume exists (New chat secondary) |
-| LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse |
-| **Avatar 4-loop packs (EOD 07-20)** | ✅ refreshed `female-default` · `female-playful-brat` · `female-soft-goth` · `twink-default` · `twink-gym` · `twink-shy-boy` (aroused fixed) · all 8 `dedicatedReady` · live web 200 on new MP4s |
+| LiveKit avatar reactivity | ✅ sticky bands + crossfade + band pulse · health badge `ready` |
+| **Avatar 4-loop packs (EOD 07-20)** | ✅ refreshed `female-default` · `female-playful-brat` · `female-soft-goth` · `twink-default` · `twink-gym` · `twink-shy-boy` (aroused fixed) · all 8 `dedicatedReady` in git · live health lists 6 Phase-4 packs |
 | Account **System pulse** | ✅ `/health` + `/metrics` — deploy, DB, push, Stripe, uptime, sessions, turns, WS, 5xx · **Send test alert** |
 | **Error alerts (5xx)** | ✅ eng: **ntfy** (no Discord) · email · Discord/Slack · [ops-error-webhook.md](./ops-error-webhook.md) · Gary sets topic URL |
 | Continue **Copy code** | ✅ one-tap resume code on gallery banner |
-| PWA install / Home Screen | ✅ manifest + install tip + offline shell |
+| PWA install / Home Screen | ✅ manifest 200 + install tip + offline shell |
 | Stripe Day Pass / Supporter UI | ✅ free path; **confirm-on-return** + webhook; **LIVE** keys; **one-tap** Day Pass/Supporter on Soft Support (chat + gallery) |
 | Soft Day Pass after heat win | ✅ Session win toast offers Day Pass when signed-in + not premium (never blocks) |
 | **Post-checkout unlock ceremony** | ✅ Account `#premium-unlocked` · Create / My models / hub · cap headroom |
@@ -122,22 +126,24 @@
 ## Your quick wins (no engineer needed)
 
 1. ~~**Phone push**~~ ✅ done  
-2. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
-3. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap, or Account checkout — free path always works  
-
-4. **Avatar packs (content):** cut your library into 4 loops — start with 6 featured models → [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
+2. **Hard-refresh the site** (this boot is new) — gallery, shy-boy, one default, one chat turn  
+3. **Sign in once** if asked (Postgres upgrade) — same handle/passphrase  
+4. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap, or Account checkout — free path always works  
+5. **Avatar packs (content):** cut your library into 4 loops — start with 6 featured models → [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
 
 ---
 
 ## CEO sprint order (eng + human)
 
 1. ~~Gary: phone push smoke~~ ✅  
-2. Eng: keep return loop + ops healthy (deploy fingerprint on `/health`)  
-3. ~~Housekeeping: close stale PRs `#1` `#2` `#3` `#4` `#29`~~ ✅ + CI workflows on `main`  
-4. ~~Ops noise: Azure workflow manual-only + Account System pulse~~ ✅  
-5. Content: dedicated packs when footage exists  
-6. Optional: **alerts without Discord** — `ERROR_WEBHOOK_URL=https://ntfy.sh/YOUR-SECRET-TOPIC` + free ntfy app → [ops-error-webhook.md](./ops-error-webhook.md) · **Send test alert**  
-7. Optional: more footage packs when ready
+2. ~~Railway plan / bring live back~~ ✅ 2026-08-13  
+3. **Gary: phone hard-refresh smoke** (gallery + shy-boy + one chat)  
+4. Eng: keep return loop + ops healthy (deploy fingerprint on `/health`)  
+5. ~~Housekeeping: close stale PRs `#1` `#2` `#3` `#4` `#29`~~ ✅ + CI workflows on `main`  
+6. ~~Ops noise: Azure workflow manual-only + Account System pulse~~ ✅  
+7. Content: dedicated packs when footage exists  
+8. Optional: say **`redeploy`** to pin latest `main` (docs/WebRTC only) — keep Dockerfile paths product-only  
+9. Optional: more footage packs when ready
 
 ---
 
@@ -145,9 +151,9 @@
 
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
-- `billing.stripe` = false until you add keys (expected); after keys: `billing.mode` test|live + `billing.webhook`  
-- `deploy.gitSha` present after API redeploy (Railway commit)  
-- `observability.lastExpiryCron` present after first cron tick (or null until then)  
+- `billing.stripe` = true · `billing.mode` = `live` · `billing.webhook` = true (2026-08-13)  
+- `deploy.gitSha` present (`c9fd651`)  
+- `observability.lastExpiryCron` present after first cron tick  
 - Manifest: `/manifest.webmanifest` returns 200  
 
 ---
