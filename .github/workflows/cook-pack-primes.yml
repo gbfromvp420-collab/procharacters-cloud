@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       who:
-        description: mila, luna, or both
+        description: mila, luna, sienna, or both
         required: true
         default: both
   # Dispatch only — do not push binaries straight to main (GitHub 500'd).
@@ -55,6 +55,11 @@ jobs:
                 "https://drive.google.com/file/d/1KdZ6SiyoipErVoqDW0Si-oY0llqXdoo2/view" \
                 female-soft-goth "0 6 12 19.8" "6 5 7 5.9"
               ;;
+            sienna)
+              cook luna_prime_25s \
+                "https://drive.google.com/file/d/1dpt3JNEnOeNqBbWy68doJfWyIST59KlL/view" \
+                female-athletic-tease "0 6 12 24" "6 5 7 6.7"
+              ;;
             both|*)
               cook maria_prime_25s \
                 "https://drive.google.com/file/d/1sGGu0_AzMaxZSZyenwGdmJGmjSnPlzaE/view" \
@@ -78,21 +83,25 @@ jobs:
           PY
 
       - name: Commit loops
+        env:
+          WHO: ${{ github.event.inputs.who || 'sienna' }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add frontend/public/avatar/female-playful-brat/*.mp4 \
                   frontend/public/avatar/female-soft-goth/*.mp4 \
+                  frontend/public/avatar/female-athletic-tease/*.mp4 \
                   frontend/public/avatar/packs/status.json
           if git diff --cached --quiet; then
             echo "No loop changes"
             exit 0
           fi
-          git commit -m "feat(packs): Mila + Luna Pack 01 loops from Gary Drive"
-          git checkout -B ops/gha-pack-loops
+          git commit -m "feat(packs): Pack 01 loops from Gary Drive (${WHO:-sienna})"
+          BRANCH="ops/gha-pack-${WHO:-sienna}"
+          git checkout -B "$BRANCH"
           for i in 1 2 3; do
-            git push -u origin ops/gha-pack-loops && break
+            git push -u origin "$BRANCH" && break
             echo "push retry $i"
             sleep 5
           done
