@@ -733,7 +733,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             ))}
           </div>
         )}
-        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 18+ · Procharacters.cloud / KGC Ventures</footer>
+        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 21+ · Procharacters.cloud / KGC Ventures</footer>
       </div>
 
       <div

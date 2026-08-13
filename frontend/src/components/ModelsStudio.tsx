@@ -509,7 +509,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     const lines: string[] = [
       `# My Character — ${name.trim() || "Unnamed"}`,
       ``,
-      `Consenting adult 18+. Photorealistic. Uncensored. First person live cam.`,
+      `Consenting adult 21+. Photorealistic. Uncensored. First person live cam.`,
       ``,
       `## Identity lock (user-authored)`,
       appearance.trim() || "_(add a short visual — 1–2 sentences)_",
