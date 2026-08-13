@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 Mila + Luna primes cut (**🟢 prod** · deploy pending)  
-**Session:** King Grok CEO · Gary Drive → Mila + Luna 4-loop packs ready locally
+**Updated:** 2026-08-13 Mila + Luna loops on `main` (`1f0dbfb`)  
+**Session:** King Grok CEO · Gary Drive primes live in git · wait Railway web rebuild
 
 ### Agent fleet (slash / auto)
 
@@ -21,10 +21,10 @@
 |------|--------|
 | **Now** | Both public URLs **200**. API `/health` `status: ok` |
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
-| **Avatar packs** | **8/8 READY** · 32 MP4s live 200 · Phase-4 `dedicatedReady` = 6 |
-| **This cook** | Luna Drive prime (4K 25.8s) → 4 loops 1080×1920 |
-| **Gary move** | Optional next: **Sienna** share link (or more) |
-| **Eng move** | Push Mila+Luna 8 MP4s (git binary) → Railway web |
+| **Avatar packs** | **8/8 READY** · Mila + Luna Pack 01 loops on `main` `1f0dbfb` |
+| **This cook** | GHA cut + merged 8 loops from Gary Drive |
+| **Gary move** | After web deploy: hard-refresh gallery → **Mila** + **Luna** |
+| **Eng move** | Confirm live MP4 sizes, then Sienna / Stripe / Studio |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -34,11 +34,11 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **🟢 Railway / live** | **LIVE** | Optional Stripe Day Pass smoke |
-| **21+ age floor** | ✅ runtime + **source leftovers** this cook | Hard-refresh after deploy |
-| **Dedicated packs** | ✅ 8/8 live · Mila+Luna **cut, not on Railway yet** | wait binary push |
+| **🟢 Railway / live** | **LIVE** | Hard-refresh after web rebuild |
+| **21+ age floor** | ✅ | — |
+| **Dedicated packs** | ✅ 8/8 · **Mila+Luna new loops on main** | watch gallery |
 | **Pack 01 primes** | Mila ✅ Luna ✅ · 4 pending | next: **Sienna** / Mateo / Diego / Rio |
-| **Next** | **1) more primes · 2) stripe · 3) Studio DNA** | say `unpack packs: <url>` or `stripe` |
+| **Next** | **1) Sienna prime · 2) stripe · 3) Studio DNA** | say `Sienna` + Drive link |
 
 ---
 
