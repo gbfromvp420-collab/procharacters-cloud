@@ -1,16 +1,39 @@
 {
-  "updatedAt": "2026-08-13T19:22:28.000Z",
+  "updatedAt": "2026-08-13T20:50:51.000Z",
   "ready": [
+    "becca",
+    "blake",
     "female-athletic-tease",
     "female-default",
     "female-playful-brat",
     "female-soft-goth",
+    "gary",
+    "jenny",
+    "jessica",
+    "justin",
+    "kenny",
+    "mark",
+    "peter",
+    "rachel",
+    "samantha",
+    "sarah",
+    "tommy",
     "twink-alt-punk",
     "twink-default",
     "twink-gym",
     "twink-shy-boy"
   ],
   "packs": {
+    "becca": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "blake": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
     "female-athletic-tease": {
       "ready": true,
       "missing": [],
@@ -30,6 +53,61 @@
       "ready": true,
       "missing": [],
       "avatarBase": "female-default"
+    },
+    "gary": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "jenny": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "jessica": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "justin": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "kenny": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "mark": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "peter": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "rachel": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "samantha": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "sarah": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "female-default"
+    },
+    "tommy": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
     },
     "twink-alt-punk": {
       "ready": true,
