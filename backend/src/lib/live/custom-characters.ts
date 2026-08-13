@@ -212,7 +212,7 @@ async function buildPromptV2(input: {
   return [
     `# Naughty Syntax — My Character: ${input.name}`,
     ``,
-    `Consenting adult 18+. Photorealistic. Uncensored. First person live cam.`,
+    `Consenting adult 21+. Photorealistic. Uncensored. First person live cam.`,
     ``,
     `## Identity lock (user-authored — never replace with a catalog model look)`,
     input.appearance,
@@ -725,7 +725,7 @@ export function getBaseModelPrefill(baseModelId: string): {
     displayName: p.displayName,
     identityHint:
       p.teaser ||
-      `${p.displayName}: ${p.consistencyTraits.slice(0, 3).join(", ")}. Consenting adult 18+. Photorealistic.`,
+      `${p.displayName}: ${p.consistencyTraits.slice(0, 3).join(", ")}. Consenting adult 21+. Photorealistic.`,
     vibeHint: p.energyLabel,
     clothingHint: defaultClothing(avatarBase),
     avatarBase,
