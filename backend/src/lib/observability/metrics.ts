@@ -10,6 +10,8 @@ export type MetricCounters = {
   wsConnections: number;
   wsErrors: number;
   sessionsCreated: number;
+  /** Successful resume-code / Continue re-entry. */
+  sessionsResumed: number;
   chatTurns: number;
   chatLlmErrors: number;
   customCharactersCreated: number;
@@ -46,6 +48,7 @@ const counters: MetricCounters = {
   wsConnections: 0,
   wsErrors: 0,
   sessionsCreated: 0,
+  sessionsResumed: 0,
   chatTurns: 0,
   chatLlmErrors: 0,
   customCharactersCreated: 0,
