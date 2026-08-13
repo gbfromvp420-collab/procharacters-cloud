@@ -36,7 +36,7 @@ aroused.mp4
 
 ## Ship order (do these first)
 
-Live Phase 4 folders already exist (empty except README):
+Live Phase 4 folders already have **dedicated 4-loop packs (8/8 live)**. Next drop is a **better prime** (start Maria), not a blank catalog:
 
 | Priority | Folder | Vibe cheat sheet |
 |----------|--------|------------------|
@@ -64,7 +64,7 @@ Then eng runs:
 cd backend && npm run avatar:check-packs -- --write
 ```
 
-Gallery badge flips **Interim → 4K pack**. Redeploy **web** (files) + **api** (status).
+A better prime **replaces** the live loops. Redeploy **web** (files) + **api** (status). Gallery badge stays **4K pack**.
 
 ---
 
@@ -103,8 +103,8 @@ Eng already supports **drop-in**: new folder with 4 files → check-packs → de
 
 ## What “4K pack” means in the product
 
-- **Interim** = shared `twink-default` / `female-default` loops (live today)
-- **4K pack** = this model’s own 4 files present → dedicated avatar in gallery + chat
+- **Interim** = shared `twink-default` / `female-default` loops (fallback only)
+- **4K pack** = this model’s own 4 files — **already live for all 8 folders**
 - `/health` → `avatar.dedicatedReady` lists ready model ids
 
 Not required for Stripe or chat. Pure premium **feel** upgrade.
@@ -126,6 +126,7 @@ Not required for Stripe or chat. Pure premium **feel** upgrade.
 You don’t need to leave Grok to “start” packs — edit offline (phone/laptop editor), then either:
 
 - upload / scp / drag files into the repo folders later, or  
-- drop a zip and say **`unpack packs`** and eng will place + verify  
+- drop a zip and say **`unpack packs`**, or  
+- paste a share link: **`unpack packs: https://your-link`** (defaults to Maria)  
 
 Stripe keys = Railway vars (separate). Packs = content drop. Parallel is fine.

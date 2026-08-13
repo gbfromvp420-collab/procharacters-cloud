@@ -37,7 +37,15 @@ Pick the **best long take** per vibe. Export a **20–30s prime**, name it exact
 | `diego_prime_25s.mp4` | `twink-shy-boy` | shy peek |
 | `alex_prime_25s.mp4` | `twink-alt-punk` | mesh brat |
 
-Put primes in **`packs/inbox/`** (or a zip) and say **`unpack packs`**.  
+**Phone (easiest):** paste a share link here:
+
+```
+unpack packs: https://your-link
+```
+
+Defaults to Maria (`maria_prime_25s.mp4`). Dropbox “copy link” works (we flip `dl=1`). Google Drive file links too.
+
+Or put the file in **`packs/inbox/`** (or a zip) and say **`unpack packs`**.  
 Eng runs `bash scripts/unpack-packs.sh` — empty inbox just prints the 6 names.
 
 Or cut the 4 loops yourself (5–8s, 9:16, silent H.264):
