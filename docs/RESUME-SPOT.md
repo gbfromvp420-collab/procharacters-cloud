@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 Sienna loops on `main` (`96f7643`)  
-**Session:** King Grok CEO · Mila+Luna live on web · Sienna in git, wait Railway
+**Updated:** 2026-08-13 Mila + Luna + Sienna **LIVE** on web  
+**Session:** King Grok CEO · 3/3 girls live · next Mateo Drive link
 
 ### Agent fleet (slash / auto)
 
@@ -15,28 +15,22 @@
 
 ---
 
-## 🟢 LIVE — plan unlocked, product serving
+## 🟢 LIVE
 
 | Fact | Detail |
 |------|--------|
-| **Now** | Both public URLs **200** |
-| **Avatar packs** | Mila + Luna **new loops live** · Sienna on `main` `96f7643` |
-| **This cook** | Sienna Drive prime cut + merged |
-| **Gary move** | Hard-refresh **Mila + Luna now**. Sienna after next web deploy. |
-| **Eng move** | Confirm Sienna live sizes, then Mateo / Diego / Rio |
+| **Girls** | Mila + Luna + Sienna **your clips live** (sizes match git) |
+| **Boys** | Mateo / Diego / Rio still July dedicated loops |
+| **Gary move** | Hard-refresh the 3 girls. Next: **Mateo** + Drive link |
+| **Eng move** | Dispatch `cook-pack-primes` with `who=mateo` + `drive_url` |
 
-**Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
+**Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`.
 
 ---
 
-## Where we are
+## Next
 
-| Track | Status | Next human move |
-|-------|--------|-----------------|
-| **Mila / Luna** | ✅ live on web | hard-refresh gallery |
-| **Sienna** | ✅ on `main` | wait Railway web |
-| **Pack 01 remaining** | Mateo / Diego / Rio | Drive link + live name |
-| **Next** | **1) Mateo · 2) stripe · 3) Studio DNA** | say `Mateo` + link |
+**1) Mateo prime · 2) Diego · 3) Rio · 4) stripe**
 
 **Live:** https://procharacters-web-production-7288.up.railway.app
 
