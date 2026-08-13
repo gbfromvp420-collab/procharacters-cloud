@@ -5,6 +5,7 @@
 
 import { env } from "../../config/env.js";
 import { XaiApiError, XaiChatClient } from "../llm/xai-client.js";
+import { applyAgeFloor } from "./age-floor.js";
 import { isSignatureModelId } from "./custom-characters.js";
 import {
   forgeSystemPrompt,
@@ -14,6 +15,26 @@ import {
   type ForgeExpandResult,
   type NaughtySyntaxDna,
 } from "./forge-dna.js";
+
+function floorDna(dna: NaughtySyntaxDna): NaughtySyntaxDna {
+  const ap = dna.adaptivePrompt;
+  return {
+    ...dna,
+    identity: applyAgeFloor(dna.identity),
+    vibe: applyAgeFloor(dna.vibe),
+    starterLine: dna.starterLine ? applyAgeFloor(dna.starterLine) : dna.starterLine,
+    adaptivePrompt: {
+      ...ap,
+      core: applyAgeFloor(ap.core),
+      branches: {
+        dark: applyAgeFloor(ap.branches.dark),
+        chaotic: applyAgeFloor(ap.branches.chaotic),
+        flirty: applyAgeFloor(ap.branches.flirty),
+      },
+      booster: ap.booster ? applyAgeFloor(ap.booster) : ap.booster,
+    },
+  };
+}
 
 function isRealXaiKey(key?: string): boolean {
   if (!key?.trim()) return false;
@@ -79,12 +100,11 @@ export async function expandFantasyToDna(
         .join("\n");
 
       const raw = await client.complete([
-        { role: "system", content: forgeSystemPrompt() },
+        { role: "system", content: applyAgeFloor(forgeSystemPrompt()) },
         { role: "user", content: userParts },
       ]);
       result = parseLlmForgeJson(raw, input);
     } catch (err) {
-      // Timeout / API issues → still deliver forge under 5s via heuristic
       if (err instanceof XaiApiError || err instanceof Error) {
         console.warn("[forge-expand] LLM failed, heuristic fallback:", err.message);
       }
@@ -94,12 +114,17 @@ export async function expandFantasyToDna(
     result = heuristicForgeExpand(input);
   }
 
-  // Ensure base is valid
   if (!isSignatureModelId(result.form.baseModelId)) {
     result.form.baseModelId = input.baseModelId || "twink-default";
     result.dna.baseModelId = result.form.baseModelId;
   }
 
+  result.dna = floorDna(result.dna);
+  result.form = {
+    ...result.form,
+    appearance: applyAgeFloor(result.form.appearance),
+    energy: applyAgeFloor(result.form.energy),
+  };
   result.dna.expandMs = Date.now() - t0;
   return result;
 }
