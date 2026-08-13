@@ -17,7 +17,7 @@ room metadata sync for the video layer.
 **v2.2 product surface** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
 Defaults: 8 signature models (`twink-default` / `female-default` at prompt `v1.3.0`, plus Phase 4 pack at `v1.0.0`) and **runtime custom characters**.
 
-**Hosting:** Railway prod **live** as of 2026-08-13 (API `c9fd651`) — see [`docs/LIVE-STATUS.md`](docs/LIVE-STATUS.md).
+**Hosting:** Railway prod **live** as of 2026-08-13 (API `554c484`) — see [`docs/LIVE-STATUS.md`](docs/LIVE-STATUS.md).
 
 **Side service (merged #30):** Python FastAPI **WebRTC signaling + trainer studio** at repo root (`app/`). Not the live chat product path; optional local/demo GPU hot-swap. Docs: [`docs/WEBRTC-ENGINE.md`](docs/WEBRTC-ENGINE.md).
 
@@ -40,7 +40,7 @@ What works today:
 - Stub / credit-aware errors when xAI is unavailable
 - Session-scoped memory (cleared on session end)
 
-What's next: phone hard-refresh smoke on live; keep return loop + ops healthy; content packs; optional WebRTC/trainer demos offline.
+What's next: optional Stripe Day Pass smoke (live money); content packs; Studio DNA phone pass. Offline proof: `bash scripts/smoke-local-product.sh`.
 
 Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md), [`docs/v2.2-roadmap.md`](docs/v2.2-roadmap.md)
 
@@ -83,12 +83,21 @@ docker compose --profile webrtc up --build webrtc
 
 ## Smoke tests
 
-Product (backend running):
+**Offline product stack** (no Railway required — builds/starts backend, hits health + characters + session):
+
+```bash
+bash scripts/smoke-local-product.sh
+# or, with backend already built:
+cd backend && npm run smoke:local
+```
+
+Product (backend already running):
 
 ```bash
 cd backend
 npm run test:memory        # WebSocket loop + memory inspection
 npm run test:livekit       # verifies LiveKit credentials (skipped if not configured)
+npm run smoke:deploy       # fuller API harness (local or --base <url>)
 ```
 
 WebRTC / trainer (from repo root, deps installed):
@@ -97,6 +106,7 @@ WebRTC / trainer (from repo root, deps installed):
 python3 scripts/run_all_tests.py --skip-stress
 ```
 
+**Age floor:** all signature models and product copy are **21+** consenting adults.
 ## Project structure
 
 | Path | Purpose |
