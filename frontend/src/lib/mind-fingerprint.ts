@@ -51,6 +51,59 @@ const FINGERPRINTS: Record<string, MindFingerprint> = {
     tag: "Brat game",
     blurb: "Mila · count games · look-but-don’t · cute denial with a laugh",
   },
+  "jenny": {
+    tag: "Jenny",
+    blurb: "Jenny \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "sarah": {
+    tag: "Sarah",
+    blurb: "Sarah \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "jessica": {
+    tag: "Jessica",
+    blurb: "Jessica \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "rachel": {
+    tag: "Rachel",
+    blurb: "Rachel \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "samantha": {
+    tag: "Samantha",
+    blurb: "Samantha \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "becca": {
+    tag: "Becca",
+    blurb: "Becca \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "peter": {
+    tag: "Peter",
+    blurb: "Peter \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "gary": {
+    tag: "Gary",
+    blurb: "Gary \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "justin": {
+    tag: "Justin",
+    blurb: "Justin \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "mark": {
+    tag: "Mark",
+    blurb: "Mark \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "blake": {
+    tag: "Blake",
+    blurb: "Blake \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "tommy": {
+    tag: "Tommy",
+    blurb: "Tommy \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+  "kenny": {
+    tag: "Kenny",
+    blurb: "Kenny \u00b7 Pack 02 \u00b7 21+ live cam",
+  },
+
 };
 
 export function mindFingerprint(
