@@ -1,4 +1,4 @@
-﻿# OS
+# OS
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -46,6 +46,7 @@ data/*.json
 # Local WebRTC test / uvicorn junk
 .uvicorn-test.log
 .uvicorn-*.log
+.local-product-smoke.log
 
 # Cursor / local tooling
 terminals/
