@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 Pack 01 **6/6 on main** (Mila Luna Sienna live · Diego Mateo Rio waiting Railway web)  
-**Session:** King Grok CEO · last-build Drive primes cooked
+**Updated:** 2026-08-13 Pack 01 **6/6 LIVE** (Mila Luna Sienna Diego Mateo Rio)  
+**Session:** King Grok CEO · last-build Drive primes cooked and on Railway web
 
 ### Agent fleet (slash / auto)
 
@@ -20,9 +20,9 @@
 | Fact | Detail |
 |------|--------|
 | **Girls** | Mila + Luna + Sienna **your clips live** |
-| **Boys** | Diego + Mateo + Rio **on main** (`193dc85`) — wait Railway web |
-| **Gary move** | Hard-refresh Diego · Mateo · Rio after web ships |
-| **Eng move** | Confirm live idle sizes drop to ~2MB, then Stripe / more primes |
+| **Boys** | Diego + Mateo + Rio **your clips live** (sizes match git) |
+| **Gary move** | Hard-refresh gallery → Diego / Mateo / Rio → watch the new loops |
+| **Eng move** | Optional: Stripe Day Pass, or next library primes |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`.
 
