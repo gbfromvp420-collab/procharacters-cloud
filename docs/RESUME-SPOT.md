@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 21+ source leftovers (**🟢 prod live** · 8/8 packs · Pack 01 primes pending)  
-**Session:** King Grok CEO · leftover 18+ source flushed · kitchen still open for Maria prime
+**Updated:** 2026-08-13 leftover 21+ source (**🟢 prod live** · 8/8 packs · Pack 01 primes pending)  
+**Session:** King Grok CEO · card/print/archive prompts 21+ · gallery/chat still runtime-floored
 
 ### Agent fleet (slash / auto)
 
@@ -22,9 +22,9 @@
 | **Now** | Both public URLs **200**. API `/health` `status: ok` |
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
 | **Avatar packs** | **8/8 READY** · 32 MP4s live 200 · Phase-4 `dedicatedReady` = 6 |
-| **This cook** | Source 18+ gone (gallery/chat/card/export/forge/studio + archive prompts) |
-| **Gary move** | Hard-refresh after this deploy. Or `unpack packs: https://…` (Maria) |
-| **Eng move** | After merge: wait web+api deploy, then Stripe or Studio DNA |
+| **This cook** | Card + resume print + archive prompts 21+; stronger `applyAgeFloor` |
+| **Gary move** | Hard-refresh after deploy. Or `unpack packs: https://…` (Maria) |
+| **Eng move** | Stripe smoke or Studio DNA phone pass |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -35,10 +35,10 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **🟢 Railway / live** | **LIVE** | Optional Stripe Day Pass smoke |
-| **21+ age floor** | ✅ runtime + **source leftovers** this cook | Hard-refresh after deploy |
+| **21+ age floor** | ✅ runtime + card/print/archives this cook | Hard-refresh after deploy |
 | **Dedicated packs** | ✅ 8/8 live (2026-07-20 loops) | Optional refresh from library |
 | **Pack 01 primes** | ⏳ pending | 6 named primes → `packs/inbox/` |
-| **Next** | **1) unpack packs / packs ready · 2) stripe · 3) Studio DNA** | say `unpack packs` or `stripe` |
+| **Next** | **1) unpack packs · 2) stripe · 3) Studio DNA** | say `unpack packs` or `stripe` |
 
 ---
 
