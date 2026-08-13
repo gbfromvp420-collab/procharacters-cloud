@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live** at `74f76ea`. **21+** shipped including leftover source this cook. Dedicated packs **8/8 live**. Next human: Pack 01 primes or Stripe smoke.
+Railway is **live**. **21+** shipped. Pack 01 last-build clips **6/6 LIVE** + phone-passed. Next human: Stripe smoke or more primes.
 
 ---
 
@@ -24,7 +24,9 @@ Railway is **live** at `74f76ea`. **21+** shipped including leftover source this
 | 6 | **Age floor 21+ models** | ✅ `59cd5c8` |
 | 7 | Dual-stack monorepo docs after WebRTC #30 | ✅ `#31` |
 | 8 | **Age floor 21+ prompts + UI + forge** | ✅ |
-| 9 | **Age floor leftover source** (gallery/chat/export/forge/studio + archive prompts) | ✅ this cook |
+| 9 | **Age floor leftover source** (gallery/chat/export/forge/studio + archive prompts) | ✅ |
+| 10 | **Pack 01 last-build loops** Mila Luna Sienna Diego Mateo Rio | ✅ live |
+| 11 | Gary phone hard-refresh Diego / Mateo / Rio | ✅ passed |
 
 ---
 
@@ -32,8 +34,8 @@ Railway is **live** at `74f76ea`. **21+** shipped including leftover source this
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Pack 01 humanized primes | Content | 8/8 dedicated already live · drop primes in `packs/inbox/` · [PACK-COOK-NOW.md](./PACK-COOK-NOW.md) |
-| B | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
+| A | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
+| B | More library primes | Content | Same drop: `Name + Drive link` |
 | C | Studio DNA phone pass | S | Sign in → Forge → Save · Chat Now |
 
 ---
@@ -41,9 +43,9 @@ Railway is **live** at `74f76ea`. **21+** shipped including leftover source this
 ## Gary (human)
 
 1. ~~Hard-refresh gallery → Diego → one chat~~ ✅  
-2. After this deploy: hard-refresh again (21+ footer + Diego prompt)  
-3. Drop `maria_prime_25s.mp4` in `packs/inbox/` or say `unpack packs`  
-4. Optional: Stripe Day Pass smoke
+2. ~~Hard-refresh last-build boys (Diego / Mateo / Rio)~~ ✅ passed  
+3. Optional: Stripe Day Pass smoke  
+4. Optional: next prime (`Name + Drive link`)
 
 ---
 

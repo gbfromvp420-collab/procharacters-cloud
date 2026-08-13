@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 Pack 01 **6/6 LIVE** (Mila Luna Sienna Diego Mateo Rio)  
-**Session:** King Grok CEO · last-build Drive primes cooked and on Railway web
+**Updated:** 2026-08-13 Pack 01 **6/6 LIVE** + Gary phone pass  
+**Session:** King Grok CEO · last-build clips confirmed on phone
 
 ### Agent fleet (slash / auto)
 
@@ -20,9 +20,10 @@
 | Fact | Detail |
 |------|--------|
 | **Girls** | Mila + Luna + Sienna **your clips live** |
-| **Boys** | Diego + Mateo + Rio **your clips live** (sizes match git) |
-| **Gary move** | Hard-refresh gallery → Diego / Mateo / Rio → watch the new loops |
-| **Eng move** | Optional: Stripe Day Pass, or next library primes |
+| **Boys** | Diego + Mateo + Rio **your clips live** |
+| **Phone** | ✅ Gary 2026-08-13 — hard-refresh Diego / Mateo / Rio **passed** |
+| **Gary move** | Optional: **stripe** (live money) or more library primes |
+| **Eng move** | Wait on Gary pick |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`.
 
@@ -30,7 +31,7 @@
 
 ## Next
 
-**1) phone hard-refresh the 3 boys · 2) stripe · 3) more primes**
+**1) stripe · 2) more primes · 3) Studio DNA**
 
 **Live:** https://procharacters-web-production-7288.up.railway.app
 
