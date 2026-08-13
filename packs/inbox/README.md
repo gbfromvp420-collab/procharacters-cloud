@@ -6,7 +6,13 @@ Drop **prime clips** or a **zip** here, then tell King Grok:
 unpack packs
 ```
 
-Eng: `bash scripts/unpack-packs.sh` (empty inbox prints the 6 names).
+**Phone:** paste a share link:
+
+```
+unpack packs: https://your-link
+```
+
+Defaults to `maria_prime_25s.mp4`. Eng: `bash scripts/unpack-packs.sh [url]`. Empty inbox prints the 6 names.
 
 ### Pack 01 prime names (exact)
 
