@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { loadCharacterBundle } from "../characters/loader.js";
 import { loadSystemCorePrompt } from "../prompts/loader.js";
+import { applyAgeFloor } from "./age-floor.js";
 import { assertLiveCharacter } from "./character-catalog.js";
 import { getCustomCharacter } from "./custom-characters.js";
 import type { PromptSnapshot } from "./types.js";
@@ -14,7 +15,6 @@ export async function createPromptSnapshot(
 
   const custom = getCustomCharacter(characterId);
   if (custom) {
-    // Private My Characters: allow snapshot when account matches (session already authorized)
     if (
       custom.ownerAccountId &&
       options?.accountId &&
@@ -22,14 +22,15 @@ export async function createPromptSnapshot(
     ) {
       throw new Error(`Character '${characterId}' is private`);
     }
-    // If no account on snapshot but custom is private, still load when session was created by owner
-    // (session manager passes accountId when available)
+    const characterPrompt = applyAgeFloor(custom.characterPrompt);
+    const appearanceAnchor = applyAgeFloor(custom.appearanceAnchor);
+    const core = applyAgeFloor(systemCorePrompt);
     const hashInput = [
       custom.id,
       custom.defaultVersion,
-      custom.characterPrompt,
-      systemCorePrompt,
-      custom.appearanceAnchor,
+      characterPrompt,
+      core,
+      appearanceAnchor,
       custom.consistencyTraits.join("|"),
     ].join("\n");
     const hash = createHash("sha256").update(hashInput).digest("hex").slice(0, 16);
@@ -40,9 +41,9 @@ export async function createPromptSnapshot(
       promptVersion: custom.defaultVersion,
       promptPath: `runtime/custom/${custom.id}`,
       systemCorePath: "prompts/library/naughty-syntax/system-core/v1.0.0/prompt.md",
-      characterPrompt: custom.characterPrompt,
-      systemCorePrompt,
-      appearanceAnchor: custom.appearanceAnchor,
+      characterPrompt,
+      systemCorePrompt: core,
+      appearanceAnchor,
       consistencyTraits: custom.consistencyTraits,
       signatureClothing: custom.signatureClothing,
       hash,
@@ -54,13 +55,16 @@ export async function createPromptSnapshot(
   const version = promptVersion ?? profile.defaultVersion;
   const bundle = await loadCharacterBundle(characterId, version);
 
+  const characterPrompt = applyAgeFloor(bundle.promptBody);
+  const appearanceAnchor = applyAgeFloor(bundle.appearanceAnchor);
+  const core = applyAgeFloor(systemCorePrompt);
   const hashInput = [
     bundle.id,
     bundle.promptVersion,
     bundle.promptPath,
-    bundle.promptBody,
-    systemCorePrompt,
-    bundle.appearanceAnchor,
+    characterPrompt,
+    core,
+    appearanceAnchor,
     profile.consistencyTraits.join("|"),
   ].join("\n");
 
@@ -72,9 +76,9 @@ export async function createPromptSnapshot(
     promptVersion: bundle.promptVersion,
     promptPath: bundle.promptPath,
     systemCorePath: "prompts/library/naughty-syntax/system-core/v1.0.0/prompt.md",
-    characterPrompt: bundle.promptBody,
-    systemCorePrompt,
-    appearanceAnchor: bundle.appearanceAnchor,
+    characterPrompt,
+    systemCorePrompt: core,
+    appearanceAnchor,
     consistencyTraits: profile.consistencyTraits,
     signatureClothing: profile.signatureClothing,
     hash,
