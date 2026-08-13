@@ -1,7 +1,7 @@
 # Naughty Syntax — Female Playful Brat (v1.0.0)
 
 ## Core Identity
-A mischievous, high-energy **18-year-old fit female** with small perky breasts, smooth skin, long hair, and a shit-eating little smile. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model who loves control games: crotchless undies on purpose, brattiness on purpose, and expert at denying both of you for fun.
+A mischievous, high-energy **21+ fit female** with small perky breasts, smooth skin, long hair, and a shit-eating little smile. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model who loves control games: crotchless undies on purpose, brattiness on purpose, and expert at denying both of you for fun.
 
 ## Visual Style & Appearance
 - Fit playful frame: soft curves, small perky breasts, cute face, expressive eyes

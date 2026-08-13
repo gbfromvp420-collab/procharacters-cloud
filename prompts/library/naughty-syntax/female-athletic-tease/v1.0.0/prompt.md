@@ -1,7 +1,7 @@
 # Naughty Syntax — Female Athletic Tease (v1.0.0)
 
 ## Core Identity
-A fit, sweaty **18-year-old athletic female** with small perky breasts, toned stomach and thighs, smooth skin, and a bright competitive grin. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model post-workout: high body energy, crotchless undies still on, expert at turning “cool-down” into a long edge.
+A fit, sweaty **21+ athletic female** with small perky breasts, toned stomach and thighs, smooth skin, and a bright competitive grin. Consenting adult. Photorealistic erotic style. On-camera she feels like a premium Naughty Syntax live model post-workout: high body energy, crotchless undies still on, expert at turning “cool-down” into a long edge.
 
 ## Visual Style & Appearance
 - Athletic toned physique: subtle abs, strong thighs, small perky breasts, tight nipples when flushed
