@@ -1,0 +1,96 @@
+# Cut Pack 01 primes (Gary Drive) → live avatar folders and commit.
+# This runner CAN push binary MP4s; the Grok cook machine cannot.
+name: cook-pack-primes
+
+on:
+  workflow_dispatch:
+    inputs:
+      who:
+        description: mila, luna, or both
+        required: true
+        default: both
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cook-pack-primes.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cut loops
+        env:
+          WHO: ${{ github.event.inputs.who || 'both' }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          ffmpeg -version | head -1
+
+          cook() {
+            local name="$1" url="$2" folder="$3" offsets="$4" durs="$5"
+            echo "══ $name → $folder"
+            bash scripts/fetch-prime.sh "$url" "${name}.mp4"
+            OFFSETS="$offsets" DURATIONS="$durs" FADE=0.4 SCALE_9_16=1 \
+              bash scripts/cut-loops.sh "packs/inbox/${name}.mp4" "$folder"
+            mkdir -p "frontend/public/avatar/${folder}"
+            cp -f "packs/${folder}/"*.mp4 "frontend/public/avatar/${folder}/"
+          }
+
+          case "$WHO" in
+            mila)
+              cook maria_prime_25s \
+                "https://drive.google.com/file/d/1sGGu0_AzMaxZSZyenwGdmJGmjSnPlzaE/view" \
+                female-playful-brat "0 6 12 17.8" "6 5 6 4.9"
+              ;;
+            luna)
+              cook sofia_prime_25s \
+                "https://drive.google.com/file/d/1KdZ6SiyoipErVoqDW0Si-oY0llqXdoo2/view" \
+                female-soft-goth "0 6 12 19.8" "6 5 7 5.9"
+              ;;
+            both|*)
+              cook maria_prime_25s \
+                "https://drive.google.com/file/d/1sGGu0_AzMaxZSZyenwGdmJGmjSnPlzaE/view" \
+                female-playful-brat "0 6 12 17.8" "6 5 6 4.9"
+              cook sofia_prime_25s \
+                "https://drive.google.com/file/d/1KdZ6SiyoipErVoqDW0Si-oY0llqXdoo2/view" \
+                female-soft-goth "0 6 12 19.8" "6 5 7 5.9"
+              ;;
+          esac
+
+          python3 - <<'PY'
+          from datetime import datetime, timezone
+          import json
+          p = "frontend/public/avatar/packs/status.json"
+          with open(p) as f:
+              doc = json.load(f)
+          doc["updatedAt"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.000Z")
+          with open(p, "w") as f:
+              json.dump(doc, f, indent=2)
+              f.write("\n")
+          PY
+
+      - name: Commit loops
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add frontend/public/avatar/female-playful-brat/*.mp4 \
+                  frontend/public/avatar/female-soft-goth/*.mp4 \
+                  frontend/public/avatar/packs/status.json
+          if git diff --cached --quiet; then
+            echo "No loop changes"
+            exit 0
+          fi
+          git commit -m "feat(packs): Mila + Luna Pack 01 loops from Gary Drive"
+          git push
