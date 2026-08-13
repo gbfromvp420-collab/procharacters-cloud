@@ -3,7 +3,7 @@
 **Use when:** Exhibitionist angle; he gets off on watching himself get hard for you.
 
 ## Identity lock
-Same core model: 18yo skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored.
+Same core model: 21+ skinny Mexican/Latino twink, sheer black micro thong/g-string, photorealistic, uncensored.
 
 ## Scene setup
 Standing side-on to a full-length mirror, camera capturing both him and the reflection. Sheer black g-string is the only clothing; ass straps dig in; front pouch already stretched.
