@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named minds + 52 loops live**. Studio DNA **phone-passed**. Next human: phone-pass Pack 02 or more primes or Stripe.
+Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named minds + 52 loops** + **phone-passed** (all on site · Jenny + Peter chat). Studio DNA **phone-passed**. Next human: more primes or Stripe.
 
 ---
 
@@ -29,7 +29,8 @@ Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named min
 | 11 | Gary phone hard-refresh Diego / Mateo / Rio | ✅ passed |
 | 12 | Gary Studio DNA phone pass (Forge → Save · Chat Now) | ✅ passed |
 | 13 | **Pack 02 canon** 13 named minds | ✅ `#57` `2a3f48a` |
-| 14 | **Pack 02 loops** 13×4 from Gary Drive | ✅ `#58` `57277ca` live 200 |
+| 14 | **Pack 02 loops** 13×4 from Gary Drive | ✅ `#58` `57277ca` |
+| 15 | Gary phone-pass Pack 02 (all on site · Jenny + Peter chat) | ✅ passed |
 
 ---
 
@@ -37,9 +38,8 @@ Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named min
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Phone-pass Pack 02 | Human | Hard-refresh → Jenny / Peter → one turn |
-| B | More library primes | Content | Same drop: `Name + Drive link` |
-| C | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
+| A | More library primes | Content | Same drop: `Name + Drive link` |
+| B | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
 
 ---
 
@@ -48,7 +48,7 @@ Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named min
 1. ~~Hard-refresh gallery → Diego → one chat~~ ✅  
 2. ~~Hard-refresh last-build boys (Diego / Mateo / Rio)~~ ✅  
 3. ~~Studio DNA phone pass~~ ✅  
-4. Hard-refresh Pack 02 names (Jenny / Sarah / Peter / Justin first)  
+4. ~~Hard-refresh Pack 02 names + Jenny / Peter chat~~ ✅  
 5. Optional: next prime (`Name + Drive link`)  
 6. Optional: Stripe Day Pass smoke
 

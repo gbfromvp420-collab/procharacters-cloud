@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-13 Pack 02 (**🟢 prod** · 13 named minds + 52 loops on `main`)  
+**Updated:** 2026-08-13 Pack 02 **phone-passed** (**🟢 prod** · 13 named minds + 52 loops)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** see `/health` `deploy.gitSha` (canon `2a3f48a` · loops `57277ca`). Pack 01 **untouched**. Pack 02 first-name slugs.
+**Live deploy SHA:** see `/health` `deploy.gitSha` (`fdde98f` at pass). Pack 01 **untouched**. Pack 02 first-name slugs.
 
 ---
 
@@ -20,7 +20,7 @@
 | Error alerts | ntfy wired |
 | Railway `captivating-vision` | api + web + Postgres-Hw0Y |
 | Pack 01 | **8/8 READY** · Mila Luna Sienna Diego Mateo Rio + defaults · **your clips** |
-| Pack 02 | **13 named minds** · **52/52 clips 200** · dedicated gallery badges |
+| Pack 02 | **13 named minds** · **52/52 clips 200** · **phone-passed** (all on site · Jenny + Peter chat) |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
 | Age floor | **21+** |
 | Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 |
@@ -58,7 +58,7 @@ Featured: **Jenny, Sarah, Peter, Justin**. Pack 01 IDs (Mateo / Diego / Rio / Mi
 | Live NSFW chat | 🟢 |
 | Gallery · Pack 01 + Pack 02 names | 🟢 |
 | Pack 01 last-build clips | 🟢 phone-passed |
-| Pack 02 dedicated loops | 🟢 **52/52 HTTP 200** · jenny/peter sessions use `/avatar/<name>/` |
+| Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site · Jenny + Peter chat |
 | Studio Forge | 🟢 phone-passed |
 | 21+ | 🟢 |
 | Resume codes | 🟢 |
@@ -68,9 +68,8 @@ Featured: **Jenny, Sarah, Peter, Justin**. Pack 01 IDs (Mateo / Diego / Rio / Mi
 
 ## Your move (only if you want)
 
-1. **Hard-refresh gallery** → tap Jenny / Peter (or any Pack 02 name) → one chat turn  
-2. **Next prime** — paste `Name + Drive link`  
-3. **Stripe smoke** — signed-in → Soft Support → Day Pass (live money · skip = free chat still works)
+1. **Next prime** — paste `Name + Drive link`  
+2. **Stripe smoke** — signed-in → Soft Support → Day Pass (live money · skip = free chat still works)
 
 I will **not** invent MP4s or charge your card.
 

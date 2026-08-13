@@ -1,7 +1,7 @@
 # Pack cook — now (Gary)
 
-**Updated:** 2026-08-13  
-**Truth:** Pack 01 **8/8 dedicated live**. Pack 02 **13 named minds + 52 loops live** from your Drive primes. Next cook = more `Name + Drive` primes (new first-name folder, never overwrite Pack 01 ids).
+**Updated:** 2026-08-13 Pack 02 **phone-passed**  
+**Truth:** Pack 01 **8/8 dedicated live**. Pack 02 **13 named minds + 52 loops live** from your Drive primes — **all on site, Jenny + Peter chat passed**. Next cook = more `Name + Drive` primes (new first-name folder, never overwrite Pack 01 / Pack 02 ids).
 
 Say **`unpack packs`** when a zip lands, or **`Name` + Drive link** for a new mind.
 
