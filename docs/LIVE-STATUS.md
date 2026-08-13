@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-13 21+ UI + prompt sweep (**🟢 prod live** · API `59cd5c8`)  
+**Updated:** 2026-08-13 pack cook (**🟢 prod live** · 8/8 dedicated loops live)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** `59cd5c8` (ops + 21+ models). This cook finishes 21+ on prompts, UI footers, forge/custom copy.
+**Live deploy SHA:** `7cd409f` (21+ inject). Dedicated avatar packs **8/8 READY**. Pack 01 humanized primes pending — [PACK-COOK-NOW.md](./PACK-COOK-NOW.md).
 
 ---
 
@@ -12,16 +12,16 @@
 | Check | Result (2026-08-13) |
 |-------|---------------------|
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
-| API `/health` | **200** `status: ok` · `deploy.gitSha` `59cd5c8` |
+| API `/health` | **200** `status: ok` · `deploy.gitSha` `7cd409f` |
 | Accounts / DB | `prisma` · `database.ok` true |
 | LiveKit | configured · badge `ready` |
 | Stripe | `live` + webhook true · free path still on |
 | Web Push | true · expiry cron ticked (2 accounts) |
 | Error alerts | ntfy wired (`alertChannel: ntfy`) |
 | Railway project `captivating-vision` | api + web + Postgres-Hw0Y serving |
-| Git `main` + avatar packs | Healthy · **8/8 packs READY** in git · live `dedicatedReady` = 6 Phase-4 packs |
+| Git `main` + avatar packs | **8/8 READY** · 32 live MP4s 200 · `dedicatedReady` = 6 Phase-4 · Pack 01 primes pending |
 | Phone hard-refresh | ✅ Gary 2026-08-13 — gallery → Diego → one chat turn |
-| Age floor | **21+** models live · prompts + UI footers shipping this cook |
+| Age floor | **21+** models + prompts + UI + inject live (`7cd409f`) |
 | Offline product smoke | `bash scripts/smoke-local-product.sh` |
 | WebRTC side service | On `main` (`app/`) — **local/demo only**, not the live chat URLs |
 
@@ -46,14 +46,14 @@
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat (Grok) | 🟢 **hosting up** · API `59cd5c8` |
+| Live NSFW chat (Grok) | 🟢 **hosting up** · API `7cd409f` |
 | Gallery + character cards | 🟢 hosting up · web 200 · 8 minds |
 | Accounts (Postgres) | ✅ `ACCOUNTS_PROVIDER=prisma` · DB ok |
 | Resume codes (multi-device) | ✅ Diego session 201 + resume code |
 | Edge Pace mode (phase strip) | ✅ |
 | Phone hard-refresh smoke (Gary) | ✅ 2026-08-13 |
 | Phone push smoke (Gary) | ✅ confirmed 2026-07-18 |
-| **Age floor 21+** | ✅ models live · live prompts this cook · UI footers follow in same PR |
+| **Age floor 21+** | ✅ models + prompts + UI + inject `7cd409f` |
 | **Offline product smoke** | ✅ `scripts/smoke-local-product.sh` · `npm run smoke:local` |
 | **Monorepo Prisma link** | ✅ `scripts/ensure-prisma-link.sh` wired into generate/build/CI |
 | Stripe Day Pass / Supporter UI | ✅ free path; **LIVE** keys; one-tap on Soft Support |
@@ -71,7 +71,7 @@
 2. ~~**Hard-refresh the site**~~ ✅ done 2026-08-13  
 3. After this deploy: **hard-refresh again** (Diego / defaults speak 21+)  
 4. **Stripe smoke (careful — live money):** signed-in → Soft Support → **Day Pass** one-tap — free path always works  
-5. **Avatar packs (content):** cut your library into 4 loops — [GARY-PACK-EDITING.md](./GARY-PACK-EDITING.md)
+5. **Avatar packs (content):** 8/8 already live. Next = Pack 01 primes — [PACK-COOK-NOW.md](./PACK-COOK-NOW.md)
 
 ---
 
@@ -81,8 +81,8 @@
 2. ~~Railway plan / bring live back~~ ✅ 2026-08-13  
 3. ~~Gary: phone hard-refresh smoke~~ ✅ 2026-08-13  
 4. ~~Eng: 21+ models + local product smoke~~ ✅ `59cd5c8`  
-5. ~~Eng: 21+ live prompts~~ ✅ this cook  
-6. Content: dedicated packs when footage exists  
+5. ~~Eng: 21+ live prompts + inject~~ ✅ `7cd409f`  
+6. ~~Dedicated packs~~ ✅ 8/8 live · **Pack 01 primes pending** (start `maria_prime_25s.mp4`)  
 7. Optional: Stripe Day Pass smoke (live money)  
 8. Optional: Studio DNA phone pass (sign in → Forge → Chat Now)
 
@@ -93,7 +93,7 @@
 - Health: `"status":"ok"`, `accounts.provider` = `"prisma"`, `accounts.database.ok` = true  
 - `observability.webPush` = true  
 - `billing.stripe` = true · `billing.mode` = `live` · `billing.webhook` = true  
-- `deploy.gitSha` present (`59cd5c8` until this cook deploys)  
+- `deploy.gitSha` present (`7cd409f`)  
 - `observability.lastExpiryCron` present after first cron tick  
 - Manifest: `/manifest.webmanifest` returns 200  
 

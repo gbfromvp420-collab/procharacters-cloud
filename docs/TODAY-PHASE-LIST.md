@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live** at `59cd5c8`. Finish the **21+** sweep on prompts, gallery/chat footers, and forge/custom copy. Then content packs or optional Stripe smoke.
+Railway is **live** at `7cd409f`. **21+** shipped. Dedicated packs **8/8 live**. Next human drop: Pack 01 primes (`maria_prime_25s.mp4` first) or optional Stripe smoke.
 
 ---
 
@@ -31,7 +31,7 @@ Railway is **live** at `59cd5c8`. Finish the **21+** sweep on prompts, gallery/c
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Dedicated avatar clips | Content | Gary footage → [DROP_IN.md](../frontend/public/avatar/packs/DROP_IN.md) |
+| A | Pack 01 humanized primes | Content | 8/8 dedicated already live · drop primes in `packs/inbox/` · [PACK-COOK-NOW.md](./PACK-COOK-NOW.md) |
 | B | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
 | C | Studio DNA phone pass | S | Sign in → Forge → Save · Chat Now |
 
@@ -41,7 +41,8 @@ Railway is **live** at `59cd5c8`. Finish the **21+** sweep on prompts, gallery/c
 
 1. ~~Hard-refresh gallery → Diego → one chat~~ ✅  
 2. After this deploy: hard-refresh again (21+ footer + Diego prompt)  
-3. Optional: Stripe Day Pass, or `cook packs`
+3. Drop `maria_prime_25s.mp4` in `packs/inbox/` or say `unpack packs`  
+4. Optional: Stripe Day Pass smoke
 
 ---
 
