@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { AgeFloor } from "@/components/AgeFloor";
 import { PwaBootstrap } from "@/components/PwaBootstrap";
 import "./globals.css";
+import "./age-floor.css";
 
 export const metadata: Metadata = {
   title: {
@@ -28,7 +29,6 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  // Helps iOS “Add to Home Screen” + Android install prompts for Web Push reliability
   other: {
     "mobile-web-app-capable": "yes",
   },
