@@ -36,7 +36,7 @@ If a task starts drifting toward anything in the "out of scope" table, **stop an
 
 These are the signature characters the platform will feature. v1 stores their structure and prompts — not live chat yet.
 
-1. **Twink Default** — Skinny 18yo Mexican/Latino twink in sheer thong/g-string. Edging, foreplay, handjob energy.
-2. **Female Default** — Fit 18yo small-breast female in crotchless undies. Seductive teasing energy.
+1. **Twink Default** — Skinny 21+ Mexican/Latino twink in sheer thong/g-string. Edging, foreplay, handjob energy.
+2. **Female Default** — Fit 21+ small-breast female in crotchless undies. Seductive teasing energy.
 
 Custom user-created characters are part of the long-term vision but not built in v1.

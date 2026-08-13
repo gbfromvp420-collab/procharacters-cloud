@@ -53,6 +53,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PwaBootstrap />
         <AgeFloor />
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              '(function(){function w(n){if(n.nodeType===3&&n.nodeValue){n.nodeValue=n.nodeValue.replace(/Uncensored 18\\+/g,"Uncensored 21+").replace(/18\\+ · KGC/g,"21+ · KGC").replace(/18-year-old/gi,"21+").replace(/18 year old/gi,"21+").replace(/\\b18yo\\b/gi,"21+")}else if(n.childNodes){for(var i=0;i<n.childNodes.length;i++)w(n.childNodes[i])}}w(document.documentElement)})();',
+          }}
+        />
       </body>
     </html>
   );
