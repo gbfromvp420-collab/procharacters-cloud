@@ -10,7 +10,11 @@
     "female-default",
     "twink-gym",
     "female-soft-goth",
-    "female-playful-brat"
+    "female-playful-brat",
+    "liam",
+    "noah",
+    "emma",
+    "olivia"
   ],
   "entries": [
     {
@@ -386,6 +390,528 @@
         "rating": "nsfw",
         "audiences": [
           "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "liam",
+      "name": "Liam",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/liam/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "noah",
+      "name": "Noah",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/noah/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "ethan",
+      "name": "Ethan",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/ethan/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "mason",
+      "name": "Mason",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/mason/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "lucas",
+      "name": "Lucas",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/lucas/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "logan",
+      "name": "Logan",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/logan/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "aiden",
+      "name": "Aiden",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/aiden/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "jackson",
+      "name": "Jackson",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/jackson/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "jacob",
+      "name": "Jacob",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/jacob/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "jayden",
+      "name": "Jayden",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/jayden/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "elijah",
+      "name": "Elijah",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/elijah/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "carter",
+      "name": "Carter",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/carter/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "wyatt",
+      "name": "Wyatt",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/wyatt/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "hunter",
+      "name": "Hunter",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/hunter/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "alex",
+      "name": "Alex",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/alex/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "gay",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "emma",
+      "name": "Emma",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/emma/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "olivia",
+      "name": "Olivia",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/olivia/v1/model.json",
+      "featured": true,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "ava",
+      "name": "Ava",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/ava/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "sophia",
+      "name": "Sophia",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/sophia/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "isabella",
+      "name": "Isabella",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/isabella/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "mia",
+      "name": "Mia",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/mia/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "charlotte",
+      "name": "Charlotte",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/charlotte/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "amelia",
+      "name": "Amelia",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/amelia/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "harper",
+      "name": "Harper",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/harper/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "evelyn",
+      "name": "Evelyn",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/evelyn/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "avery",
+      "name": "Avery",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/avery/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "scarlett",
+      "name": "Scarlett",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/scarlett/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "zoey",
+      "name": "Zoey",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/zoey/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
+          "bi"
+        ],
+        "uncensored": true
+      }
+    },
+    {
+      "id": "aria",
+      "name": "Aria",
+      "brand": "naughty-syntax",
+      "status": "active",
+      "prompt_ref": "naughty-syntax/unchained-core.md",
+      "version": "1.0.0",
+      "path": "models/naughty-syntax/aria/v1/model.json",
+      "featured": false,
+      "content_policy": {
+        "rating": "nsfw",
+        "audiences": [
+          "straight",
           "bi"
         ],
         "uncensored": true
