@@ -24,8 +24,8 @@
 | **Pack 01** | 8/8 READY · Mila Luna Sienna Diego Mateo Rio + defaults · **do not rename live IDs** |
 | **Pack 02** | 13 first-name ids · canon `#57` `2a3f48a` · loops `#58` `57277ca` · **phone-passed** |
 | **Pack 03** | 29 unique first-name ids · canon `#60` · males `#62` · females `#61` · **116/116 clips 200** · Candy held |
-| **Gary move** | Hard-refresh Liam / Emma chat · unique Candy Drive |
-| **Eng move** | ✅ clips live · waiting phone pass |
+| **Gary move** | Unique Candy Drive · optional Liam/Emma tap · Stripe when ready |
+| **Eng move** | Gallery pack lanes (01 / 02 / 03) so 50 minds browse clean |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -39,8 +39,8 @@
 | **21+ age floor** | ✅ | — |
 | **Pack 01** | ✅ 6 named + 2 defaults live | leave IDs |
 | **Pack 02** | ✅ 13 minds + 52 loops · **phone-passed** | leave IDs |
-| **Pack 03** | 🟢 29 minds + 116/116 clips 200 | unique Candy Drive · phone pass Liam/Emma |
-| **Next** | **1) phone pass · 2) stripe** | hard-refresh Liam / Emma |
+| **Pack 03** | 🟢 29 minds + 116/116 clips 200 | unique Candy Drive |
+| **Next** | **1) gallery pack lanes · 2) stripe** | optional Liam/Emma tap |
 
 ---
 
