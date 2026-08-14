@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-13 Pack 02 **phone-passed** (13 named minds + 52 loops live)  
-**Session:** King Grok CEO · Gary Drive primes → Pack 02 first-name slugs
+**Updated:** 2026-08-14 Pack 03 **29 minds + 116 loops on main**  
+**Session:** King Grok CEO · Gary Drive primes → Pack 03 first-name slugs
 
 ### Agent fleet (slash / auto)
 
@@ -23,8 +23,9 @@
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
 | **Pack 01** | 8/8 READY · Mila Luna Sienna Diego Mateo Rio + defaults · **do not rename live IDs** |
 | **Pack 02** | 13 first-name ids · canon `#57` `2a3f48a` · loops `#58` `57277ca` · **phone-passed** |
-| **Gary move** | Optional: next `Name + Drive` or Stripe Day Pass |
-| **Eng move** | ✅ 13×4 live 200 · Jenny + Peter chat passed |
+| **Pack 03** | 29 unique first-name ids · canon `#60` · males `#62` · females `#61` · Candy held (dup Aria file) |
+| **Gary move** | Hard-refresh Liam / Emma chat after live 200s · unique Candy Drive |
+| **Eng move** | Confirm Railway 200s on 116 Pack 03 clips · then phone pass |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -38,7 +39,8 @@
 | **21+ age floor** | ✅ | — |
 | **Pack 01** | ✅ 6 named + 2 defaults live | leave IDs |
 | **Pack 02** | ✅ 13 minds + 52 loops · **phone-passed** | leave IDs |
-| **Next** | **1) more primes · 2) stripe** | say `Name + Drive` or `stripe` |
+| **Pack 03** | 🟡 29 minds + 116 loops on main | unique Candy Drive · phone pass Liam/Emma |
+| **Next** | **1) live 200s + phone pass · 2) stripe** | hard-refresh after clips 200 |
 
 ---
 
@@ -47,6 +49,12 @@
 jenny sarah jessica rachel samantha becca · peter gary justin mark blake tommy kenny
 
 Featured: jenny sarah peter justin.
+
+## Pack 03 ids
+
+emma olivia ava sophia isabella mia charlotte amelia harper evelyn avery scarlett zoey aria · liam noah ethan mason lucas logan aiden jackson jacob jayden elijah carter wyatt hunter alex
+
+Featured: liam noah emma olivia. Held: candy (same Drive as aria).
 
 ---
 
