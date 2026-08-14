@@ -1,5 +1,6 @@
 import { ChatApp } from "@/components/ChatApp";
 import { PushEnableHint } from "@/components/PushEnableHint";
+import { ReclaimAutostartGate } from "@/components/ReclaimAutostartGate";
 
 export default function ChatPage() {
   return (
@@ -10,7 +11,9 @@ export default function ChatPage() {
           <PushEnableHint className="mb-0 shadow-lg shadow-black/20" />
         </div>
       </div>
-      <ChatApp />
+      <ReclaimAutostartGate>
+        <ChatApp />
+      </ReclaimAutostartGate>
     </div>
   );
 }
