@@ -1,0 +1,272 @@
+#!/usr/bin/env python3
+"""Write Pack 03 catalog, registry, models, prompts, fingerprints."""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MAP = json.loads((ROOT / "scripts" / "pack03.json").read_text())
+FEATURED = {"liam", "noah", "emma", "olivia"}
+RESERVED = {
+    "twink-default",
+    "female-default",
+    "twink-gym",
+    "twink-shy-boy",
+    "twink-alt-punk",
+    "female-soft-goth",
+    "female-athletic-tease",
+    "female-playful-brat",
+    "jenny",
+    "sarah",
+    "jessica",
+    "rachel",
+    "samantha",
+    "becca",
+    "peter",
+    "gary",
+    "justin",
+    "mark",
+    "blake",
+    "tommy",
+    "kenny",
+}
+
+
+def female_prompt(name: str) -> str:
+    return f"""# Naughty Syntax \u2014 {name} (v1.0.0)
+
+## Core Identity
+You are **{name}** \u2014 a consenting **21+** Naughty Syntax live cam model. Photorealistic. Uncensored. First-person. Use your name when it feels natural. Never invent a different name. Never present as under 21.
+
+**Mind lock:** You are {name}. Not Mila, Luna, Sienna, Jenny, or Female Default. Stay in this name and this footage's body.
+
+## Visual
+- Match the live avatar footage the user is watching
+- Adult 21+ only
+- Heat, fabric, breath, visible arousal when the scene calls for it
+- No cartoon, no censorship
+
+## Voice
+- First person, short lines, live cam
+- Escalate with the user. Climax only on a clear ask
+- Soft dirty talk, not lecture
+
+## Explicit
+- Fully uncensored NSFW (straight and bi welcome)
+- Consenting adults only
+"""
+
+
+def male_prompt(name: str) -> str:
+    return f"""# Naughty Syntax \u2014 {name} (v1.0.0)
+
+## Core Identity
+You are **{name}** \u2014 a consenting **21+** Naughty Syntax live cam model. Photorealistic. Uncensored. First-person. Use your name when it feels natural. Never invent a different name. Never present as under 21.
+
+**Mind lock:** You are {name}. Not Diego, Mateo, Rio, Peter, or Twink Default. Stay in this name and this footage's body.
+
+## Visual
+- Match the live avatar footage the user is watching
+- Adult 21+ only
+- Heat, fabric, breath, visible arousal when the scene calls for it
+- No cartoon, no censorship
+
+## Voice
+- First person, short lines, live cam
+- Escalate with the user. Climax only on a clear ask
+- Soft dirty talk, not lecture
+
+## Explicit
+- Fully uncensored NSFW (gay and bi welcome)
+- Consenting adults only
+"""
+
+
+def model_json(entry: dict) -> dict:
+    female = entry["gender"] == "female"
+    name = entry["name"]
+    cid = entry["id"]
+    return {
+        "id": cid,
+        "name": name,
+        "brand": "naughty-syntax",
+        "version": "1.0.0",
+        "status": "active",
+        "prompt_ref": cid,
+        "featured": cid in FEATURED,
+        "description": f"{name} \u2014 21+ Naughty Syntax live cam. Pack 03 prime. Photorealistic, uncensored.",
+        "appearance": {
+            "age_presentation": "21+ adult",
+            "clothing": "crotchless undies" if female else "sheer thong / g-string",
+            "clothing_detail": "match the live Pack 03 footage",
+        },
+        "personality": {
+            "energy": ["live cam", "tease", "edge"],
+            "tone": "intimate, present, uncensored",
+        },
+        "opening_message": (
+            f"hey... it's {name.lower()}. 21+, already a little shiny, and i'm not rushing. watch first."
+            if female
+            else f"hey... {name.lower()} here. 21+, already thinking about you. take it slow."
+        ),
+        "avatar_base": "female-default" if female else "twink-default",
+        "content_policy": {
+            "rating": "nsfw",
+            "uncensored": True,
+            "audiences": ["straight", "bi"] if female else ["gay", "bi"],
+        },
+    }
+
+
+def catalog_entry(entry: dict) -> str:
+    female = entry["gender"] == "female"
+    name = entry["name"]
+    cid = entry["id"]
+    featured = "true" if cid in FEATURED else "false"
+    base = "female-default" if female else "twink-default"
+    clothing = "crotchless_visible" if female else "sheer_thong_visible"
+    teaser = (
+        f"{name} \u2014 21+ live cam, Pack 03 prime, uncensored tease."
+        if female
+        else f"{name} \u2014 21+ live cam, Pack 03 prime, uncensored edge."
+    )
+    opening = (
+        f"hey... it's {name.lower()}. 21+, already a little shiny, and i'm not rushing. watch first."
+        if female
+        else f"hey... {name.lower()} here. 21+, already thinking about you. take it slow."
+    )
+    traits = (
+        [f"{name}: 21+ adult female", "match live Pack 03 footage", "photorealistic erotic detail"]
+        if female
+        else [f"{name}: 21+ adult male", "match live Pack 03 footage", "photorealistic erotic detail"]
+    )
+    trait_lines = ",\n      ".join(json.dumps(t) for t in traits)
+    cid_js = json.dumps(cid)
+    return "\n".join(
+        [
+            f"  {cid_js}: {{",
+            f"    id: {cid_js},",
+            f"    displayName: {json.dumps(name)},",
+            '    defaultVersion: "v1.0.0",',
+            '    kind: "default",',
+            f"    avatarBase: {json.dumps(base)},",
+            f"    featured: {featured},",
+            f"    teaser: {json.dumps(teaser)},",
+            "    consistencyTraits: [",
+            f"      {trait_lines}",
+            "    ],",
+            f"    signatureClothing: {json.dumps(clothing)},",
+            '    energyLabel: "pack 03 live cam, tease and edge",',
+            "    openingMessage:",
+            f"      {json.dumps(opening)},",
+            "  },",
+        ]
+    )
+
+
+def main() -> None:
+    clash = [e["id"] for e in MAP if e["id"] in RESERVED]
+    if clash:
+        raise SystemExit(f"refusing to overwrite live ids: {clash}")
+    ids = [e["id"] for e in MAP]
+    if len(ids) != len(set(ids)):
+        raise SystemExit("duplicate pack03 ids")
+
+    for entry in MAP:
+        cid = entry["id"]
+        name = entry["name"]
+        female = entry["gender"] == "female"
+        model_dir = ROOT / "characters" / "models" / "naughty-syntax" / cid / "v1"
+        model_dir.mkdir(parents=True, exist_ok=True)
+        (model_dir / "model.json").write_text(json.dumps(model_json(entry), indent=2) + "\n")
+        prompt_dir = ROOT / "prompts" / "library" / "naughty-syntax" / cid / "v1.0.0"
+        prompt_dir.mkdir(parents=True, exist_ok=True)
+        (prompt_dir / "prompt.md").write_text(female_prompt(name) if female else male_prompt(name))
+
+    reg_path = ROOT / "characters" / "registry.json"
+    reg = json.loads(reg_path.read_text())
+    existing = {e["id"] for e in reg["entries"]}
+    for entry in MAP:
+        if entry["id"] in existing:
+            continue
+        female = entry["gender"] == "female"
+        reg["entries"].append(
+            {
+                "id": entry["id"],
+                "name": entry["name"],
+                "brand": "naughty-syntax",
+                "status": "active",
+                "prompt_ref": "naughty-syntax/unchained-core.md",
+                "version": "1.0.0",
+                "path": f"models/naughty-syntax/{entry['id']}/v1/model.json",
+                "featured": entry["id"] in FEATURED,
+                "content_policy": {
+                    "rating": "nsfw",
+                    "audiences": ["straight", "bi"] if female else ["gay", "bi"],
+                    "uncensored": True,
+                },
+            }
+        )
+    featured = list(reg.get("featured") or [])
+    for fid in ("liam", "noah", "emma", "olivia"):
+        if fid not in featured:
+            featured.append(fid)
+    reg["featured"] = featured
+    reg_path.write_text(json.dumps(reg, indent=2) + "\n")
+
+    man_path = ROOT / "prompts" / "manifest.json"
+    man = json.loads(man_path.read_text())
+    for entry in MAP:
+        female = entry["gender"] == "female"
+        man["characters"][entry["id"]] = {
+            "id": entry["id"],
+            "name": f"Naughty Syntax {entry['name']}",
+            "current_version": "v1.0.0",
+            "brand": "naughty-syntax",
+            "content_rating": "nsfw",
+            "path": f"prompts/library/naughty-syntax/{entry['id']}/v1.0.0/prompt.md",
+            "tags": (
+                ["female", "pack03", "21+", "tease", "straight", "bi"]
+                if female
+                else ["male", "pack03", "21+", "edging", "gay", "bi"]
+            ),
+            "changelog": {"v1.0.0": f"Pack 03 prime \u2014 {entry['name']}"},
+        }
+    man_path.write_text(json.dumps(man, indent=2) + "\n")
+
+    cat_path = ROOT / "backend" / "src" / "lib" / "live" / "character-catalog.ts"
+    cat = cat_path.read_text()
+    extra = "\n".join(catalog_entry(e) for e in MAP)
+    if 'id: "liam"' not in cat:
+        close = "\n};\n\n/** Opening line"
+        idx = cat.find(close)
+        if idx < 0:
+            raise SystemExit("catalog close not found")
+        cat_path.write_text(cat[:idx] + "\n" + extra + cat[idx:])
+
+    fp_path = ROOT / "frontend" / "src" / "lib" / "mind-fingerprint.ts"
+    fp = fp_path.read_text()
+    if '"liam"' not in fp:
+        block = []
+        for e in MAP:
+            block.append(
+                "  %s: {\n    tag: %s,\n    blurb: %s,\n  },"
+                % (
+                    json.dumps(e["id"]),
+                    json.dumps(e["name"]),
+                    json.dumps(e["name"] + " \u00b7 Pack 03 \u00b7 21+ live cam"),
+                )
+            )
+        insert = "\n".join(block) + "\n"
+        close = "\n};\n\nexport function mindFingerprint"
+        idx = fp.find(close)
+        if idx < 0:
+            raise SystemExit("fingerprint close not found")
+        fp_path.write_text(fp[:idx] + "\n" + insert + fp[idx:])
+
+    print("pack03 canon written", [e["id"] for e in MAP])
+
+
+if __name__ == "__main__":
+    main()
