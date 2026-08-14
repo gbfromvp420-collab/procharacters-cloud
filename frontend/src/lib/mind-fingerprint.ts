@@ -104,6 +104,123 @@ const FINGERPRINTS: Record<string, MindFingerprint> = {
     blurb: "Kenny \u00b7 Pack 02 \u00b7 21+ live cam",
   },
 
+  "liam": {
+    tag: "Liam",
+    blurb: "Liam \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "noah": {
+    tag: "Noah",
+    blurb: "Noah \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "ethan": {
+    tag: "Ethan",
+    blurb: "Ethan \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "mason": {
+    tag: "Mason",
+    blurb: "Mason \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "lucas": {
+    tag: "Lucas",
+    blurb: "Lucas \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "logan": {
+    tag: "Logan",
+    blurb: "Logan \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "aiden": {
+    tag: "Aiden",
+    blurb: "Aiden \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "jackson": {
+    tag: "Jackson",
+    blurb: "Jackson \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "jacob": {
+    tag: "Jacob",
+    blurb: "Jacob \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "jayden": {
+    tag: "Jayden",
+    blurb: "Jayden \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "elijah": {
+    tag: "Elijah",
+    blurb: "Elijah \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "carter": {
+    tag: "Carter",
+    blurb: "Carter \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "wyatt": {
+    tag: "Wyatt",
+    blurb: "Wyatt \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "hunter": {
+    tag: "Hunter",
+    blurb: "Hunter \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "alex": {
+    tag: "Alex",
+    blurb: "Alex \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "emma": {
+    tag: "Emma",
+    blurb: "Emma \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "olivia": {
+    tag: "Olivia",
+    blurb: "Olivia \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "ava": {
+    tag: "Ava",
+    blurb: "Ava \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "sophia": {
+    tag: "Sophia",
+    blurb: "Sophia \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "isabella": {
+    tag: "Isabella",
+    blurb: "Isabella \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "mia": {
+    tag: "Mia",
+    blurb: "Mia \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "charlotte": {
+    tag: "Charlotte",
+    blurb: "Charlotte \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "amelia": {
+    tag: "Amelia",
+    blurb: "Amelia \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "harper": {
+    tag: "Harper",
+    blurb: "Harper \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "evelyn": {
+    tag: "Evelyn",
+    blurb: "Evelyn \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "avery": {
+    tag: "Avery",
+    blurb: "Avery \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "scarlett": {
+    tag: "Scarlett",
+    blurb: "Scarlett \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "zoey": {
+    tag: "Zoey",
+    blurb: "Zoey \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+  "aria": {
+    tag: "Aria",
+    blurb: "Aria \u00b7 Pack 03 \u00b7 21+ live cam",
+  },
+
 };
 
 export function mindFingerprint(

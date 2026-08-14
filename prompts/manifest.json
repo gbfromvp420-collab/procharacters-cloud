@@ -434,6 +434,557 @@
       "changelog": {
         "v1.0.0": "Pack 02 prime \u2014 Kenny"
       }
+    },
+    "liam": {
+      "id": "liam",
+      "name": "Naughty Syntax Liam",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/liam/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Liam"
+      }
+    },
+    "noah": {
+      "id": "noah",
+      "name": "Naughty Syntax Noah",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/noah/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Noah"
+      }
+    },
+    "ethan": {
+      "id": "ethan",
+      "name": "Naughty Syntax Ethan",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/ethan/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Ethan"
+      }
+    },
+    "mason": {
+      "id": "mason",
+      "name": "Naughty Syntax Mason",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/mason/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Mason"
+      }
+    },
+    "lucas": {
+      "id": "lucas",
+      "name": "Naughty Syntax Lucas",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/lucas/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Lucas"
+      }
+    },
+    "logan": {
+      "id": "logan",
+      "name": "Naughty Syntax Logan",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/logan/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Logan"
+      }
+    },
+    "aiden": {
+      "id": "aiden",
+      "name": "Naughty Syntax Aiden",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/aiden/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Aiden"
+      }
+    },
+    "jackson": {
+      "id": "jackson",
+      "name": "Naughty Syntax Jackson",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/jackson/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Jackson"
+      }
+    },
+    "jacob": {
+      "id": "jacob",
+      "name": "Naughty Syntax Jacob",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/jacob/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Jacob"
+      }
+    },
+    "jayden": {
+      "id": "jayden",
+      "name": "Naughty Syntax Jayden",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/jayden/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Jayden"
+      }
+    },
+    "elijah": {
+      "id": "elijah",
+      "name": "Naughty Syntax Elijah",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/elijah/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Elijah"
+      }
+    },
+    "carter": {
+      "id": "carter",
+      "name": "Naughty Syntax Carter",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/carter/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Carter"
+      }
+    },
+    "wyatt": {
+      "id": "wyatt",
+      "name": "Naughty Syntax Wyatt",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/wyatt/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Wyatt"
+      }
+    },
+    "hunter": {
+      "id": "hunter",
+      "name": "Naughty Syntax Hunter",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/hunter/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Hunter"
+      }
+    },
+    "alex": {
+      "id": "alex",
+      "name": "Naughty Syntax Alex",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/alex/v1.0.0/prompt.md",
+      "tags": [
+        "male",
+        "pack03",
+        "21+",
+        "edging",
+        "gay",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Alex"
+      }
+    },
+    "emma": {
+      "id": "emma",
+      "name": "Naughty Syntax Emma",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/emma/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Emma"
+      }
+    },
+    "olivia": {
+      "id": "olivia",
+      "name": "Naughty Syntax Olivia",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/olivia/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Olivia"
+      }
+    },
+    "ava": {
+      "id": "ava",
+      "name": "Naughty Syntax Ava",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/ava/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Ava"
+      }
+    },
+    "sophia": {
+      "id": "sophia",
+      "name": "Naughty Syntax Sophia",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/sophia/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Sophia"
+      }
+    },
+    "isabella": {
+      "id": "isabella",
+      "name": "Naughty Syntax Isabella",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/isabella/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Isabella"
+      }
+    },
+    "mia": {
+      "id": "mia",
+      "name": "Naughty Syntax Mia",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/mia/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Mia"
+      }
+    },
+    "charlotte": {
+      "id": "charlotte",
+      "name": "Naughty Syntax Charlotte",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/charlotte/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Charlotte"
+      }
+    },
+    "amelia": {
+      "id": "amelia",
+      "name": "Naughty Syntax Amelia",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/amelia/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Amelia"
+      }
+    },
+    "harper": {
+      "id": "harper",
+      "name": "Naughty Syntax Harper",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/harper/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Harper"
+      }
+    },
+    "evelyn": {
+      "id": "evelyn",
+      "name": "Naughty Syntax Evelyn",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/evelyn/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Evelyn"
+      }
+    },
+    "avery": {
+      "id": "avery",
+      "name": "Naughty Syntax Avery",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/avery/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Avery"
+      }
+    },
+    "scarlett": {
+      "id": "scarlett",
+      "name": "Naughty Syntax Scarlett",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/scarlett/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Scarlett"
+      }
+    },
+    "zoey": {
+      "id": "zoey",
+      "name": "Naughty Syntax Zoey",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/zoey/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Zoey"
+      }
+    },
+    "aria": {
+      "id": "aria",
+      "name": "Naughty Syntax Aria",
+      "current_version": "v1.0.0",
+      "brand": "naughty-syntax",
+      "content_rating": "nsfw",
+      "path": "prompts/library/naughty-syntax/aria/v1.0.0/prompt.md",
+      "tags": [
+        "female",
+        "pack03",
+        "21+",
+        "tease",
+        "straight",
+        "bi"
+      ],
+      "changelog": {
+        "v1.0.0": "Pack 03 prime \u2014 Aria"
+      }
     }
   }
 }

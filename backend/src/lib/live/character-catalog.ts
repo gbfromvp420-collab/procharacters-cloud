@@ -423,6 +423,528 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     openingMessage:
       "hey... kenny here. 21+, already thinking about you. take it slow.",
   },
+  "liam": {
+    id: "liam",
+    displayName: "Liam",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: true,
+    teaser: "Liam \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Liam: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... liam here. 21+, already thinking about you. take it slow.",
+  },
+  "noah": {
+    id: "noah",
+    displayName: "Noah",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: true,
+    teaser: "Noah \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Noah: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... noah here. 21+, already thinking about you. take it slow.",
+  },
+  "ethan": {
+    id: "ethan",
+    displayName: "Ethan",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Ethan \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Ethan: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... ethan here. 21+, already thinking about you. take it slow.",
+  },
+  "mason": {
+    id: "mason",
+    displayName: "Mason",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Mason \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Mason: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... mason here. 21+, already thinking about you. take it slow.",
+  },
+  "lucas": {
+    id: "lucas",
+    displayName: "Lucas",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Lucas \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Lucas: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... lucas here. 21+, already thinking about you. take it slow.",
+  },
+  "logan": {
+    id: "logan",
+    displayName: "Logan",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Logan \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Logan: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... logan here. 21+, already thinking about you. take it slow.",
+  },
+  "aiden": {
+    id: "aiden",
+    displayName: "Aiden",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Aiden \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Aiden: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... aiden here. 21+, already thinking about you. take it slow.",
+  },
+  "jackson": {
+    id: "jackson",
+    displayName: "Jackson",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Jackson \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Jackson: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... jackson here. 21+, already thinking about you. take it slow.",
+  },
+  "jacob": {
+    id: "jacob",
+    displayName: "Jacob",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Jacob \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Jacob: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... jacob here. 21+, already thinking about you. take it slow.",
+  },
+  "jayden": {
+    id: "jayden",
+    displayName: "Jayden",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Jayden \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Jayden: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... jayden here. 21+, already thinking about you. take it slow.",
+  },
+  "elijah": {
+    id: "elijah",
+    displayName: "Elijah",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Elijah \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Elijah: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... elijah here. 21+, already thinking about you. take it slow.",
+  },
+  "carter": {
+    id: "carter",
+    displayName: "Carter",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Carter \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Carter: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... carter here. 21+, already thinking about you. take it slow.",
+  },
+  "wyatt": {
+    id: "wyatt",
+    displayName: "Wyatt",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Wyatt \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Wyatt: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... wyatt here. 21+, already thinking about you. take it slow.",
+  },
+  "hunter": {
+    id: "hunter",
+    displayName: "Hunter",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Hunter \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Hunter: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... hunter here. 21+, already thinking about you. take it slow.",
+  },
+  "alex": {
+    id: "alex",
+    displayName: "Alex",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "twink-default",
+    featured: false,
+    teaser: "Alex \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    consistencyTraits: [
+      "Alex: 21+ adult male",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "sheer_thong_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... alex here. 21+, already thinking about you. take it slow.",
+  },
+  "emma": {
+    id: "emma",
+    displayName: "Emma",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: true,
+    teaser: "Emma \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Emma: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's emma. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "olivia": {
+    id: "olivia",
+    displayName: "Olivia",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: true,
+    teaser: "Olivia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Olivia: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's olivia. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "ava": {
+    id: "ava",
+    displayName: "Ava",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Ava \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Ava: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's ava. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "sophia": {
+    id: "sophia",
+    displayName: "Sophia",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Sophia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Sophia: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's sophia. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "isabella": {
+    id: "isabella",
+    displayName: "Isabella",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Isabella \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Isabella: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's isabella. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "mia": {
+    id: "mia",
+    displayName: "Mia",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Mia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Mia: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's mia. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "charlotte": {
+    id: "charlotte",
+    displayName: "Charlotte",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Charlotte \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Charlotte: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's charlotte. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "amelia": {
+    id: "amelia",
+    displayName: "Amelia",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Amelia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Amelia: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's amelia. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "harper": {
+    id: "harper",
+    displayName: "Harper",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Harper \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Harper: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's harper. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "evelyn": {
+    id: "evelyn",
+    displayName: "Evelyn",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Evelyn \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Evelyn: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's evelyn. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "avery": {
+    id: "avery",
+    displayName: "Avery",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Avery \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Avery: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's avery. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "scarlett": {
+    id: "scarlett",
+    displayName: "Scarlett",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Scarlett \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Scarlett: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's scarlett. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "zoey": {
+    id: "zoey",
+    displayName: "Zoey",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Zoey \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Zoey: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's zoey. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
+  "aria": {
+    id: "aria",
+    displayName: "Aria",
+    defaultVersion: "v1.0.0",
+    kind: "default",
+    avatarBase: "female-default",
+    featured: false,
+    teaser: "Aria \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    consistencyTraits: [
+      "Aria: 21+ adult female",
+      "match live Pack 03 footage",
+      "photorealistic erotic detail"
+    ],
+    signatureClothing: "crotchless_visible",
+    energyLabel: "pack 03 live cam, tease and edge",
+    openingMessage:
+      "hey... it's aria. 21+, already a little shiny, and i'm not rushing. watch first.",
+  },
 };
 
 /** Opening line for a live character (signature or custom). */
