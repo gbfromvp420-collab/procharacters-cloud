@@ -18,6 +18,8 @@ export interface ShareQuery {
   create?: boolean;
   /** Open Edit form for character= (?edit=1). */
   edit?: boolean;
+  /** Skip same-night reclaim — start a cold session even if a resume exists. */
+  fresh?: boolean;
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -54,6 +56,9 @@ export function parseShareQuery(search: string): ShareQuery {
   const editRaw = params.get("edit")?.trim().toLowerCase();
   const edit =
     editRaw === "1" || editRaw === "true" || editRaw === "yes" || editRaw === "me";
+  const freshRaw = params.get("fresh")?.trim().toLowerCase();
+  const fresh =
+    freshRaw === "1" || freshRaw === "true" || freshRaw === "yes" || freshRaw === "new";
 
   return {
     characterId,
@@ -66,6 +71,7 @@ export function parseShareQuery(search: string): ShareQuery {
     rehydrate,
     create,
     edit,
+    fresh,
   };
 }
 
