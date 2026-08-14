@@ -1,62 +1,53 @@
 {
-  "updatedAt": "2026-08-14T03:07:40.000Z",
+  "updatedAt": "2026-08-14T03:07:45.000Z",
   "ready": [
-    "amelia",
-    "aria",
-    "ava",
-    "avery",
+    "aiden",
+    "alex",
     "becca",
     "blake",
-    "charlotte",
-    "emma",
-    "evelyn",
+    "carter",
+    "elijah",
+    "ethan",
     "female-athletic-tease",
     "female-default",
     "female-playful-brat",
     "female-soft-goth",
     "gary",
-    "harper",
-    "isabella",
+    "hunter",
+    "jackson",
+    "jacob",
+    "jayden",
     "jenny",
     "jessica",
     "justin",
     "kenny",
+    "liam",
+    "logan",
+    "lucas",
     "mark",
-    "mia",
-    "olivia",
+    "mason",
+    "noah",
     "peter",
     "rachel",
     "samantha",
     "sarah",
-    "scarlett",
-    "sophia",
     "tommy",
     "twink-alt-punk",
     "twink-default",
     "twink-gym",
     "twink-shy-boy",
-    "zoey"
+    "wyatt"
   ],
   "packs": {
-    "amelia": {
+    "aiden": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
-    "aria": {
+    "alex": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
-    },
-    "ava": {
-      "ready": true,
-      "missing": [],
-      "avatarBase": "female-default"
-    },
-    "avery": {
-      "ready": true,
-      "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
     "becca": {
       "ready": true,
@@ -68,20 +59,20 @@
       "missing": [],
       "avatarBase": "twink-default"
     },
-    "charlotte": {
+    "carter": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
-    "emma": {
+    "elijah": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
-    "evelyn": {
+    "ethan": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
     "female-athletic-tease": {
       "ready": true,
@@ -108,15 +99,25 @@
       "missing": [],
       "avatarBase": "twink-default"
     },
-    "harper": {
+    "hunter": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
-    "isabella": {
+    "jackson": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
+    },
+    "jacob": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "jayden": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
     },
     "jenny": {
       "ready": true,
@@ -138,20 +139,35 @@
       "missing": [],
       "avatarBase": "twink-default"
     },
+    "liam": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "logan": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "lucas": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
     "mark": {
       "ready": true,
       "missing": [],
       "avatarBase": "twink-default"
     },
-    "mia": {
+    "mason": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
-    "olivia": {
+    "noah": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     },
     "peter": {
       "ready": true,
@@ -169,16 +185,6 @@
       "avatarBase": "female-default"
     },
     "sarah": {
-      "ready": true,
-      "missing": [],
-      "avatarBase": "female-default"
-    },
-    "scarlett": {
-      "ready": true,
-      "missing": [],
-      "avatarBase": "female-default"
-    },
-    "sophia": {
       "ready": true,
       "missing": [],
       "avatarBase": "female-default"
@@ -208,10 +214,10 @@
       "missing": [],
       "avatarBase": "twink-default"
     },
-    "zoey": {
+    "wyatt": {
       "ready": true,
       "missing": [],
-      "avatarBase": "female-default"
+      "avatarBase": "twink-default"
     }
   }
 }
