@@ -1,4 +1,4 @@
-# Today’s phase list — 2026-08-13
+# Today’s phase list — 2026-08-14
 
 **Owner:** King Grok CEO (final say on eng)  
 **Boss Sr.:** Gary (phone smoke, footage, Stripe live money)  
@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. Pack 01 + Pack 02 **phone-passed**. Pack 03 **29 minds · 116/116 clips 200**. Next eng: gallery pack lanes so 50 minds browse as Pack 01 / 02 / 03.
+Railway is **live**. **50 named minds** on the floor (8 + 13 + 29). Pack lanes shipped. Gary walked the gallery. Next human: more primes or Stripe. Next eng: return tightness.
 
 ---
 
@@ -33,6 +33,9 @@ Railway is **live**. Pack 01 + Pack 02 **phone-passed**. Pack 03 **29 minds · 1
 | 15 | Gary phone-pass Pack 02 (all on site · Jenny + Peter chat) | ✅ passed |
 | 16 | **Pack 03 canon** 29 unique first-name minds | ✅ `#60` |
 | 17 | **Pack 03 loops** 29×4 from Gary Drive | ✅ `#61` `#62` · 116/116 live 200 |
+| 18 | **Gallery pack lanes** Pack 01 / 02 / 03 chips | ✅ `#63` |
+| 19 | Gary walked the gallery (counted the wall) | ✅ 2026-08-14 |
+| 20 | **Pack 02/03 distinct minds** + hide Prod* smoke cards | 🔄 this cook |
 
 ---
 
@@ -40,9 +43,10 @@ Railway is **live**. Pack 01 + Pack 02 **phone-passed**. Pack 03 **29 minds · 1
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | Gallery pack lanes (01 / 02 / 03) | Eng | Browse 50 minds without a wall |
+| A | More library primes | Content | Same drop: `Name + Drive link` |
 | B | Unique Candy Drive | Content | Aria file already used |
 | C | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
+| D | Return tightness | Eng | Continue / resume / push reclaim |
 
 ---
 
@@ -52,8 +56,9 @@ Railway is **live**. Pack 01 + Pack 02 **phone-passed**. Pack 03 **29 minds · 1
 2. ~~Hard-refresh last-build boys (Diego / Mateo / Rio)~~ ✅  
 3. ~~Studio DNA phone pass~~ ✅  
 4. ~~Hard-refresh Pack 02 names + Jenny / Peter chat~~ ✅  
-5. Optional: next prime (`Name + Drive link`)  
-6. Optional: Stripe Day Pass smoke
+5. ~~Walked the live gallery~~ ✅  
+6. Optional: next prime (`Name + Drive link`)  
+7. Optional: Stripe Day Pass smoke
 
 ---
 

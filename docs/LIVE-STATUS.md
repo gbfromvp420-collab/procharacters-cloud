@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-14 Pack 03 **29 minds · 116/116 clips live 200** (**🟢 prod** · Pack 01+02 still live)  
+**Updated:** 2026-08-14 **50 live named minds** · pack lanes live · distinct Pack 02/03 fingerprints  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** see `/health` `deploy.gitSha` (`ab5d54a` at clip pass). Pack 01 **untouched**. Pack 02 **untouched**. Pack 03 first-name slugs.
+**Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
 
 ---
 
@@ -20,8 +20,10 @@
 | Error alerts | ntfy wired |
 | Railway `captivating-vision` | api + web + Postgres-Hw0Y |
 | Pack 01 | **8/8 READY** · Mila Luna Sienna Diego Mateo Rio + defaults · **your clips** |
-| Pack 02 | **13 named minds** · **52/52 clips 200** · **phone-passed** (all on site · Jenny + Peter chat) |
-| Pack 03 | **29 unique first-name ids** · **116/116 clips 200** · Candy held (same file as Aria) · **not phone-passed yet** |
+| Pack 02 | **13 named minds** · **52/52 clips 200** · **phone-passed** |
+| Pack 03 | **29 unique first-name ids** · **116/116 clips 200** · Candy held (same file as Aria) |
+| Gallery lanes | **Pack 01 / 02 / 03 chips** · `?filter=pack03` |
+| Public floor | **50 named minds** + 5 leftover Prod* / VolumeCheck smoke cards (hide next) |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
 | Age floor | **21+** |
 | Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 |
@@ -42,7 +44,7 @@
 
 ---
 
-## Pack 02 names (new first-name ids)
+## Pack 02 names (first-name ids)
 
 | Girls | Boys |
 |-------|------|
@@ -50,7 +52,7 @@
 
 Featured Pack 02: **Jenny, Sarah, Peter, Justin**. Pack 01 IDs stay.
 
-## Pack 03 names (new first-name ids)
+## Pack 03 names (first-name ids)
 
 | Girls | Boys |
 |-------|------|
@@ -65,10 +67,11 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 | Area | Status |
 |------|--------|
 | Live NSFW chat | 🟢 |
-| Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 |
-| Pack 03 dedicated loops | 🟢 **116/116 200** · not phone-passed |
+| Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 **50 minds** · pack chips |
+| Pack 03 dedicated loops | 🟢 **116/116 200** · catalog browsed |
 | Pack 01 last-build clips | 🟢 phone-passed |
-| Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site · Jenny + Peter chat |
+| Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site |
+| Pack 02 / 03 mind copy | 🔄 fingerprints shipping — not clone blurbs |
 | Studio Forge | 🟢 phone-passed |
 | 21+ | 🟢 |
 | Resume codes | 🟢 |
@@ -79,7 +82,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 ## Your move (only if you want)
 
 1. **Candy** — unique Drive link (Aria’s file is already used)  
-2. **Optional** — tap Liam / Emma after a hard-refresh  
+2. **More primes** — paste `Name + Drive`  
 3. **Stripe smoke** — signed-in → Soft Support → Day Pass (live money · skip = free chat still works)
 
 I will **not** invent MP4s or charge your card.
