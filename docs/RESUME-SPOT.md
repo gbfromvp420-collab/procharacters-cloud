@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-14 **50 live named minds** · pack lanes + distinct Pack 02/03 minds  
-**Session:** King Grok CEO · Gary walked the gallery (~58 cards incl. leftover smoke)
+**Updated:** 2026-08-14 **50 live named minds** · same-night reclaim  
+**Session:** King Grok CEO · return tightness: gallery Chat resumes heat
 
 ### Agent fleet (slash / auto)
 
@@ -26,7 +26,7 @@
 | **Pack 03** | 29 unique first-name ids · **116/116 clips 200** · Candy held |
 | **Gallery** | Pack 01 / 02 / 03 chips · `#63` · fingerprints `#64` · public floor = **50** |
 | **Gary move** | Unique Candy Drive · more `Name + Drive` · Stripe when ready |
-| **Eng move** | Hide leftover smoke cards (this cook) → return tightness |
+| **Eng move** | Same-night reclaim shipped — next is phone push or more primes |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -42,7 +42,8 @@
 | **Pack 02** | ✅ 13 minds + 52 loops · **phone-passed** | leave IDs |
 | **Pack 03** | 🟢 29 minds + 116/116 clips 200 | unique Candy Drive |
 | **Pack lanes** | ✅ `#63` | tap Pack 01 / 02 / 03 |
-| **Next** | **1) more primes · 2) stripe · 3) return tightness** | `Name + Drive` or `stripe` |
+| **Same-night reclaim** | 🔄 shipping | chat someone → leave → tap Chat again |
+| **Next** | **1) more primes · 2) stripe · 3) phone push** | `Name + Drive` or `stripe` |
 
 ---
 
