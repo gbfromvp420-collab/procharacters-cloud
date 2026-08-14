@@ -34,6 +34,7 @@ import { GalleryLiveStrip } from "./GalleryLiveStrip";
 import { NetworkOfflineBanner } from "./NetworkOfflineBanner";
 import { SiteChrome } from "./SiteChrome";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
+import { packLaneFor, packLaneLabel, type PackLane } from "@/lib/pack-lanes";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
@@ -48,7 +49,20 @@ type GalleryFilter =
   | "featured"
   | "mine"
   | "owned"
-  | "packs";
+  | "packs"
+  | "pack01"
+  | "pack02"
+  | "pack03";
+
+const PACK_FILTERS: Record<"pack01" | "pack02" | "pack03", PackLane> = {
+  pack01: "01",
+  pack02: "02",
+  pack03: "03",
+};
+
+function cardPackLane(c: CharacterCard): PackLane | null {
+  return c.packLane ?? packLaneFor(c.id);
+}
 
 const EMPTY_CLIPS: Record<MediaClipKey, string> = {
   idle: "",
@@ -112,6 +126,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       "mine",
       "owned",
       "packs",
+      "pack01",
+      "pack02",
+      "pack03",
     ];
     if (allowed.includes(raw as GalleryFilter)) {
       setFilter(raw as GalleryFilter);
@@ -240,6 +257,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       mine: catalog.filter((c) => !!resumes[c.id]).length,
       owned: catalog.filter((c) => c.mine === true).length,
       packs: catalog.filter((c) => c.dedicatedPack).length,
+      pack01: catalog.filter((c) => cardPackLane(c) === "01").length,
+      pack02: catalog.filter((c) => cardPackLane(c) === "02").length,
+      pack03: catalog.filter((c) => cardPackLane(c) === "03").length,
     }),
     [catalog, resumes],
   );
@@ -262,6 +282,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       c.vibeTag,
       mind?.tag,
       mind?.blurb,
+      packLaneLabel(cardPackLane(c)),
       ...(c.tags ?? []),
     ]
       .filter(Boolean)
@@ -286,6 +307,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       if (filter === "owned" && c.mine !== true) return false;
       if (filter === "featured" && !c.featured) return false;
       if (filter === "packs" && !c.dedicatedPack) return false;
+      if (filter in PACK_FILTERS && cardPackLane(c) !== PACK_FILTERS[filter as keyof typeof PACK_FILTERS]) {
+        return false;
+      }
       if (filter === "default" && c.kind !== "default") return false;
       if (filter === "custom" && c.kind !== "custom") return false;
       return matchesQuery(c, q);
@@ -421,6 +445,11 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             setSort("featured");
             setQuery("");
           }}
+          onPackLane={(lane) => {
+            setFilter(lane === "01" ? "pack01" : lane === "02" ? "pack02" : "pack03");
+            setSort("featured");
+            setQuery("");
+          }}
           onMine={() => {
             setFilter("mine");
             setSort("recent");
@@ -531,6 +560,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 ["mine", "My chats"],
                 ["owned", "My models"],
                 ["featured", "Featured"],
+                ["pack01", "Pack 01"],
+                ["pack02", "Pack 02"],
+                ["pack03", "Pack 03"],
                 ["packs", "4K packs"],
                 ["default", "Signature"],
                 ["custom", "Custom"],
@@ -547,7 +579,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                       : "border-amber-500/40 text-amber-100/90"
                     : key === "owned" && counts.owned > 0
                       ? "border-violet-400/45 text-violet-100/90"
-                    : key === "packs"
+                    : key === "packs" || key === "pack01" || key === "pack02" || key === "pack03"
                       ? "border-emerald-400/35 text-emerald-100/90"
                       : ""
                 }`}
@@ -568,7 +600,17 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               <span className="font-semibold text-brand-text">{visible.length}</span>{" "}
               mind{visible.length === 1 ? "" : "s"}
               {query.trim() ? ` for “${query.trim()}”` : ""}
-              {filter !== "all" ? ` · ${filter}` : ""}
+              {filter !== "all"
+                ? ` · ${
+                    filter === "pack01"
+                      ? "Pack 01"
+                      : filter === "pack02"
+                        ? "Pack 02"
+                        : filter === "pack03"
+                          ? "Pack 03"
+                          : filter
+                  }`
+                : ""}
               {filter === "mine" && urgentMineCount > 0 ? (
                 <span className="text-rose-200/90">
                   {" "}
@@ -581,14 +623,22 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-brand-border bg-gradient-to-b from-brand-panel to-brand-bg p-8 text-center sm:p-10">
-            {filter === "packs" ? (
+            {filter === "packs" || filter === "pack01" || filter === "pack02" || filter === "pack03" ? (
               <>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-200/80">
-                  4K packs
+                  {filter === "pack01"
+                    ? "Pack 01"
+                    : filter === "pack02"
+                      ? "Pack 02"
+                      : filter === "pack03"
+                        ? "Pack 03"
+                        : "4K packs"}
                 </p>
-                <p className="mt-2 text-lg font-semibold text-brand-text">No dedicated packs here</p>
+                <p className="mt-2 text-lg font-semibold text-brand-text">
+                  {query.trim() ? `No minds match “${query.trim()}”.` : "No dedicated packs here"}
+                </p>
                 <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-brand-muted">
-                  Dedicated 4-clip loops show a green 4K badge when live. Browse signature minds
+                  Dedicated 4-clip loops show a green 4K badge when live. Browse featured minds
                   meanwhile — interim footage still heats.
                 </p>
                 <div className="mt-5 flex flex-wrap justify-center gap-3">
@@ -631,7 +681,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                     }}
                     className="btn-primary min-h-0 px-5 py-2.5 text-sm"
                   >
-                    Meet tonight&apos;s cast
+                    Meet tonight's cast
                   </button>
                   <Link href="/chat" className="btn-ghost min-h-0 px-5 py-2.5 text-sm">
                     Open live chat
@@ -720,18 +770,34 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
-            {visible.map((card) => (
-              <CharacterTile
-                key={card.id}
-                card={card}
-                onShareCard={shareCard}
-                onShareResume={shareResume}
-                resume={resumes[card.id] ?? null}
-                searchHighlight={!!query.trim() && matchesQuery(card, query.trim().toLowerCase())}
-              />
-            ))}
-          </div>
+          <>
+            {(filter === "pack01" || filter === "pack02" || filter === "pack03") && (
+              <div className="mb-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-200/80">
+                  {filter === "pack01" ? "Pack 01" : filter === "pack02" ? "Pack 02" : "Pack 03"}
+                </p>
+                <h2 className="mt-1 text-lg font-semibold text-brand-text">
+                  {filter === "pack01"
+                    ? "Signature minds — Mila Luna Sienna Mateo Diego Rio + defaults"
+                    : filter === "pack02"
+                      ? "First-name minds — Jenny Sarah Peter Justin and the Pack 02 roster"
+                      : "First-name minds — Liam Noah Emma Olivia and the Pack 03 roster"}
+                </h2>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+              {visible.map((card) => (
+                <CharacterTile
+                  key={card.id}
+                  card={card}
+                  onShareCard={shareCard}
+                  onShareResume={shareResume}
+                  resume={resumes[card.id] ?? null}
+                  searchHighlight={!!query.trim() && matchesQuery(card, query.trim().toLowerCase())}
+                />
+              ))}
+            </div>
+          </>
         )}
         <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 21+ · Procharacters.cloud / KGC Ventures</footer>
       </div>

@@ -20,6 +20,7 @@ import {
 } from "../lib/live/index.js";
 import { bump } from "../lib/observability/metrics.js";
 import { isDedicatedPackReady } from "../lib/media/avatar-packs.js";
+import { packLaneFor } from "../lib/live/pack-lanes.js";
 import { listClipUrls } from "../lib/media/clip-resolver.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
@@ -188,6 +189,7 @@ export const createSessionRoutes = (
           tags: profile.consistencyTraits.slice(0, 4),
           avatarBase: profile.avatarBase ?? profile.id,
           dedicatedPack,
+          packLane: packLaneFor(profile.id),
           mediaLabel: dedicatedPack ? "dedicated" : "interim",
           posterClip: clips.teasing || clips.idle,
           clips,
@@ -573,6 +575,7 @@ export const createSessionRoutes = (
         tags: builtIn!.consistencyTraits.slice(0, 4),
         avatarBase: builtIn!.avatarBase ?? builtIn!.id,
         dedicatedPack,
+        packLane: packLaneFor(builtIn!.id),
         mediaLabel: dedicatedPack ? "dedicated" : "interim",
         posterClip: clips.teasing || clips.idle,
         clips,

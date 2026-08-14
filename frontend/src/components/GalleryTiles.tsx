@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { packLaneFor, packLaneLabel } from "@/lib/pack-lanes";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import {
@@ -335,6 +336,11 @@ export function CharacterTile({
                 }
               >
                 {card.dedicatedPack ? "4K pack" : "Interim"}
+              </span>
+            )}
+            {packLaneLabel(card.packLane ?? packLaneFor(card.id)) && (
+              <span className="rounded-full border border-emerald-300/30 bg-black/45 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50/90 backdrop-blur">
+                {packLaneLabel(card.packLane ?? packLaneFor(card.id))}
               </span>
             )}
             <span className="rounded-full border border-white/20 bg-black/45 px-2 py-0.5 text-[9px] font-medium text-white/85 backdrop-blur">

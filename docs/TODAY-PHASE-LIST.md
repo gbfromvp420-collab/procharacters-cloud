@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named minds + 52 loops** + **phone-passed** (all on site · Jenny + Peter chat). Studio DNA **phone-passed**. Next human: more primes or Stripe.
+Railway is **live**. Pack 01 + Pack 02 **phone-passed**. Pack 03 **29 minds · 116/116 clips 200**. Next eng: gallery pack lanes so 50 minds browse as Pack 01 / 02 / 03.
 
 ---
 
@@ -31,6 +31,8 @@ Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named min
 | 13 | **Pack 02 canon** 13 named minds | ✅ `#57` `2a3f48a` |
 | 14 | **Pack 02 loops** 13×4 from Gary Drive | ✅ `#58` `57277ca` |
 | 15 | Gary phone-pass Pack 02 (all on site · Jenny + Peter chat) | ✅ passed |
+| 16 | **Pack 03 canon** 29 unique first-name minds | ✅ `#60` |
+| 17 | **Pack 03 loops** 29×4 from Gary Drive | ✅ `#61` `#62` · 116/116 live 200 |
 
 ---
 
@@ -38,8 +40,9 @@ Railway is **live**. Pack 01 **6/6 LIVE** + phone-passed. Pack 02 **13 named min
 
 | Priority | Ship | Effort | Notes |
 |----------|------|--------|-------|
-| A | More library primes | Content | Same drop: `Name + Drive link` |
-| B | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
+| A | Gallery pack lanes (01 / 02 / 03) | Eng | Browse 50 minds without a wall |
+| B | Unique Candy Drive | Content | Aria file already used |
+| C | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
 
 ---
 

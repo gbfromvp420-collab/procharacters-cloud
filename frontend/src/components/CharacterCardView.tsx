@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { packLaneFor, packLaneLabel } from "@/lib/pack-lanes";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { fetchLatestAccountSessionForCharacter } from "@/lib/api";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
@@ -213,6 +214,11 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                   {card.dedicatedPack && (
                     <span className="rounded-full border border-emerald-400/45 bg-emerald-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50">
                       4K pack
+                    </span>
+                  )}
+                  {packLaneLabel(card.packLane ?? packLaneFor(card.id)) && (
+                    <span className="rounded-full border border-emerald-300/30 bg-black/45 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50/90">
+                      {packLaneLabel(card.packLane ?? packLaneFor(card.id))}
                     </span>
                   )}
                   {resumeCode && (

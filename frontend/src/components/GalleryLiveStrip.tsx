@@ -2,6 +2,7 @@
 
 import type { CharacterCard } from "@/lib/character-card";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
+import { packLaneFor, type PackLane } from "@/lib/pack-lanes";
 
 /**
  * Compact “what’s live” pulse under the gallery header — product confidence at a glance.
@@ -11,6 +12,7 @@ export function GalleryLiveStrip({
   characters,
   resumeCount,
   onPacks,
+  onPackLane,
   onMine,
   onOwned,
   onFeatured,
@@ -18,6 +20,7 @@ export function GalleryLiveStrip({
   characters: CharacterCard[];
   resumeCount: number;
   onPacks?: () => void;
+  onPackLane?: (lane: PackLane) => void;
   onMine?: () => void;
   /** Filter to private My Characters */
   onOwned?: () => void;
@@ -28,6 +31,9 @@ export function GalleryLiveStrip({
   const featured = characters.filter((c) => c.featured).length;
   const owned = characters.filter((c) => c.mine === true).length;
   const minds = characters.filter((c) => !!mindFingerprint(c.id)).length;
+  const pack01 = characters.filter((c) => (c.packLane ?? packLaneFor(c.id)) === "01").length;
+  const pack02 = characters.filter((c) => (c.packLane ?? packLaneFor(c.id)) === "02").length;
+  const pack03 = characters.filter((c) => (c.packLane ?? packLaneFor(c.id)) === "03").length;
 
   type Chip = {
     label: string;
@@ -37,8 +43,17 @@ export function GalleryLiveStrip({
 
   const chips: Chip[] = [
     { label: `${signature} minds`, tone: "accent" },
+    pack01 > 0
+      ? { label: `Pack 01 · ${pack01}`, tone: "emerald", onClick: onPackLane ? () => onPackLane("01") : onPacks }
+      : null,
+    pack02 > 0
+      ? { label: `Pack 02 · ${pack02}`, tone: "emerald", onClick: onPackLane ? () => onPackLane("02") : onPacks }
+      : null,
+    pack03 > 0
+      ? { label: `Pack 03 · ${pack03}`, tone: "emerald", onClick: onPackLane ? () => onPackLane("03") : onPacks }
+      : null,
     packs > 0
-      ? { label: `${packs}× 4K packs`, tone: "emerald", onClick: onPacks }
+      ? { label: `${packs}× 4K`, tone: "emerald", onClick: onPacks }
       : null,
     featured > 0
       ? { label: `${featured} featured`, tone: "accent", onClick: onFeatured }

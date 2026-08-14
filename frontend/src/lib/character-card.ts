@@ -18,6 +18,8 @@ export interface CharacterCard {
   featured?: boolean;
   /** True when all 4 dedicated loops exist under /avatar/<id>/ */
   dedicatedPack?: boolean;
+  /** Catalog pack lane: 01 signature · 02 first names · 03 first names */
+  packLane?: "01" | "02" | "03" | null;
   /** dedicated | interim | custom — pack readiness for UI chips */
   mediaLabel?: "dedicated" | "interim" | "custom" | string;
   /** Short vibe chip from API (e.g. "gym interval edging") */

@@ -78,8 +78,8 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 
 ## Your move (only if you want)
 
-1. **Hard-refresh** — tap Liam / Emma, one chat each  
-2. **Candy** — unique Drive link (Aria’s file is already used)  
+1. **Candy** — unique Drive link (Aria’s file is already used)  
+2. **Optional** — tap Liam / Emma after a hard-refresh  
 3. **Stripe smoke** — signed-in → Soft Support → Day Pass (live money · skip = free chat still works)
 
 I will **not** invent MP4s or charge your card.
