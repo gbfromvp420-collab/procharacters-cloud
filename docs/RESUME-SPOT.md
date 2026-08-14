@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-14 **50 live named minds** · same-night reclaim  
-**Session:** King Grok CEO · return tightness: gallery Chat resumes heat
+**Updated:** 2026-08-14 **50 live named minds** · same-night reclaim · distinct openings  
+**Session:** King Grok CEO · Pack 02/03 first lines stop being clones
 
 ### Agent fleet (slash / auto)
 
@@ -26,7 +26,7 @@
 | **Pack 03** | 29 unique first-name ids · **116/116 clips 200** · Candy held |
 | **Gallery** | Pack 01 / 02 / 03 chips · `#63` · fingerprints `#64` · public floor = **50** |
 | **Gary move** | Unique Candy Drive · more `Name + Drive` · Stripe when ready |
-| **Eng move** | Same-night reclaim shipped — next is phone push or more primes |
+| **Eng move** | Distinct Pack 02/03 openings shipping |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -37,37 +37,10 @@
 | Track | Status | Next human move |
 |-------|--------|-----------------|
 | **🟢 Railway / live** | **LIVE** | Optional Stripe Day Pass smoke |
-| **21+ age floor** | ✅ | — |
-| **Pack 01** | ✅ 6 named + 2 defaults live | leave IDs |
-| **Pack 02** | ✅ 13 minds + 52 loops · **phone-passed** | leave IDs |
-| **Pack 03** | 🟢 29 minds + 116/116 clips 200 | unique Candy Drive |
-| **Pack lanes** | ✅ `#63` | tap Pack 01 / 02 / 03 |
-| **Same-night reclaim** | 🔄 shipping | chat someone → leave → tap Chat again |
+| **Same-night reclaim** | ✅ `#66` phone-passed | — |
+| **Pack 02 / 03 openings** | 🔄 this cook | tap Jenny / Liam Chat · Start fresh |
 | **Next** | **1) more primes · 2) stripe · 3) phone push** | `Name + Drive` or `stripe` |
 
 ---
-
-## Pack 02 ids
-
-jenny sarah jessica rachel samantha becca · peter gary justin mark blake tommy kenny
-
-Featured: jenny sarah peter justin.
-
-## Pack 03 ids
-
-emma olivia ava sophia isabella mia charlotte amelia harper evelyn avery scarlett zoey aria · liam noah ethan mason lucas logan aiden jackson jacob jayden elijah carter wyatt hunter alex
-
-Featured: liam noah emma olivia. Held: candy (same Drive as aria).
-
----
-
-## Studio routes (canonical)
-
-| Path | Purpose |
-|------|---------|
-| `/models/studio` | **Studio Forge v3** |
-| `/models/studio/edit/:id` | Edit owned model |
-
-**Live:** https://procharacters-web-production-7288.up.railway.app/models/studio
 
 *King Grok · 50/50 · ship it unchained.*
