@@ -1,6 +1,6 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-14 Pack 03 **29 minds + 116 loops on main**  
+**Updated:** 2026-08-14 Pack 03 **116/116 clips live 200**  
 **Session:** King Grok CEO · Gary Drive primes → Pack 03 first-name slugs
 
 ### Agent fleet (slash / auto)
@@ -19,13 +19,13 @@
 
 | Fact | Detail |
 |------|--------|
-| **Now** | Both public URLs **200**. API `/health` `status: ok` |
+| **Now** | Both public URLs **200**. API `/health` `status: ok` · deploy `ab5d54a` |
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
 | **Pack 01** | 8/8 READY · Mila Luna Sienna Diego Mateo Rio + defaults · **do not rename live IDs** |
 | **Pack 02** | 13 first-name ids · canon `#57` `2a3f48a` · loops `#58` `57277ca` · **phone-passed** |
-| **Pack 03** | 29 unique first-name ids · canon `#60` · males `#62` · females `#61` · Candy held (dup Aria file) |
-| **Gary move** | Hard-refresh Liam / Emma chat after live 200s · unique Candy Drive |
-| **Eng move** | Confirm Railway 200s on 116 Pack 03 clips · then phone pass |
+| **Pack 03** | 29 unique first-name ids · canon `#60` · males `#62` · females `#61` · **116/116 clips 200** · Candy held |
+| **Gary move** | Hard-refresh Liam / Emma chat · unique Candy Drive |
+| **Eng move** | ✅ clips live · waiting phone pass |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -39,8 +39,8 @@
 | **21+ age floor** | ✅ | — |
 | **Pack 01** | ✅ 6 named + 2 defaults live | leave IDs |
 | **Pack 02** | ✅ 13 minds + 52 loops · **phone-passed** | leave IDs |
-| **Pack 03** | 🟡 29 minds + 116 loops on main | unique Candy Drive · phone pass Liam/Emma |
-| **Next** | **1) live 200s + phone pass · 2) stripe** | hard-refresh after clips 200 |
+| **Pack 03** | 🟢 29 minds + 116/116 clips 200 | unique Candy Drive · phone pass Liam/Emma |
+| **Next** | **1) phone pass · 2) stripe** | hard-refresh Liam / Emma |
 
 ---
 

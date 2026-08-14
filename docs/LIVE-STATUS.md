@@ -1,9 +1,9 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-14 Pack 03 **29 minds + 116 loops on main** (**🟢 prod** · Pack 01+02 still live)  
+**Updated:** 2026-08-14 Pack 03 **29 minds · 116/116 clips live 200** (**🟢 prod** · Pack 01+02 still live)  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 **untouched**. Pack 02 **untouched**. Pack 03 first-name slugs.
+**Live deploy SHA:** see `/health` `deploy.gitSha` (`ab5d54a` at clip pass). Pack 01 **untouched**. Pack 02 **untouched**. Pack 03 first-name slugs.
 
 ---
 
@@ -21,7 +21,7 @@
 | Railway `captivating-vision` | api + web + Postgres-Hw0Y |
 | Pack 01 | **8/8 READY** · Mila Luna Sienna Diego Mateo Rio + defaults · **your clips** |
 | Pack 02 | **13 named minds** · **52/52 clips 200** · **phone-passed** (all on site · Jenny + Peter chat) |
-| Pack 03 | **29 unique first-name ids** · **116 dedicated loops on main** · Candy held (same file as Aria) · **not phone-passed yet** |
+| Pack 03 | **29 unique first-name ids** · **116/116 clips 200** · Candy held (same file as Aria) · **not phone-passed yet** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
 | Age floor | **21+** |
 | Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 |
@@ -65,8 +65,8 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 | Area | Status |
 |------|--------|
 | Live NSFW chat | 🟢 |
-| Gallery · Pack 01 + Pack 02 names | 🟢 |
-| Pack 03 names + dedicated loops | 🟡 on main (`#60` canon · `#62` males · `#61` females) · wait Railway 200s · phone pass Liam/Emma |
+| Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 |
+| Pack 03 dedicated loops | 🟢 **116/116 200** · not phone-passed |
 | Pack 01 last-build clips | 🟢 phone-passed |
 | Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site · Jenny + Peter chat |
 | Studio Forge | 🟢 phone-passed |
@@ -78,7 +78,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 
 ## Your move (only if you want)
 
-1. **Hard-refresh** — tap Liam / Emma, one chat each (after clips return 200)  
+1. **Hard-refresh** — tap Liam / Emma, one chat each  
 2. **Candy** — unique Drive link (Aria’s file is already used)  
 3. **Stripe smoke** — signed-in → Soft Support → Day Pass (live money · skip = free chat still works)
 
