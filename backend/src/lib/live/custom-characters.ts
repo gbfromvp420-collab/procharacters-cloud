@@ -373,14 +373,27 @@ export function listAccountCustomCharacters(accountId: string): CustomCharacterR
   return listCustomCharacters().filter((c) => c.ownerAccountId === accountId);
 }
 
+/** Leftover Railway smoke cards stay off the public floor. */
+export function isSmokeTestCustom(c: CustomCharacterRecord): boolean {
+  const blob = `${c.id} ${c.displayName}`.toLowerCase();
+  return (
+    blob.includes("prodbatch") ||
+    blob.includes("produpload") ||
+    blob.includes("prodclip") ||
+    blob.includes("prodpersist") ||
+    blob.includes("volumecheck")
+  );
+}
+
 export function isPublicCustom(c: CustomCharacterRecord): boolean {
+  if (isSmokeTestCustom(c)) return false;
   // v2 private My Characters never hit public gallery
   if (c.visibility === "private") return false;
   if (c.ownerAccountId && c.visibility !== "featured" && c.visibility !== "unlisted") {
     return false;
   }
-  // Legacy globals (no owner) remain listable
-  if (!c.ownerAccountId) return true;
+  // Legacy unowned: only if someone explicitly featured them
+  if (!c.ownerAccountId) return c.visibility === "featured";
   return c.visibility === "featured" || c.visibility === "unlisted";
 }
 
