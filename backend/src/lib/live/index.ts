@@ -23,7 +23,6 @@ export {
   getCustomCharactersPersistPath,
   initCustomCharacters,
   isPublicCustom,
-  isSmokeTestCustom,
   isSignatureModelId,
   listAccountCustomCharacters,
   listCustomCharacters,
