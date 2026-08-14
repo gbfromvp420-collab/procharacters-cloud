@@ -1,9 +1,11 @@
 import { buildApp } from "./app.js";
 import { env } from "./config/env.js";
+import { applyPackMindCopy } from "./lib/live/apply-pack-minds.js";
 
 async function main() {
+  const stamped = applyPackMindCopy();
   console.log(
-    `[startup] procharacters backend | NODE_ENV=${env.NODE_ENV} | PORT=${env.PORT} | REPO_ROOT=${env.repoRoot}`,
+    `[startup] procharacters backend | NODE_ENV=${env.NODE_ENV} | PORT=${env.PORT} | REPO_ROOT=${env.repoRoot} | packMinds=${stamped}`,
   );
 
   const app = await buildApp();
