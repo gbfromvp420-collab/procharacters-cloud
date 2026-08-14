@@ -23,7 +23,7 @@
 | Pack 02 | **13 named minds** · **52/52 clips 200** · **phone-passed** |
 | Pack 03 | **29 unique first-name ids** · **116/116 clips 200** · Candy held (same file as Aria) |
 | Gallery lanes | **Pack 01 / 02 / 03 chips** · `?filter=pack03` |
-| Public floor | **50 named minds** + 5 leftover Prod* / VolumeCheck smoke cards (hide next) |
+| Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
 | Age floor | **21+** |
 | Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 |
@@ -71,7 +71,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 | Pack 03 dedicated loops | 🟢 **116/116 200** · catalog browsed |
 | Pack 01 last-build clips | 🟢 phone-passed |
 | Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site |
-| Pack 02 / 03 mind copy | 🔄 fingerprints shipping — not clone blurbs |
+| Pack 02 / 03 mind copy | 🟢 fingerprints `#64` · catalog openings this cook |
 | Studio Forge | 🟢 phone-passed |
 | 21+ | 🟢 |
 | Resume codes | 🟢 |
