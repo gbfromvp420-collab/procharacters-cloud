@@ -46,6 +46,18 @@ export async function fetchCharacterCard(characterId: string): Promise<Character
   }
 }
 
+/** Leftover Railway smoke cards — never show on the public floor. */
+export function isSmokeTestCard(card: Pick<CharacterCard, "id" | "displayName">): boolean {
+  const blob = `${card.id} ${card.displayName}`.toLowerCase();
+  return (
+    blob.includes("prodbatch") ||
+    blob.includes("produpload") ||
+    blob.includes("prodclip") ||
+    blob.includes("prodpersist") ||
+    blob.includes("volumecheck")
+  );
+}
+
 export async function fetchCharacterGallery(): Promise<CharacterCard[]> {
   try {
     const res = await fetch(`${API_BASE}/api/v1/characters/gallery`, {
@@ -53,7 +65,7 @@ export async function fetchCharacterGallery(): Promise<CharacterCard[]> {
     });
     if (!res.ok) return [];
     const data = (await res.json()) as { characters?: CharacterCard[] };
-    return data.characters ?? [];
+    return (data.characters ?? []).filter((c) => !isSmokeTestCard(c));
   } catch {
     return [];
   }

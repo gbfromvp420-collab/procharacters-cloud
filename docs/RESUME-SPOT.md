@@ -24,9 +24,9 @@
 | **Pack 01** | 8/8 READY · Mila Luna Sienna Diego Mateo Rio + defaults · **do not rename live IDs** |
 | **Pack 02** | 13 first-name ids · **phone-passed** · 52/52 clips |
 | **Pack 03** | 29 unique first-name ids · **116/116 clips 200** · Candy held |
-| **Gallery** | Pack 01 / 02 / 03 chips · `#63` · public floor = **50** (smoke customs hidden) |
+| **Gallery** | Pack 01 / 02 / 03 chips · `#63` · fingerprints `#64` · public floor = **50** |
 | **Gary move** | Unique Candy Drive · more `Name + Drive` · Stripe when ready |
-| **Eng move** | Return tightness next (Continue / resume / push reclaim) |
+| **Eng move** | Hide leftover smoke cards (this cook) → return tightness |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
