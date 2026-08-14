@@ -1,18 +1,32 @@
 {
-  "updatedAt": "2026-08-13T20:50:51.000Z",
+  "updatedAt": "2026-08-14T03:07:45.000Z",
   "ready": [
+    "aiden",
+    "alex",
     "becca",
     "blake",
+    "carter",
+    "elijah",
+    "ethan",
     "female-athletic-tease",
     "female-default",
     "female-playful-brat",
     "female-soft-goth",
     "gary",
+    "hunter",
+    "jackson",
+    "jacob",
+    "jayden",
     "jenny",
     "jessica",
     "justin",
     "kenny",
+    "liam",
+    "logan",
+    "lucas",
     "mark",
+    "mason",
+    "noah",
     "peter",
     "rachel",
     "samantha",
@@ -21,15 +35,41 @@
     "twink-alt-punk",
     "twink-default",
     "twink-gym",
-    "twink-shy-boy"
+    "twink-shy-boy",
+    "wyatt"
   ],
   "packs": {
+    "aiden": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "alex": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
     "becca": {
       "ready": true,
       "missing": [],
       "avatarBase": "female-default"
     },
     "blake": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "carter": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "elijah": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "ethan": {
       "ready": true,
       "missing": [],
       "avatarBase": "twink-default"
@@ -59,6 +99,26 @@
       "missing": [],
       "avatarBase": "twink-default"
     },
+    "hunter": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "jackson": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "jacob": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "jayden": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
     "jenny": {
       "ready": true,
       "missing": [],
@@ -79,7 +139,32 @@
       "missing": [],
       "avatarBase": "twink-default"
     },
+    "liam": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "logan": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "lucas": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
     "mark": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "mason": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "noah": {
       "ready": true,
       "missing": [],
       "avatarBase": "twink-default"
@@ -125,6 +210,11 @@
       "avatarBase": "twink-default"
     },
     "twink-shy-boy": {
+      "ready": true,
+      "missing": [],
+      "avatarBase": "twink-default"
+    },
+    "wyatt": {
       "ready": true,
       "missing": [],
       "avatarBase": "twink-default"
