@@ -33,6 +33,9 @@ jobs:
         run: npm run lint --if-present
         continue-on-error: true
 
+      - name: Autostart deep-link checks
+        run: npm run test:deeplink
+
       - name: Build
         run: npm run build
         env:
