@@ -7,7 +7,8 @@
     "dev:lan": "next dev -p 3000 -H 0.0.0.0",
     "build": "next build",
     "start": "next start -H 0.0.0.0",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:deeplink": "npx --yes tsx scripts/check-chat-deeplink.ts"
   },
   "dependencies": {
     "livekit-client": "^2.15.4",

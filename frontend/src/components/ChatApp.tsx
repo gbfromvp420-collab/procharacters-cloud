@@ -103,13 +103,17 @@ import {
   buildResumeCodeShareUrl,
   canNativeShare,
   copyText,
-  parseShareQuery,
   replaceCharacterInUrl,
   shareOrCopyText,
   shareOrCopyUrl,
   shareResultLabel,
   shareUrlResultLabel,
 } from "@/lib/share-links";
+import {
+  hasPendingShareDeepLink,
+  resolveCharacterDeepLink,
+  snapshotShareQuery,
+} from "@/lib/chat-deeplink";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
   energyBandBadgeClass,
@@ -245,6 +249,8 @@ function StatusDot({ status }: { status: ConnectionStatus }) {
 
 export function ChatApp() {
   const [characters, setCharacters] = useState<LiveCharacterOption[]>(FALLBACK_CHARACTERS);
+  const [catalogReady, setCatalogReady] = useState(false);
+  const [accountReady, setAccountReady] = useState(false);
   const [character, setCharacter] = useState<CharacterId>("twink-default");
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [characterName, setCharacterName] = useState<string | null>(null);
@@ -423,6 +429,11 @@ export function ChatApp() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const pendingHistoryRef = useRef<ChatMessage[] | null>(null);
   const deepLinkHandledRef = useRef(false);
+  /** First client search string — idle URL sync must not clobber this. */
+  const incomingQueryRef = useRef<ReturnType<typeof snapshotShareQuery> | null>(null);
+  if (typeof window !== "undefined" && incomingQueryRef.current === null) {
+    incomingQueryRef.current = snapshotShareQuery();
+  }
   /** True only for deliberate closes (End, Switch, unmount) — suppresses rescue banner. */
   const intentionalCloseRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
@@ -731,6 +742,7 @@ export function ChatApp() {
 
   useEffect(() => {
     let cancelled = false;
+    setCatalogReady(false);
     listLiveCharacters(account?.token)
       .then((list) => {
         if (cancelled || list.length === 0) return;
@@ -742,7 +754,7 @@ export function ChatApp() {
           return a.displayName.localeCompare(b.displayName);
         });
         setCharacters(ordered);
-        const query = parseShareQuery(window.location.search);
+        const query = incomingQueryRef.current ?? snapshotShareQuery();
         setCharacter((current) => {
           if (query.characterId && ordered.some((c) => c.id === query.characterId)) {
             return query.characterId!;
@@ -752,6 +764,9 @@ export function ChatApp() {
       })
       .catch(() => {
         /* keep fallback list */
+      })
+      .finally(() => {
+        if (!cancelled) setCatalogReady(true);
       });
     return () => {
       cancelled = true;
@@ -762,6 +777,7 @@ export function ChatApp() {
     setSavedSession(loadStoredSession());
     const storedAccount = loadStoredAccount();
     setAccount(storedAccount);
+    setAccountReady(true);
     if (storedAccount) {
       void refreshAccountSessions(storedAccount.token);
     }
@@ -800,8 +816,17 @@ export function ChatApp() {
   }, [character, characters, showCreate]);
 
   // Keep address bar shareable without private tokens after boot.
+  // Must not run before the incoming ?character=&autostart= / resume query is
+  // consumed — replaceCharacterInUrl strips those flags and would leave the
+  // picker on the default twink-default id.
   useEffect(() => {
     if (status === "idle" || status === "ended" || status === "error") {
+      if (
+        !deepLinkHandledRef.current &&
+        hasPendingShareDeepLink(incomingQueryRef.current)
+      ) {
+        return;
+      }
       replaceCharacterInUrl(character);
     }
   }, [character, status]);
@@ -1540,7 +1565,7 @@ export function ChatApp() {
   // Deep-link: ?create=1 → Studio; ?edit=1&character= → /models/studio/edit/:id
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const query = parseShareQuery(window.location.search);
+    const query = incomingQueryRef.current ?? snapshotShareQuery();
     if (query.edit && query.characterId) {
       window.location.replace(
         `/models/studio/edit/${encodeURIComponent(query.characterId)}`,
@@ -1552,11 +1577,13 @@ export function ChatApp() {
   }, []);
 
   // Deep-links: ?magic=  ?character=  ?resume=  or legacy ?session=&token=
+  // Read the snapshotted query — idle URL sync used to rewrite the bar to
+  // twink-default and strip autostart before this effect ran.
   useEffect(() => {
     if (deepLinkHandledRef.current) return;
     if (typeof window === "undefined") return;
 
-    const query = parseShareQuery(window.location.search);
+    const query = incomingQueryRef.current ?? snapshotShareQuery();
 
     if (query.magicToken) {
       deepLinkHandledRef.current = true;
@@ -1589,11 +1616,9 @@ export function ChatApp() {
     }
 
     if (characters.length === 0) return;
-    if (!query.characterId && !query.resumeCode && !(query.sessionId && query.token)) return;
-
-    deepLinkHandledRef.current = true;
 
     if (query.resumeCode) {
+      deepLinkHandledRef.current = true;
       void (async () => {
         try {
           setStatus("connecting");
@@ -1623,6 +1648,7 @@ export function ChatApp() {
     }
 
     if (query.sessionId && query.token) {
+      deepLinkHandledRef.current = true;
       const stored: StoredSession = {
         sessionId: query.sessionId,
         wsToken: query.token,
@@ -1633,28 +1659,37 @@ export function ChatApp() {
       return;
     }
 
-    if (query.characterId) {
-      const exists = characters.some((c) => c.id === query.characterId);
-      if (!exists) {
-        setError(
-          `Unknown character “${query.characterId}” — it may be a custom model not on this server.`,
-        );
-        return;
-      }
-      setCharacter(query.characterId);
-      // Deep-link mode=edge_pace must apply before createSession (state alone is too late).
-      if (query.sessionMode) {
-        setSessionMode(query.sessionMode);
-      }
-      if (query.autostart) {
-        void startSession(
-          query.characterId,
-          query.sessionMode ? { sessionMode: query.sessionMode } : undefined,
-        );
-      }
+    if (!query.characterId) return;
+
+    const decision = resolveCharacterDeepLink({
+      query,
+      catalogIds: characters.map((c) => c.id),
+      catalogReady: catalogReady && accountReady,
+    });
+    if (decision.action === "wait" || decision.action === "none") return;
+
+    deepLinkHandledRef.current = true;
+
+    if (decision.action === "unknown") {
+      setError(
+        `Unknown character “${decision.characterId}” — it may be a custom model not on this server.`,
+      );
+      return;
+    }
+
+    setCharacter(decision.characterId);
+    // Deep-link mode=edge_pace must apply before createSession (state alone is too late).
+    if (decision.sessionMode) {
+      setSessionMode(decision.sessionMode);
+    }
+    if (decision.autostart) {
+      void startSession(
+        decision.characterId,
+        decision.sessionMode ? { sessionMode: decision.sessionMode } : undefined,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- boot once when catalog ready
-  }, [characters]);
+  }, [characters, catalogReady, accountReady]);
 
   const flashCopy = (label: string) => {
     setCopyNotice(label);

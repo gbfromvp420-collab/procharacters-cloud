@@ -167,7 +167,11 @@ export function buildResumeShareUrl(
   return url.toString();
 }
 
-/** Keep the address bar in sync without a full navigation. */
+/**
+ * Keep the address bar in sync without a full navigation.
+ * Strips autostart / resume / magic / mode — do not call this while a
+ * pending share deep-link still needs to be consumed (see chat-deeplink.ts).
+ */
 export function replaceCharacterInUrl(characterId: string | null): void {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
