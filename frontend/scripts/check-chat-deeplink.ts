@@ -5,7 +5,9 @@
 import assert from "node:assert/strict";
 import {
   hasPendingShareDeepLink,
+  initialPickerCharacterId,
   resolveCharacterDeepLink,
+  resolveChatBootIdentity,
   snapshotShareQuery,
 } from "../src/lib/chat-deeplink";
 import { rewriteAutostartToResume } from "../src/lib/return-autostart";
@@ -160,6 +162,108 @@ function checkFreshAutostartStillSelects() {
   );
 }
 
+function checkInitialPickerHonorsQuery() {
+  assert.equal(initialPickerCharacterId("?character=liam&autostart=1"), "liam");
+  assert.equal(initialPickerCharacterId("?character=emma&autostart=1"), "emma");
+  assert.equal(initialPickerCharacterId(""), "twink-default");
+  assert.equal(initialPickerCharacterId("?autostart=1"), "twink-default");
+}
+
+function checkBootLabelIgnoresLeftoverSavedName() {
+  const liamBoot = resolveChatBootIdentity({
+    queryCharacterId: "liam",
+    queryConsumed: false,
+    selectedCharacterId: "liam",
+    liveCharacterName: null,
+    selectedDisplayName: null,
+    savedSession: {
+      characterId: "emma",
+      characterName: "Naughty Syntax Emma",
+    },
+  });
+  assert.equal(liamBoot.intendedCharacterId, "liam");
+  assert.equal(liamBoot.displayName, null);
+  assert.equal(liamBoot.showMind, true);
+  assert.equal(liamBoot.pendingRequested, false);
+
+  const emmaBoot = resolveChatBootIdentity({
+    queryCharacterId: "emma",
+    queryConsumed: false,
+    selectedCharacterId: "emma",
+    liveCharacterName: null,
+    selectedDisplayName: "Naughty Syntax Emma",
+    savedSession: {
+      characterId: "liam",
+      characterName: "Naughty Syntax Liam",
+    },
+  });
+  assert.equal(emmaBoot.displayName, "Naughty Syntax Emma");
+  assert.equal(emmaBoot.showMind, true);
+}
+
+function checkBootLabelNeutralWhileDefaultStillSelected() {
+  const boot = resolveChatBootIdentity({
+    queryCharacterId: "liam",
+    queryConsumed: false,
+    selectedCharacterId: "twink-default",
+    liveCharacterName: null,
+    selectedDisplayName: "Twink Default",
+    savedSession: {
+      characterId: "emma",
+      characterName: "Naughty Syntax Emma",
+    },
+  });
+  assert.equal(boot.pendingRequested, true);
+  assert.equal(boot.displayName, null);
+  assert.equal(boot.showMind, false);
+  assert.equal(boot.intendedCharacterId, "liam");
+}
+
+function checkBootLabelDoesNotUseSavedNameForDefaultMind() {
+  const boot = resolveChatBootIdentity({
+    queryCharacterId: "liam",
+    queryConsumed: false,
+    selectedCharacterId: "twink-default",
+    savedSession: {
+      characterId: "twink-default",
+      characterName: "Twink Default",
+    },
+  });
+  assert.equal(boot.showMind, false);
+  assert.equal(boot.displayName, null);
+}
+
+function checkBootLabelAfterQueryConsumedAllowsPickerHop() {
+  const boot = resolveChatBootIdentity({
+    queryCharacterId: "liam",
+    queryConsumed: true,
+    selectedCharacterId: "emma",
+    selectedDisplayName: "Naughty Syntax Emma",
+    savedSession: {
+      characterId: "liam",
+      characterName: "Naughty Syntax Liam",
+    },
+  });
+  assert.equal(boot.pendingRequested, false);
+  assert.equal(boot.intendedCharacterId, "emma");
+  assert.equal(boot.displayName, "Naughty Syntax Emma");
+  assert.equal(boot.showMind, true);
+}
+
+function checkBootLabelUsesMatchingSavedName() {
+  const boot = resolveChatBootIdentity({
+    queryCharacterId: "liam",
+    queryConsumed: false,
+    selectedCharacterId: "liam",
+    savedSession: {
+      characterId: "liam",
+      characterName: "Naughty Syntax Liam",
+    },
+  });
+  assert.equal(boot.displayName, "Naughty Syntax Liam");
+  assert.equal(boot.showMind, true);
+}
+
 function checkClobberedTwinkDefaultWouldMisselect() {
   // Documents the production bug: idle URL sync rewrote the bar before consume.
   const clobbered = parseShareQuery("?character=twink-default");
@@ -194,6 +298,12 @@ const checks = [
   checkEdgePaceAutostart,
   checkResumeQueryIsPendingNotCharacterWait,
   checkFreshAutostartStillSelects,
+  checkInitialPickerHonorsQuery,
+  checkBootLabelIgnoresLeftoverSavedName,
+  checkBootLabelNeutralWhileDefaultStillSelected,
+  checkBootLabelDoesNotUseSavedNameForDefaultMind,
+  checkBootLabelAfterQueryConsumedAllowsPickerHop,
+  checkBootLabelUsesMatchingSavedName,
   checkClobberedTwinkDefaultWouldMisselect,
 ];
 
