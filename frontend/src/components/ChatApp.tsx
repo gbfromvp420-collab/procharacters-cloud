@@ -111,7 +111,9 @@ import {
 } from "@/lib/share-links";
 import {
   hasPendingShareDeepLink,
+  initialPickerCharacterId,
   resolveCharacterDeepLink,
+  resolveChatBootIdentity,
   snapshotShareQuery,
 } from "@/lib/chat-deeplink";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
@@ -251,7 +253,9 @@ export function ChatApp() {
   const [characters, setCharacters] = useState<LiveCharacterOption[]>(FALLBACK_CHARACTERS);
   const [catalogReady, setCatalogReady] = useState(false);
   const [accountReady, setAccountReady] = useState(false);
-  const [character, setCharacter] = useState<CharacterId>("twink-default");
+  const [character, setCharacter] = useState<CharacterId>(() =>
+    initialPickerCharacterId(),
+  );
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [characterName, setCharacterName] = useState<string | null>(null);
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(null);
@@ -2580,17 +2584,36 @@ export function ChatApp() {
     characters.find((c) => c.id === (activeCharacterId ?? character)) ??
     characters.find((c) => c.id === character) ??
     null;
-  const headerCharacterName =
-    characterName ??
-    savedSession?.characterName ??
-    selectedLive?.displayName ??
-    null;
-  const headerMind = mindFingerprint(activeCharacterId ?? character);
-  const selectedOpening =
-    selectedLive?.openingMessage?.trim() ||
-    FALLBACK_CHARACTERS.find((c) => c.id === (activeCharacterId ?? character))
-      ?.openingMessage ||
-    null;
+  const incomingQuery = incomingQueryRef.current;
+  const bootIdentity = resolveChatBootIdentity({
+    queryCharacterId: incomingQuery?.characterId,
+    queryConsumed: deepLinkHandledRef.current,
+    selectedCharacterId: character,
+    activeCharacterId,
+    liveCharacterName: characterName,
+    selectedDisplayName: selectedLive?.displayName,
+    savedSession,
+  });
+  const headerCharacterName = bootIdentity.displayName;
+  const headerMind = bootIdentity.showMind
+    ? mindFingerprint(
+        bootIdentity.intendedCharacterId ?? activeCharacterId ?? character,
+      )
+    : null;
+  const selectedOpening = bootIdentity.showMind
+    ? selectedLive?.openingMessage?.trim() ||
+      FALLBACK_CHARACTERS.find(
+        (c) =>
+          c.id ===
+          (bootIdentity.intendedCharacterId ?? activeCharacterId ?? character),
+      )?.openingMessage ||
+      null
+    : null;
+  const showSavedResumeChrome =
+    !!savedSession &&
+    !bootIdentity.pendingRequested &&
+    savedSession.characterId ===
+      (bootIdentity.intendedCharacterId ?? character);
   const chatPresenceSkin = resolvePresenceSkin(
     avatarState?.presenceSkin,
     activeCharacterId ?? character,
@@ -3212,7 +3235,7 @@ export function ChatApp() {
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
-            {!sessionActive && savedSession && !pauseSnapshot && (
+            {!sessionActive && showSavedResumeChrome && !pauseSnapshot && (
               <ChatResumeHero
                 saved={savedSession}
                 busy={restarting}
@@ -3312,6 +3335,10 @@ export function ChatApp() {
                   };
                   return (
                     <>
+                      {character &&
+                        !characters.some((c) => c.id === character) && (
+                          <option value={character}>Connecting…</option>
+                        )}
                       {mine.length > 0 && (
                         <optgroup label="My models">{mine.map(renderOpt)}</optgroup>
                       )}
@@ -3429,12 +3456,12 @@ export function ChatApp() {
                     type="button"
                     onClick={() => void startSession()}
                     className={`min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm ${
-                      savedSession ? "btn-ghost" : "btn-primary"
+                      showSavedResumeChrome ? "btn-ghost" : "btn-primary"
                     }`}
                   >
-                    {savedSession ? "Start new" : "Start"}
+                    {showSavedResumeChrome ? "Start new" : "Start"}
                   </button>
-                  {savedSession && !pauseSnapshot && (
+                  {showSavedResumeChrome && !pauseSnapshot && (
                     <button
                       type="button"
                       onClick={() => void resumeLastSession()}
@@ -4327,13 +4354,16 @@ export function ChatApp() {
                             ? "Live — first line loading. Stay with them."
                             : `${headerCharacterName} is live — they should greet you first.`
                           : "Session live — they should greet you first. Memory saves as you go."
-                      : savedSession
-                          ? `Welcome back — resume “${savedSession.characterName ?? savedSession.characterId}” or start a new session.`
-                          : priorNotes
+                      : showSavedResumeChrome
+                          ? `Welcome back — resume “${savedSession?.characterName ?? savedSession?.characterId}” or start a new session.`
+                          : priorNotes && !bootIdentity.pendingRequested
                             ? "They kept a little of you — Start to pick up the heat."
                             : headerCharacterName
                               ? `Ready for ${headerCharacterName}. Choose Normal or Edge Pace, then Start.`
-                              : "Pick a character, choose Normal or Edge Pace, then Start."}
+                              : bootIdentity.pendingRequested ||
+                                  (incomingQuery?.autostart && incomingQuery.characterId)
+                                ? "Connecting…"
+                                : "Pick a character, choose Normal or Edge Pace, then Start."}
                   </p>
                   )}
                   {status !== "ready" && status !== "connecting" && !restarting && !selectedOpening && (

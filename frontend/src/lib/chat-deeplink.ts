@@ -66,3 +66,75 @@ export function resolveCharacterDeepLink(options: {
     sessionMode: options.query.sessionMode,
   };
 }
+
+/** Picker id for first ChatApp paint — honor ?character= instead of twink-default. */
+export function initialPickerCharacterId(
+  search?: string,
+  fallback = "twink-default",
+): string {
+  return snapshotShareQuery(search).characterId || fallback;
+}
+
+export type ChatBootIdentity = {
+  /** URL / live / picker mind — never a leftover last-session id. */
+  intendedCharacterId: string | null;
+  /** Safe chrome name. Null = stay blank / “Opening live session…”. */
+  displayName: string | null;
+  /** Mind tag + opening belong to intendedCharacterId (not Flagship edge leftover). */
+  showMind: boolean;
+  /** ?character= is set but picker/session has not caught up yet. */
+  pendingRequested: boolean;
+};
+
+/**
+ * First-paint / connecting labels must not leak the last mind or the static
+ * twink-default fallback while ?character=liam (or emma, …) is still booting.
+ */
+export function resolveChatBootIdentity(options: {
+  queryCharacterId?: string | null;
+  /** True after ChatApp consumed the snapshotted share query. */
+  queryConsumed?: boolean;
+  selectedCharacterId?: string | null;
+  activeCharacterId?: string | null;
+  liveCharacterName?: string | null;
+  selectedDisplayName?: string | null;
+  savedSession?: {
+    characterId?: string | null;
+    characterName?: string | null;
+  } | null;
+}): ChatBootIdentity {
+  const rawQuery = options.queryCharacterId?.trim() || null;
+  const selectedId = options.selectedCharacterId?.trim() || null;
+  const activeId = options.activeCharacterId?.trim() || null;
+  // Stale snapshot must not override a later picker hop once the link is applied.
+  const queryId = rawQuery && !options.queryConsumed ? rawQuery : null;
+  const intendedCharacterId = queryId || activeId || selectedId || null;
+  const pendingRequested = !!(
+    queryId &&
+    queryId !== selectedId &&
+    queryId !== activeId
+  );
+
+  if (pendingRequested || !intendedCharacterId) {
+    return {
+      intendedCharacterId,
+      displayName: null,
+      showMind: false,
+      pendingRequested,
+    };
+  }
+
+  const liveName = options.liveCharacterName?.trim() || null;
+  const selectedName = options.selectedDisplayName?.trim() || null;
+  const savedId = options.savedSession?.characterId?.trim() || null;
+  const savedName = options.savedSession?.characterName?.trim() || null;
+  const savedNameIfMatch =
+    savedId && savedId === intendedCharacterId ? savedName : null;
+
+  return {
+    intendedCharacterId,
+    displayName: liveName || selectedName || savedNameIfMatch || null,
+    showMind: true,
+    pendingRequested: false,
+  };
+}
