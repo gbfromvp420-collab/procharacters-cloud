@@ -5,9 +5,9 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "dev:lan": "next dev -p 3000 -H 0.0.0.0",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start -H 0.0.0.0",
-    "lint": "next lint",
+    "lint": "eslint src",
     "test": "vitest run",
     "test:watch": "vitest",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "livekit-client": "^2.15.4",
-    "next": "^15.3.3",
+    "next": "^16.3.1",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
@@ -31,8 +31,8 @@
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.21",
-    "eslint": "^8.57.1",
-    "eslint-config-next": "^15.3.3",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.1",
     "jsdom": "^25.0.1",
     "postcss": "^8.5.4",
     "prettier": "^3.3.3",
