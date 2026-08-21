@@ -134,7 +134,7 @@ class JobStatusResult:
     ok: bool
     job_id: str
     status: JobStatus
-    progress: float | None = None  # 0.0 – 1.0 when known
+    progress: float | None = None  # 0.0 - 1.0 when known
     weights_uri: str | None = None
     logs_tail: str | None = None
     output: dict[str, Any] = field(default_factory=dict)
@@ -591,5 +591,5 @@ def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
         data = response.json()
         return data if isinstance(data, dict) else {"output": data}
-    except Exception:
+    except ValueError:
         return {"raw": response.text}

@@ -11,7 +11,8 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -225,7 +226,7 @@ def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
         data = response.json()
         return data if isinstance(data, dict) else {"output": data}
-    except Exception:
+    except ValueError:
         return {"raw": response.text}
 
 

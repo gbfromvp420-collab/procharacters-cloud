@@ -1,0 +1,17 @@
+# Tooling config for the Python WebRTC signaling + trainer studio side service (app/).
+# Node product services (backend/, frontend/) manage their own toolchains.
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+# Mirror the rule families the project already lints against, pinned so results
+# are reproducible across ruff releases (default select drifts between versions).
+select = ["E4", "E7", "E9", "F", "I", "UP", "B", "SIM", "BLE", "RUF"]
+ignore = [
+  # FastAPI intentionally uses callables (File/Form/Depends) as argument defaults.
+  "B008",
+  # Keep explicit `(str, Enum)` bases: switching to StrEnum changes str() semantics
+  # for values already serialized into JSON payloads and the on-disk registry.
+  "UP042",
+]
