@@ -681,7 +681,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                     }}
                     className="btn-primary min-h-0 px-5 py-2.5 text-sm"
                   >
-                    Meet tonight's cast
+                    Meet tonight&apos;s cast
                   </button>
                   <Link href="/chat" className="btn-ghost min-h-0 px-5 py-2.5 text-sm">
                     Open live chat
