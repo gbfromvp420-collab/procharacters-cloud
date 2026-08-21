@@ -15,6 +15,8 @@ import {
   claimSession,
   createCustomCharacter,
   createSession,
+  fetchGenVideoStatus,
+  performGenVideo,
   deleteCustomCharacter,
   exportLiveSession,
   fetchBaseModelPrefill,
@@ -46,13 +48,16 @@ import {
   type AccountSessionSummary,
   type ImportPreview,
 } from "@/lib/api";
+import {
+  GEN_VIDEO_IDLE,
+  isGenVideoOptIn,
+  overlayFromPerform,
+  type GenVideoOverlayState,
+} from "@/lib/gen-video";
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import { InstallAppHint } from "@/components/InstallAppHint";
 import { SessionDropRescue } from "@/components/SessionDropRescue";
-import {
-  ComposerVibeChip,
-  edgePaceComposerClass,
-} from "@/components/ComposerVibeChip";
+import { ComposerVibeChip, edgePaceComposerClass } from "@/components/ComposerVibeChip";
 import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
@@ -66,10 +71,7 @@ import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
 import { LastBeatEcho } from "@/components/LastBeatEcho";
 import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
-import {
-  heatDepthFromMessages,
-  SessionDepthMeter,
-} from "@/components/SessionDepthMeter";
+import { heatDepthFromMessages, SessionDepthMeter } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
@@ -129,11 +131,7 @@ import {
   liveRoomWashClass,
   type EnergyBand,
 } from "@/lib/energy";
-import {
-  presenceAmbientClass,
-  presenceBubbleClass,
-  resolvePresenceSkin,
-} from "@/lib/presence";
+import { presenceAmbientClass, presenceBubbleClass, resolvePresenceSkin } from "@/lib/presence";
 import {
   getResumeForCharacter,
   heatTrailFromSession,
@@ -253,9 +251,7 @@ export function ChatApp() {
   const [characters, setCharacters] = useState<LiveCharacterOption[]>(FALLBACK_CHARACTERS);
   const [catalogReady, setCatalogReady] = useState(false);
   const [accountReady, setAccountReady] = useState(false);
-  const [character, setCharacter] = useState<CharacterId>(() =>
-    initialPickerCharacterId(),
-  );
+  const [character, setCharacter] = useState<CharacterId>(() => initialPickerCharacterId());
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [characterName, setCharacterName] = useState<string | null>(null);
   const [activeCharacterId, setActiveCharacterId] = useState<string | null>(null);
@@ -266,6 +262,8 @@ export function ChatApp() {
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState | null>(null);
+  const [genOverlay, setGenOverlay] = useState<GenVideoOverlayState>(GEN_VIDEO_IDLE);
+  const lastUserTextRef = useRef("");
   const [livekit, setLivekit] = useState<LiveKitJoinInfo | null>(null);
   const [restarting, setRestarting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -487,10 +485,7 @@ export function ChatApp() {
 
   const refreshAccountSessions = useCallback(async (token: string) => {
     try {
-      const [sessions, me] = await Promise.all([
-        listAccountSessions(token),
-        fetchAccountMe(token),
-      ]);
+      const [sessions, me] = await Promise.all([listAccountSessions(token), fetchAccountMe(token)]);
       setAccountSessions(sessions);
       setAccountEmailLinked(me?.email ?? null);
     } catch (err) {
@@ -506,19 +501,17 @@ export function ChatApp() {
   const stampHeatTrail = useCallback(
     (characterId: string, notes?: string | null, count?: number) => {
       if (!characterId) return;
-      void import("@/lib/resume-cache").then(
-        ({ heatTrailFromSession, rememberHeatTrail }) => {
-          const mind = mindFingerprint(characterId);
-          const trail = heatTrailFromSession({
-            sessionNotes: notes ?? sessionNotes,
-            messageCount: count ?? messages.length,
-            mindTag: mind?.tag,
-            dnaTreeNodeId: modeState?.dnaTreeNodeId,
-            dnaTreeLabel: modeState?.dnaTreeLabel,
-          });
-          rememberHeatTrail(characterId, trail);
-        },
-      );
+      void import("@/lib/resume-cache").then(({ heatTrailFromSession, rememberHeatTrail }) => {
+        const mind = mindFingerprint(characterId);
+        const trail = heatTrailFromSession({
+          sessionNotes: notes ?? sessionNotes,
+          messageCount: count ?? messages.length,
+          mindTag: mind?.tag,
+          dnaTreeNodeId: modeState?.dnaTreeNodeId,
+          dnaTreeLabel: modeState?.dnaTreeLabel,
+        });
+        rememberHeatTrail(characterId, trail);
+      });
     },
     [messages.length, sessionNotes, modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel],
   );
@@ -546,32 +539,30 @@ export function ChatApp() {
       saveStoredSession(stored);
       setSavedSession(stored);
       if (info.resumeCode) {
-        void import("@/lib/resume-cache").then(
-          ({ rememberLocalResume, heatTrailFromSession }) => {
-            const mind = mindFingerprint(info.characterId);
-            const trail = heatTrailFromSession({
-              sessionNotes: info.sessionNotes ?? sessionNotes,
-              messageCount: info.messageCount ?? messages.length,
-              mindTag: mind?.tag,
-              dnaTreeNodeId: modeState?.dnaTreeNodeId,
-              dnaTreeLabel: modeState?.dnaTreeLabel,
-            });
-            rememberLocalResume({
-              characterId: info.characterId,
-              characterName: info.characterName,
-              sessionId: info.sessionId,
-              resumeCode: info.resumeCode!,
-              resumeExpiresAt: info.resumeExpiresAt,
-              recapLine: trail.recapLine,
-              heatDepth: trail.heatDepth,
-              heatChips: trail.heatChips,
-              messageCount: trail.messageCount,
-              mindTag: trail.mindTag,
-              dnaTreeNodeId: trail.dnaTreeNodeId,
-              dnaTreeLabel: trail.dnaTreeLabel,
-            });
-          },
-        );
+        void import("@/lib/resume-cache").then(({ rememberLocalResume, heatTrailFromSession }) => {
+          const mind = mindFingerprint(info.characterId);
+          const trail = heatTrailFromSession({
+            sessionNotes: info.sessionNotes ?? sessionNotes,
+            messageCount: info.messageCount ?? messages.length,
+            mindTag: mind?.tag,
+            dnaTreeNodeId: modeState?.dnaTreeNodeId,
+            dnaTreeLabel: modeState?.dnaTreeLabel,
+          });
+          rememberLocalResume({
+            characterId: info.characterId,
+            characterName: info.characterName,
+            sessionId: info.sessionId,
+            resumeCode: info.resumeCode!,
+            resumeExpiresAt: info.resumeExpiresAt,
+            recapLine: trail.recapLine,
+            heatDepth: trail.heatDepth,
+            heatChips: trail.heatChips,
+            messageCount: trail.messageCount,
+            mindTag: trail.mindTag,
+            dnaTreeNodeId: trail.dnaTreeNodeId,
+            dnaTreeLabel: trail.dnaTreeLabel,
+          });
+        });
       }
     },
     [messages.length, sessionNotes, modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel],
@@ -692,12 +683,30 @@ export function ChatApp() {
     firstOpenFlashedRef.current = true;
     const nick =
       characterName?.split(/\s+/)[0] ||
-      characters.find((c) => c.id === (activeCharacterId ?? character))
+      characters
+        .find((c) => c.id === (activeCharacterId ?? character))
         ?.displayName?.split(/\s+/)[0] ||
       "They";
     setCopyNotice(`${nick} is live · heat on`);
     window.setTimeout(() => setCopyNotice(null), 2200);
   }, [status, messages, characterName, characters, activeCharacterId, character]);
+
+  // Opt-in gen-video (?genVideo=1). Loops stay default when the flag is off.
+  useEffect(() => {
+    if (!isGenVideoOptIn(incomingQueryRef.current)) return;
+    setGenOverlay((prev) => ({ ...prev, optedIn: true, status: "pending" }));
+    fetchGenVideoStatus()
+      .then((s) => {
+        setGenOverlay((prev) => ({
+          ...prev,
+          optedIn: true,
+          status: s.configured ? "idle" : "off",
+        }));
+      })
+      .catch(() => {
+        setGenOverlay((prev) => ({ ...prev, optedIn: true, status: "off" }));
+      });
+  }, []);
 
   // Per-character composer drafts — swap brains without losing unsent heat
   useEffect(() => {
@@ -825,10 +834,7 @@ export function ChatApp() {
   // picker on the default twink-default id.
   useEffect(() => {
     if (status === "idle" || status === "ended" || status === "error") {
-      if (
-        !deepLinkHandledRef.current &&
-        hasPendingShareDeepLink(incomingQueryRef.current)
-      ) {
+      if (!deepLinkHandledRef.current && hasPendingShareDeepLink(incomingQueryRef.current)) {
         return;
       }
       replaceCharacterInUrl(character);
@@ -836,10 +842,7 @@ export function ChatApp() {
   }, [character, status]);
 
   const bindWebSocket = useCallback(
-    (
-      ws: WebSocket,
-      session: { sessionId: string; characterId: string; wsToken: string },
-    ) => {
+    (ws: WebSocket, session: { sessionId: string; characterId: string; wsToken: string }) => {
       ws.onopen = () => {
         setSessionId(session.sessionId);
         setWsToken(session.wsToken);
@@ -898,8 +901,7 @@ export function ChatApp() {
             pendingHistoryRef.current = null;
             // Returning with history or memory → soft recap before they scroll
             const cachedRecap = getResumeForCharacter(session.characterId)?.recapLine ?? null;
-            const line =
-              recapFromSessionNotes(notesForRecap) || cachedRecap || null;
+            const line = recapFromSessionNotes(notesForRecap) || cachedRecap || null;
             if (history?.length || priorForRecap || line) {
               setRejoinRecap({ line, show: true });
             }
@@ -921,13 +923,8 @@ export function ChatApp() {
                   starter?: string;
                   at?: number;
                 };
-                const fresh =
-                  !parsed.at || Date.now() - Number(parsed.at) < 30 * 60_000;
-                if (
-                  fresh &&
-                  parsed.characterId === session.characterId &&
-                  parsed.starter?.trim()
-                ) {
+                const fresh = !parsed.at || Date.now() - Number(parsed.at) < 30 * 60_000;
+                if (fresh && parsed.characterId === session.characterId && parsed.starter?.trim()) {
                   const seed = parsed.starter.trim().slice(0, 400);
                   setInput((prev) => (prev.trim() ? prev : seed));
                   const edge =
@@ -995,8 +992,7 @@ export function ChatApp() {
               const trimmed = notes.trim();
               setSessionNotes(trimmed);
               const mind = mindFingerprint(session.characterId);
-              const turns =
-                Number(trimmed.match(/~(\d+)\s*turn/i)?.[1]) || 0;
+              const turns = Number(trimmed.match(/~(\d+)\s*turn/i)?.[1]) || 0;
               const trail = heatTrailFromSession({
                 sessionNotes: trimmed,
                 messageCount: turns > 0 ? turns * 2 : undefined,
@@ -1030,11 +1026,27 @@ export function ChatApp() {
                   msg.id === messageId ? { ...msg, content, streaming: false } : msg,
                 );
               }
-              return [
-                ...prev,
-                { id: messageId, role: "assistant", content, streaming: false },
-              ];
+              return [...prev, { id: messageId, role: "assistant", content, streaming: false }];
             });
+            if (isGenVideoOptIn(incomingQueryRef.current) && lastUserTextRef.current) {
+              const turnText = lastUserTextRef.current;
+              setGenOverlay((prev) => ({ ...prev, optedIn: true, status: "pending" }));
+              void performGenVideo({
+                sessionId: session.sessionId,
+                characterId: session.characterId,
+                message: turnText,
+              })
+                .then((result) => setGenOverlay(overlayFromPerform(result)))
+                .catch(() =>
+                  setGenOverlay({
+                    optedIn: true,
+                    status: "error",
+                    provider: null,
+                    videoUrl: null,
+                    playable: false,
+                  }),
+                );
+            }
             break;
           }
 
@@ -1052,8 +1064,7 @@ export function ChatApp() {
               sessionId: session.sessionId,
               wsToken: session.wsToken,
               characterId: session.characterId,
-              characterName:
-                liveCredsRef.current?.characterName ?? characterName,
+              characterName: liveCredsRef.current?.characterName ?? characterName,
               resumeCode: code,
             });
             if (code || (session.sessionId && session.wsToken)) {
@@ -1166,9 +1177,7 @@ export function ChatApp() {
 
       // Continue / resume code: always pull full server memory so UI + next turn match.
       const shouldRehydrate =
-        options?.forceRehydrate === true ||
-        session.rehydrate === true ||
-        !!session.resumeCode;
+        options?.forceRehydrate === true || session.rehydrate === true || !!session.resumeCode;
       if (shouldRehydrate) {
         try {
           const mem = await fetchSessionMemory(session.sessionId, session.wsToken);
@@ -1243,10 +1252,7 @@ export function ChatApp() {
   );
 
   const connectSession = useCallback(
-    async (
-      characterId: CharacterId,
-      options?: { sessionMode?: SessionMode },
-    ) => {
+    async (characterId: CharacterId, options?: { sessionMode?: SessionMode }) => {
       setError(null);
       setStatus("connecting");
       pendingHistoryRef.current = null;
@@ -1411,7 +1417,7 @@ export function ChatApp() {
       }
       const fb = liveIds.has("twink-default")
         ? "twink-default"
-        : [...liveIds][0] ?? "twink-default";
+        : ([...liveIds][0] ?? "twink-default");
 
       setImportDoc(document);
       setImportMissing(missing);
@@ -1449,14 +1455,10 @@ export function ChatApp() {
         }
       }
       const preview = await loadChatImportPreview(importDoc, {
-        characterMap: Object.keys(importCharacterMap).length
-          ? importCharacterMap
-          : undefined,
+        characterMap: Object.keys(importCharacterMap).length ? importCharacterMap : undefined,
         fallbackCharacterId: importMissing.length ? importFallbackId : undefined,
       });
-      flashCopy(
-        `Preview updated: ${preview.willSucceed} will import, ${preview.willFail} blocked`,
-      );
+      flashCopy(`Preview updated: ${preview.willSucceed} will import, ${preview.willFail} blocked`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Preview failed");
     } finally {
@@ -1476,9 +1478,7 @@ export function ChatApp() {
     setError(null);
     try {
       const opts = {
-        characterMap: Object.keys(importCharacterMap).length
-          ? importCharacterMap
-          : undefined,
+        characterMap: Object.keys(importCharacterMap).length ? importCharacterMap : undefined,
         fallbackCharacterId: importMissing.length ? importFallbackId : undefined,
       };
       const preview = await loadChatImportPreview(importDoc, opts);
@@ -1508,9 +1508,7 @@ export function ChatApp() {
         }`,
       );
       if (session.bulk && session.bulk.failed > 0) {
-        setError(
-          `${session.bulk.failed} chat(s) could not be restored (empty or unmapped)`,
-        );
+        setError(`${session.bulk.failed} chat(s) could not be restored (empty or unmapped)`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Import failed");
@@ -1535,11 +1533,7 @@ export function ChatApp() {
         clearStoredSession();
         setSavedSession(null);
       }
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not resume — start a new session",
-      );
+      setError(err instanceof Error ? err.message : "Could not resume — start a new session");
       setStatus("error");
     }
   };
@@ -1571,9 +1565,7 @@ export function ChatApp() {
     if (typeof window === "undefined") return;
     const query = incomingQueryRef.current ?? snapshotShareQuery();
     if (query.edit && query.characterId) {
-      window.location.replace(
-        `/models/studio/edit/${encodeURIComponent(query.characterId)}`,
-      );
+      window.location.replace(`/models/studio/edit/${encodeURIComponent(query.characterId)}`);
       return;
     }
     if (!query.create) return;
@@ -1715,22 +1707,17 @@ export function ChatApp() {
         });
         const label = shareUrlResultLabel(result, `Resume ${resumeCode}`);
         flashCopy(
-          label
-            ? `${label} · private mind (code only)`
-            : "Private model — resume code shared",
+          label ? `${label} · private mind (code only)` : "Private model — resume code shared",
         );
         return;
       }
-      flashCopy(
-        "Private My Character — only you can open it. Start chat to share a resume code.",
-      );
+      flashCopy("Private My Character — only you can open it. Start chat to share a resume code.");
       return;
     }
     const url = buildCharacterShareUrl(character, { autostart, card: !autostart });
     const name = live?.displayName ?? characterName ?? character;
     const opening = live?.openingMessage?.trim();
-    const quote =
-      opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
+    const quote = opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url,
       title: `${name} · Naughty Syntax`,
@@ -1740,10 +1727,7 @@ export function ChatApp() {
           ? `Chat with ${name} on Procharacters.cloud`
           : `Meet ${name} on Procharacters.cloud`,
     });
-    const label = shareUrlResultLabel(
-      result,
-      autostart ? "Autostart link" : "Character card",
-    );
+    const label = shareUrlResultLabel(result, autostart ? "Autostart link" : "Character card");
     if (label) flashCopy(label);
   };
 
@@ -1847,12 +1831,15 @@ export function ChatApp() {
     }
   };
 
-  const applyAccountAuth = async (result: {
-    accountId: string;
-    handle: string;
-    token: string;
-    expiresAt: string;
-  }, label: string) => {
+  const applyAccountAuth = async (
+    result: {
+      accountId: string;
+      handle: string;
+      token: string;
+      expiresAt: string;
+    },
+    label: string,
+  ) => {
     const stored: StoredAccount = {
       accountId: result.accountId,
       handle: result.handle,
@@ -2012,14 +1999,9 @@ export function ChatApp() {
     setRestarting(true);
     try {
       const code =
-        resumeCode ??
-        savedSession?.resumeCode ??
-        liveCredsRef.current?.resumeCode ??
-        null;
+        resumeCode ?? savedSession?.resumeCode ?? liveCredsRef.current?.resumeCode ?? null;
       const dnaPower =
-        !!modeState?.dnaTreeNodeId ||
-        !!modeState?.dnaTreeLabel ||
-        sessionMode === "edge_pace";
+        !!modeState?.dnaTreeNodeId || !!modeState?.dnaTreeLabel || sessionMode === "edge_pace";
       if (code) {
         setStatus("connecting");
         if (dnaPower) setSessionMode("edge_pace");
@@ -2046,18 +2028,17 @@ export function ChatApp() {
               resumeCode: resumeCode ?? undefined,
               savedAt: new Date().toISOString(),
             }
-          : savedSession ??
+          : (savedSession ??
             (liveCredsRef.current
               ? {
                   sessionId: liveCredsRef.current.sessionId,
                   wsToken: liveCredsRef.current.wsToken,
                   characterId: liveCredsRef.current.characterId,
-                  characterName:
-                    liveCredsRef.current.characterName ?? undefined,
+                  characterName: liveCredsRef.current.characterName ?? undefined,
                   resumeCode: liveCredsRef.current.resumeCode ?? undefined,
                   savedAt: new Date().toISOString(),
                 }
-              : null);
+              : null));
       if (stored) {
         await connectResumedSession(stored);
         return;
@@ -2388,12 +2369,7 @@ export function ChatApp() {
     setCreating(true);
     setError(null);
     try {
-      const result = await uploadCharacterClip(
-        selected.id,
-        emotion,
-        file,
-        account.token,
-      );
+      const result = await uploadCharacterClip(selected.id, emotion, file, account.token);
       applyClipResult(selected.id, result.mediaOverrides, result.clips);
       flashCopy(`Uploaded ${emotion} clip`);
     } catch (err) {
@@ -2419,23 +2395,13 @@ export function ChatApp() {
     setError(null);
     try {
       const files = Array.from(fileList);
-      const result = await uploadCharacterClipsBatch(
-        selected.id,
-        files,
-        account.token,
-      );
+      const result = await uploadCharacterClipsBatch(selected.id, files, account.token);
       applyClipResult(selected.id, result.mediaOverrides, result.clips);
       const n = result.uploaded.length;
       const skip = result.skipped.length;
-      flashCopy(
-        skip > 0
-          ? `Uploaded ${n} clip(s), skipped ${skip}`
-          : `Uploaded ${n} clip(s)`,
-      );
+      flashCopy(skip > 0 ? `Uploaded ${n} clip(s), skipped ${skip}` : `Uploaded ${n} clip(s)`);
       if (skip > 0) {
-        setError(
-          result.skipped.map((s) => `${s.filename}: ${s.reason}`).join(" · "),
-        );
+        setError(result.skipped.map((s) => `${s.filename}: ${s.reason}`).join(" · "));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Batch upload failed");
@@ -2544,6 +2510,7 @@ export function ChatApp() {
       content: text,
     };
 
+    lastUserTextRef.current = text;
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     clearComposerDraft(character);
@@ -2596,38 +2563,27 @@ export function ChatApp() {
   });
   const headerCharacterName = bootIdentity.displayName;
   const headerMind = bootIdentity.showMind
-    ? mindFingerprint(
-        bootIdentity.intendedCharacterId ?? activeCharacterId ?? character,
-      )
+    ? mindFingerprint(bootIdentity.intendedCharacterId ?? activeCharacterId ?? character)
     : null;
   const selectedOpening = bootIdentity.showMind
     ? selectedLive?.openingMessage?.trim() ||
       FALLBACK_CHARACTERS.find(
-        (c) =>
-          c.id ===
-          (bootIdentity.intendedCharacterId ?? activeCharacterId ?? character),
+        (c) => c.id === (bootIdentity.intendedCharacterId ?? activeCharacterId ?? character),
       )?.openingMessage ||
       null
     : null;
   const showSavedResumeChrome =
     !!savedSession &&
     !bootIdentity.pendingRequested &&
-    savedSession.characterId ===
-      (bootIdentity.intendedCharacterId ?? character);
+    savedSession.characterId === (bootIdentity.intendedCharacterId ?? character);
   const chatPresenceSkin = resolvePresenceSkin(
     avatarState?.presenceSkin,
     activeCharacterId ?? character,
   );
   const assistantBubbleBase = presenceBubbleClass(chatPresenceSkin);
-  const dnaBubbleAsst = dnaAssistantBubbleClass(
-    modeState?.dnaTreeNodeId,
-    modeState?.dnaTreeLabel,
-  );
+  const dnaBubbleAsst = dnaAssistantBubbleClass(modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel);
   const assistantBubbleClass = dnaBubbleAsst || assistantBubbleBase;
-  const dnaBubbleUser = dnaUserBubbleClass(
-    modeState?.dnaTreeNodeId,
-    modeState?.dnaTreeLabel,
-  );
+  const dnaBubbleUser = dnaUserBubbleClass(modeState?.dnaTreeNodeId, modeState?.dnaTreeLabel);
   const transcriptAmbient = presenceAmbientClass(chatPresenceSkin);
 
   const onMessagesScroll = () => {
@@ -2659,17 +2615,13 @@ export function ChatApp() {
             ? "Error"
             : "Disconnected";
 
-  const liveBand =
-    status === "ready" ? energyBandFromAvatar(avatarState) : ("idle" as EnergyBand);
-  const dnaNodeLive =
-    status === "ready" ? modeState?.dnaTreeNodeId : null;
-  const dnaLabelLive =
-    status === "ready" ? modeState?.dnaTreeLabel : null;
+  const liveBand = status === "ready" ? energyBandFromAvatar(avatarState) : ("idle" as EnergyBand);
+  const dnaNodeLive = status === "ready" ? modeState?.dnaTreeNodeId : null;
+  const dnaLabelLive = status === "ready" ? modeState?.dnaTreeLabel : null;
   const dnaLevel = dnaTreeHeatLevel(dnaNodeLive, dnaLabelLive);
   const roomWash = liveRoomWashClass(liveBand, dnaNodeLive, dnaLabelLive);
   const heatDepth = heatDepthFromMessages(messages.length);
-  const dnaChrome =
-    status === "ready" ? dnaChromeClass(dnaNodeLive, dnaLabelLive) : "";
+  const dnaChrome = status === "ready" ? dnaChromeClass(dnaNodeLive, dnaLabelLive) : "";
   const bandChrome =
     !dnaChrome && status === "ready" && liveBand === "edge"
       ? "border-b-rose-400/40 shadow-[0_8px_28px_-12px_rgba(244,63,94,0.35)]"
@@ -2789,9 +2741,7 @@ export function ChatApp() {
         <NetworkOfflineBanner className="mb-3" />
         <SoftSupportHint
           className="mb-3"
-          hasEngagement={
-            messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
-          }
+          hasEngagement={messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode}
           dnaHeat={
             !!modeState?.dnaTreeNodeId &&
             /edge|deny|release|gate|tease/i.test(
@@ -2855,10 +2805,7 @@ export function ChatApp() {
                     const session = await resumeByCode(snap.resumeCode, {
                       sessionMode: dnaPower ? "edge_pace" : undefined,
                     });
-                    if (
-                      session.sessionMode === "edge_pace" ||
-                      session.sessionMode === "normal"
-                    ) {
+                    if (session.sessionMode === "edge_pace" || session.sessionMode === "normal") {
                       setSessionMode(session.sessionMode);
                     }
                     await openLiveSession(session, { forceRehydrate: true });
@@ -2884,19 +2831,12 @@ export function ChatApp() {
           className="mb-3"
           show={connectionDropped}
           resumeCode={
-            resumeCode ??
-            savedSession?.resumeCode ??
-            liveCredsRef.current?.resumeCode ??
-            null
+            resumeCode ?? savedSession?.resumeCode ?? liveCredsRef.current?.resumeCode ?? null
           }
-          characterName={
-            characterName ?? savedSession?.characterName ?? null
-          }
+          characterName={characterName ?? savedSession?.characterName ?? null}
           characterId={activeCharacterId ?? character}
           dnaPower={
-            !!modeState?.dnaTreeNodeId ||
-            !!modeState?.dnaTreeLabel ||
-            sessionMode === "edge_pace"
+            !!modeState?.dnaTreeNodeId || !!modeState?.dnaTreeLabel || sessionMode === "edge_pace"
           }
           busy={restarting}
           onRejoin={() => void rejoinAfterDrop()}
@@ -2946,9 +2886,7 @@ export function ChatApp() {
                     value={accountEmail}
                     onChange={(e) => setAccountEmail(e.target.value)}
                     placeholder={
-                      accountEmailLinked
-                        ? "Change linked email"
-                        : "Link email for magic sign-in"
+                      accountEmailLinked ? "Change linked email" : "Link email for magic sign-in"
                     }
                     className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
                   />
@@ -2980,36 +2918,30 @@ export function ChatApp() {
                   <ul className="max-h-40 space-y-1 overflow-y-auto text-xs">
                     {accountSessions.map((s) => {
                       const mind = mindFingerprint(s.characterId);
-                      const nick =
-                        s.characterName?.trim().split(/\s+/)[0] || "chat";
+                      const nick = s.characterName?.trim().split(/\s+/)[0] || "chat";
                       return (
-                      <li
-                        key={s.sessionId}
-                        className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-border/60 bg-brand-bg px-2 py-1.5"
-                      >
-                        <span className="min-w-0 flex-1 text-brand-text">
-                          {s.characterName}
-                          {mind ? (
-                            <span className="text-brand-accent"> · {mind.tag}</span>
-                          ) : null}
-                          <span className="text-brand-muted">
-                            {" "}
-                            · {s.messageCount} msgs
-                          </span>
-                          {s.resumeCode && (
-                            <span className="ml-1 font-mono text-amber-200/80">
-                              {s.resumeCode}
-                            </span>
-                          )}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => void handleAccountSessionResume(s.sessionId)}
-                          className="btn-primary ml-auto min-h-0 px-2.5 py-1 text-[10px]"
+                        <li
+                          key={s.sessionId}
+                          className="flex flex-wrap items-center gap-2 rounded-lg border border-brand-border/60 bg-brand-bg px-2 py-1.5"
                         >
-                          Continue · {nick}
-                        </button>
-                      </li>
+                          <span className="min-w-0 flex-1 text-brand-text">
+                            {s.characterName}
+                            {mind ? <span className="text-brand-accent"> · {mind.tag}</span> : null}
+                            <span className="text-brand-muted"> · {s.messageCount} msgs</span>
+                            {s.resumeCode && (
+                              <span className="ml-1 font-mono text-amber-200/80">
+                                {s.resumeCode}
+                              </span>
+                            )}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => void handleAccountSessionResume(s.sessionId)}
+                            className="btn-primary ml-auto min-h-0 px-2.5 py-1 text-[10px]"
+                          >
+                            Continue · {nick}
+                          </button>
+                        </li>
                       );
                     })}
                   </ul>
@@ -3218,6 +3150,7 @@ export function ChatApp() {
                     characterId={activeCharacterId ?? character}
                     dnaTreeNodeId={modeState?.dnaTreeNodeId}
                     dnaTreeLabel={modeState?.dnaTreeLabel}
+                    genOverlay={genOverlay}
                     compact
                   />
                 </div>
@@ -3234,792 +3167,641 @@ export function ChatApp() {
           )}
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
-            {!sessionActive && showSavedResumeChrome && !pauseSnapshot && (
-              <ChatResumeHero
-                saved={savedSession}
-                busy={restarting}
-                onResume={() => {
-                  void (async () => {
-                    const trail = getResumeForCharacter(savedSession.characterId);
-                    const dnaPower = trail ? isDnaPowerTrail(trail) : false;
-                    if (savedSession.resumeCode) {
-                      try {
-                        setStatus("connecting");
-                        if (dnaPower) setSessionMode("edge_pace");
-                        const session = await resumeByCode(savedSession.resumeCode, {
-                          sessionMode: dnaPower ? "edge_pace" : undefined,
-                        });
-                        if (
-                          session.sessionMode === "edge_pace" ||
-                          session.sessionMode === "normal"
-                        ) {
-                          setSessionMode(session.sessionMode);
+            <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
+              {!sessionActive && showSavedResumeChrome && !pauseSnapshot && (
+                <ChatResumeHero
+                  saved={savedSession}
+                  busy={restarting}
+                  onResume={() => {
+                    void (async () => {
+                      const trail = getResumeForCharacter(savedSession.characterId);
+                      const dnaPower = trail ? isDnaPowerTrail(trail) : false;
+                      if (savedSession.resumeCode) {
+                        try {
+                          setStatus("connecting");
+                          if (dnaPower) setSessionMode("edge_pace");
+                          const session = await resumeByCode(savedSession.resumeCode, {
+                            sessionMode: dnaPower ? "edge_pace" : undefined,
+                          });
+                          if (
+                            session.sessionMode === "edge_pace" ||
+                            session.sessionMode === "normal"
+                          ) {
+                            setSessionMode(session.sessionMode);
+                          }
+                          await openLiveSession(session, { forceRehydrate: true });
+                          if (dnaPower) {
+                            setCopyNotice("DNA power reclaim · Edge Pace + heat restored");
+                            window.setTimeout(() => setCopyNotice(null), 3200);
+                          }
+                          return;
+                        } catch {
+                          /* fall through */
                         }
-                        await openLiveSession(session, { forceRehydrate: true });
-                        if (dnaPower) {
-                          setCopyNotice("DNA power reclaim · Edge Pace + heat restored");
-                          window.setTimeout(() => setCopyNotice(null), 3200);
-                        }
-                        return;
-                      } catch {
-                        /* fall through */
                       }
-                    }
-                    await resumeLastSession();
-                  })();
-                }}
-                onStartFresh={() => {
-                  setCharacter(savedSession.characterId);
-                  void startSession();
-                }}
-              />
-            )}
-            {!sessionActive && sessionMode === "edge_pace" && (
-              <EdgePaceStartHint
-                characterId={character}
-                characterName={
-                  characters.find((c) => c.id === character)?.displayName ?? headerCharacterName
-                }
-                busy={restarting}
-                onStart={() => void startSession(character, { sessionMode: "edge_pace" })}
-              />
-            )}
-            {!sessionActive && input.trim().length >= 8 && (
-              <DraftRecoveryHint
-                characterId={character}
-                characterName={
-                  characters.find((c) => c.id === character)?.displayName ?? null
-                }
-                draftPreview={input.trim()}
-                onClear={() => {
-                  setInput("");
-                  clearComposerDraft(character);
-                }}
-              />
-            )}
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <div className="flex min-w-0 items-center gap-2">
-              <label className="shrink-0 text-xs text-brand-muted sm:text-sm" htmlFor="character">
-                Character
-              </label>
-              <select
-                id="character"
-                value={character}
-                onChange={(e) => {
-                  const next = e.target.value as CharacterId;
-                  setCharacter(next);
-                  replaceCharacterInUrl(next);
-                }}
-                disabled={status === "connecting" || restarting}
-                className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
-              >
-                {(() => {
-                  const mine = characters.filter((c) => c.mine === true);
-                  const signatures = characters.filter((c) => c.kind === "default");
-                  const otherCustom = characters.filter(
-                    (c) => c.kind === "custom" && c.mine !== true,
-                  );
-                  const renderOpt = (opt: (typeof characters)[0]) => {
-                    const mind = mindFingerprint(opt.id);
-                    return (
-                      <option key={opt.id} value={opt.id}>
-                        {opt.mine ? "◆ " : opt.kind === "custom" ? "✦ " : ""}
-                        {opt.displayName}
-                        {opt.mine ? " · mine" : ""}
-                        {mind ? ` · ${mind.tag}` : ""}
-                        {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
-                      </option>
-                    );
-                  };
-                  return (
-                    <>
-                      {character &&
-                        !characters.some((c) => c.id === character) && (
-                          <option value={character}>Connecting…</option>
-                        )}
-                      {mine.length > 0 && (
-                        <optgroup label="My models">{mine.map(renderOpt)}</optgroup>
-                      )}
-                      {signatures.length > 0 && (
-                        <optgroup label="Signature">{signatures.map(renderOpt)}</optgroup>
-                      )}
-                      {otherCustom.length > 0 && (
-                        <optgroup label="Custom">{otherCustom.map(renderOpt)}</optgroup>
-                      )}
-                    </>
-                  );
-                })()}
-              </select>
-              </div>
-              {characters.find((c) => c.id === character)?.mine && !sessionActive && (
-                <p className="pl-0 text-[10px] leading-snug text-violet-200/90 sm:pl-[4.5rem]">
-                  <span className="font-semibold">My model · private</span>
-                  {" · only on your account · "}
-                  <Link href="/?filter=owned" className="underline-offset-2 hover:underline">
-                    all My models
-                  </Link>
-                </p>
+                      await resumeLastSession();
+                    })();
+                  }}
+                  onStartFresh={() => {
+                    setCharacter(savedSession.characterId);
+                    void startSession();
+                  }}
+                />
               )}
-              {headerMind && !sessionActive && !characters.find((c) => c.id === character)?.mine && (
-                <p className="pl-0 text-[10px] leading-snug text-brand-muted sm:pl-[4.5rem]">
-                  <span className="font-semibold text-brand-accent">Mind · {headerMind.tag}</span>
-                  {" · "}
-                  {headerMind.blurb}
-                </p>
+              {!sessionActive && sessionMode === "edge_pace" && (
+                <EdgePaceStartHint
+                  characterId={character}
+                  characterName={
+                    characters.find((c) => c.id === character)?.displayName ?? headerCharacterName
+                  }
+                  busy={restarting}
+                  onStart={() => void startSession(character, { sessionMode: "edge_pace" })}
+                />
               )}
-              </div>
-
-              {!sessionActive && (
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
-                  <label className="flex items-center gap-1.5">
-                    Mode
+              {!sessionActive && input.trim().length >= 8 && (
+                <DraftRecoveryHint
+                  characterId={character}
+                  characterName={characters.find((c) => c.id === character)?.displayName ?? null}
+                  draftPreview={input.trim()}
+                  onClear={() => {
+                    setInput("");
+                    clearComposerDraft(character);
+                  }}
+                />
+              )}
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <label
+                      className="shrink-0 text-xs text-brand-muted sm:text-sm"
+                      htmlFor="character"
+                    >
+                      Character
+                    </label>
                     <select
-                      value={sessionMode}
-                      onChange={(e) => setSessionMode(e.target.value as SessionMode)}
-                      className={`field min-h-0 py-1 text-xs ${
-                        sessionMode === "edge_pace"
-                          ? "border-rose-400/50 text-rose-100"
-                          : ""
-                      }`}
-                      title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="edge_pace">Edge Pace</option>
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-1.5">
-                    Memory window
-                    <select
-                      value={messageWindow}
-                      onChange={(e) =>
-                        setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
-                      }
-                      className="field min-h-0 py-1 text-xs"
-                    >
-                      <option value={20}>20 msgs</option>
-                      <option value={30}>30 msgs</option>
-                      <option value={50}>50 msgs</option>
-                      <option value={80}>80 msgs</option>
-                    </select>
-                  </label>
-                  {account && (
-                    <>
-                      <label
-                        className="flex cursor-pointer items-center gap-1.5"
-                        title="Saves vibe + wants for this character when signed in. Uncheck anytime; Forget me clears it."
-                      >
-                        <input
-                          type="checkbox"
-                          checked={crossSessionOptIn}
-                          onChange={(e) => {
-                            const next = e.target.checked;
-                            setCrossSessionOptIn(next);
-                            if (!next) setPriorNotes(null);
-                            void setCrossSessionMemoryOptIn(account.token, character, next).catch(
-                              () => {
-                                /* ignore */
-                              },
-                            );
-                          }}
-                        />
-                        Remember me (sticky heat)
-                      </label>
-                      {(crossSessionOptIn || priorNotes) && (
-                        <button
-                          type="button"
-                          className="text-[11px] text-violet-200/90 underline-offset-2 hover:underline"
-                          title="Clear long-term dossier for this character"
-                          onClick={() => {
-                            void clearCrossSessionMemory(account.token, character)
-                              .then((r) => {
-                                setPriorNotes(null);
-                                if (!r.optIn) setCrossSessionOptIn(false);
-                                flashCopy("Forgot this character’s memory");
-                              })
-                              .catch(() => flashCopy("Could not clear memory"));
-                          }}
-                        >
-                          Forget me
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
-
-              <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
-              {!sessionActive ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => void startSession()}
-                    className={`min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm ${
-                      showSavedResumeChrome ? "btn-ghost" : "btn-primary"
-                    }`}
-                  >
-                    {showSavedResumeChrome ? "Start new" : "Start"}
-                  </button>
-                  {showSavedResumeChrome && !pauseSnapshot && (
-                    <button
-                      type="button"
-                      onClick={() => void resumeLastSession()}
-                      className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                      title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
-                    >
-                      Resume
-                    </button>
-                  )}
-                  <label
-                    className={`btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
-                      importBusy ? "opacity-50" : ""
-                    }`}
-                    title="Preview then restore exported chat JSON"
-                  >
-                    {importBusy ? "…" : "Import"}
-                    <input
-                      type="file"
-                      accept="application/json,.json"
-                      className="hidden"
-                      disabled={importBusy}
+                      id="character"
+                      value={character}
                       onChange={(e) => {
-                        const f = e.target.files?.[0] ?? null;
-                        e.target.value = "";
-                        void importChatFromFile(f);
+                        const next = e.target.value as CharacterId;
+                        setCharacter(next);
+                        replaceCharacterInUrl(next);
                       }}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (showCreate) {
-                        setShowCreate(false);
-                        resetCustomForm();
-                      } else {
-                        openCreateForm();
-                      }
-                    }}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                  >
-                    {showCreate ? "Close" : "Create"}
-                  </button>
-                  {characters.some(
-                    (c) => c.id === character && c.kind === "custom" && c.mine !== false,
-                  ) &&
-                    !sessionActive && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => openEditCustom()}
-                        className="btn-ghost min-h-0 shrink-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100 sm:text-sm"
-                        title="Edit identity, vibe, phrases, scenes"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDuplicateCustom()}
-                        disabled={creating}
-                        className="btn-ghost min-h-0 shrink-0 border-violet-400/30 px-3 py-2 text-xs text-violet-100/90 sm:text-sm disabled:opacity-50"
-                        title="Clone this private model (uses one cap slot)"
-                      >
-                        {creating ? "…" : "Duplicate"}
-                      </button>
-                    </>
-                  )}
-                  {characters.some((c) => c.id === character && c.kind === "custom") && (
-                    <button
-                      type="button"
-                      onClick={handleDeleteCustom}
-                      className="btn-ghost min-h-0 shrink-0 border-red-500/40 px-3 py-2 text-xs text-red-300 sm:text-sm"
+                      disabled={status === "connecting" || restarting}
+                      className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
                     >
-                      Delete
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => void shareCharacterLink(false)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share character card via system sheet"
-                        : "Copy character card link"
-                    }
-                  >
-                    {canNativeShare() ? "Share card" : "Copy card"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareCharacterLink(true)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share autostart chat link"
-                        : "Copy autostart chat link"
-                    }
-                  >
-                    {canNativeShare() ? "Share chat" : "Copy ▶"}
-                  </button>
-                  <a
-                    href={`/character/${encodeURIComponent(character)}`}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs text-brand-muted sm:text-sm"
-                  >
-                    Card
-                  </a>
-                </>
-              ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={startNewSession}
-                    disabled={status === "connecting" || restarting}
-                    className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                  >
-                    {restarting ? "…" : "Switch"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={endSession}
-                    disabled={status === "connecting" || restarting}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                  >
-                    End
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareCharacterLink(true)}
-                    disabled={status === "connecting" || restarting}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share public character link"
-                        : "Copy public character link"
-                    }
-                  >
-                    {canNativeShare() ? "Share" : "Copy link"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void sharePrivateResumeLink()}
-                    disabled={status !== "ready" || !resumeCode}
-                    className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share resume code link"
-                        : "Copy resume code link"
-                    }
-                  >
-                    {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void exportChat("json")}
-                    disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title="Download chat history as JSON (no secrets)"
-                  >
-                    JSON
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void exportChat("md")}
-                    disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title="Download chat history as Markdown"
-                  >
-                    MD
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareChatMarkdown()}
-                    disabled={messages.length === 0 && !(sessionId && wsToken)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share Markdown via system share sheet"
-                        : "Copy Markdown transcript to clipboard"
-                    }
-                  >
-                    {canNativeShare() ? "Share MD" : "Copy MD"}
-                  </button>
-                </>
-              )}
-              </div>
-            </div>
-
-            {showCreate && !sessionActive && (
-              <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
-                <p className="text-xs text-brand-muted">
-                  <strong className="text-brand-text">
-                    {editingCustomId ? "Edit My Character" : "My Character (v2)"}
-                  </strong>
-                  {editingCustomId
-                    ? " — update identity, vibe, phrases, scenes. Private to your account."
-                    : " — private to your account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save."}
-                  {!account
-                    ? " Sign in required."
-                    : (() => {
-                        const used = characters.filter((c) => c.mine === true).length;
-                        const near = !editingCustomId && used >= customsLimit - 1;
-                        const full = !editingCustomId && used >= customsLimit;
+                      {(() => {
+                        const mine = characters.filter((c) => c.mine === true);
+                        const signatures = characters.filter((c) => c.kind === "default");
+                        const otherCustom = characters.filter(
+                          (c) => c.kind === "custom" && c.mine !== true,
+                        );
+                        const renderOpt = (opt: (typeof characters)[0]) => {
+                          const mind = mindFingerprint(opt.id);
+                          return (
+                            <option key={opt.id} value={opt.id}>
+                              {opt.mine ? "◆ " : opt.kind === "custom" ? "✦ " : ""}
+                              {opt.displayName}
+                              {opt.mine ? " · mine" : ""}
+                              {mind ? ` · ${mind.tag}` : ""}
+                              {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
+                            </option>
+                          );
+                        };
                         return (
                           <>
-                            {" "}
-                            Using{" "}
-                            <strong className="text-brand-text">
-                              {used}/{customsLimit}
-                            </strong>
-                            {activePremium ? " premium" : " free"}
-                            {full
-                              ? " — cap full; delete one on Account to add more."
-                              : near
-                                ? " — almost full."
-                                : "."}
+                            {character && !characters.some((c) => c.id === character) && (
+                              <option value={character}>Connecting…</option>
+                            )}
+                            {mine.length > 0 && (
+                              <optgroup label="My models">{mine.map(renderOpt)}</optgroup>
+                            )}
+                            {signatures.length > 0 && (
+                              <optgroup label="Signature">{signatures.map(renderOpt)}</optgroup>
+                            )}
+                            {otherCustom.length > 0 && (
+                              <optgroup label="Custom">{otherCustom.map(renderOpt)}</optgroup>
+                            )}
                           </>
                         );
                       })()}
-                </p>
-                {!editingCustomId &&
-                  account &&
-                  characters.filter((c) => c.mine === true).length >= customsLimit && (
-                    <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-2.5 py-1.5 text-[11px] text-amber-100/90">
-                      Cap reached.{" "}
-                      <Link href="/account#my-models" className="underline-offset-2 hover:underline">
-                        Manage My models
-                      </Link>{" "}
-                      or{" "}
-                      {!activePremium ? (
-                        <Link href="/account" className="underline-offset-2 hover:underline">
-                          Day Pass
-                        </Link>
-                      ) : (
-                        "free a slot"
-                      )}
-                      .
+                    </select>
+                  </div>
+                  {characters.find((c) => c.id === character)?.mine && !sessionActive && (
+                    <p className="pl-0 text-[10px] leading-snug text-violet-200/90 sm:pl-[4.5rem]">
+                      <span className="font-semibold">My model · private</span>
+                      {" · only on your account · "}
+                      <Link href="/?filter=owned" className="underline-offset-2 hover:underline">
+                        all My models
+                      </Link>
                     </p>
                   )}
-                <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
-                  Base model{editingCustomId ? " (locked on edit)" : ""}
-                </label>
-                <select
-                  id="baseModel"
-                  value={customBaseModel}
-                  disabled={!!editingCustomId}
-                  onChange={(e) => {
-                    setCustomBaseModel(e.target.value);
-                    // Force re-prefill by clearing soft fields when switching base
-                    setCustomAppearance("");
-                    setCustomEnergy("");
-                    setCustomClothing("");
-                  }}
-                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text disabled:opacity-60"
-                >
-                  {characters
-                    .filter((c) => c.kind === "default")
-                    .map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.displayName}
-                        {c.energyLabel ? ` — ${c.energyLabel.slice(0, 40)}` : ""}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  value={customName}
-                  onChange={(e) => setCustomName(e.target.value)}
-                  placeholder="Name (e.g. Diego)"
-                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-                />
-                <textarea
-                  value={customAppearance}
-                  onChange={(e) => setCustomAppearance(e.target.value)}
-                  placeholder="Core identity / appearance lock (prefilled from base — edit me)"
-                  rows={3}
-                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-                />
-                <input
-                  value={customEnergy}
-                  onChange={(e) => setCustomEnergy(e.target.value)}
-                  placeholder="Vibe / energy (prefilled — edit me)"
-                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-                />
-                <input
-                  value={customClothing}
-                  onChange={(e) => setCustomClothing(e.target.value)}
-                  placeholder="Clothing focus (sheer / crotchless — prefilled)"
-                  className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-                />
-                <p className="text-[11px] font-medium text-brand-muted">Key phrases (optional)</p>
-                <div className="grid gap-1.5 sm:grid-cols-3">
-                  <input
-                    value={customPhrase1}
-                    onChange={(e) => setCustomPhrase1(e.target.value)}
-                    placeholder="Phrase 1"
-                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
-                  />
-                  <input
-                    value={customPhrase2}
-                    onChange={(e) => setCustomPhrase2(e.target.value)}
-                    placeholder="Phrase 2"
-                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
-                  />
-                  <input
-                    value={customPhrase3}
-                    onChange={(e) => setCustomPhrase3(e.target.value)}
-                    placeholder="Phrase 3"
-                    className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
-                  />
-                </div>
-                <p className="text-[11px] font-medium text-brand-muted">
-                  Scene examples (2–3 recommended)
-                </p>
-                {(
-                  [
-                    [customScene1Title, setCustomScene1Title, customScene1Body, setCustomScene1Body, "Scene 1"],
-                    [customScene2Title, setCustomScene2Title, customScene2Body, setCustomScene2Body, "Scene 2"],
-                    [customScene3Title, setCustomScene3Title, customScene3Body, setCustomScene3Body, "Scene 3"],
-                  ] as const
-                ).map(([title, setTitle, body, setBody, label], idx) => (
-                  <div key={label} className="grid gap-1 rounded-lg border border-brand-border/50 p-2">
-                    <input
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder={`${label} title (e.g. Mirror tease)`}
-                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
-                    />
-                    <textarea
-                      value={body}
-                      onChange={(e) => setBody(e.target.value)}
-                      placeholder={`${label} body — what happens + a line of dialogue`}
-                      rows={2}
-                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
-                    />
-                    {idx === 0 ? null : null}
-                  </div>
-                ))}
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowMediaAdvanced((v) => !v)}
-                    className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-muted hover:border-brand-accent"
-                  >
-                    {showMediaAdvanced ? "Hide custom clips" : "Custom clips…"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleCreateCustom}
-                    disabled={
-                      creating ||
-                      customName.trim().length < 2 ||
-                      customAppearance.trim().length < 12 ||
-                      (!editingCustomId &&
-                        characters.filter((c) => c.mine === true).length >= customsLimit)
-                    }
-                    className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
-                  >
-                    {creating
-                      ? editingCustomId
-                        ? "Updating…"
-                        : "Saving…"
-                      : !account
-                        ? "Sign in to save"
-                        : editingCustomId
-                          ? "Save changes"
-                          : characters.filter((c) => c.mine === true).length >= customsLimit
-                            ? "Cap full"
-                            : "Save My Character"}
-                  </button>
+                  {headerMind &&
+                    !sessionActive &&
+                    !characters.find((c) => c.id === character)?.mine && (
+                      <p className="pl-0 text-[10px] leading-snug text-brand-muted sm:pl-[4.5rem]">
+                        <span className="font-semibold text-brand-accent">
+                          Mind · {headerMind.tag}
+                        </span>
+                        {" · "}
+                        {headerMind.blurb}
+                      </p>
+                    )}
                 </div>
 
-                {showMediaAdvanced && (
-                  <div className="grid gap-2 rounded-lg border border-dashed border-brand-border/80 p-2">
-                    <p className="text-[11px] leading-relaxed text-brand-muted">
-                      Point at a folder of loops under the web app (e.g.{" "}
-                      <code className="text-brand-text">/avatar/packs/diego</code> with{" "}
-                      idle/teasing/playful/aroused.mp4) or paste full https URLs per emotion.
-                    </p>
-                    <input
-                      value={mediaBase}
-                      onChange={(e) => setMediaBase(e.target.value)}
-                      placeholder="Media base folder — /avatar/packs/your-name"
-                      className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
-                    />
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {(
-                        [
-                          ["idle", clipIdle, setClipIdle],
-                          ["teasing", clipTeasing, setClipTeasing],
-                          ["playful", clipPlayful, setClipPlayful],
-                          ["aroused", clipAroused, setClipAroused],
-                        ] as const
-                      ).map(([emotion, value, setValue]) => (
-                        <div key={emotion} className="space-y-1">
-                          <ClipPreview
-                            src={
-                              value ||
-                              (mediaBase
-                                ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
-                                : `/avatar/${customBase}/${emotion}.mp4`)
-                            }
-                            label={emotion}
-                          />
+                {!sessionActive && (
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
+                    <label className="flex items-center gap-1.5">
+                      Mode
+                      <select
+                        value={sessionMode}
+                        onChange={(e) => setSessionMode(e.target.value as SessionMode)}
+                        className={`field min-h-0 py-1 text-xs ${
+                          sessionMode === "edge_pace" ? "border-rose-400/50 text-rose-100" : ""
+                        }`}
+                        title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
+                      >
+                        <option value="normal">Normal</option>
+                        <option value="edge_pace">Edge Pace</option>
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-1.5">
+                      Memory window
+                      <select
+                        value={messageWindow}
+                        onChange={(e) =>
+                          setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
+                        }
+                        className="field min-h-0 py-1 text-xs"
+                      >
+                        <option value={20}>20 msgs</option>
+                        <option value={30}>30 msgs</option>
+                        <option value={50}>50 msgs</option>
+                        <option value={80}>80 msgs</option>
+                      </select>
+                    </label>
+                    {account && (
+                      <>
+                        <label
+                          className="flex cursor-pointer items-center gap-1.5"
+                          title="Saves vibe + wants for this character when signed in. Uncheck anytime; Forget me clears it."
+                        >
                           <input
-                            value={value}
-                            onChange={(e) => setValue(e.target.value)}
-                            placeholder={`${emotion} clip URL (optional)`}
-                            className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                            type="checkbox"
+                            checked={crossSessionOptIn}
+                            onChange={(e) => {
+                              const next = e.target.checked;
+                              setCrossSessionOptIn(next);
+                              if (!next) setPriorNotes(null);
+                              void setCrossSessionMemoryOptIn(account.token, character, next).catch(
+                                () => {
+                                  /* ignore */
+                                },
+                              );
+                            }}
                           />
-                        </div>
-                      ))}
-                    </div>
+                          Remember me (sticky heat)
+                        </label>
+                        {(crossSessionOptIn || priorNotes) && (
+                          <button
+                            type="button"
+                            className="text-[11px] text-violet-200/90 underline-offset-2 hover:underline"
+                            title="Clear long-term dossier for this character"
+                            onClick={() => {
+                              void clearCrossSessionMemory(account.token, character)
+                                .then((r) => {
+                                  setPriorNotes(null);
+                                  if (!r.optIn) setCrossSessionOptIn(false);
+                                  flashCopy("Forgot this character’s memory");
+                                })
+                                .catch(() => flashCopy("Could not clear memory"));
+                            }}
+                          >
+                            Forget me
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
-              </div>
-            )}
 
-            {!sessionActive &&
-              characters.some((c) => c.id === character && c.kind === "custom") && (
-                <div className="rounded-lg border border-brand-border/70 bg-brand-bg p-3">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-xs text-brand-muted">
-                        Edit clips for{" "}
-                        <span className="text-brand-text">
-                          {characters.find((c) => c.id === character)?.displayName}
-                        </span>
-                      </p>
-                      {(() => {
-                        const sel = characters.find((c) => c.id === character);
-                        if (!sel) return null;
-                        const keys: MediaClipKey[] = [
-                          "idle",
-                          "teasing",
-                          "playful",
-                          "aroused",
-                        ];
-                        // Count dedicated overrides / mediaBase — not signature fallback clips
-                        const filled = keys.filter((k) => !!sel.mediaOverrides?.[k]?.trim());
-                        const hasBase = !!sel.mediaBase?.trim();
-                        return (
-                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-                              Pack {filled.length}/4
-                              {hasBase ? " · base folder" : ""}
-                            </span>
-                            {keys.map((k) => {
-                              const ok = !!sel.mediaOverrides?.[k]?.trim();
-                              return (
-                                <span
-                                  key={k}
-                                  className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${
-                                    ok
-                                      ? "border-emerald-400/45 bg-emerald-500/15 text-emerald-100"
-                                      : "border-brand-border bg-brand-bg text-brand-muted"
-                                  }`}
-                                  title={ok ? `${k} ready` : `${k} missing`}
-                                >
-                                  {ok ? "✓ " : ""}
-                                  {k}
-                                </span>
-                              );
-                            })}
-                          </div>
-                        );
-                      })()}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3">
+                <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
+                  {!sessionActive ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void startSession()}
+                        className={`min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm ${
+                          showSavedResumeChrome ? "btn-ghost" : "btn-primary"
+                        }`}
+                      >
+                        {showSavedResumeChrome ? "Start new" : "Start"}
+                      </button>
+                      {showSavedResumeChrome && !pauseSnapshot && (
+                        <button
+                          type="button"
+                          onClick={() => void resumeLastSession()}
+                          className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                          title={`Resume ${savedSession.characterName ?? savedSession.characterId}`}
+                        >
+                          Resume
+                        </button>
+                      )}
+                      <label
+                        className={`btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
+                          importBusy ? "opacity-50" : ""
+                        }`}
+                        title="Preview then restore exported chat JSON"
+                      >
+                        {importBusy ? "…" : "Import"}
+                        <input
+                          type="file"
+                          accept="application/json,.json"
+                          className="hidden"
+                          disabled={importBusy}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0] ?? null;
+                            e.target.value = "";
+                            void importChatFromFile(f);
+                          }}
+                        />
+                      </label>
                       <button
                         type="button"
                         onClick={() => {
-                          const id = activeCharacterId ?? character;
-                          window.location.href = `/models/studio/edit/${encodeURIComponent(id)}`;
-                        }}
-                        className="text-xs font-medium text-violet-200 hover:underline"
-                      >
-                        Edit in Studio
-                      </button>
-                      <label className="flex cursor-pointer items-center gap-1.5 text-xs text-brand-muted">
-                        <input
-                          type="checkbox"
-                          checked={
-                            characters.find((c) => c.id === character)?.featured === true
+                          if (showCreate) {
+                            setShowCreate(false);
+                            resetCustomForm();
+                          } else {
+                            openCreateForm();
                           }
-                          disabled={creating}
-                          onChange={(e) => {
-                            const selected = characters.find((c) => c.id === character);
-                            if (!selected || selected.kind !== "custom") return;
-                            void (async () => {
-                              setCreating(true);
-                              try {
-                                const updated = await updateCustomCharacter(
-                                  selected.id,
-                                  {
-                                    featured: e.target.checked,
-                                  },
-                                  account?.token,
-                                );
-                                setCharacters((prev) =>
-                                  prev.map((c) =>
-                                    c.id === selected.id
-                                      ? { ...c, featured: updated.featured === true }
-                                      : c,
-                                  ),
-                                );
-                                flashCopy(
-                                  e.target.checked
-                                    ? "Pinned to Featured row"
-                                    : "Removed from Featured",
-                                );
-                              } catch (err) {
-                                setError(
-                                  err instanceof Error ? err.message : "Could not update featured",
-                                );
-                              } finally {
-                                setCreating(false);
-                              }
-                            })();
-                          }}
-                        />
-                        Featured
-                      </label>
+                        }}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                      >
+                        {showCreate ? "Close" : "Create"}
+                      </button>
+                      {characters.some(
+                        (c) => c.id === character && c.kind === "custom" && c.mine !== false,
+                      ) &&
+                        !sessionActive && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => openEditCustom()}
+                              className="btn-ghost min-h-0 shrink-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100 sm:text-sm"
+                              title="Edit identity, vibe, phrases, scenes"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void handleDuplicateCustom()}
+                              disabled={creating}
+                              className="btn-ghost min-h-0 shrink-0 border-violet-400/30 px-3 py-2 text-xs text-violet-100/90 sm:text-sm disabled:opacity-50"
+                              title="Clone this private model (uses one cap slot)"
+                            >
+                              {creating ? "…" : "Duplicate"}
+                            </button>
+                          </>
+                        )}
+                      {characters.some((c) => c.id === character && c.kind === "custom") && (
+                        <button
+                          type="button"
+                          onClick={handleDeleteCustom}
+                          className="btn-ghost min-h-0 shrink-0 border-red-500/40 px-3 py-2 text-xs text-red-300 sm:text-sm"
+                        >
+                          Delete
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => setShowMediaAdvanced((v) => !v)}
-                        className="text-xs text-brand-accent hover:underline"
+                        onClick={() => void shareCharacterLink(false)}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                        title={
+                          canNativeShare()
+                            ? "Share character card via system sheet"
+                            : "Copy character card link"
+                        }
                       >
-                        {showMediaAdvanced ? "Hide" : "Edit media"}
+                        {canNativeShare() ? "Share card" : "Copy card"}
                       </button>
-                    </div>
+                      <button
+                        type="button"
+                        onClick={() => void shareCharacterLink(true)}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
+                        title={
+                          canNativeShare()
+                            ? "Share autostart chat link"
+                            : "Copy autostart chat link"
+                        }
+                      >
+                        {canNativeShare() ? "Share chat" : "Copy ▶"}
+                      </button>
+                      <a
+                        href={`/character/${encodeURIComponent(character)}`}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs text-brand-muted sm:text-sm"
+                      >
+                        Card
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={startNewSession}
+                        disabled={status === "connecting" || restarting}
+                        className="btn-primary min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                      >
+                        {restarting ? "…" : "Switch"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={endSession}
+                        disabled={status === "connecting" || restarting}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                      >
+                        End
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void shareCharacterLink(true)}
+                        disabled={status === "connecting" || restarting}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                        title={
+                          canNativeShare()
+                            ? "Share public character link"
+                            : "Copy public character link"
+                        }
+                      >
+                        {canNativeShare() ? "Share" : "Copy link"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void sharePrivateResumeLink()}
+                        disabled={status !== "ready" || !resumeCode}
+                        className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
+                        title={
+                          canNativeShare() ? "Share resume code link" : "Copy resume code link"
+                        }
+                      >
+                        {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void exportChat("json")}
+                        disabled={!sessionId || !wsToken || messages.length === 0}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                        title="Download chat history as JSON (no secrets)"
+                      >
+                        JSON
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void exportChat("md")}
+                        disabled={!sessionId || !wsToken || messages.length === 0}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                        title="Download chat history as Markdown"
+                      >
+                        MD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void shareChatMarkdown()}
+                        disabled={messages.length === 0 && !(sessionId && wsToken)}
+                        className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                        title={
+                          canNativeShare()
+                            ? "Share Markdown via system share sheet"
+                            : "Copy Markdown transcript to clipboard"
+                        }
+                      >
+                        {canNativeShare() ? "Share MD" : "Copy MD"}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {showCreate && !sessionActive && (
+                <div className="grid gap-2 rounded-lg border border-brand-border bg-brand-bg p-3">
+                  <p className="text-xs text-brand-muted">
+                    <strong className="text-brand-text">
+                      {editingCustomId ? "Edit My Character" : "My Character (v2)"}
+                    </strong>
+                    {editingCustomId
+                      ? " — update identity, vibe, phrases, scenes. Private to your account."
+                      : " — private to your account. Pick a base model (prefill identity/vibe), add phrases + 2–3 scenes, save."}
+                    {!account
+                      ? " Sign in required."
+                      : (() => {
+                          const used = characters.filter((c) => c.mine === true).length;
+                          const near = !editingCustomId && used >= customsLimit - 1;
+                          const full = !editingCustomId && used >= customsLimit;
+                          return (
+                            <>
+                              {" "}
+                              Using{" "}
+                              <strong className="text-brand-text">
+                                {used}/{customsLimit}
+                              </strong>
+                              {activePremium ? " premium" : " free"}
+                              {full
+                                ? " — cap full; delete one on Account to add more."
+                                : near
+                                  ? " — almost full."
+                                  : "."}
+                            </>
+                          );
+                        })()}
+                  </p>
+                  {!editingCustomId &&
+                    account &&
+                    characters.filter((c) => c.mine === true).length >= customsLimit && (
+                      <p className="rounded-lg border border-amber-500/35 bg-amber-500/10 px-2.5 py-1.5 text-[11px] text-amber-100/90">
+                        Cap reached.{" "}
+                        <Link
+                          href="/account#my-models"
+                          className="underline-offset-2 hover:underline"
+                        >
+                          Manage My models
+                        </Link>{" "}
+                        or{" "}
+                        {!activePremium ? (
+                          <Link href="/account" className="underline-offset-2 hover:underline">
+                            Day Pass
+                          </Link>
+                        ) : (
+                          "free a slot"
+                        )}
+                        .
+                      </p>
+                    )}
+                  <label className="text-[11px] text-brand-muted" htmlFor="baseModel">
+                    Base model{editingCustomId ? " (locked on edit)" : ""}
+                  </label>
+                  <select
+                    id="baseModel"
+                    value={customBaseModel}
+                    disabled={!!editingCustomId}
+                    onChange={(e) => {
+                      setCustomBaseModel(e.target.value);
+                      // Force re-prefill by clearing soft fields when switching base
+                      setCustomAppearance("");
+                      setCustomEnergy("");
+                      setCustomClothing("");
+                    }}
+                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text disabled:opacity-60"
+                  >
+                    {characters
+                      .filter((c) => c.kind === "default")
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.displayName}
+                          {c.energyLabel ? ` — ${c.energyLabel.slice(0, 40)}` : ""}
+                        </option>
+                      ))}
+                  </select>
+                  <input
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="Name (e.g. Diego)"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                  />
+                  <textarea
+                    value={customAppearance}
+                    onChange={(e) => setCustomAppearance(e.target.value)}
+                    placeholder="Core identity / appearance lock (prefilled from base — edit me)"
+                    rows={3}
+                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                  />
+                  <input
+                    value={customEnergy}
+                    onChange={(e) => setCustomEnergy(e.target.value)}
+                    placeholder="Vibe / energy (prefilled — edit me)"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                  />
+                  <input
+                    value={customClothing}
+                    onChange={(e) => setCustomClothing(e.target.value)}
+                    placeholder="Clothing focus (sheer / crotchless — prefilled)"
+                    className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                  />
+                  <p className="text-[11px] font-medium text-brand-muted">Key phrases (optional)</p>
+                  <div className="grid gap-1.5 sm:grid-cols-3">
+                    <input
+                      value={customPhrase1}
+                      onChange={(e) => setCustomPhrase1(e.target.value)}
+                      placeholder="Phrase 1"
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
+                    <input
+                      value={customPhrase2}
+                      onChange={(e) => setCustomPhrase2(e.target.value)}
+                      placeholder="Phrase 2"
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
+                    <input
+                      value={customPhrase3}
+                      onChange={(e) => setCustomPhrase3(e.target.value)}
+                      placeholder="Phrase 3"
+                      className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                    />
                   </div>
+                  <p className="text-[11px] font-medium text-brand-muted">
+                    Scene examples (2–3 recommended)
+                  </p>
+                  {(
+                    [
+                      [
+                        customScene1Title,
+                        setCustomScene1Title,
+                        customScene1Body,
+                        setCustomScene1Body,
+                        "Scene 1",
+                      ],
+                      [
+                        customScene2Title,
+                        setCustomScene2Title,
+                        customScene2Body,
+                        setCustomScene2Body,
+                        "Scene 2",
+                      ],
+                      [
+                        customScene3Title,
+                        setCustomScene3Title,
+                        customScene3Body,
+                        setCustomScene3Body,
+                        "Scene 3",
+                      ],
+                    ] as const
+                  ).map(([title, setTitle, body, setBody, label], idx) => (
+                    <div
+                      key={label}
+                      className="grid gap-1 rounded-lg border border-brand-border/50 p-2"
+                    >
+                      <input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder={`${label} title (e.g. Mirror tease)`}
+                        className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                      />
+                      <textarea
+                        value={body}
+                        onChange={(e) => setBody(e.target.value)}
+                        placeholder={`${label} body — what happens + a line of dialogue`}
+                        rows={2}
+                        className="rounded-lg border border-brand-border bg-brand-panel px-2 py-1.5 text-xs text-brand-text"
+                      />
+                      {idx === 0 ? null : null}
+                    </div>
+                  ))}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowMediaAdvanced((v) => !v)}
+                      className="rounded-lg border border-brand-border px-3 py-2 text-xs text-brand-muted hover:border-brand-accent"
+                    >
+                      {showMediaAdvanced ? "Hide custom clips" : "Custom clips…"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCreateCustom}
+                      disabled={
+                        creating ||
+                        customName.trim().length < 2 ||
+                        customAppearance.trim().length < 12 ||
+                        (!editingCustomId &&
+                          characters.filter((c) => c.mine === true).length >= customsLimit)
+                      }
+                      className="ml-auto rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-accentDim disabled:opacity-50"
+                    >
+                      {creating
+                        ? editingCustomId
+                          ? "Updating…"
+                          : "Saving…"
+                        : !account
+                          ? "Sign in to save"
+                          : editingCustomId
+                            ? "Save changes"
+                            : characters.filter((c) => c.mine === true).length >= customsLimit
+                              ? "Cap full"
+                              : "Save My Character"}
+                    </button>
+                  </div>
+
                   {showMediaAdvanced && (
-                    <div className="grid gap-2">
+                    <div className="grid gap-2 rounded-lg border border-dashed border-brand-border/80 p-2">
+                      <p className="text-[11px] leading-relaxed text-brand-muted">
+                        Point at a folder of loops under the web app (e.g.{" "}
+                        <code className="text-brand-text">/avatar/packs/diego</code> with{" "}
+                        idle/teasing/playful/aroused.mp4) or paste full https URLs per emotion.
+                      </p>
                       <input
                         value={mediaBase}
                         onChange={(e) => setMediaBase(e.target.value)}
-                        placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
+                        placeholder="Media base folder — /avatar/packs/your-name"
                         className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
                       />
-                      <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand-accent/40 bg-brand-accent/5 px-3 py-3 text-center text-xs text-brand-muted transition hover:border-brand-accent hover:text-brand-text">
-                        <span className="font-medium text-brand-text">
-                          {creating ? "Uploading…" : "Batch upload clips"}
-                        </span>
-                        <span>
-                          Select multiple files named idle / teasing / playful / aroused
-                        </span>
-                        <input
-                          type="file"
-                          accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
-                          multiple
-                          className="hidden"
-                          disabled={creating}
-                          onChange={(e) => {
-                            const list = e.target.files;
-                            e.target.value = "";
-                            void handleBatchUpload(list);
-                          }}
-                        />
-                      </label>
-                      <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="grid gap-2 sm:grid-cols-2">
                         {(
                           [
                             ["idle", clipIdle, setClipIdle],
@@ -4027,207 +3809,370 @@ export function ChatApp() {
                             ["playful", clipPlayful, setClipPlayful],
                             ["aroused", clipAroused, setClipAroused],
                           ] as const
-                        ).map(([emotion, value, setValue]) => {
-                          const selected = characters.find((c) => c.id === character);
-                          const previewSrc =
-                            value ||
-                            selected?.clips?.[emotion] ||
-                            (mediaBase
-                              ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
-                              : selected?.avatarBase
-                                ? `/avatar/${selected.avatarBase}/${emotion}.mp4`
-                                : null);
-                          return (
-                            <div key={emotion} className="space-y-1">
-                              <ClipPreview src={previewSrc} label={emotion} />
-                              <input
-                                value={value}
-                                onChange={(e) => setValue(e.target.value)}
-                                placeholder={`${emotion} URL (optional)`}
-                                className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
-                              />
-                              <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
-                                <span>Upload {emotion}.mp4/.webm</span>
-                                <input
-                                  type="file"
-                                  accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
-                                  className="hidden"
-                                  disabled={creating}
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0] ?? null;
-                                    e.target.value = "";
-                                    void handleUploadClip(emotion, file);
-                                  }}
-                                />
-                              </label>
-                            </div>
-                          );
-                        })}
+                        ).map(([emotion, value, setValue]) => (
+                          <div key={emotion} className="space-y-1">
+                            <ClipPreview
+                              src={
+                                value ||
+                                (mediaBase
+                                  ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
+                                  : `/avatar/${customBase}/${emotion}.mp4`)
+                              }
+                              label={emotion}
+                            />
+                            <input
+                              value={value}
+                              onChange={(e) => setValue(e.target.value)}
+                              placeholder={`${emotion} clip URL (optional)`}
+                              className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                            />
+                          </div>
+                        ))}
                       </div>
-                      <p className="text-[11px] text-brand-muted">
-                        Uploads store on the API volume and update this character&apos;s clip map
-                        (max ~40MB each). Only real MP4/WebM — type + file header checked.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={handleSaveMediaForSelected}
-                        disabled={creating}
-                        className="justify-self-end rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                      >
-                        {creating ? "Saving…" : "Save clip pack"}
-                      </button>
                     </div>
                   )}
                 </div>
               )}
-          </section>
 
-          <section
-            className={`relative flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
-              avatarCollapsed
-                ? "min-h-[min(70dvh,560px)] sm:min-h-[480px]"
-                : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
-            }`}
-          >
-            <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="text-[11px] text-brand-muted">
-                  {messages.length > 0
-                    ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
-                    : "Transcript"}
-                  {avatarCollapsed ? " · avatar hidden" : ""}
-                  {headerMind ? ` · ${headerMind.tag}` : ""}
-                </p>
-                {status === "ready" && (
-                  <SessionDepthMeter
-                    messageCount={messages.length}
-                    liveSeconds={liveSeconds}
-                  />
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {bandFlash && (
-                  <span
-                    className={`animate-fade-in rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(bandFlash)}`}
-                  >
-                    {energyBandLabel(bandFlash)} heat
-                  </span>
-                )}
-                {status === "ready" && messages.length > 0 && sessionId && wsToken && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => void exportChat("md")}
-                      className="text-[11px] text-brand-muted hover:text-brand-accent"
-                      title="Download this heat as Markdown"
-                    >
-                      Export MD
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void shareChatMarkdown()}
-                      className="text-[11px] text-brand-muted hover:text-brand-accent"
-                      title="Share a heat snippet"
-                    >
-                      Share heat
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
-                  className="text-[11px] text-brand-accent hover:underline"
-                  title={
-                    avatarCollapsed
-                      ? "Show avatar video and status"
-                      : "Hide avatar for more chat space"
-                  }
-                >
-                  {avatarCollapsed ? "Show avatar" : "Hide avatar"}
-                </button>
-              </div>
-            </div>
-            <div
-              ref={messagesScrollRef}
-              onScroll={onMessagesScroll}
-              className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
-            >
-              {(() => {
-                const mind = mindFingerprint(activeCharacterId ?? character);
-                const dnaLive = dnaLevel >= 0;
-                if (!mind && !dnaLive) return null;
-                return (
-                  <div
-                    className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${
-                      dnaLive
-                        ? "border-violet-400/40 bg-gradient-to-r from-violet-500/15 via-rose-500/10 to-brand-panel/80"
-                        : "border-brand-accent/25 bg-brand-accent/5"
-                    }`}
-                    role="status"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {mind && (
-                        <p
-                          className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
-                            dnaLive ? "text-violet-200/95" : "text-brand-accent"
-                          }`}
-                        >
-                          Mind · {mind.tag}
+              {!sessionActive &&
+                characters.some((c) => c.id === character && c.kind === "custom") && (
+                  <div className="rounded-lg border border-brand-border/70 bg-brand-bg p-3">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs text-brand-muted">
+                          Edit clips for{" "}
+                          <span className="text-brand-text">
+                            {characters.find((c) => c.id === character)?.displayName}
+                          </span>
                         </p>
-                      )}
-                      {dnaLive && (
-                        <span className="rounded-full border border-violet-300/50 bg-violet-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50">
-                          DNA · {dnaLabelLive || dnaNodeLive}
-                          {dnaLevel >= 3 ? " · hot" : ""}
-                        </span>
-                      )}
-                      {mind?.bilingual && (
-                        <span className="rounded-full border border-brand-border/80 px-2 py-0.5 text-[9px] text-brand-muted">
-                          Soft ES spice
-                        </span>
-                      )}
+                        {(() => {
+                          const sel = characters.find((c) => c.id === character);
+                          if (!sel) return null;
+                          const keys: MediaClipKey[] = ["idle", "teasing", "playful", "aroused"];
+                          // Count dedicated overrides / mediaBase — not signature fallback clips
+                          const filled = keys.filter((k) => !!sel.mediaOverrides?.[k]?.trim());
+                          const hasBase = !!sel.mediaBase?.trim();
+                          return (
+                            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+                                Pack {filled.length}/4
+                                {hasBase ? " · base folder" : ""}
+                              </span>
+                              {keys.map((k) => {
+                                const ok = !!sel.mediaOverrides?.[k]?.trim();
+                                return (
+                                  <span
+                                    key={k}
+                                    className={`rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${
+                                      ok
+                                        ? "border-emerald-400/45 bg-emerald-500/15 text-emerald-100"
+                                        : "border-brand-border bg-brand-bg text-brand-muted"
+                                    }`}
+                                    title={ok ? `${k} ready` : `${k} missing`}
+                                  >
+                                    {ok ? "✓ " : ""}
+                                    {k}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const id = activeCharacterId ?? character;
+                            window.location.href = `/models/studio/edit/${encodeURIComponent(id)}`;
+                          }}
+                          className="text-xs font-medium text-violet-200 hover:underline"
+                        >
+                          Edit in Studio
+                        </button>
+                        <label className="flex cursor-pointer items-center gap-1.5 text-xs text-brand-muted">
+                          <input
+                            type="checkbox"
+                            checked={characters.find((c) => c.id === character)?.featured === true}
+                            disabled={creating}
+                            onChange={(e) => {
+                              const selected = characters.find((c) => c.id === character);
+                              if (!selected || selected.kind !== "custom") return;
+                              void (async () => {
+                                setCreating(true);
+                                try {
+                                  const updated = await updateCustomCharacter(
+                                    selected.id,
+                                    {
+                                      featured: e.target.checked,
+                                    },
+                                    account?.token,
+                                  );
+                                  setCharacters((prev) =>
+                                    prev.map((c) =>
+                                      c.id === selected.id
+                                        ? { ...c, featured: updated.featured === true }
+                                        : c,
+                                    ),
+                                  );
+                                  flashCopy(
+                                    e.target.checked
+                                      ? "Pinned to Featured row"
+                                      : "Removed from Featured",
+                                  );
+                                } catch (err) {
+                                  setError(
+                                    err instanceof Error
+                                      ? err.message
+                                      : "Could not update featured",
+                                  );
+                                } finally {
+                                  setCreating(false);
+                                }
+                              })();
+                            }}
+                          />
+                          Featured
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShowMediaAdvanced((v) => !v)}
+                          className="text-xs text-brand-accent hover:underline"
+                        >
+                          {showMediaAdvanced ? "Hide" : "Edit media"}
+                        </button>
+                      </div>
                     </div>
-                    {mind && (
-                      <p className="mt-1 text-brand-muted">{mind.blurb}</p>
-                    )}
-                    {dnaLive && dnaLevel >= 2 && (
-                      <p className="mt-1 text-[10px] text-violet-100/85">
-                        Stay in the climb — Fire chips and afterglow keep you on this node.
-                      </p>
+                    {showMediaAdvanced && (
+                      <div className="grid gap-2">
+                        <input
+                          value={mediaBase}
+                          onChange={(e) => setMediaBase(e.target.value)}
+                          placeholder="Media base — /avatar/packs/name or leave blank for fallback pack"
+                          className="rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-sm text-brand-text"
+                        />
+                        <label className="flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand-accent/40 bg-brand-accent/5 px-3 py-3 text-center text-xs text-brand-muted transition hover:border-brand-accent hover:text-brand-text">
+                          <span className="font-medium text-brand-text">
+                            {creating ? "Uploading…" : "Batch upload clips"}
+                          </span>
+                          <span>
+                            Select multiple files named idle / teasing / playful / aroused
+                          </span>
+                          <input
+                            type="file"
+                            accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
+                            multiple
+                            className="hidden"
+                            disabled={creating}
+                            onChange={(e) => {
+                              const list = e.target.files;
+                              e.target.value = "";
+                              void handleBatchUpload(list);
+                            }}
+                          />
+                        </label>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          {(
+                            [
+                              ["idle", clipIdle, setClipIdle],
+                              ["teasing", clipTeasing, setClipTeasing],
+                              ["playful", clipPlayful, setClipPlayful],
+                              ["aroused", clipAroused, setClipAroused],
+                            ] as const
+                          ).map(([emotion, value, setValue]) => {
+                            const selected = characters.find((c) => c.id === character);
+                            const previewSrc =
+                              value ||
+                              selected?.clips?.[emotion] ||
+                              (mediaBase
+                                ? `${mediaBase.replace(/\/$/, "")}/${emotion}.mp4`
+                                : selected?.avatarBase
+                                  ? `/avatar/${selected.avatarBase}/${emotion}.mp4`
+                                  : null);
+                            return (
+                              <div key={emotion} className="space-y-1">
+                                <ClipPreview src={previewSrc} label={emotion} />
+                                <input
+                                  value={value}
+                                  onChange={(e) => setValue(e.target.value)}
+                                  placeholder={`${emotion} URL (optional)`}
+                                  className="w-full rounded-lg border border-brand-border bg-brand-panel px-3 py-2 text-xs text-brand-text"
+                                />
+                                <label className="flex cursor-pointer items-center justify-between rounded-lg border border-dashed border-brand-border/80 bg-brand-panel/50 px-2 py-1.5 text-[11px] text-brand-muted hover:border-brand-accent">
+                                  <span>Upload {emotion}.mp4/.webm</span>
+                                  <input
+                                    type="file"
+                                    accept="video/mp4,video/webm,video/x-m4v,.mp4,.webm"
+                                    className="hidden"
+                                    disabled={creating}
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0] ?? null;
+                                      e.target.value = "";
+                                      void handleUploadClip(emotion, file);
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <p className="text-[11px] text-brand-muted">
+                          Uploads store on the API volume and update this character&apos;s clip map
+                          (max ~40MB each). Only real MP4/WebM — type + file header checked.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleSaveMediaForSelected}
+                          disabled={creating}
+                          className="justify-self-end rounded-lg bg-brand-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                        >
+                          {creating ? "Saving…" : "Save clip pack"}
+                        </button>
+                      </div>
                     )}
                   </div>
-                );
-              })()}
-              {modeState && modeState.mode === "edge_pace" && status === "ready" && (
-                <EdgePaceStrip
-                  modeState={modeState}
-                  tickOffset={modeTick}
-                  canFire={!sending && !isTyping}
-                  onSeed={(text) => {
-                    setInput((prev) => {
-                      const p = prev.trim();
-                      if (!p) return text;
-                      return `${p} ${text}`;
-                    });
-                    window.setTimeout(() => inputRef.current?.focus(), 40);
-                  }}
-                  onFire={(text) => sendMessage(text)}
+                )}
+            </section>
+
+            <section
+              className={`relative flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
+                avatarCollapsed
+                  ? "min-h-[min(70dvh,560px)] sm:min-h-[480px]"
+                  : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <p className="text-[11px] text-brand-muted">
+                    {messages.length > 0
+                      ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
+                      : "Transcript"}
+                    {avatarCollapsed ? " · avatar hidden" : ""}
+                    {headerMind ? ` · ${headerMind.tag}` : ""}
+                  </p>
+                  {status === "ready" && (
+                    <SessionDepthMeter messageCount={messages.length} liveSeconds={liveSeconds} />
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {bandFlash && (
+                    <span
+                      className={`animate-fade-in rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(bandFlash)}`}
+                    >
+                      {energyBandLabel(bandFlash)} heat
+                    </span>
+                  )}
+                  {status === "ready" && messages.length > 0 && sessionId && wsToken && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => void exportChat("md")}
+                        className="text-[11px] text-brand-muted hover:text-brand-accent"
+                        title="Download this heat as Markdown"
+                      >
+                        Export MD
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void shareChatMarkdown()}
+                        className="text-[11px] text-brand-muted hover:text-brand-accent"
+                        title="Share a heat snippet"
+                      >
+                        Share heat
+                      </button>
+                    </>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
+                    className="text-[11px] text-brand-accent hover:underline"
+                    title={
+                      avatarCollapsed
+                        ? "Show avatar video and status"
+                        : "Hide avatar for more chat space"
+                    }
+                  >
+                    {avatarCollapsed ? "Show avatar" : "Hide avatar"}
+                  </button>
+                </div>
+              </div>
+              <div
+                ref={messagesScrollRef}
+                onScroll={onMessagesScroll}
+                className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
+              >
+                {(() => {
+                  const mind = mindFingerprint(activeCharacterId ?? character);
+                  const dnaLive = dnaLevel >= 0;
+                  if (!mind && !dnaLive) return null;
+                  return (
+                    <div
+                      className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${
+                        dnaLive
+                          ? "border-violet-400/40 bg-gradient-to-r from-violet-500/15 via-rose-500/10 to-brand-panel/80"
+                          : "border-brand-accent/25 bg-brand-accent/5"
+                      }`}
+                      role="status"
+                    >
+                      <div className="flex flex-wrap items-center gap-2">
+                        {mind && (
+                          <p
+                            className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
+                              dnaLive ? "text-violet-200/95" : "text-brand-accent"
+                            }`}
+                          >
+                            Mind · {mind.tag}
+                          </p>
+                        )}
+                        {dnaLive && (
+                          <span className="rounded-full border border-violet-300/50 bg-violet-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50">
+                            DNA · {dnaLabelLive || dnaNodeLive}
+                            {dnaLevel >= 3 ? " · hot" : ""}
+                          </span>
+                        )}
+                        {mind?.bilingual && (
+                          <span className="rounded-full border border-brand-border/80 px-2 py-0.5 text-[9px] text-brand-muted">
+                            Soft ES spice
+                          </span>
+                        )}
+                      </div>
+                      {mind && <p className="mt-1 text-brand-muted">{mind.blurb}</p>}
+                      {dnaLive && dnaLevel >= 2 && (
+                        <p className="mt-1 text-[10px] text-violet-100/85">
+                          Stay in the climb — Fire chips and afterglow keep you on this node.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+                {modeState && modeState.mode === "edge_pace" && status === "ready" && (
+                  <EdgePaceStrip
+                    modeState={modeState}
+                    tickOffset={modeTick}
+                    canFire={!sending && !isTyping}
+                    onSeed={(text) => {
+                      setInput((prev) => {
+                        const p = prev.trim();
+                        if (!p) return text;
+                        return `${p} ${text}`;
+                      });
+                      window.setTimeout(() => inputRef.current?.focus(), 40);
+                    }}
+                    onFire={(text) => sendMessage(text)}
+                  />
+                )}
+                <RejoinRecapToast
+                  show={rejoinRecap.show && status === "ready"}
+                  characterId={activeCharacterId ?? character}
+                  characterName={characterName ?? headerCharacterName}
+                  recapLine={rejoinRecap.line}
+                  priorNotes={priorNotes}
+                  dnaTreeLabel={modeState?.dnaTreeLabel}
+                  dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                  onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
                 />
-              )}
-              <RejoinRecapToast
-                show={rejoinRecap.show && status === "ready"}
-                characterId={activeCharacterId ?? character}
-                characterName={characterName ?? headerCharacterName}
-                recapLine={rejoinRecap.line}
-                priorNotes={priorNotes}
-                dnaTreeLabel={modeState?.dnaTreeLabel}
-                dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
-              />
-              {/* Return Intelligence — opt-in dossier at session open */}
-              {status === "ready" &&
-                !!priorNotes?.trim() &&
-                messages.length <= 4 && (
+                {/* Return Intelligence — opt-in dossier at session open */}
+                {status === "ready" && !!priorNotes?.trim() && messages.length <= 4 && (
                   <ReturnHeatCard
                     priorNotes={priorNotes}
                     characterId={activeCharacterId ?? character}
@@ -4246,304 +4191,297 @@ export function ChatApp() {
                     onFire={(text) => sendMessage(text)}
                   />
                 )}
-              <SessionWinToast
-                show={status === "ready"}
-                characterId={activeCharacterId ?? character}
-                characterName={characterName ?? headerCharacterName}
-                resumeCode={resumeCode}
-                messageCount={messages.length}
-                dnaTreeLabel={modeState?.dnaTreeLabel}
-                dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                heatDepth={heatDepth.label}
-                heatChips={modeState?.phaseChips}
-                recapLine={
-                  recapFromSessionNotes(sessionNotes) ||
-                  getResumeForCharacter(activeCharacterId ?? character)?.recapLine
-                }
-                baseModelId={
-                  characters.find((c) => c.id === (activeCharacterId ?? character))
-                    ?.baseModelId ||
-                  characters.find((c) => c.id === (activeCharacterId ?? character))
-                    ?.avatarBase ||
-                  (activeCharacterId ?? character)
-                }
-                isMine={
-                  characters.find((c) => c.id === (activeCharacterId ?? character))
-                    ?.mine === true ||
-                  (activeCharacterId ?? character).startsWith("custom-")
-                }
-              />
-              {(status === "ready" ||
-                messages.length > 0 ||
-                (!!priorNotes && status !== "connecting")) && (
-                <SessionMemoryStrip
-                  priorNotes={priorNotes}
-                  sessionNotes={sessionNotes}
-                  onChipPick={
-                    status === "ready"
-                      ? (text) => {
-                          setInput((prev) => {
-                            const p = prev.trim();
-                            if (!p) return text;
-                            return `${p} ${text}`;
-                          });
-                          window.setTimeout(() => inputRef.current?.focus(), 40);
-                        }
-                      : undefined
+                <SessionWinToast
+                  show={status === "ready"}
+                  characterId={activeCharacterId ?? character}
+                  characterName={characterName ?? headerCharacterName}
+                  resumeCode={resumeCode}
+                  messageCount={messages.length}
+                  dnaTreeLabel={modeState?.dnaTreeLabel}
+                  dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                  heatDepth={heatDepth.label}
+                  heatChips={modeState?.phaseChips}
+                  recapLine={
+                    recapFromSessionNotes(sessionNotes) ||
+                    getResumeForCharacter(activeCharacterId ?? character)?.recapLine
+                  }
+                  baseModelId={
+                    characters.find((c) => c.id === (activeCharacterId ?? character))
+                      ?.baseModelId ||
+                    characters.find((c) => c.id === (activeCharacterId ?? character))?.avatarBase ||
+                    (activeCharacterId ?? character)
+                  }
+                  isMine={
+                    characters.find((c) => c.id === (activeCharacterId ?? character))?.mine ===
+                      true || (activeCharacterId ?? character).startsWith("custom-")
                   }
                 />
-              )}
-              {/* Opening continuity before first message lands */}
-              {messages.length === 0 &&
-                !isTyping &&
-                selectedOpening &&
-                status !== "connecting" &&
-                !restarting && (
-                  <OpeningLinePreview
-                    characterId={activeCharacterId ?? character}
-                    characterName={headerCharacterName}
-                    openingMessage={selectedOpening}
-                    variant={status === "ready" ? "live" : "idle"}
-                    onSeedReply={(text) => {
-                      setInput(text);
-                      window.setTimeout(() => inputRef.current?.focus(), 50);
-                    }}
+                {(status === "ready" ||
+                  messages.length > 0 ||
+                  (!!priorNotes && status !== "connecting")) && (
+                  <SessionMemoryStrip
+                    priorNotes={priorNotes}
+                    sessionNotes={sessionNotes}
+                    onChipPick={
+                      status === "ready"
+                        ? (text) => {
+                            setInput((prev) => {
+                              const p = prev.trim();
+                              if (!p) return text;
+                              return `${p} ${text}`;
+                            });
+                            window.setTimeout(() => inputRef.current?.focus(), 40);
+                          }
+                        : undefined
+                    }
                   />
                 )}
-              {messages.length === 0 && !isTyping && (
-                <div className="px-2 py-10 text-center sm:py-14">
-                  {(status === "connecting" || restarting) && (
-                    <div className="mx-auto mb-5 max-w-sm animate-fade-in">
-                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-accentDim to-brand-accent text-xl font-semibold text-white shadow-glow-sm">
-                        {(headerCharacterName ?? "?").charAt(0)}
-                      </div>
-                      <p className="mt-3 text-base font-semibold text-brand-text">
-                        {headerCharacterName
-                          ? `Opening ${headerCharacterName}…`
-                          : "Opening live session…"}
-                      </p>
-                      {headerMind && (
-                        <p className="mt-1.5 text-[11px] leading-relaxed text-brand-muted">
-                          <span className="font-semibold text-brand-accent">{headerMind.tag}</span>
-                          {" · "}
-                          {headerMind.blurb}
-                        </p>
-                      )}
-                      {selectedOpening && (
-                        <p className="mt-2 line-clamp-3 text-[11px] italic leading-relaxed text-brand-muted/90">
-                          “{selectedOpening}”
-                        </p>
-                      )}
-                      <p className="mt-3 text-xs text-brand-muted animate-pulse">
-                        Wiring avatar + mind…
-                      </p>
-                    </div>
-                  )}
-                  {status === "ready" && isTyping && (
-                    <p className="mt-2 text-xs text-brand-accent animate-pulse">
-                      {headerCharacterName?.split(/\s+/)[0] || "They"}’s opening for you…
-                    </p>
-                  )}
-                  {status !== "connecting" && !restarting && (
-                  <p className="text-sm text-brand-muted">
-                    {status === "ready"
-                      ? priorNotes
-                        ? "Session live — they still remember you. Heat continues from the strip above."
-                        : headerCharacterName
-                          ? isTyping
-                            ? "Live — first line loading. Stay with them."
-                            : `${headerCharacterName} is live — they should greet you first.`
-                          : "Session live — they should greet you first. Memory saves as you go."
-                      : showSavedResumeChrome
-                          ? `Welcome back — resume “${savedSession?.characterName ?? savedSession?.characterId}” or start a new session.`
-                          : priorNotes && !bootIdentity.pendingRequested
-                            ? "They kept a little of you — Start to pick up the heat."
-                            : headerCharacterName
-                              ? `Ready for ${headerCharacterName}. Choose Normal or Edge Pace, then Start.`
-                              : bootIdentity.pendingRequested ||
-                                  (incomingQuery?.autostart && incomingQuery.characterId)
-                                ? "Connecting…"
-                                : "Pick a character, choose Normal or Edge Pace, then Start."}
-                  </p>
-                  )}
-                  {status !== "ready" && status !== "connecting" && !restarting && !selectedOpening && (
-                    <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
-                      {headerMind
-                        ? `${headerMind.tag} · ${headerMind.blurb}`
-                        : "Signature models open with a brand line. Edge Pace adds soft build → hold → almost → breathe cycles. Free path always works."}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {messages.map((msg, i) => {
-                const isLast = i === messages.length - 1;
-                const prev = i > 0 ? messages[i - 1] : null;
-                const showMindTag =
-                  msg.role === "assistant" &&
-                  !!headerMind &&
-                  (!prev || prev.role === "user" || !!msg.streaming);
-                const showAfterglow =
-                  isLast &&
-                  msg.role === "assistant" &&
-                  !msg.streaming &&
-                  status === "ready" &&
-                  !sending &&
+                {/* Opening continuity before first message lands */}
+                {messages.length === 0 &&
                   !isTyping &&
-                  !input.trim();
-                const showUseAgain =
-                  isLast &&
-                  msg.role === "user" &&
-                  status === "ready" &&
-                  !sending &&
-                  !isTyping;
-                return (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col animate-rise-in ${msg.role === "user" ? "items-end" : "items-start"}`}
-                >
-                  <div
-                    className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed transition-[box-shadow,ring] duration-500 sm:max-w-[80%] sm:px-4 ${
-                      msg.role === "user"
-                        ? `bg-brand-accent text-white shadow-glow-sm ${dnaBubbleUser} ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
-                        : `border text-brand-text ${assistantBubbleClass} ${
-                            msg.streaming
-                              ? dnaLevel >= 0
-                                ? "ring-1 ring-violet-400/40"
-                                : "ring-1 ring-brand-accent/30"
-                              : arrivalId === msg.id
-                                ? dnaLevel >= 0
-                                  ? "ring-2 ring-violet-400/55 shadow-glow-sm"
-                                  : "ring-2 ring-brand-accent/50 shadow-glow-sm"
-                                : ""
-                          }`
-                    }`}
-                  >
-                    {showMindTag && (
-                      <p
-                        className={`mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] ${
-                          dnaLevel >= 0 ? "text-violet-200/90" : "text-brand-accent/80"
+                  selectedOpening &&
+                  status !== "connecting" &&
+                  !restarting && (
+                    <OpeningLinePreview
+                      characterId={activeCharacterId ?? character}
+                      characterName={headerCharacterName}
+                      openingMessage={selectedOpening}
+                      variant={status === "ready" ? "live" : "idle"}
+                      onSeedReply={(text) => {
+                        setInput(text);
+                        window.setTimeout(() => inputRef.current?.focus(), 50);
+                      }}
+                    />
+                  )}
+                {messages.length === 0 && !isTyping && (
+                  <div className="px-2 py-10 text-center sm:py-14">
+                    {(status === "connecting" || restarting) && (
+                      <div className="mx-auto mb-5 max-w-sm animate-fade-in">
+                        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-brand-accentDim to-brand-accent text-xl font-semibold text-white shadow-glow-sm">
+                          {(headerCharacterName ?? "?").charAt(0)}
+                        </div>
+                        <p className="mt-3 text-base font-semibold text-brand-text">
+                          {headerCharacterName
+                            ? `Opening ${headerCharacterName}…`
+                            : "Opening live session…"}
+                        </p>
+                        {headerMind && (
+                          <p className="mt-1.5 text-[11px] leading-relaxed text-brand-muted">
+                            <span className="font-semibold text-brand-accent">
+                              {headerMind.tag}
+                            </span>
+                            {" · "}
+                            {headerMind.blurb}
+                          </p>
+                        )}
+                        {selectedOpening && (
+                          <p className="mt-2 line-clamp-3 text-[11px] italic leading-relaxed text-brand-muted/90">
+                            “{selectedOpening}”
+                          </p>
+                        )}
+                        <p className="mt-3 text-xs text-brand-muted animate-pulse">
+                          Wiring avatar + mind…
+                        </p>
+                      </div>
+                    )}
+                    {status === "ready" && isTyping && (
+                      <p className="mt-2 text-xs text-brand-accent animate-pulse">
+                        {headerCharacterName?.split(/\s+/)[0] || "They"}’s opening for you…
+                      </p>
+                    )}
+                    {status !== "connecting" && !restarting && (
+                      <p className="text-sm text-brand-muted">
+                        {status === "ready"
+                          ? priorNotes
+                            ? "Session live — they still remember you. Heat continues from the strip above."
+                            : headerCharacterName
+                              ? isTyping
+                                ? "Live — first line loading. Stay with them."
+                                : `${headerCharacterName} is live — they should greet you first.`
+                              : "Session live — they should greet you first. Memory saves as you go."
+                          : showSavedResumeChrome
+                            ? `Welcome back — resume “${savedSession?.characterName ?? savedSession?.characterId}” or start a new session.`
+                            : priorNotes && !bootIdentity.pendingRequested
+                              ? "They kept a little of you — Start to pick up the heat."
+                              : headerCharacterName
+                                ? `Ready for ${headerCharacterName}. Choose Normal or Edge Pace, then Start.`
+                                : bootIdentity.pendingRequested ||
+                                    (incomingQuery?.autostart && incomingQuery.characterId)
+                                  ? "Connecting…"
+                                  : "Pick a character, choose Normal or Edge Pace, then Start."}
+                      </p>
+                    )}
+                    {status !== "ready" &&
+                      status !== "connecting" &&
+                      !restarting &&
+                      !selectedOpening && (
+                        <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
+                          {headerMind
+                            ? `${headerMind.tag} · ${headerMind.blurb}`
+                            : "Signature models open with a brand line. Edge Pace adds soft build → hold → almost → breathe cycles. Free path always works."}
+                        </p>
+                      )}
+                  </div>
+                )}
+
+                {messages.map((msg, i) => {
+                  const isLast = i === messages.length - 1;
+                  const prev = i > 0 ? messages[i - 1] : null;
+                  const showMindTag =
+                    msg.role === "assistant" &&
+                    !!headerMind &&
+                    (!prev || prev.role === "user" || !!msg.streaming);
+                  const showAfterglow =
+                    isLast &&
+                    msg.role === "assistant" &&
+                    !msg.streaming &&
+                    status === "ready" &&
+                    !sending &&
+                    !isTyping &&
+                    !input.trim();
+                  const showUseAgain =
+                    isLast && msg.role === "user" && status === "ready" && !sending && !isTyping;
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`flex flex-col animate-rise-in ${msg.role === "user" ? "items-end" : "items-start"}`}
+                    >
+                      <div
+                        className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed transition-[box-shadow,ring] duration-500 sm:max-w-[80%] sm:px-4 ${
+                          msg.role === "user"
+                            ? `bg-brand-accent text-white shadow-glow-sm ${dnaBubbleUser} ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
+                            : `border text-brand-text ${assistantBubbleClass} ${
+                                msg.streaming
+                                  ? dnaLevel >= 0
+                                    ? "ring-1 ring-violet-400/40"
+                                    : "ring-1 ring-brand-accent/30"
+                                  : arrivalId === msg.id
+                                    ? dnaLevel >= 0
+                                      ? "ring-2 ring-violet-400/55 shadow-glow-sm"
+                                      : "ring-2 ring-brand-accent/50 shadow-glow-sm"
+                                    : ""
+                              }`
                         }`}
                       >
-                        {headerCharacterName?.split(/\s+/)[0] || "Them"}
-                        {" · "}
-                        {headerMind!.tag}
-                        {dnaLevel >= 0 && modeState?.dnaTreeLabel
-                          ? ` · DNA ${String(modeState.dnaTreeLabel).split(/\s+/)[0]}`
-                          : dnaLevel >= 0 && modeState?.dnaTreeNodeId
-                            ? ` · DNA ${String(modeState.dnaTreeNodeId).split(/\s+/)[0]}`
-                            : ""}
-                      </p>
-                    )}
-                    <span className="whitespace-pre-wrap break-words">{msg.content}</span>
-                    {msg.streaming && (
-                      <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-brand-accent align-middle" />
-                    )}
-                  </div>
-                  {showUseAgain && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setInput(msg.content);
-                        window.setTimeout(() => inputRef.current?.focus(), 40);
-                      }}
-                      className="mt-1 text-[10px] text-brand-muted hover:text-brand-accent"
-                    >
-                      Use again
-                    </button>
-                  )}
-                  {showAfterglow && (
-                    <div className="max-w-[90%] sm:max-w-[80%]">
-                      <AfterglowChips
-                        characterId={activeCharacterId ?? character}
-                        disabled={sending}
-                        intense={
-                          modeState?.mode === "edge_pace" &&
-                          modeState.phase === "almost"
-                        }
-                        heatDepth={heatDepth.label}
-                        dnaTreeLabel={modeState?.dnaTreeLabel}
-                        dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                        onFire={(text) => sendMessage(text)}
-                        onPick={(text) => {
-                          setInput((prev) => {
-                            const p = prev.trim();
-                            if (!p) return text;
-                            return `${p} ${text}`;
-                          });
-                          window.setTimeout(() => inputRef.current?.focus(), 40);
-                        }}
-                      />
+                        {showMindTag && (
+                          <p
+                            className={`mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] ${
+                              dnaLevel >= 0 ? "text-violet-200/90" : "text-brand-accent/80"
+                            }`}
+                          >
+                            {headerCharacterName?.split(/\s+/)[0] || "Them"}
+                            {" · "}
+                            {headerMind!.tag}
+                            {dnaLevel >= 0 && modeState?.dnaTreeLabel
+                              ? ` · DNA ${String(modeState.dnaTreeLabel).split(/\s+/)[0]}`
+                              : dnaLevel >= 0 && modeState?.dnaTreeNodeId
+                                ? ` · DNA ${String(modeState.dnaTreeNodeId).split(/\s+/)[0]}`
+                                : ""}
+                          </p>
+                        )}
+                        <span className="whitespace-pre-wrap break-words">{msg.content}</span>
+                        {msg.streaming && (
+                          <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-brand-accent align-middle" />
+                        )}
+                      </div>
+                      {showUseAgain && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setInput(msg.content);
+                            window.setTimeout(() => inputRef.current?.focus(), 40);
+                          }}
+                          className="mt-1 text-[10px] text-brand-muted hover:text-brand-accent"
+                        >
+                          Use again
+                        </button>
+                      )}
+                      {showAfterglow && (
+                        <div className="max-w-[90%] sm:max-w-[80%]">
+                          <AfterglowChips
+                            characterId={activeCharacterId ?? character}
+                            disabled={sending}
+                            intense={
+                              modeState?.mode === "edge_pace" && modeState.phase === "almost"
+                            }
+                            heatDepth={heatDepth.label}
+                            dnaTreeLabel={modeState?.dnaTreeLabel}
+                            dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                            onFire={(text) => sendMessage(text)}
+                            onPick={(text) => {
+                              setInput((prev) => {
+                                const p = prev.trim();
+                                if (!p) return text;
+                                return `${p} ${text}`;
+                              });
+                              window.setTimeout(() => inputRef.current?.focus(), 40);
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                );
-              })}
+                  );
+                })}
 
-              {isTyping && (
-                <TypingIndicator
-                  name={characterName ?? headerCharacterName}
-                  characterId={activeCharacterId ?? character}
-                  dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                  dnaTreeLabel={modeState?.dnaTreeLabel}
-                />
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {showJumpLatest && messages.length > 0 && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-10 flex justify-center sm:bottom-[6.25rem]">
-                <button
-                  type="button"
-                  onClick={jumpToLatest}
-                  className="pointer-events-auto btn-primary min-h-0 animate-rise-in rounded-full px-4 py-1.5 text-xs shadow-glow"
-                >
-                  Jump to latest
-                  {isTyping ? " · typing" : ""}
-                </button>
+                {isTyping && (
+                  <TypingIndicator
+                    name={characterName ?? headerCharacterName}
+                    characterId={activeCharacterId ?? character}
+                    dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                    dnaTreeLabel={modeState?.dnaTreeLabel}
+                  />
+                )}
+                <div ref={messagesEndRef} />
               </div>
-            )}
 
-            {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
-            <div
-              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-4 sm:pb-4 ${edgePaceComposerClass(modeState, status)} ${
-                sendPulse ? "ring-1 ring-inset ring-brand-accent/40" : ""
-              } ${arrivalId ? "ring-1 ring-inset ring-brand-accent/25" : ""}`}
-            >
-              <ComposerVibeChip
-                characterId={activeCharacterId ?? character}
-                characterName={headerCharacterName}
-                sessionMode={sessionMode}
-                modeState={modeState}
-                tickOffset={modeTick}
-                status={status}
-                arousalPct={
-                  avatarState
-                    ? Math.round((avatarState.arousalLevel ?? 0) * 100)
-                    : null
-                }
-              />
-              {status === "ready" && (
-                <HeatWhisperStrip
+              {showJumpLatest && messages.length > 0 && (
+                <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-10 flex justify-center sm:bottom-[6.25rem]">
+                  <button
+                    type="button"
+                    onClick={jumpToLatest}
+                    className="pointer-events-auto btn-primary min-h-0 animate-rise-in rounded-full px-4 py-1.5 text-xs shadow-glow"
+                  >
+                    Jump to latest
+                    {isTyping ? " · typing" : ""}
+                  </button>
+                </div>
+              )}
+
+              {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
+              <div
+                className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-4 sm:pb-4 ${edgePaceComposerClass(modeState, status)} ${
+                  sendPulse ? "ring-1 ring-inset ring-brand-accent/40" : ""
+                } ${arrivalId ? "ring-1 ring-inset ring-brand-accent/25" : ""}`}
+              >
+                <ComposerVibeChip
                   characterId={activeCharacterId ?? character}
+                  characterName={headerCharacterName}
+                  sessionMode={sessionMode}
                   modeState={modeState}
                   tickOffset={modeTick}
-                  canFire={!sending && !isTyping}
-                  onSeed={(text) => {
-                    setInput((prev) => {
-                      const p = prev.trim();
-                      if (!p) return text;
-                      return `${p} ${text}`;
-                    });
-                    window.setTimeout(() => inputRef.current?.focus(), 40);
-                  }}
-                  onFire={(text) => sendMessage(text)}
+                  status={status}
+                  arousalPct={
+                    avatarState ? Math.round((avatarState.arousalLevel ?? 0) * 100) : null
+                  }
                 />
-              )}
-              {status === "ready" &&
-                lastAssistantBeat &&
-                messages.length >= 2 &&
-                !isTyping && (
+                {status === "ready" && (
+                  <HeatWhisperStrip
+                    characterId={activeCharacterId ?? character}
+                    modeState={modeState}
+                    tickOffset={modeTick}
+                    canFire={!sending && !isTyping}
+                    onSeed={(text) => {
+                      setInput((prev) => {
+                        const p = prev.trim();
+                        if (!p) return text;
+                        return `${p} ${text}`;
+                      });
+                      window.setTimeout(() => inputRef.current?.focus(), 40);
+                    }}
+                    onFire={(text) => sendMessage(text)}
+                  />
+                )}
+                {status === "ready" && lastAssistantBeat && messages.length >= 2 && !isTyping && (
                   <LastBeatEcho
                     text={lastAssistantBeat}
                     name={characterName ?? headerCharacterName}
@@ -4561,148 +4499,152 @@ export function ChatApp() {
                     }}
                   />
                 )}
-              {/* Always offer vibe chips when composer is empty — mid-session used to go blank */}
-              {status === "ready" && !sending && !isTyping && !input.trim() && (
-                <QuickReplyChips
-                  characterId={activeCharacterId ?? character}
-                  characterName={characterName ?? headerCharacterName}
-                  heatDepth={heatDepth.label}
-                  disabled={status !== "ready"}
-                  onFire={(text) => sendMessage(text)}
-                  onPick={(text) => {
-                    setInput((prev) => {
-                      const p = prev.trim();
-                      if (!p) return text;
-                      if (p.endsWith(text)) return prev;
-                      return `${p} ${text}`;
-                    });
-                    window.setTimeout(() => inputRef.current?.focus(), 40);
-                  }}
-                />
-              )}
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={inputRef}
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  onFocus={() => {
-                    // Phone: auto-collapse avatar on focus so keyboard + chat fit
-                    if (
-                      typeof window !== "undefined" &&
-                      window.matchMedia("(max-width: 639px)").matches &&
-                      !avatarCollapsed
-                    ) {
-                      setAvatarCollapsedPersist(true);
-                    }
-                    // Keep focused input above soft keyboard
-                    window.setTimeout(() => {
-                      inputRef.current?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "nearest",
+                {/* Always offer vibe chips when composer is empty — mid-session used to go blank */}
+                {status === "ready" && !sending && !isTyping && !input.trim() && (
+                  <QuickReplyChips
+                    characterId={activeCharacterId ?? character}
+                    characterName={characterName ?? headerCharacterName}
+                    heatDepth={heatDepth.label}
+                    disabled={status !== "ready"}
+                    onFire={(text) => sendMessage(text)}
+                    onPick={(text) => {
+                      setInput((prev) => {
+                        const p = prev.trim();
+                        if (!p) return text;
+                        if (p.endsWith(text)) return prev;
+                        return `${p} ${text}`;
                       });
-                    }, 120);
-                  }}
-                  placeholder={
-                    status === "ready"
-                      ? modeState?.mode === "edge_pace" && modeState.phase
-                        ? `Reply in ${modeState.phase}… (Enter to send)`
-                        : dnaLevel >= 3
-                          ? `Stay on DNA · ${dnaLabelLive || "Edge"}… (Enter)`
-                          : dnaLevel >= 0
-                            ? `Climb with ${
-                                (headerCharacterName || "them").split(/\s+/)[0]
-                              }… (Enter)`
-                            : headerCharacterName
-                              ? `Message ${headerCharacterName.split(/\s+/)[0]}… (draft saves)`
-                              : "Message… (draft saves)"
-                      : connectionDropped
-                        ? "Rejoin to keep chatting"
-                        : input.trim()
-                          ? "Draft saved — Start to send"
-                          : "Start a session first"
-                  }
-                  disabled={status !== "ready" || sending}
-                  rows={avatarCollapsed ? 3 : 2}
-                  enterKeyHint="send"
-                  autoComplete="off"
-                  className={`field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm ${
-                    input.trim() && status !== "ready" ? "field-has-draft" : ""
-                  } ${
-                    modeState?.mode === "edge_pace" && modeState.phase === "almost" && status === "ready"
-                      ? "border-rose-400/50 focus:ring-rose-400/30"
-                      : modeState?.mode === "edge_pace" && modeState.phase === "breathe" && status === "ready"
-                        ? "border-sky-400/40 focus:ring-sky-400/25"
-                        : status === "ready" && dnaLevel >= 0
-                          ? dnaComposerClass(dnaNodeLive, dnaLabelLive)
-                          : ""
-                  }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => sendMessage()}
-                  disabled={!canSend}
-                  className={`btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5 ${
-                    sendPulse ? "scale-95 ring-2 ring-white/40 shadow-glow" : ""
-                  } ${sending ? "opacity-80" : ""} ${
-                    modeState?.mode === "edge_pace" && modeState.phase === "almost"
-                      ? "ring-2 ring-rose-300/50"
-                      : modeState?.mode === "edge_pace" && modeState.phase === "hold"
-                        ? "ring-1 ring-amber-300/40"
-                        : modeState?.mode === "edge_pace" && modeState.phase === "breathe"
-                          ? "ring-1 ring-sky-300/40"
-                          : ""
-                  }`}
-                >
-                  {sending
-                    ? "…"
-                    : modeState?.mode === "edge_pace"
-                      ? modeState.phase === "almost"
-                        ? "Hold…"
-                        : modeState.phase === "hold"
+                      window.setTimeout(() => inputRef.current?.focus(), 40);
+                    }}
+                  />
+                )}
+                <div className="flex items-end gap-2">
+                  <textarea
+                    ref={inputRef}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onFocus={() => {
+                      // Phone: auto-collapse avatar on focus so keyboard + chat fit
+                      if (
+                        typeof window !== "undefined" &&
+                        window.matchMedia("(max-width: 639px)").matches &&
+                        !avatarCollapsed
+                      ) {
+                        setAvatarCollapsedPersist(true);
+                      }
+                      // Keep focused input above soft keyboard
+                      window.setTimeout(() => {
+                        inputRef.current?.scrollIntoView({
+                          behavior: "smooth",
+                          block: "nearest",
+                        });
+                      }, 120);
+                    }}
+                    placeholder={
+                      status === "ready"
+                        ? modeState?.mode === "edge_pace" && modeState.phase
+                          ? `Reply in ${modeState.phase}… (Enter to send)`
+                          : dnaLevel >= 3
+                            ? `Stay on DNA · ${dnaLabelLive || "Edge"}… (Enter)`
+                            : dnaLevel >= 0
+                              ? `Climb with ${
+                                  (headerCharacterName || "them").split(/\s+/)[0]
+                                }… (Enter)`
+                              : headerCharacterName
+                                ? `Message ${headerCharacterName.split(/\s+/)[0]}… (draft saves)`
+                                : "Message… (draft saves)"
+                        : connectionDropped
+                          ? "Rejoin to keep chatting"
+                          : input.trim()
+                            ? "Draft saved — Start to send"
+                            : "Start a session first"
+                    }
+                    disabled={status !== "ready" || sending}
+                    rows={avatarCollapsed ? 3 : 2}
+                    enterKeyHint="send"
+                    autoComplete="off"
+                    className={`field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm ${
+                      input.trim() && status !== "ready" ? "field-has-draft" : ""
+                    } ${
+                      modeState?.mode === "edge_pace" &&
+                      modeState.phase === "almost" &&
+                      status === "ready"
+                        ? "border-rose-400/50 focus:ring-rose-400/30"
+                        : modeState?.mode === "edge_pace" &&
+                            modeState.phase === "breathe" &&
+                            status === "ready"
+                          ? "border-sky-400/40 focus:ring-sky-400/25"
+                          : status === "ready" && dnaLevel >= 0
+                            ? dnaComposerClass(dnaNodeLive, dnaLabelLive)
+                            : ""
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => sendMessage()}
+                    disabled={!canSend}
+                    className={`btn-primary min-h-touch shrink-0 px-4 disabled:opacity-50 sm:min-h-[2.75rem] sm:px-5 ${
+                      sendPulse ? "scale-95 ring-2 ring-white/40 shadow-glow" : ""
+                    } ${sending ? "opacity-80" : ""} ${
+                      modeState?.mode === "edge_pace" && modeState.phase === "almost"
+                        ? "ring-2 ring-rose-300/50"
+                        : modeState?.mode === "edge_pace" && modeState.phase === "hold"
+                          ? "ring-1 ring-amber-300/40"
+                          : modeState?.mode === "edge_pace" && modeState.phase === "breathe"
+                            ? "ring-1 ring-sky-300/40"
+                            : ""
+                    }`}
+                  >
+                    {sending
+                      ? "…"
+                      : modeState?.mode === "edge_pace"
+                        ? modeState.phase === "almost"
+                          ? "Hold…"
+                          : modeState.phase === "hold"
+                            ? "Stay…"
+                            : modeState.phase === "breathe"
+                              ? "Soft…"
+                              : modeState.phase === "build"
+                                ? "Build…"
+                                : "Send"
+                        : heatDepth.label === "locked"
                           ? "Stay…"
-                          : modeState.phase === "breathe"
-                            ? "Soft…"
-                            : modeState.phase === "build"
-                              ? "Build…"
-                              : "Send"
-                      : heatDepth.label === "locked"
-                        ? "Stay…"
-                        : heatDepth.label === "deep"
-                          ? "Push…"
-                          : heatDepth.label === "edge"
-                            ? "Edge…"
-                            : "Send"}
-                </button>
-              </div>
-              {status === "ready" && (
-                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[9px] text-brand-soft">
-                  <p>
-                    Enter send · Shift+Enter line · Esc clear draft
-                    {input.trim() ? " · draft auto-saves" : ""}
-                  </p>
-                  {input.trim().length > 0 && (
-                    <p
-                      className={`font-mono tabular-nums ${
-                        input.trim().length > 400
-                          ? "text-rose-200/90"
-                          : input.trim().length > 180
-                            ? "text-amber-200/80"
-                            : "text-brand-soft"
-                      }`}
-                    >
-                      {input.trim().length}
-                      {input.trim().length > 180
-                        ? input.trim().length > 400
-                          ? " · novel heat"
-                          : " · long pour"
-                        : " · short & filthy ok"}
-                    </p>
-                  )}
+                          : heatDepth.label === "deep"
+                            ? "Push…"
+                            : heatDepth.label === "edge"
+                              ? "Edge…"
+                              : "Send"}
+                  </button>
                 </div>
-              )}
-            </div>
-          </section>
+                {status === "ready" && (
+                  <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[9px] text-brand-soft">
+                    <p>
+                      Enter send · Shift+Enter line · Esc clear draft
+                      {input.trim() ? " · draft auto-saves" : ""}
+                    </p>
+                    {input.trim().length > 0 && (
+                      <p
+                        className={`font-mono tabular-nums ${
+                          input.trim().length > 400
+                            ? "text-rose-200/90"
+                            : input.trim().length > 180
+                              ? "text-amber-200/80"
+                              : "text-brand-soft"
+                        }`}
+                      >
+                        {input.trim().length}
+                        {input.trim().length > 180
+                          ? input.trim().length > 400
+                            ? " · novel heat"
+                            : " · long pour"
+                          : " · short & filthy ok"}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </section>
           </div>
         </div>
 

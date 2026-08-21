@@ -5,11 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { sendTestPush } from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { loadStoredSession } from "@/lib/session-storage";
-import {
-  enableWebPush,
-  isPushSupported,
-  registerPushServiceWorker,
-} from "@/lib/web-push-client";
+import { enableWebPush, isPushSupported, registerPushServiceWorker } from "@/lib/web-push-client";
 
 const DISMISS_KEY = "procharacters.pushHint.dismissed.v1";
 const TESTED_KEY = "procharacters.pushHint.tested.v1";
@@ -88,8 +84,7 @@ export function PushEnableHint({
           return;
         }
 
-        const hasResume =
-          hasResumeCodeProp !== undefined ? hasResumeCodeProp : hasAnyResumeCode();
+        const hasResume = hasResumeCodeProp !== undefined ? hasResumeCodeProp : hasAnyResumeCode();
         if (!hasResume) {
           if (!cancelled) setMode(null);
           return;
@@ -145,8 +140,7 @@ export function PushEnableHint({
     };
   }, [accountTokenProp, hasResumeCodeProp]);
 
-  const resolveToken = () =>
-    token ?? accountTokenProp ?? loadStoredAccount()?.token ?? null;
+  const resolveToken = () => token ?? accountTokenProp ?? loadStoredAccount()?.token ?? null;
 
   const onEnable = async () => {
     const t = resolveToken();

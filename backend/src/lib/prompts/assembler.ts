@@ -12,9 +12,7 @@ export interface AssemblePromptInput {
 
 const injector = new LivePromptInjector();
 
-export async function assembleSessionPrompt(
-  input: AssemblePromptInput,
-): Promise<AssembledPrompt> {
+export async function assembleSessionPrompt(input: AssemblePromptInput): Promise<AssembledPrompt> {
   const snapshot = await createPromptSnapshot(input.characterId, input.promptVersion);
   const memory = SessionMemory.empty();
   const result = injector.injectTurn(snapshot, { context: memory.getRecentContext() });

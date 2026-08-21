@@ -29,10 +29,7 @@ export function RejoinRecapToast({
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "Them";
   const dnaLive =
-    dnaTreeLabel?.trim() ||
-    dnaTreeNodeId?.trim() ||
-    extractDnaLabel(priorNotes) ||
-    null;
+    dnaTreeLabel?.trim() || dnaTreeNodeId?.trim() || extractDnaLabel(priorNotes) || null;
 
   const line =
     recapLine?.trim() ||
@@ -79,9 +76,7 @@ export function RejoinRecapToast({
             {mind ? ` · ${mind.tag}` : ""}
             {dnaLive ? ` · ${dnaLive.split(/\s+/)[0]}` : ""}
           </p>
-          <p className="mt-1 text-brand-muted">
-            {recapLine?.trim() ? `“${line}”` : line}
-          </p>
+          <p className="mt-1 text-brand-muted">{recapLine?.trim() ? `“${line}”` : line}</p>
         </div>
         <button
           type="button"
@@ -101,9 +96,7 @@ export function RejoinRecapToast({
 
 function extractDnaLabel(prior?: string | null): string | null {
   if (!prior?.trim()) return null;
-  const m =
-    prior.match(/DNA power climb:\s*([^(\n]+)/i) ||
-    prior.match(/DNA tree ·\s*([^.]+)/i);
+  const m = prior.match(/DNA power climb:\s*([^(\n]+)/i) || prior.match(/DNA tree ·\s*([^.]+)/i);
   return m?.[1]?.trim().replace(/\s*·\s*Edge Pace\s*$/i, "") || null;
 }
 

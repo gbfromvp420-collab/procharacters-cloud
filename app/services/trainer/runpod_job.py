@@ -20,9 +20,7 @@ from app.core.config import Settings, get_settings
 logger = logging.getLogger(__name__)
 
 # Terminal RunPod-ish statuses
-_TERMINAL = frozenset(
-    {"COMPLETED", "FAILED", "CANCELLED", "TIMED_OUT", "ERROR", "SUCCESS", "DONE"}
-)
+_TERMINAL = frozenset({"COMPLETED", "FAILED", "CANCELLED", "TIMED_OUT", "ERROR", "SUCCESS", "DONE"})
 _SUCCESS = frozenset({"COMPLETED", "SUCCESS", "DONE"})
 
 # Process-wide mock job store so status/logs work across request-scoped clients
@@ -134,7 +132,7 @@ class JobStatusResult:
     ok: bool
     job_id: str
     status: JobStatus
-    progress: float | None = None  # 0.0 – 1.0 when known
+    progress: float | None = None  # 0.0 - 1.0 when known
     weights_uri: str | None = None
     logs_tail: str | None = None
     output: dict[str, Any] = field(default_factory=dict)
@@ -144,11 +142,15 @@ class JobStatusResult:
 
     @property
     def is_terminal(self) -> bool:
-        return self.status.value in {
-            JobStatus.COMPLETED.value,
-            JobStatus.FAILED.value,
-            JobStatus.CANCELLED.value,
-        } or self.status.value in _TERMINAL
+        return (
+            self.status.value
+            in {
+                JobStatus.COMPLETED.value,
+                JobStatus.FAILED.value,
+                JobStatus.CANCELLED.value,
+            }
+            or self.status.value in _TERMINAL
+        )
 
     @property
     def is_success(self) -> bool:
@@ -267,9 +269,7 @@ class TrainingJobClient:
         if self.mock:
             return
         if not self.base_url:
-            raise RuntimeError(
-                "RUNPOD_TRAINING_URL is not configured for training jobs"
-            )
+            raise RuntimeError("RUNPOD_TRAINING_URL is not configured for training jobs")
 
     async def start_job(self, request: StartJobRequest) -> StartJobResult:
         """Submit a training job (async /run preferred)."""
@@ -339,9 +339,7 @@ class TrainingJobClient:
         self._ensure_configured()
         url = f"{self.base_url}/status/{job_id}"
         try:
-            response = await self._client.get(
-                url, headers=self.settings.runpod_training_headers()
-            )
+            response = await self._client.get(url, headers=self.settings.runpod_training_headers())
             # Some deployments use /job/{id}
             if response.status_code == 404:
                 url = f"{self.base_url}/job/{job_id}"
@@ -396,21 +394,16 @@ class TrainingJobClient:
                 )
             response.raise_for_status()
         except httpx.TimeoutException as exc:
-            return JobLogsResult(
-                ok=False, job_id=job_id, logs="", error=f"timeout: {exc}"
-            )
+            return JobLogsResult(ok=False, job_id=job_id, logs="", error=f"timeout: {exc}")
         except httpx.HTTPError as exc:
-            return JobLogsResult(
-                ok=False, job_id=job_id, logs="", error=f"http_error: {exc}"
-            )
+            return JobLogsResult(ok=False, job_id=job_id, logs="", error=f"http_error: {exc}")
 
         # JSON or plain text
         ctype = response.headers.get("content-type", "")
         if "application/json" in ctype:
             data = _safe_json(response)
             logs = (
-                data.get("logs")
-                or data.get("output", {}).get("logs")
+                data.get("logs") or data.get("output", {}).get("logs")
                 if isinstance(data.get("output"), dict)
                 else data.get("logs")
             )
@@ -457,8 +450,7 @@ class TrainingJobClient:
             if "://" not in clean:
                 clean = f"s3://{clean}"
             weights = (
-                f"{clean}/weights/{request.character_id}/"
-                f"{request.training_kind.value}/{job_id}"
+                f"{clean}/weights/{request.character_id}/{request.training_kind.value}/{job_id}"
             )
         _MOCK_JOBS[job_id] = {
             "id": job_id,
@@ -512,18 +504,14 @@ class TrainingJobClient:
             job["status"] = "IN_PROGRESS"
             out = job.setdefault("output", {})
             out["progress"] = min(0.9, 0.1 + 0.4 * job["ticks"])
-            out["logs"] = (
-                str(out.get("logs") or "") + f"[mock] step tick={job['ticks']}\n"
-            )
+            out["logs"] = str(out.get("logs") or "") + f"[mock] step tick={job['ticks']}\n"
 
         return _parse_status(job_id, job, provider="mock")
 
     def _logs_mock(self, job_id: str, *, tail: int = 200) -> JobLogsResult:
         job = _MOCK_JOBS.get(job_id)
         if not job:
-            return JobLogsResult(
-                ok=False, job_id=job_id, logs="", error="job_not_found"
-            )
+            return JobLogsResult(ok=False, job_id=job_id, logs="", error="job_not_found")
         logs = str((job.get("output") or {}).get("logs") or "")
         lines = logs.splitlines()
         if tail > 0 and len(lines) > tail:
@@ -538,9 +526,7 @@ def _parse_status(
     if not isinstance(output, dict):
         output = {} if output is None else {"value": output}
 
-    status = JobStatus.from_raw(
-        str(data.get("status") or output.get("status") or "")
-    )
+    status = JobStatus.from_raw(str(data.get("status") or output.get("status") or ""))
     progress = output.get("progress")
     if progress is None:
         progress = data.get("progress")
@@ -591,5 +577,5 @@ def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
         data = response.json()
         return data if isinstance(data, dict) else {"output": data}
-    except Exception:
+    except ValueError:
         return {"raw": response.text}

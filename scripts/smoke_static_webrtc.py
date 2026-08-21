@@ -251,6 +251,24 @@ def main() -> int:
             if not isinstance(body.get("weights"), dict):
                 failures.append(f"chat/perform missing weights: {body}")
 
+        # 9c) video-only generate (no second LLM) — mock:// URL is expected
+        r = client.post(
+            "/api/v1/video/generate",
+            json={
+                "session_id": session_id,
+                "character_id": "smoke-char",
+                "message": "gen video spike",
+            },
+        )
+        if r.status_code != 200:
+            failures.append(f"POST /api/v1/video/generate -> {r.status_code} {r.text}")
+        else:
+            body = r.json()
+            if not body.get("ok") or not body.get("video_url"):
+                failures.append(f"video/generate body: {body}")
+            elif not str(body.get("video_url", "")).startswith("mock://"):
+                failures.append(f"video/generate expected mock url: {body}")
+
         # 9b) legacy /chat/perform still works
         r = client.post(
             "/chat/perform",
@@ -300,6 +318,7 @@ def main() -> int:
     print("  POST /api/v1/webrtc/offer -> 200 answer SDP + lora_id")
     print("  POST /api/v1/webrtc/ice-candidate -> 200")
     print("  POST /api/v1/chat/perform -> 200 with weights")
+    print("  POST /api/v1/video/generate -> 200 mock url")
     print("  POST /chat/perform        -> 200 legacy")
     print("  CORS localhost + 127.0.0.1:8000 -> OK")
     return 0

@@ -20,11 +20,12 @@ import re
 import threading
 import time
 import uuid
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from app.core.config import Settings, get_settings
 
@@ -74,9 +75,7 @@ class WeightEntry:
     trigger_word: str | None = None
     job_id: str | None = None
     active: bool = True
-    created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
-    )
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     meta: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
@@ -98,7 +97,7 @@ class WeightEntry:
             trigger_word=data.get("trigger_word"),
             job_id=data.get("job_id"),
             active=bool(data.get("active", True)),
-            created_at=str(data.get("created_at") or datetime.now(timezone.utc).isoformat()),
+            created_at=str(data.get("created_at") or datetime.now(UTC).isoformat()),
             meta=dict(data.get("meta") or {}),
         )
 
@@ -135,7 +134,9 @@ class CharacterWeights:
         if self.visual_lora:
             payload["visual_lora_uri"] = self.visual_lora.uri
             payload["lora_uri"] = self.visual_lora.uri
-            payload["lora_id"] = self.lora_id or self.visual_lora.lora_id or self.visual_lora.weight_id
+            payload["lora_id"] = (
+                self.lora_id or self.visual_lora.lora_id or self.visual_lora.weight_id
+            )
             if self.visual_lora.trigger_word:
                 payload["trigger_word"] = self.visual_lora.trigger_word
             if self.visual_lora.base_model:
@@ -213,9 +214,7 @@ class WeightRegistry:
                 if isinstance(active, dict):
                     for cid, kinds in active.items():
                         if isinstance(kinds, dict):
-                            self._active[str(cid)] = {
-                                str(k): str(v) for k, v in kinds.items()
-                            }
+                            self._active[str(cid)] = {str(k): str(v) for k, v in kinds.items()}
             # Also scan local directory tree for manifests
             self._scan_local_tree()
             self._loaded_at = time.time()
@@ -247,14 +246,10 @@ class WeightRegistry:
                             data = json.loads(manifest.read_text(encoding="utf-8"))
                         except (OSError, json.JSONDecodeError):
                             data = {}
-                    weight_id = str(
-                        data.get("weight_id") or data.get("lora_id") or weight_dir.name
-                    )
+                    weight_id = str(data.get("weight_id") or data.get("lora_id") or weight_dir.name)
                     if weight_id in self._entries:
                         continue
-                    uri = data.get("uri") or self._uri_for(
-                        character_id, kind, weight_id
-                    )
+                    uri = data.get("uri") or self._uri_for(character_id, kind, weight_id)
                     entry = WeightEntry(
                         weight_id=weight_id,
                         character_id=str(data.get("character_id") or character_id),
@@ -266,17 +261,12 @@ class WeightRegistry:
                         trigger_word=data.get("trigger_word"),
                         job_id=data.get("job_id"),
                         active=bool(data.get("active", True)),
-                        created_at=str(
-                            data.get("created_at")
-                            or datetime.now(timezone.utc).isoformat()
-                        ),
+                        created_at=str(data.get("created_at") or datetime.now(UTC).isoformat()),
                         meta=dict(data.get("meta") or {}),
                     )
                     self._entries[weight_id] = entry
 
-    def _uri_for(
-        self, character_id: str, kind: WeightKind, weight_id: str
-    ) -> str:
+    def _uri_for(self, character_id: str, kind: WeightKind, weight_id: str) -> str:
         bucket = (self.settings.weights_storage_bucket or "").strip()
         if bucket:
             clean = bucket.rstrip("/")
@@ -292,7 +282,7 @@ class WeightRegistry:
             payload = {
                 "version": 1,
                 "bucket": self.settings.weights_storage_bucket or None,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
                 "entries": [e.to_dict() for e in self._entries.values()],
                 "active": self._active,
             }
@@ -501,9 +491,7 @@ class WeightRegistry:
                 llms = [
                     e
                     for e in self._entries.values()
-                    if e.character_id == character_id
-                    and e.kind == WeightKind.LLM
-                    and e.active
+                    if e.character_id == character_id and e.kind == WeightKind.LLM and e.active
                 ]
                 llms.sort(key=lambda x: x.created_at, reverse=True)
                 llm = llms[0] if llms else None
@@ -515,9 +503,7 @@ class WeightRegistry:
                 voices = [
                     e
                     for e in self._entries.values()
-                    if e.character_id == character_id
-                    and e.kind == WeightKind.VOICE
-                    and e.active
+                    if e.character_id == character_id and e.kind == WeightKind.VOICE and e.active
                 ]
                 voices.sort(key=lambda x: x.created_at, reverse=True)
                 voice = voices[0] if voices else None
@@ -530,9 +516,7 @@ class WeightRegistry:
                 voice=voice,
             )
 
-    def reindex_from_bucket_layout(
-        self, entries: Iterable[dict[str, Any]]
-    ) -> int:
+    def reindex_from_bucket_layout(self, entries: Iterable[dict[str, Any]]) -> int:
         """
         Bulk-ingest weight descriptors (e.g. from an S3 list or training
         completion webhook). Returns count registered.

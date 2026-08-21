@@ -12,10 +12,7 @@ export type PushPayload = {
 };
 
 export function isWebPushConfigured(): boolean {
-  return !!(
-    process.env.VAPID_PUBLIC_KEY?.trim() &&
-    process.env.VAPID_PRIVATE_KEY?.trim()
-  );
+  return !!(process.env.VAPID_PUBLIC_KEY?.trim() && process.env.VAPID_PRIVATE_KEY?.trim());
 }
 
 export function getVapidPublicKey(): string | null {
@@ -27,8 +24,7 @@ let configured = false;
 function ensureConfigured(): boolean {
   if (!isWebPushConfigured()) return false;
   if (!configured) {
-    const subject =
-      process.env.VAPID_SUBJECT?.trim() || "mailto:ops@procharacters.cloud";
+    const subject = process.env.VAPID_SUBJECT?.trim() || "mailto:ops@procharacters.cloud";
     webpush.setVapidDetails(
       subject,
       process.env.VAPID_PUBLIC_KEY!.trim(),

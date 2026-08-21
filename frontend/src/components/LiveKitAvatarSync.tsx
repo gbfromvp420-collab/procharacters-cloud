@@ -86,11 +86,9 @@ export function LiveKitAvatarSync({
 
     setStatus("connecting");
 
-    room
-      .connect(livekit.url, livekit.token)
-      .catch(() => {
-        if (!cancelled) setStatus("error");
-      });
+    room.connect(livekit.url, livekit.token).catch(() => {
+      if (!cancelled) setStatus("error");
+    });
 
     return () => {
       cancelled = true;

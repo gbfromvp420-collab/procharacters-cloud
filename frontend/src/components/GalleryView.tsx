@@ -74,8 +74,7 @@ const EMPTY_CLIPS: Record<MediaClipKey, string> = {
 /** Map authenticated live custom → gallery card (private My Characters). */
 function liveCustomToCard(c: LiveCharacterOption): CharacterCard {
   const clips = { ...EMPTY_CLIPS, ...(c.clips ?? {}) };
-  const poster =
-    clips.teasing || clips.idle || clips.playful || clips.aroused || "";
+  const poster = clips.teasing || clips.idle || clips.playful || clips.aroused || "";
   return {
     id: c.id,
     displayName: c.displayName,
@@ -224,7 +223,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     for (const c of characters) map.set(c.id, c);
     for (const o of ownedCards) {
       const prev = map.get(o.id);
-      map.set(o.id, prev ? { ...prev, mine: true, visibility: o.visibility ?? prev.visibility } : o);
+      map.set(
+        o.id,
+        prev ? { ...prev, mine: true, visibility: o.visibility ?? prev.visibility } : o,
+      );
     }
     return [...map.values()];
   }, [characters, ownedCards]);
@@ -233,7 +235,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
   const continueTarget = useMemo(() => {
     const entries = Object.values(resumes).filter((r) => !!r.resumeCode);
     if (entries.length === 0) return getMostRecentResume();
-    return [...entries].sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0] ?? null;
+    return (
+      [...entries].sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0] ?? null
+    );
   }, [resumes]);
   const continueCard = useMemo(() => {
     if (!continueTarget) return null;
@@ -264,10 +268,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     [catalog, resumes],
   );
   const urgentMineCount = useMemo(
-    () =>
-      Object.values(resumes).filter((r) =>
-        isResumeExpiryUrgent(r.resumeExpiresAt),
-      ).length,
+    () => Object.values(resumes).filter((r) => isResumeExpiryUrgent(r.resumeExpiresAt)).length,
     [resumes],
   );
 
@@ -307,7 +308,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       if (filter === "owned" && c.mine !== true) return false;
       if (filter === "featured" && !c.featured) return false;
       if (filter === "packs" && !c.dedicatedPack) return false;
-      if (filter in PACK_FILTERS && cardPackLane(c) !== PACK_FILTERS[filter as keyof typeof PACK_FILTERS]) {
+      if (
+        filter in PACK_FILTERS &&
+        cardPackLane(c) !== PACK_FILTERS[filter as keyof typeof PACK_FILTERS]
+      ) {
         return false;
       }
       if (filter === "default" && c.kind !== "default") return false;
@@ -341,7 +345,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         return a.displayName.localeCompare(b.displayName);
       }
       if (sort === "name") return a.displayName.localeCompare(b.displayName);
-      if (sort === "energy") return a.energyLabel.localeCompare(b.energyLabel) || a.displayName.localeCompare(b.displayName);
+      if (sort === "energy")
+        return (
+          a.energyLabel.localeCompare(b.energyLabel) || a.displayName.localeCompare(b.displayName)
+        );
       if (sort === "packs") {
         if (!!a.dedicatedPack !== !!b.dedicatedPack) return a.dedicatedPack ? -1 : 1;
         if (!!a.featured !== !!b.featured) return a.featured ? -1 : 1;
@@ -361,8 +368,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
   const shareCard = async (card: CharacterCard) => {
     const opening = card.openingMessage?.trim();
-    const quote =
-      opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
+    const quote = opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url: `${siteOrigin}${card.cardPath}`,
       title: `${card.displayName} · Naughty Syntax`,
@@ -380,8 +386,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       origin: siteOrigin,
       characterId: card.id,
       rehydrate: true,
-      sessionMode:
-        resume.dnaTreeLabel || resume.dnaTreeNodeId ? "edge_pace" : undefined,
+      sessionMode: resume.dnaTreeLabel || resume.dnaTreeNodeId ? "edge_pace" : undefined,
     });
     const result = await shareOrCopyUrl({
       url,
@@ -391,7 +396,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     flash(shareUrlResultLabel(result, `Resume ${resume.resumeCode}`));
   };
 
-  const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0 && sort !== "recent";
+  const showFeaturedStrip =
+    filter === "all" && !query.trim() && featuredRow.length > 0 && sort !== "recent";
 
   return (
     <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -411,30 +417,35 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       />
 
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
-        <SessionAuthBanner
-          className="mb-4"
-          onInvalidated={() => setSignedInHandle(null)}
-        />
+        <SessionAuthBanner className="mb-4" onInvalidated={() => setSignedInHandle(null)} />
         <InstallAppHint className="mb-4" />
         <NetworkOfflineBanner className="mb-4" />
         <PushEnableHint className="mb-4" />
         <SoftSupportHint
           className="mb-4"
           hasEngagement={resumeCount > 0}
-          dnaHeat={Object.values(resumes).some(
-            (r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId),
-          )}
+          dnaHeat={Object.values(resumes).some((r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId))}
         />
         <header className="mb-5 animate-fade-in sm:mb-6">
-          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">Live character gallery</h1>
+          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">
+            Live character gallery
+          </h1>
           <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
             {sort === "recent" || signedInHandle
               ? "Your last chats first — then the rest of the catalog."
               : "Tonight’s cast up top — mind fingerprints on every tile, then the full roster."}
-            {resumeCount > 0 ? " Amber codes are saved chats." : signedInHandle ? " Chat while signed in for multi-device codes." : " Sign in to sync resumes."}
+            {resumeCount > 0
+              ? " Amber codes are saved chats."
+              : signedInHandle
+                ? " Chat while signed in for multi-device codes."
+                : " Sign in to sync resumes."}
             {" Search minds too (e.g. post-set, shy heat, brat)."}
           </p>
-          {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}
+          {notice && (
+            <p className="mt-2 text-xs font-medium text-brand-accent" role="status">
+              {notice}
+            </p>
+          )}
         </header>
 
         <GalleryLiveStrip
@@ -477,7 +488,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             continueTarget={continueTarget}
             continueCard={continueCard}
             resumeCount={resumeCount}
-            onShowAllMyChats={() => { setFilter("mine"); setSort("recent"); }}
+            onShowAllMyChats={() => {
+              setFilter("mine");
+              setSort("recent");
+            }}
           />
         )}
 
@@ -485,7 +499,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           <section className="mb-8 sm:mb-10">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Spotlight</p>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">
+                  Spotlight
+                </p>
                 <h2 className="text-base font-semibold text-brand-text sm:text-lg">
                   Featured
                   <span className="ml-2 text-xs font-normal text-brand-muted">
@@ -493,7 +509,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                   </span>
                 </h2>
               </div>
-              <button type="button" onClick={() => setFilter("featured")} className="min-h-touch text-xs text-brand-muted hover:text-brand-accent">View all →</button>
+              <button
+                type="button"
+                onClick={() => setFilter("featured")}
+                className="min-h-touch text-xs text-brand-muted hover:text-brand-accent"
+              >
+                View all →
+              </button>
             </div>
             <div className="relative -mx-4 sm:mx-0">
               <div
@@ -531,7 +553,14 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0"
               >
                 {featuredRow.map((card) => (
-                  <CharacterTile key={`feat-${card.id}`} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} compact />
+                  <CharacterTile
+                    key={`feat-${card.id}`}
+                    card={card}
+                    onShareCard={shareCard}
+                    onShareResume={shareResume}
+                    resume={resumes[card.id] ?? null}
+                    compact
+                  />
                 ))}
               </div>
             </div>
@@ -540,10 +569,21 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-5 space-y-3 border-b border-brand-border/50 bg-brand-bg/90 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, mind, energy, tags…" enterKeyHint="search" autoComplete="off" className="field min-h-touch flex-1" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search name, mind, energy, tags…"
+              enterKeyHint="search"
+              autoComplete="off"
+              className="field min-h-touch flex-1"
+            />
             <label className="flex min-h-touch items-center gap-2 text-xs text-brand-muted">
               <span className="shrink-0">Sort</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className="field min-h-touch w-full sm:w-auto">
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortMode)}
+                className="field min-h-touch w-full sm:w-auto"
+              >
                 <option value="featured">Featured first</option>
                 <option value="recent">Last chat</option>
                 <option value="packs">4K packs first</option>
@@ -579,9 +619,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                       : "border-amber-500/40 text-amber-100/90"
                     : key === "owned" && counts.owned > 0
                       ? "border-violet-400/45 text-violet-100/90"
-                    : key === "packs" || key === "pack01" || key === "pack02" || key === "pack03"
-                      ? "border-emerald-400/35 text-emerald-100/90"
-                      : ""
+                      : key === "packs" || key === "pack01" || key === "pack02" || key === "pack03"
+                        ? "border-emerald-400/35 text-emerald-100/90"
+                        : ""
                 }`}
               >
                 {label}
@@ -596,9 +636,8 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </div>
           {(query.trim() || filter !== "all") && (
             <p className="text-[10px] text-brand-muted">
-              Showing{" "}
-              <span className="font-semibold text-brand-text">{visible.length}</span>{" "}
-              mind{visible.length === 1 ? "" : "s"}
+              Showing <span className="font-semibold text-brand-text">{visible.length}</span> mind
+              {visible.length === 1 ? "" : "s"}
               {query.trim() ? ` for “${query.trim()}”` : ""}
               {filter !== "all"
                 ? ` · ${
@@ -612,10 +651,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                   }`
                 : ""}
               {filter === "mine" && urgentMineCount > 0 ? (
-                <span className="text-rose-200/90">
-                  {" "}
-                  · {urgentMineCount} need reclaim
-                </span>
+                <span className="text-rose-200/90"> · {urgentMineCount} need reclaim</span>
               ) : null}
             </p>
           )}
@@ -623,7 +659,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
 
         {visible.length === 0 ? (
           <div className="rounded-2xl border border-brand-border bg-gradient-to-b from-brand-panel to-brand-bg p-8 text-center sm:p-10">
-            {filter === "packs" || filter === "pack01" || filter === "pack02" || filter === "pack03" ? (
+            {filter === "packs" ||
+            filter === "pack01" ||
+            filter === "pack02" ||
+            filter === "pack03" ? (
               <>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-emerald-200/80">
                   {filter === "pack01"
@@ -681,7 +720,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                     }}
                     className="btn-primary min-h-0 px-5 py-2.5 text-sm"
                   >
-                    Meet tonight's cast
+                    Meet tonight&apos;s cast
                   </button>
                   <Link href="/chat" className="btn-ghost min-h-0 px-5 py-2.5 text-sm">
                     Open live chat
@@ -693,7 +732,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-200/85">
                   My models
                 </p>
-                <p className="mt-2 text-lg font-semibold text-brand-text">No private My Characters yet</p>
+                <p className="mt-2 text-lg font-semibold text-brand-text">
+                  No private My Characters yet
+                </p>
                 <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-brand-muted">
                   {signedInHandle
                     ? "Craft a private mind from a signature base — only you see them here."
@@ -799,7 +840,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </div>
           </>
         )}
-        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 21+ · Procharacters.cloud / KGC Ventures</footer>
+        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">
+          Uncensored 21+ · Procharacters.cloud / KGC Ventures
+        </footer>
       </div>
 
       <div
@@ -818,14 +861,16 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               }`}
             >
               {continueUrgent ? "Reclaim" : "Continue"}
-              {continueCard?.displayName
-                ? ` · ${continueCard.displayName.split(" ")[0]}`
-                : ""}
+              {continueCard?.displayName ? ` · ${continueCard.displayName.split(" ")[0]}` : ""}
             </Link>
           ) : (
-            <Link href="/chat" className="btn-primary flex-1">Open live chat</Link>
+            <Link href="/chat" className="btn-primary flex-1">
+              Open live chat
+            </Link>
           )}
-          <Link href="/account" className="btn-ghost flex-1">Account</Link>
+          <Link href="/account" className="btn-ghost flex-1">
+            Account
+          </Link>
         </div>
       </div>
     </main>

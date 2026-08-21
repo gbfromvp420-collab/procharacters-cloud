@@ -29,11 +29,7 @@ export function ReturnHeatCard({
   const sig = useMemo(() => parseReturnSignals(priorNotes), [priorNotes]);
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "Them";
-  const liveDna =
-    dnaTreeLabel?.trim() ||
-    dnaTreeNodeId?.trim() ||
-    sig.dnaLabel ||
-    null;
+  const liveDna = dnaTreeLabel?.trim() || dnaTreeNodeId?.trim() || sig.dnaLabel || null;
   const dnaHot = !!liveDna;
 
   if (!sig.hasAnything && !dnaHot) return null;
@@ -178,10 +174,8 @@ function parseReturnSignals(prior?: string | null): ReturnSig {
     prior.match(/(?:Called|call(?:ed)? me)\s*[:\s]+([A-Za-z][\w.-]{1,24})/i)?.[1] ??
     null;
   const dnaMatch =
-    prior.match(/DNA power climb:\s*([^(\n]+)/i) ||
-    prior.match(/DNA tree ·\s*([^.]+)/i);
-  const dnaLabel =
-    dnaMatch?.[1]?.trim().replace(/\s*·\s*Edge Pace\s*$/i, "") || null;
+    prior.match(/DNA power climb:\s*([^(\n]+)/i) || prior.match(/DNA tree ·\s*([^.]+)/i);
+  const dnaLabel = dnaMatch?.[1]?.trim().replace(/\s*·\s*Edge Pace\s*$/i, "") || null;
   const hasAnything =
     !!name ||
     !!dnaLabel ||

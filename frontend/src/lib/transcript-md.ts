@@ -10,10 +10,17 @@ export type LocalTranscriptMessage = {
 };
 
 function stamp(iso?: string): string {
-  if (!iso) return new Date().toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC");
+  if (!iso)
+    return new Date()
+      .toISOString()
+      .replace("T", " ")
+      .replace(/\.\d{3}Z$/, " UTC");
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return iso;
-  return new Date(t).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC");
+  return new Date(t)
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d{3}Z$/, " UTC");
 }
 
 export function buildLocalTranscriptMarkdown(options: {

@@ -63,9 +63,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
             characterId: card.id,
             rehydrate: true,
             sessionMode:
-              resumeEntry?.dnaTreeLabel || resumeEntry?.dnaTreeNodeId
-                ? "edge_pace"
-                : undefined,
+              resumeEntry?.dnaTreeLabel || resumeEntry?.dnaTreeNodeId ? "edge_pace" : undefined,
           })
         : null,
     [resumeCode, siteOrigin, card.id, resumeEntry?.dnaTreeLabel, resumeEntry?.dnaTreeNodeId],
@@ -128,8 +126,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
   const onShareCard = async () => {
     const opening = card.openingMessage?.trim();
-    const quote =
-      opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
+    const quote = opening && opening.length > 140 ? `${opening.slice(0, 137).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url: shareUrl,
       title: `${card.displayName} · Naughty Syntax`,
@@ -144,8 +141,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
   const onShareAutostart = async () => {
     const opening = card.openingMessage?.trim();
-    const quote =
-      opening && opening.length > 120 ? `${opening.slice(0, 117).trim()}…` : opening;
+    const quote = opening && opening.length > 120 ? `${opening.slice(0, 117).trim()}…` : opening;
     const result = await shareOrCopyUrl({
       url: autostartUrl,
       title: `Chat with ${card.displayName}`,
@@ -330,7 +326,10 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 </Link>
               )}
               <Link
-                href={card.edgePacePath || `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`}
+                href={
+                  card.edgePacePath ||
+                  `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`
+                }
                 className="btn-ghost border-rose-400/40 px-6 text-rose-100"
               >
                 Edge Pace
@@ -351,11 +350,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 type="button"
                 onClick={() => void onShareAutostart()}
                 className="btn-ghost px-6"
-                title={
-                  canNativeShare()
-                    ? "Share autostart chat link"
-                    : "Copy autostart chat link"
-                }
+                title={canNativeShare() ? "Share autostart chat link" : "Copy autostart chat link"}
               >
                 {shareLabel} start
               </button>
@@ -373,10 +368,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                   {shareLabel} resume
                 </button>
               )}
-              <Link
-                href="/chat"
-                className="btn-ghost px-6 text-brand-muted hover:text-brand-text"
-              >
+              <Link href="/chat" className="btn-ghost px-6 text-brand-muted hover:text-brand-text">
                 Open chat
               </Link>
             </div>
@@ -436,9 +428,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                     : "ring-amber-400/45"
                 }`}
               >
-                {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
-                  ? "DNA power"
-                  : "Continue"}
+                {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId ? "DNA power" : "Continue"}
               </Link>
               <Link href={card.ctaPath} className="btn-ghost min-w-[4.5rem] flex-1">
                 New

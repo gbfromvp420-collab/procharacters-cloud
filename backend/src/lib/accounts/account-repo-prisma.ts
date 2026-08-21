@@ -6,7 +6,10 @@ export async function getAccountByEmail(email: string) {
 
 function normalizeHandleSeed(email: string): string {
   const local = email.split("@")[0] ?? "user";
-  let base = local.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32);
+  let base = local
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 32);
   if (base.length < 3) base = `user${base}`.slice(0, 32);
   return base;
 }

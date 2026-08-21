@@ -9,10 +9,7 @@ import {
   shouldOfferForgeFromHeat,
   stashForgeHeatSeed,
 } from "@/lib/forge-from-heat";
-import {
-  buildResumeChatPath,
-  type ResumeCacheEntry,
-} from "@/lib/resume-cache";
+import { buildResumeChatPath, type ResumeCacheEntry } from "@/lib/resume-cache";
 import { posterUrl } from "./GalleryTiles";
 
 const ROTATE_MS = 7000;
@@ -33,9 +30,7 @@ export function pickHeroCast(
   if (withPoster.length === 0) return [];
 
   const resumeSet =
-    resumeIds instanceof Set
-      ? resumeIds
-      : new Set((resumeIds ?? []).filter(Boolean));
+    resumeIds instanceof Set ? resumeIds : new Set((resumeIds ?? []).filter(Boolean));
 
   const featuredDedicated = withPoster.filter((c) => c.featured && c.dedicatedPack);
   const featured = withPoster.filter((c) => c.featured);
@@ -52,10 +47,7 @@ export function pickHeroCast(
   // Featured stay in the front half; each tier shuffles with the day seed.
   const featuredPool = pool.filter((c) => c.featured);
   const restPool = pool.filter((c) => !c.featured);
-  let ordered = [
-    ...seededShuffle(featuredPool, daySeed),
-    ...seededShuffle(restPool, daySeed + 17),
-  ];
+  let ordered = [...seededShuffle(featuredPool, daySeed), ...seededShuffle(restPool, daySeed + 17)];
 
   // Personalize: your chats first, then the nightly cast order
   if (resumeSet.size > 0) {
@@ -184,7 +176,13 @@ export function GalleryHeroReel({
     if (!paused || cast.length < 2) return;
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
-      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.isContentEditable)) {
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable)
+      ) {
         return;
       }
       if (e.key === "ArrowLeft") {
@@ -209,8 +207,7 @@ export function GalleryHeroReel({
   const resume = resumes[card.id];
   const continueHref = resume?.resumeCode ? buildResumeChatPath(resume) : null;
   const nick = firstName(card.displayName);
-  const dnaLabel =
-    resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
+  const dnaLabel = resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
   const offerForge =
     !!resume &&
     shouldOfferForgeFromHeat({
@@ -219,24 +216,22 @@ export function GalleryHeroReel({
       dnaTreeNodeId: resume.dnaTreeNodeId,
       heatDepth: resume.heatDepth,
     });
-  const forgeHeatCtx = offerForge && resume
-    ? {
-        characterId: card.id,
-        characterName: card.displayName,
-        baseModelId:
-          card.avatarBase ||
-          (card.id.startsWith("custom-") ? undefined : card.id),
-        dnaTreeLabel: resume.dnaTreeLabel,
-        dnaTreeNodeId: resume.dnaTreeNodeId,
-        heatDepth: resume.heatDepth,
-        heatChips: resume.heatChips,
-        recapLine: resume.recapLine,
-        messageCount: resume.messageCount,
-        isMine: card.mine === true,
-      }
-    : null;
-  const forgeHref =
-    forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
+  const forgeHeatCtx =
+    offerForge && resume
+      ? {
+          characterId: card.id,
+          characterName: card.displayName,
+          baseModelId: card.avatarBase || (card.id.startsWith("custom-") ? undefined : card.id),
+          dnaTreeLabel: resume.dnaTreeLabel,
+          dnaTreeNodeId: resume.dnaTreeNodeId,
+          heatDepth: resume.heatDepth,
+          heatChips: resume.heatChips,
+          recapLine: resume.recapLine,
+          messageCount: resume.messageCount,
+          isMine: card.mine === true,
+        }
+      : null;
+  const forgeHref = forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -391,9 +386,7 @@ export function GalleryHeroReel({
                   title="Mint private DNA from this climb"
                   onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
                 >
-                  {dnaLabel
-                    ? `Forge this DNA · ${dnaLabel}`
-                    : "Forge this heat"}
+                  {dnaLabel ? `Forge this DNA · ${dnaLabel}` : "Forge this heat"}
                 </Link>
               )}
               <Link

@@ -67,9 +67,7 @@ export function computeModeState(
   }
 
   const start = Date.parse(modeStartedAt);
-  const elapsedSec = Number.isFinite(start)
-    ? Math.max(0, Math.floor((now - start) / 1000))
-    : 0;
+  const elapsedSec = Number.isFinite(start) ? Math.max(0, Math.floor((now - start) / 1000)) : 0;
   const round = Math.floor(elapsedSec / ROUND_SEC);
   let intoRound = elapsedSec % ROUND_SEC;
 

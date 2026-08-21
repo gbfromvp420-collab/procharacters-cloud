@@ -28,6 +28,8 @@ services:
     environment:
       PORT: "3001"
       PUBLIC_API_URL: http://localhost:3001
+      # Empty = loops only. Set to http://webrtc:8000 when using --profile webrtc.
+      GEN_VIDEO_SERVICE_URL: ${GEN_VIDEO_SERVICE_URL:-}
     restart: unless-stopped
 
   frontend:

@@ -11,11 +11,7 @@ export type RemapTarget = {
   displayName: string;
 };
 
-function pushChar(
-  map: Map<string, ExportCharacterRef>,
-  id: string,
-  name?: string,
-) {
+function pushChar(map: Map<string, ExportCharacterRef>, id: string, name?: string) {
   const key = id.trim();
   if (!key) return;
   const existing = map.get(key);
@@ -47,7 +43,11 @@ export function collectExportCharacters(document: unknown): ExportCharacterRef[]
   if (root.session && typeof root.session === "object") {
     const s = root.session as Record<string, unknown>;
     if (typeof s.characterId === "string") {
-      pushChar(map, s.characterId, typeof s.characterName === "string" ? s.characterName : undefined);
+      pushChar(
+        map,
+        s.characterId,
+        typeof s.characterName === "string" ? s.characterName : undefined,
+      );
     }
   }
 

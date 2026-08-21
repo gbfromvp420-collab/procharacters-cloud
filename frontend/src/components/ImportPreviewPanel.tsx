@@ -130,10 +130,7 @@ export function ImportPreviewPanel({
           <p className="text-xs font-medium text-amber-100">Remap missing characters</p>
           <ul className="space-y-2">
             {missing.map((m) => (
-              <li
-                key={m.id}
-                className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3"
-              >
+              <li key={m.id} className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-xs font-medium text-brand-text">{m.name}</p>
                   <p className="truncate font-mono text-[10px] text-brand-muted">

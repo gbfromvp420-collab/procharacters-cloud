@@ -35,10 +35,7 @@ export function isAccountAuthError(error: unknown): error is AccountAuthError {
 
 function throwIfAuthFailed(res: Response, text: string, fallback: string): void {
   if (res.status === 401 || res.status === 403) {
-    throw new AccountAuthError(
-      "Session expired — sign in again to sync chats.",
-      res.status,
-    );
+    throw new AccountAuthError("Session expired — sign in again to sync chats.", res.status);
   }
   throw new Error(`${fallback} (${res.status}): ${text}`);
 }
@@ -69,6 +66,45 @@ export async function createSession(
   }
 
   return res.json() as Promise<CreateSessionResponse>;
+}
+
+export async function fetchGenVideoStatus(): Promise<{
+  configured: boolean;
+  default: string;
+  optIn: boolean;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/gen-video/status`);
+  if (!res.ok) {
+    return { configured: false, default: "loops", optIn: true };
+  }
+  return res.json() as Promise<{
+    configured: boolean;
+    default: string;
+    optIn: boolean;
+  }>;
+}
+
+export async function performGenVideo(input: {
+  sessionId: string;
+  characterId: string;
+  message: string;
+}): Promise<import("./gen-video").GenVideoPerformResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/gen-video/perform`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const body = (await res
+    .json()
+    .catch(() => ({}))) as import("./gen-video").GenVideoPerformResponse;
+  if (!res.ok) {
+    return {
+      ok: false,
+      configured: body.configured,
+      error: body.error ?? `gen-video ${res.status}`,
+    };
+  }
+  return body;
 }
 
 export async function setCrossSessionMemoryOptIn(
@@ -206,9 +242,7 @@ export async function fetchSessionMemory(
   characterName?: string;
   status?: string;
 }> {
-  const url = new URL(
-    `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/memory`,
-  );
+  const url = new URL(`${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/memory`);
   url.searchParams.set("token", wsToken);
   const res = await fetch(url.toString());
   if (!res.ok) {
@@ -347,9 +381,7 @@ export interface AccountSessionSummary {
   dnaTreeNodeId?: string;
 }
 
-export async function listAccountSessions(
-  accountToken: string,
-): Promise<AccountSessionSummary[]> {
+export async function listAccountSessions(accountToken: string): Promise<AccountSessionSummary[]> {
   const res = await fetch(`${API_BASE}/api/v1/accounts/me/sessions`, {
     headers: authHeaders(accountToken),
   });
@@ -539,9 +571,7 @@ export async function sendTestPush(accountToken: string): Promise<{
           : 0) ||
         (Number.isFinite(headerRetry) && headerRetry > 0 ? headerRetry : 0) ||
         60;
-      throw new Error(
-        `Too many test alerts — try again in ${formatRetryAfter(retryAfterSec)}`,
-      );
+      throw new Error(`Too many test alerts — try again in ${formatRetryAfter(retryAfterSec)}`);
     }
     throw new Error(data.error || text || `Test push failed (${res.status})`);
   }
@@ -790,9 +820,7 @@ export async function updateCustomCharacter(
 export async function getCharacterClips(
   characterId: string,
 ): Promise<{ characterId: string; clips: Record<MediaClipKey, string> }> {
-  const res = await fetch(
-    `${API_BASE}/api/v1/characters/${encodeURIComponent(characterId)}/clips`,
-  );
+  const res = await fetch(`${API_BASE}/api/v1/characters/${encodeURIComponent(characterId)}/clips`);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Failed to load clips (${res.status}): ${text}`);
@@ -940,9 +968,7 @@ export async function uploadCharacterClipsBatch(
   return data;
 }
 
-export async function fetchAccountMe(
-  accountToken: string,
-): Promise<{
+export async function fetchAccountMe(accountToken: string): Promise<{
   accountId: string;
   handle: string;
   email?: string;
@@ -982,8 +1008,9 @@ export async function validateStoredAccountSession(): Promise<{
   handle?: string;
   notice?: string | null;
 }> {
-  const { loadStoredAccount, invalidateStoredAccount, DEFAULT_REAUTH_NOTICE } =
-    await import("./account-storage");
+  const { loadStoredAccount, invalidateStoredAccount, DEFAULT_REAUTH_NOTICE } = await import(
+    "./account-storage"
+  );
   const stored = loadStoredAccount();
   if (!stored) {
     return { valid: false, notice: null };
@@ -1515,14 +1542,11 @@ export async function exportLiveSession(
 ): Promise<{ filename: string; doc?: SessionExportDoc; markdown?: string }> {
   const download = options?.download !== false;
   const { dispositionFilename, downloadJson, downloadMarkdown } = await import("./download-json");
-  const res = await fetch(
-    `${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/export`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: wsToken, format }),
-    },
-  );
+  const res = await fetch(`${API_BASE}/api/v1/sessions/${encodeURIComponent(sessionId)}/export`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: wsToken, format }),
+  });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Export failed (${res.status}): ${text}`);
@@ -1552,10 +1576,7 @@ export async function fetchLiveSessionMarkdown(
   return markdown;
 }
 
-export async function deleteAccountSession(
-  accountToken: string,
-  sessionId: string,
-): Promise<void> {
+export async function deleteAccountSession(accountToken: string, sessionId: string): Promise<void> {
   const res = await fetch(
     `${API_BASE}/api/v1/accounts/me/sessions/${encodeURIComponent(sessionId)}`,
     { method: "DELETE", headers: authHeaders(accountToken) },

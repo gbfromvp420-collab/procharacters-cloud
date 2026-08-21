@@ -9,6 +9,11 @@
     "build": "npm run prisma:generate && tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint \"src/**/*.ts\" \"scripts/**/*.ts\"",
+    "format": "prettier --write \"src/**/*.ts\" \"scripts/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"scripts/**/*.ts\"",
     "prisma:link": "bash ../scripts/ensure-prisma-link.sh",
     "prisma:generate": "npm run prisma:link && prisma generate --schema=../prisma/schema.prisma",
     "prisma:migrate": "npm run prisma:link && prisma migrate deploy --schema=../prisma/schema.prisma",
@@ -46,10 +51,15 @@
     "@types/uuid": "^10.0.0",
     "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.1",
+    "@typescript-eslint/eslint-plugin": "^8.67.0",
+    "@typescript-eslint/parser": "^8.67.0",
+    "eslint": "^8.57.1",
     "ffmpeg-static": "^5.3.0",
+    "prettier": "^3.3.3",
     "prisma": "^7.8.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
+    "vitest": "^2.1.9",
     "ws": "^8.18.2"
   }
 }

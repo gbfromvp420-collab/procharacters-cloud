@@ -91,8 +91,12 @@ body {
 }
 
 .avatar-ring {
-  box-shadow: 0 0 0 2px #12121a, 0 0 20px rgba(225, 29, 143, 0.25);
-  transition: box-shadow 0.5s ease, background 0.5s ease;
+  box-shadow:
+    0 0 0 2px #12121a,
+    0 0 20px rgba(225, 29, 143, 0.25);
+  transition:
+    box-shadow 0.5s ease,
+    background 0.5s ease;
 }
 
 /* Brief glow when energy band changes (LiveKit / WS reactivity feedback) */
@@ -155,11 +159,7 @@ body {
 .composer-edge-almost {
   animation: composer-almost-pulse 1.1s ease-in-out infinite;
   border-color: rgba(251, 113, 133, 0.85) !important;
-  background-image: linear-gradient(
-    to top,
-    rgba(244, 63, 94, 0.12),
-    rgba(18, 18, 26, 0.95) 55%
-  );
+  background-image: linear-gradient(to top, rgba(244, 63, 94, 0.12), rgba(18, 18, 26, 0.95) 55%);
 }
 .composer-edge-almost .btn-primary {
   background: linear-gradient(135deg, #e11d8f, #f43f5e) !important;
@@ -301,11 +301,7 @@ body {
 @layer components {
   .glass-bar {
     @apply border-b border-brand-border/80 bg-brand-bg/80 backdrop-blur-xl;
-    background-image: linear-gradient(
-      to bottom,
-      rgba(18, 18, 26, 0.92),
-      rgba(10, 10, 15, 0.78)
-    );
+    background-image: linear-gradient(to bottom, rgba(18, 18, 26, 0.92), rgba(10, 10, 15, 0.78));
   }
 
   .chip {

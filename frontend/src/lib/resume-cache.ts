@@ -101,9 +101,7 @@ function writeCache(file: CacheFile) {
 }
 
 /** Merge account session list into local resume cache (newest per character wins). */
-export function syncResumeCacheFromAccountSessions(
-  sessions: AccountSessionSummary[],
-): void {
+export function syncResumeCacheFromAccountSessions(sessions: AccountSessionSummary[]): void {
   const file = readCache();
   // list is already newest-first from API
   const seen = new Set<string>();
@@ -154,7 +152,7 @@ export function syncResumeCacheFromAccountSessions(
       heatDepth: heatDepth ?? (sameSession ? prev?.heatDepth : undefined),
       heatChips: sameSession ? prev?.heatChips : undefined,
       messageCount: sameSession
-        ? prev?.messageCount ?? s.messageCount
+        ? (prev?.messageCount ?? s.messageCount)
         : s.messageCount || undefined,
       mindTag: sameSession ? prev?.mindTag : undefined,
       dnaTreeNodeId,
@@ -196,32 +194,25 @@ export function rememberLocalResume(options: {
   }
   const sameSession = prev?.sessionId === options.sessionId;
   const nextExpiry =
-    options.resumeExpiresAt?.trim() ||
-    (sameSession ? prev.resumeExpiresAt : undefined);
-  const nextRecap =
-    options.recapLine?.trim() || (sameSession ? prev?.recapLine : undefined);
-  const nextDepth =
-    options.heatDepth || (sameSession ? prev?.heatDepth : undefined);
-  const nextChips =
-    options.heatChips?.length
-      ? options.heatChips.slice(0, 5)
-      : sameSession
-        ? prev?.heatChips
-        : undefined;
+    options.resumeExpiresAt?.trim() || (sameSession ? prev.resumeExpiresAt : undefined);
+  const nextRecap = options.recapLine?.trim() || (sameSession ? prev?.recapLine : undefined);
+  const nextDepth = options.heatDepth || (sameSession ? prev?.heatDepth : undefined);
+  const nextChips = options.heatChips?.length
+    ? options.heatChips.slice(0, 5)
+    : sameSession
+      ? prev?.heatChips
+      : undefined;
   const nextCount =
     typeof options.messageCount === "number"
       ? options.messageCount
       : sameSession
         ? prev?.messageCount
         : undefined;
-  const nextMind =
-    options.mindTag?.trim() || (sameSession ? prev?.mindTag : undefined);
+  const nextMind = options.mindTag?.trim() || (sameSession ? prev?.mindTag : undefined);
   const nextDnaNode =
-    options.dnaTreeNodeId?.trim() ||
-    (sameSession ? prev?.dnaTreeNodeId : undefined);
+    options.dnaTreeNodeId?.trim() || (sameSession ? prev?.dnaTreeNodeId : undefined);
   const nextDnaLabel =
-    options.dnaTreeLabel?.trim() ||
-    (sameSession ? prev?.dnaTreeLabel : undefined);
+    options.dnaTreeLabel?.trim() || (sameSession ? prev?.dnaTreeLabel : undefined);
 
   file.byCharacter[characterId] = {
     characterId,
@@ -229,7 +220,8 @@ export function rememberLocalResume(options: {
     sessionId: options.sessionId,
     resumeCode: options.resumeCode.trim().toUpperCase(),
     updatedAt: new Date().toISOString(),
-    source: prev?.source === "account" || !options.characterName ? prev?.source ?? "local" : "local",
+    source:
+      prev?.source === "account" || !options.characterName ? (prev?.source ?? "local") : "local",
     resumeExpiresAt: nextExpiry,
     recapLine: nextRecap,
     heatDepth: nextDepth,
@@ -324,8 +316,7 @@ export function heatTrailFromSession(options: {
 
   // DNA tree · Edge ↑ from session notes
   const dnaFromNotes = text.match(/DNA tree ·\s*([^↑.]+)/i)?.[1]?.trim();
-  const dnaTreeLabel =
-    options.dnaTreeLabel?.trim() || dnaFromNotes || undefined;
+  const dnaTreeLabel = options.dnaTreeLabel?.trim() || dnaFromNotes || undefined;
   const dnaTreeNodeId = options.dnaTreeNodeId?.trim() || undefined;
   if (dnaTreeLabel && chips.length < 5) {
     chips.unshift(
@@ -524,11 +515,7 @@ export function isDnaPowerTrail(
 ): boolean {
   const dna = `${entry.dnaTreeLabel || ""} ${entry.dnaTreeNodeId || ""}`.toLowerCase();
   if (/edge|deny|release|gate|tease/.test(dna)) return true;
-  return (
-    entry.heatDepth === "edge" ||
-    entry.heatDepth === "deep" ||
-    entry.heatDepth === "locked"
-  );
+  return entry.heatDepth === "edge" || entry.heatDepth === "deep" || entry.heatDepth === "locked";
 }
 
 /**
@@ -546,8 +533,7 @@ export function buildResumeChatPath(
   const params = new URLSearchParams({ resume: code, rehydrate: "1" });
   if (entry.characterId) params.set("character", entry.characterId);
   const edge =
-    options?.edgePace === true ||
-    (options?.edgePace !== false && isDnaPowerTrail(entry));
+    options?.edgePace === true || (options?.edgePace !== false && isDnaPowerTrail(entry));
   if (edge) params.set("mode", "edge_pace");
   return `/chat?${params.toString()}`;
 }

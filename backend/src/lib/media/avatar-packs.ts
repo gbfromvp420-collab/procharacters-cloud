@@ -108,10 +108,7 @@ function loadReadyMap(): Map<string, boolean> {
 
   const map = readStatusJsonReady();
 
-  const ids = new Set([
-    ...Object.keys(LIVE_CHARACTER_CATALOG),
-    ...PHASE4_IDS,
-  ]);
+  const ids = new Set([...Object.keys(LIVE_CHARACTER_CATALOG), ...PHASE4_IDS]);
   for (const id of ids) {
     if (scanPackFilesReady(id)) map.set(id, true);
     else if (!map.has(id)) map.set(id, false);
@@ -162,10 +159,7 @@ export function resolvePackMediaIds(characterId: string): {
 export function listPackStatuses(): PackStatus[] {
   const root = findAvatarRoot() ?? "(not found)";
   const readyMap = loadReadyMap();
-  const ids = new Set([
-    ...Object.keys(LIVE_CHARACTER_CATALOG),
-    ...PHASE4_IDS,
-  ]);
+  const ids = new Set([...Object.keys(LIVE_CHARACTER_CATALOG), ...PHASE4_IDS]);
 
   return [...ids].sort().map((id) => {
     const avatarBase = LIVE_CHARACTER_CATALOG[id]?.avatarBase ?? id;
@@ -177,9 +171,7 @@ export function listPackStatuses(): PackStatus[] {
     const missing: ClipKey[] = [];
     if (typeof root === "string" && root !== "(not found)" && existsSync(dir)) {
       for (const clip of CLIP_KEYS) {
-        const ok =
-          existsSync(join(dir, `${clip}.mp4`)) ||
-          existsSync(join(dir, `${clip}.webm`));
+        const ok = existsSync(join(dir, `${clip}.mp4`)) || existsSync(join(dir, `${clip}.webm`));
         if (ok) present.push(clip);
         else missing.push(clip);
       }
@@ -189,8 +181,7 @@ export function listPackStatuses(): PackStatus[] {
     // Prefer unified readiness (status.json / files / env) so API health matches
     // gallery badges even when this container does not ship MP4 binaries.
     const ready =
-      readyMap.get(id) === true ||
-      (missing.length === 0 && present.length === CLIP_KEYS.length);
+      readyMap.get(id) === true || (missing.length === 0 && present.length === CLIP_KEYS.length);
     return {
       id,
       ready,
@@ -208,10 +199,7 @@ export function buildPackStatusFile(): {
   packs: Record<string, { ready: boolean; missing: string[]; avatarBase: string }>;
 } {
   const statuses = listPackStatuses();
-  const packs: Record<
-    string,
-    { ready: boolean; missing: string[]; avatarBase: string }
-  > = {};
+  const packs: Record<string, { ready: boolean; missing: string[]; avatarBase: string }> = {};
   for (const s of statuses) {
     packs[s.id] = {
       ready: s.ready,

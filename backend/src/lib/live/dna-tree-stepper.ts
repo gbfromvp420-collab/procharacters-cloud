@@ -42,8 +42,7 @@ const GLOBAL_ESCALATE =
   /\b(more|harder|faster|please|deeper|hotter|show me|take me|need you|want you|don't stop|dont stop|keep going|yes|fuck|stroke|touch)\b/i;
 const GLOBAL_DENY =
   /\b(stop|not yet|don't cum|dont cum|hold|deny|edge|wait|slow down|no finish|don't finish|dont finish)\b/i;
-const GLOBAL_SOFT =
-  /\b(slow|gentle|soft|kiss|hold me|cuddle|whisper|sweet|easy|breathe)\b/i;
+const GLOBAL_SOFT = /\b(slow|gentle|soft|kiss|hold me|cuddle|whisper|sweet|easy|breathe)\b/i;
 const GLOBAL_RELEASE =
   /\b(cum|finish|let me cum|make me cum|release|i'?m close|gonna cum|can i cum|let me finish)\b/i;
 
@@ -55,10 +54,7 @@ function nodeMap(tree: BehaviorTree): Map<string, BehaviorTreeNode> {
   return m;
 }
 
-function resolveNode(
-  tree: BehaviorTree,
-  id: string | undefined | null,
-): BehaviorTreeNode | null {
+function resolveNode(tree: BehaviorTree, id: string | undefined | null): BehaviorTreeNode | null {
   const map = nodeMap(tree);
   if (id && map.has(id)) return map.get(id)!;
   if (tree.rootId && map.has(tree.rootId)) return map.get(tree.rootId)!;
@@ -112,7 +108,7 @@ function walkEdge(
     edge === "escalate"
       ? node.edges?.escalate
       : edge === "deny"
-        ? node.edges?.deny ?? node.edges?.soft
+        ? (node.edges?.deny ?? node.edges?.soft)
         : node.edges?.soft;
 
   if (targetId && map.has(targetId)) {

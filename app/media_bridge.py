@@ -135,9 +135,7 @@ class MediaBridge:
                 voice_model_uri=weights.voice_model_uri,
                 extra={"weights": inference},
             )
-            video_result = await self._video_generate_with_fallback(
-                video_provider, video_req
-            )
+            video_result = await self._video_generate_with_fallback(video_provider, video_req)
             if video_result.meta.get("fallback"):
                 fallback_used = True
             if video_result.ok:
@@ -175,9 +173,32 @@ class MediaBridge:
             weights=inference,
         )
 
-    async def _llm_complete_with_fallback(
-        self, provider: Any, request: LLMRequest
-    ) -> LLMResult:
+    async def generate_video_only(
+        self,
+        *,
+        session_id: str,
+        character_id: str,
+        message: str,
+        lora_id: str | None = None,
+        avatar_url: str | None = None,
+    ) -> VideoGenerateResult:
+        """Video job only — does not run the product chat LLM."""
+        video_provider = get_video_provider(self.settings)
+        weights = self.resolve_weights(character_id, lora_id=lora_id)
+        resolved_lora = weights.lora_id or lora_id
+        request = VideoGenerateRequest(
+            session_id=session_id,
+            character_id=character_id,
+            text=message,
+            avatar_url=avatar_url,
+            lora_id=resolved_lora,
+            visual_lora_uri=weights.visual_lora_uri,
+            voice_model_uri=weights.voice_model_uri,
+            extra={"weights": weights.to_inference_payload()},
+        )
+        return await self._video_generate_with_fallback(video_provider, request)
+
+    async def _llm_complete_with_fallback(self, provider: Any, request: LLMRequest) -> LLMResult:
         try:
             result = await provider.complete(request)
         except Exception as exc:  # noqa: BLE001 — boundary to fallback
@@ -191,10 +212,7 @@ class MediaBridge:
         if result.ok:
             return result
 
-        if (
-            self.settings.runpod_fallback_to_mock
-            and getattr(provider, "name", "") == "runpod"
-        ):
+        if self.settings.runpod_fallback_to_mock and getattr(provider, "name", "") == "runpod":
             logger.info("Falling back to mock LLM after RunPod failure: %s", result.error)
             mock = MockLLMProvider()
             mock_result = await mock.complete(request)
@@ -208,9 +226,7 @@ class MediaBridge:
         try:
             result = await provider.generate(request)
         except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "Video provider %s raised: %s", getattr(provider, "name", "?"), exc
-            )
+            logger.warning("Video provider %s raised: %s", getattr(provider, "name", "?"), exc)
             result = VideoGenerateResult(
                 ok=False,
                 provider=getattr(provider, "name", "unknown"),
@@ -220,13 +236,8 @@ class MediaBridge:
         if result.ok:
             return result
 
-        if (
-            self.settings.runpod_fallback_to_mock
-            and getattr(provider, "name", "") == "runpod"
-        ):
-            logger.info(
-                "Falling back to mock video after RunPod failure: %s", result.error
-            )
+        if self.settings.runpod_fallback_to_mock and getattr(provider, "name", "") == "runpod":
+            logger.info("Falling back to mock video after RunPod failure: %s", result.error)
             mock = MockVideoProvider()
             mock_result = await mock.generate(request)
             mock_result.meta = {**mock_result.meta, "fallback": True, "from": "runpod"}

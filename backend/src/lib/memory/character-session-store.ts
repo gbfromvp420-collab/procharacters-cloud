@@ -48,9 +48,7 @@ function asKinkProfile(value: unknown): KinkProfile | null {
       ? v.dnaTreeLabel.trim().slice(0, 48)
       : undefined;
   const sessionMode =
-    v.sessionMode === "edge_pace" || v.sessionMode === "normal"
-      ? v.sessionMode
-      : undefined;
+    v.sessionMode === "edge_pace" || v.sessionMode === "normal" ? v.sessionMode : undefined;
   return {
     tags: Array.isArray(v.tags) ? v.tags.filter((t): t is string => typeof t === "string") : [],
     intensity:
@@ -190,8 +188,7 @@ export async function upsertCharacterSession(
     }
 
     const summary =
-      (input.memorySummary?.trim() || existing?.memorySummary || "").slice(0, MAX_SUMMARY) ||
-      null;
+      (input.memorySummary?.trim() || existing?.memorySummary || "").slice(0, MAX_SUMMARY) || null;
 
     const messageCount =
       input.messageCountHint ??
@@ -246,10 +243,7 @@ export function priorNotesFromCharacterSession(
 }
 
 /** Clear durable character memory for account + character (account privacy). */
-export async function clearCharacterSession(
-  userId: string,
-  characterId: string,
-): Promise<boolean> {
+export async function clearCharacterSession(userId: string, characterId: string): Promise<boolean> {
   if (!isCharacterSessionDbConfigured() || !userId?.trim() || !characterId?.trim()) {
     return false;
   }

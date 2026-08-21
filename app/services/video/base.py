@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
-from typing import Any, AsyncIterator, Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass
@@ -42,9 +43,7 @@ class VideoProvider(Protocol):
         """Submit a talking-head / clip generation job and wait for a result."""
         ...
 
-    async def stream_events(
-        self, request: VideoGenerateRequest
-    ) -> AsyncIterator[dict[str, Any]]:
+    async def stream_events(self, request: VideoGenerateRequest) -> AsyncIterator[dict[str, Any]]:
         """Stream progress / chunk events for long-running generation."""
         ...
 

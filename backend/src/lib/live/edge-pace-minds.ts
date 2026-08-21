@@ -50,55 +50,38 @@ const MINDS: Record<string, PhaseCues> = {
     build:
       "BUILD — post-set cool-down. Sweat + sheer pouch, stroke like warm-up reps. “Eyes on the pouch.”",
     hold: "HOLD — interval edge: full-grip reps then hands off. “Hold that burn. No finish.”",
-    almost:
-      "ALMOST — last-rep intensity, almost peel free, snap band: “cool-down only.”",
-    breathe:
-      "BREATHE — rest interval. Still tented, sweat sheen, count breaths before next set.",
+    almost: "ALMOST — last-rep intensity, almost peel free, snap band: “cool-down only.”",
+    breathe: "BREATHE — rest interval. Still tented, sweat sheen, count breaths before next set.",
   },
   "twink-alt-punk": {
-    build:
-      "BUILD — mesh show-off, bored-hot smirk. Stretch the grid, “stare. i’m not shy.”",
+    build: "BUILD — mesh show-off, bored-hot smirk. Stretch the grid, “stare. i’m not shy.”",
     hold: "HOLD — brat freeze on the edge through mesh. Laugh when they beg. Soft-dom tempo.",
-    almost:
-      "ALMOST — tip only out of the mesh, three filthy strokes, “back in the net.”",
-    breathe:
-      "BREATHE — cool mean aftercare grin, still hard in mesh, reset the game.",
+    almost: "ALMOST — tip only out of the mesh, three filthy strokes, “back in the net.”",
+    breathe: "BREATHE — cool mean aftercare grin, still hard in mesh, reset the game.",
   },
   "female-soft-goth": {
-    build:
-      "BUILD — open lace still-life. Breath, eye contact, almost-touch only. Ritual pace.",
+    build: "BUILD — open lace still-life. Breath, eye contact, almost-touch only. Ritual pace.",
     hold: "HOLD — hover edge over clit in the cut. “Beg quieter.” Soft absolute denial.",
-    almost:
-      "ALMOST — three-count open show, wet fingertip, return to light edge only.",
-    breathe:
-      "BREATHE — charged quiet cool-down, panel still open, hypnotic reset.",
+    almost: "ALMOST — three-count open show, wet fingertip, return to light edge only.",
+    breathe: "BREATHE — charged quiet cool-down, panel still open, hypnotic reset.",
   },
   "female-athletic-tease": {
     build:
       "BUILD — post-workout open panel. Stretch-spread, sweat, “cool-down starts with you staring.”",
     hold: "HOLD — interval edge: count of ten hard, stop. “Rest interval. Stay aching.”",
-    almost:
-      "ALMOST — almost-fill denial at the crotchless hole, pull out shiny. Empty on purpose.",
-    breathe:
-      "BREATHE — rest set. Sweaty, still wet in the cut, prep next work interval.",
+    almost: "ALMOST — almost-fill denial at the crotchless hole, pull out shiny. Empty on purpose.",
+    breathe: "BREATHE — rest set. Sweaty, still wet in the cut, prep next work interval.",
   },
   "female-playful-brat": {
-    build:
-      "BUILD — look-but-don’t game. Hands up “innocent,” open panel on display. Giggly rules.",
+    build: "BUILD — look-but-don’t game. Hands up “innocent,” open panel on display. Giggly rules.",
     hold: "HOLD — count tease mid-edge, stop on purpose. “Lost count. Start over.”",
-    almost:
-      "ALMOST — finger in, moan, pull out, lick. “Good girls get another edge…”",
-    breathe:
-      "BREATHE — brat aftercare laugh, still open, dare them to beg for the next round.",
+    almost: "ALMOST — finger in, moan, pull out, lick. “Good girls get another edge…”",
+    breathe: "BREATHE — brat aftercare laugh, still open, dare them to beg for the next round.",
   },
 };
 
 /** Resolve character-flavored coach cue for an Edge Pace phase. */
-export function edgePaceCoachCue(
-  characterId: string,
-  phase: EdgePacePhase,
-  round = 0,
-): string {
+export function edgePaceCoachCue(characterId: string, phase: EdgePacePhase, round = 0): string {
   const mind = MINDS[characterId] ?? pickByBase(characterId);
   const base = (mind ?? GENERIC)[phase];
   if (round <= 0) return base;
@@ -230,21 +213,25 @@ export function edgePacePhaseChips(phase: EdgePacePhase): string[] {
 }
 
 function pickByBase(characterId: string): PhaseCues | null {
-  if (characterId.includes("female") || characterId.includes("goth") || characterId.includes("brat")) {
+  if (
+    characterId.includes("female") ||
+    characterId.includes("goth") ||
+    characterId.includes("brat")
+  ) {
     return MINDS["female-default"] ?? null;
   }
-  if (characterId.includes("twink") || characterId.includes("gym") || characterId.includes("punk")) {
+  if (
+    characterId.includes("twink") ||
+    characterId.includes("gym") ||
+    characterId.includes("punk")
+  ) {
     return MINDS["twink-default"] ?? null;
   }
   return null;
 }
 
 /** Extra line for prompt: how THIS mind runs the current phase. */
-export function edgePaceMindLine(
-  characterId: string,
-  phase: EdgePacePhase,
-  round = 0,
-): string {
+export function edgePaceMindLine(characterId: string, phase: EdgePacePhase, round = 0): string {
   const cue = edgePaceCoachCue(characterId, phase, round);
   return `Signature mind for this phase: ${cue}`;
 }

@@ -93,13 +93,9 @@ export async function createCheckoutSession(options: {
 }): Promise<{ url: string; sessionId: string }> {
   const stripe = stripeClient();
   const product = options.product === "supporter" ? "supporter" : "day_pass";
-  const amount =
-    product === "supporter" ? supporterAmountCents() : dayPassAmountCents();
+  const amount = product === "supporter" ? supporterAmountCents() : dayPassAmountCents();
   const name = product === "supporter" ? "Procharacters Supporter" : "Procharacters Day Pass";
-  const description =
-    product === "supporter"
-      ? "30-day premium access"
-      : "24-hour premium access";
+  const description = product === "supporter" ? "30-day premium access" : "24-hour premium access";
 
   const base = siteBase();
   const session = await stripe.checkout.sessions.create({
@@ -151,14 +147,11 @@ export async function handleStripeWebhook(
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
-    const accountId =
-      session.metadata?.accountId || session.client_reference_id || "";
+    const accountId = session.metadata?.accountId || session.client_reference_id || "";
     const product = (session.metadata?.product || "day_pass") as CheckoutProduct;
     if (accountId && session.payment_status === "paid") {
       const customerId =
-        typeof session.customer === "string"
-          ? session.customer
-          : session.customer?.id;
+        typeof session.customer === "string" ? session.customer : session.customer?.id;
       const grant = await grantAccountPlan(
         accountId,
         product === "supporter" ? "supporter" : "day_pass",
@@ -193,8 +186,7 @@ export async function confirmCheckoutSession(options: {
   const stripe = stripeClient();
   const session = await stripe.checkout.sessions.retrieve(options.sessionId);
 
-  const sessionAccountId =
-    session.metadata?.accountId || session.client_reference_id || "";
+  const sessionAccountId = session.metadata?.accountId || session.client_reference_id || "";
   if (!sessionAccountId || sessionAccountId !== options.accountId) {
     throw new Error("Checkout session does not belong to this account");
   }
@@ -208,10 +200,7 @@ export async function confirmCheckoutSession(options: {
 
   const product = (session.metadata?.product || "day_pass") as CheckoutProduct;
   const plan = product === "supporter" ? "supporter" : "day_pass";
-  const customerId =
-    typeof session.customer === "string"
-      ? session.customer
-      : session.customer?.id;
+  const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
 
   await grantAccountPlan(options.accountId, plan, {
     stripeCustomerId: customerId,

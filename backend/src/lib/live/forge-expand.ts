@@ -39,12 +39,7 @@ function floorDna(dna: NaughtySyntaxDna): NaughtySyntaxDna {
 function isRealXaiKey(key?: string): boolean {
   if (!key?.trim()) return false;
   const k = key.trim().toLowerCase();
-  return (
-    k !== "your_xai_api_key_here" &&
-    k !== "changeme" &&
-    k !== "xai-..." &&
-    k.length > 12
-  );
+  return k !== "your_xai_api_key_here" && k !== "changeme" && k !== "xai-..." && k.length > 12;
 }
 
 export type { ForgeExpandInput, ForgeExpandResult, NaughtySyntaxDna };
@@ -59,9 +54,7 @@ export {
   pickClipFromDnaIntensity,
 } from "./forge-dna.js";
 
-export async function expandFantasyToDna(
-  input: ForgeExpandInput,
-): Promise<ForgeExpandResult> {
+export async function expandFantasyToDna(input: ForgeExpandInput): Promise<ForgeExpandResult> {
   const t0 = Date.now();
   const fantasy = input.fantasy?.trim() ?? "";
   if (fantasy.length < 8) {
@@ -92,9 +85,7 @@ export async function expandFantasyToDna(
         `Fantasy:\n${fantasy}`,
         input.baseModelId ? `Preferred baseModelId (clips): ${input.baseModelId}` : "",
         input.displayNameHint ? `Name hint: ${input.displayNameHint}` : "",
-        input.audience && input.audience !== "any"
-          ? `Audience framing: ${input.audience}`
-          : "",
+        input.audience && input.audience !== "any" ? `Audience framing: ${input.audience}` : "",
       ]
         .filter(Boolean)
         .join("\n");

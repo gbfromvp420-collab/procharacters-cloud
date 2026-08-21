@@ -16,6 +16,7 @@ import { isWebPushConfigured } from "./lib/push/web-push-service.js";
 import { createAccountRoutes } from "./routes/accounts.js";
 import { createBillingRoutes } from "./routes/billing.js";
 import { createHealthRoutes } from "./routes/health.js";
+import { createGenVideoRoutes } from "./routes/gen-video.js";
 import { createPushRoutes } from "./routes/push.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createUploadRoutes } from "./routes/uploads.js";
@@ -45,19 +46,15 @@ export async function buildApp() {
   registerObservability(app);
 
   // Preserve raw body for Stripe webhooks (signature verification)
-  app.addContentTypeParser(
-    "application/json",
-    { parseAs: "buffer" },
-    (req, body, done) => {
-      try {
-        (req as { rawBody?: Buffer }).rawBody = body as Buffer;
-        const text = (body as Buffer).toString("utf8");
-        done(null, text ? JSON.parse(text) : {});
-      } catch (err) {
-        done(err as Error, undefined);
-      }
-    },
-  );
+  app.addContentTypeParser("application/json", { parseAs: "buffer" }, (req, body, done) => {
+    try {
+      (req as { rawBody?: Buffer }).rawBody = body as Buffer;
+      const text = (body as Buffer).toString("utf8");
+      done(null, text ? JSON.parse(text) : {});
+    } catch (err) {
+      done(err as Error, undefined);
+    }
+  });
 
   await app.register(cors, { origin: true });
   await app.register(websocket);
@@ -71,22 +68,15 @@ export async function buildApp() {
   });
   app.log.info({ uploadsDir }, "Clip uploads directory ready");
 
-  const customStore = await initCustomCharacters(
-    env.CUSTOM_CHARACTERS_PATH?.trim() || undefined,
-  );
+  const customStore = await initCustomCharacters(env.CUSTOM_CHARACTERS_PATH?.trim() || undefined);
   app.log.info(
     { path: customStore.path, count: customStore.count },
     "Custom characters store ready",
   );
 
-  const sessionStore = await initSessionStore(
-    env.SESSIONS_PATH?.trim() || undefined,
-  );
+  const sessionStore = await initSessionStore(env.SESSIONS_PATH?.trim() || undefined);
   const pruned = await pruneOldSessions(14);
-  app.log.info(
-    { path: sessionStore.path, pruned },
-    "Session memory store ready",
-  );
+  app.log.info({ path: sessionStore.path, pruned }, "Session memory store ready");
 
   const accountStore = await initAccountStore(env.ACCOUNTS_PATH?.trim() || undefined);
   app.log.info(
@@ -158,6 +148,9 @@ export async function buildApp() {
     prefix: "/api/v1",
   });
   await app.register(createPushRoutes(sessionManager), {
+    prefix: "/api/v1",
+  });
+  await app.register(createGenVideoRoutes(), {
     prefix: "/api/v1",
   });
 

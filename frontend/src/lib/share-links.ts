@@ -20,6 +20,8 @@ export interface ShareQuery {
   edit?: boolean;
   /** Skip same-night reclaim — start a cold session even if a resume exists. */
   fresh?: boolean;
+  /** Opt-in generative video overlay. Default chat stays 4-loop clips. */
+  genVideo?: boolean;
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -54,11 +56,11 @@ export function parseShareQuery(search: string): ShareQuery {
     createRaw === "my" ||
     createRaw === "character";
   const editRaw = params.get("edit")?.trim().toLowerCase();
-  const edit =
-    editRaw === "1" || editRaw === "true" || editRaw === "yes" || editRaw === "me";
+  const edit = editRaw === "1" || editRaw === "true" || editRaw === "yes" || editRaw === "me";
   const freshRaw = params.get("fresh")?.trim().toLowerCase();
-  const fresh =
-    freshRaw === "1" || freshRaw === "true" || freshRaw === "yes" || freshRaw === "new";
+  const fresh = freshRaw === "1" || freshRaw === "true" || freshRaw === "yes" || freshRaw === "new";
+  const genVideoRaw = params.get("genVideo")?.trim().toLowerCase();
+  const genVideo = genVideoRaw === "1" || genVideoRaw === "true" || genVideoRaw === "yes";
 
   return {
     characterId,
@@ -72,6 +74,7 @@ export function parseShareQuery(search: string): ShareQuery {
     create,
     edit,
     fresh,
+    genVideo,
   };
 }
 
@@ -99,7 +102,9 @@ export function buildCharacterShareUrl(
 ): string {
   const origin =
     options.origin ??
-    (typeof window !== "undefined" ? window.location.origin : "https://procharacters-web-production-7288.up.railway.app");
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "https://procharacters-web-production-7288.up.railway.app");
 
   // Default public share is the pretty card page.
   if (options.card !== false && !options.autostart) {
@@ -157,7 +162,9 @@ export function buildResumeShareUrl(
 ): string {
   const origin =
     options.origin ??
-    (typeof window !== "undefined" ? window.location.origin : "https://procharacters-web-production-7288.up.railway.app");
+    (typeof window !== "undefined"
+      ? window.location.origin
+      : "https://procharacters-web-production-7288.up.railway.app");
   const url = new URL(origin);
   url.searchParams.set("session", sessionId);
   url.searchParams.set("token", token);
@@ -187,6 +194,7 @@ export function replaceCharacterInUrl(characterId: string | null): void {
   url.searchParams.delete("magic");
   url.searchParams.delete("autostart");
   url.searchParams.delete("mode");
+  url.searchParams.delete("genVideo");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
@@ -245,20 +253,14 @@ export async function shareOrCopyText(options: {
           type: "text/markdown",
         });
         const filePayload = { title, files: [file] as File[] };
-        if (
-          typeof navigator.canShare !== "function" ||
-          navigator.canShare(filePayload)
-        ) {
+        if (typeof navigator.canShare !== "function" || navigator.canShare(filePayload)) {
           await navigator.share(filePayload);
           return { ok: true, method: "share" };
         }
       }
 
       const textPayload = { title, text };
-      if (
-        typeof navigator.canShare !== "function" ||
-        navigator.canShare(textPayload)
-      ) {
+      if (typeof navigator.canShare !== "function" || navigator.canShare(textPayload)) {
         await navigator.share(textPayload);
         return { ok: true, method: "share" };
       }
@@ -279,10 +281,7 @@ export async function shareOrCopyText(options: {
 }
 
 /** Human flash for shareOrCopyText results. */
-export function shareResultLabel(
-  result: ShareOrCopyResult,
-  kind = "Transcript",
-): string | null {
+export function shareResultLabel(result: ShareOrCopyResult, kind = "Transcript"): string | null {
   if (!result.ok) {
     if (result.reason === "cancelled") return null;
     return "Share failed";
@@ -333,10 +332,7 @@ export async function shareOrCopyUrl(options: {
   return copied ? { ok: true, method: "copy" } : { ok: false, reason: "failed" };
 }
 
-export function shareUrlResultLabel(
-  result: ShareOrCopyResult,
-  kind = "Link",
-): string | null {
+export function shareUrlResultLabel(result: ShareOrCopyResult, kind = "Link"): string | null {
   if (!result.ok) {
     if (result.reason === "cancelled") return null;
     return "Share failed";

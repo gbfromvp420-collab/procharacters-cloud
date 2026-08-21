@@ -76,7 +76,7 @@ export function formatMemoryBlock(
       "",
       "### Continuity lock (resume-safe)",
       "Rehydrate from Scene lock when present (clothing / pose / act / arousal / game).",
-      'Clothing default if unspecified: crotchless open panel or signature sheer still on.',
+      "Clothing default if unspecified: crotchless open panel or signature sheer still on.",
       "Carry forward arousal + any edging/denial game already in play.",
       "This is a continuation — never cold-open as if the session just started.",
     );
@@ -112,20 +112,13 @@ export function formatMemoryBlock(
     return lines.join("\n");
   }
 
-  lines.push(
-    "",
-    `${context.messageCount} message(s) in this session · ~${turnCount} turn(s).`,
-  );
+  lines.push("", `${context.messageCount} message(s) in this session · ~${turnCount} turn(s).`);
 
   const lastUser =
     options.pendingUserMessage?.trim() ||
     [...context.messages].reverse().find((m) => m.role === "user")?.content;
   if (lastUser?.trim()) {
-    lines.push(
-      "",
-      "### Last user action (MUST address this turn)",
-      `[user] ${lastUser.trim()}`,
-    );
+    lines.push("", "### Last user action (MUST address this turn)", `[user] ${lastUser.trim()}`);
   }
 
   lines.push("", "### Recent conversation");

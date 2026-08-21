@@ -169,8 +169,7 @@ export function CharacterTile({
   });
 
   // Forge this heat — DNA-hot / deep trail → Studio seed (mirrors SessionWinToast)
-  const dnaLabel =
-    resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
+  const dnaLabel = resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
   const offerForge =
     !!resume &&
     shouldOfferForgeFromHeat({
@@ -179,24 +178,22 @@ export function CharacterTile({
       dnaTreeNodeId: resume.dnaTreeNodeId,
       heatDepth: resume.heatDepth,
     });
-  const forgeHeatCtx = offerForge && resume
-    ? {
-        characterId: card.id,
-        characterName: card.displayName,
-        baseModelId:
-          card.avatarBase ||
-          (card.id.startsWith("custom-") ? undefined : card.id),
-        dnaTreeLabel: resume.dnaTreeLabel,
-        dnaTreeNodeId: resume.dnaTreeNodeId,
-        heatDepth: resume.heatDepth,
-        heatChips: resume.heatChips,
-        recapLine: resume.recapLine,
-        messageCount: resume.messageCount,
-        isMine: card.mine === true,
-      }
-    : null;
-  const forgeHref =
-    forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
+  const forgeHeatCtx =
+    offerForge && resume
+      ? {
+          characterId: card.id,
+          characterName: card.displayName,
+          baseModelId: card.avatarBase || (card.id.startsWith("custom-") ? undefined : card.id),
+          dnaTreeLabel: resume.dnaTreeLabel,
+          dnaTreeNodeId: resume.dnaTreeNodeId,
+          heatDepth: resume.heatDepth,
+          heatChips: resume.heatChips,
+          recapLine: resume.recapLine,
+          messageCount: resume.messageCount,
+          isMine: card.mine === true,
+        }
+      : null;
+  const forgeHref = forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   // Smooth src swap without blank frame
   useEffect(() => {
@@ -225,11 +222,7 @@ export function CharacterTile({
       >
         {/* Poster is the primary path: continue when resume exists, else chat */}
         <Link
-          href={
-            resume?.resumeCode
-              ? buildResumeChatPath(resume)
-              : card.ctaPath
-          }
+          href={resume?.resumeCode ? buildResumeChatPath(resume) : card.ctaPath}
           className="absolute inset-0 z-[2] block"
           aria-label={
             resume?.resumeCode
@@ -278,14 +271,10 @@ export function CharacterTile({
           <div className="pointer-events-none absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
             <span
               className={`rounded-full border bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
-                urgent
-                  ? "border-rose-400/60 text-rose-100"
-                  : "border-amber-400/50 text-amber-200"
+                urgent ? "border-rose-400/60 text-rose-100" : "border-amber-400/50 text-amber-200"
               }`}
               title={
-                resume.source === "account"
-                  ? "Saved chat (account)"
-                  : "Saved chat on this device"
+                resume.source === "account" ? "Saved chat (account)" : "Saved chat on this device"
               }
             >
               {resume.resumeCode}
@@ -306,11 +295,7 @@ export function CharacterTile({
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
-              {card.mine
-                ? "My model"
-                : card.kind === "custom"
-                  ? "Custom"
-                  : "Signature"}
+              {card.mine ? "My model" : card.kind === "custom" ? "Custom" : "Signature"}
             </p>
             {card.mine && (
               <span className="rounded-full border border-violet-300/50 bg-violet-500/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
@@ -378,9 +363,7 @@ export function CharacterTile({
                   </span>
                 )}
                 {typeof resume.messageCount === "number" && resume.messageCount > 0 && (
-                  <span className="font-mono text-[9px] text-white/70">
-                    {resume.messageCount}m
-                  </span>
+                  <span className="font-mono text-[9px] text-white/70">{resume.messageCount}m</span>
                 )}
               </div>
               {resume.heatChips && resume.heatChips.length > 0 && (
@@ -424,7 +407,9 @@ export function CharacterTile({
             {mind.bilingual ? " · ES" : ""}
           </p>
         )}
-        <p className={`text-xs text-brand-muted sm:text-sm ${compact ? "line-clamp-1" : "line-clamp-2"}`}>
+        <p
+          className={`text-xs text-brand-muted sm:text-sm ${compact ? "line-clamp-1" : "line-clamp-2"}`}
+        >
           {mind?.blurb || card.teaser}
         </p>
         {!compact && card.tags?.length > 0 && (
@@ -445,11 +430,7 @@ export function CharacterTile({
               <Link
                 href={buildResumeChatPath(resume)}
                 className={`btn-primary min-h-0 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
-                title={
-                  expiryLabel
-                    ? `Continue saved chat · ${expiryLabel}`
-                    : "Continue saved chat"
-                }
+                title={expiryLabel ? `Continue saved chat · ${expiryLabel}` : "Continue saved chat"}
               >
                 Continue
               </Link>
@@ -473,11 +454,7 @@ export function CharacterTile({
               title="Mint private DNA from this climb"
               onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
             >
-              {compact
-                ? "Forge"
-                : dnaLabel
-                  ? `Forge this DNA · ${dnaLabel}`
-                  : "Forge this heat"}
+              {compact ? "Forge" : dnaLabel ? `Forge this DNA · ${dnaLabel}` : "Forge this heat"}
             </Link>
           )}
           {card.edgePacePath && !resume?.resumeCode && (

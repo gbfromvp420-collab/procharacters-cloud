@@ -55,9 +55,7 @@ export function SiteChrome({
   const urgent = isResumeExpiryUrgent(resume?.resumeExpiresAt);
   const dnaPower = resume ? isDnaPowerTrail(resume) : false;
   const nick =
-    resume?.characterName?.trim().split(/\s+/)[0] ||
-    resume?.characterId?.split("-")[0] ||
-    null;
+    resume?.characterName?.trim().split(/\s+/)[0] || resume?.characterId?.split("-")[0] || null;
 
   const linkClass = (key: SiteChromeActive) =>
     `btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
@@ -87,7 +85,11 @@ export function SiteChrome({
         <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
           {trailing}
           <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="Primary">
-            <Link href="/" className={linkClass("gallery")} aria-current={active === "gallery" ? "page" : undefined}>
+            <Link
+              href="/"
+              className={linkClass("gallery")}
+              aria-current={active === "gallery" ? "page" : undefined}
+            >
               Gallery
             </Link>
             <Link

@@ -11,11 +11,12 @@ import mimetypes
 import re
 import struct
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, BinaryIO, Iterable
+from typing import Any, BinaryIO
 
 from app.core.config import Settings, get_settings
 
@@ -267,19 +268,17 @@ def _webp_size(data: bytes) -> tuple[int | None, int | None]:
         w = 1 + int.from_bytes(data[24:27], "little")
         h = 1 + int.from_bytes(data[27:30], "little")
         return w, h
-    if chunk == b"VP8 " and len(data) >= 30:
-        # lossy: start code 0x9d012a then 14-bit width/height
-        if data[23:26] == b"\x9d\x01\x2a":
-            w = struct.unpack("<H", data[26:28])[0] & 0x3FFF
-            h = struct.unpack("<H", data[28:30])[0] & 0x3FFF
-            return w, h
-    if chunk == b"VP8L" and len(data) >= 25:
-        # signature 0x2f then 14-bit w-1 / h-1 packed
-        if data[20] == 0x2F:
-            bits = struct.unpack("<I", data[21:25])[0]
-            w = (bits & 0x3FFF) + 1
-            h = ((bits >> 14) & 0x3FFF) + 1
-            return w, h
+    # lossy: start code 0x9d012a then 14-bit width/height
+    if chunk == b"VP8 " and len(data) >= 30 and data[23:26] == b"\x9d\x01\x2a":
+        w = struct.unpack("<H", data[26:28])[0] & 0x3FFF
+        h = struct.unpack("<H", data[28:30])[0] & 0x3FFF
+        return w, h
+    # signature 0x2f then 14-bit w-1 / h-1 packed
+    if chunk == b"VP8L" and len(data) >= 25 and data[20] == 0x2F:
+        bits = struct.unpack("<I", data[21:25])[0]
+        w = (bits & 0x3FFF) + 1
+        h = ((bits >> 14) & 0x3FFF) + 1
+        return w, h
     return None, None
 
 
@@ -385,17 +384,11 @@ def validate_image_bytes(
 
     if width is not None and height is not None:
         if width < min_side or height < min_side:
-            errors.append(
-                f"image too small ({width}x{height}); min side {min_side}px"
-            )
+            errors.append(f"image too small ({width}x{height}); min side {min_side}px")
         if width > max_side or height > max_side:
-            warnings.append(
-                f"image very large ({width}x{height}); max recommended {max_side}px"
-            )
+            warnings.append(f"image very large ({width}x{height}); max recommended {max_side}px")
         if abs(width - height) / max(width, height) > 0.5:
-            warnings.append(
-                "highly non-square aspect ratio may hurt avatar LoRA consistency"
-            )
+            warnings.append("highly non-square aspect ratio may hurt avatar LoRA consistency")
     elif mime and not parse_errors:
         warnings.append("could not determine image dimensions")
 
@@ -439,13 +432,9 @@ def validate_audio_bytes(
 
     if duration_ms is not None:
         if duration_ms < min_duration_ms:
-            errors.append(
-                f"audio too short ({duration_ms}ms); min {min_duration_ms}ms"
-            )
+            errors.append(f"audio too short ({duration_ms}ms); min {min_duration_ms}ms")
         if duration_ms > max_duration_ms:
-            warnings.append(
-                f"audio long ({duration_ms}ms); max recommended {max_duration_ms}ms"
-            )
+            warnings.append(f"audio long ({duration_ms}ms); max recommended {max_duration_ms}ms")
     else:
         warnings.append("could not determine audio duration")
 
@@ -542,9 +531,8 @@ def build_caption(
                 if t and t not in tags:
                     tags.append(t)
         if style == "xtts_voice":
-            caption = (
-                f"Voice sample for character {character_id}"
-                + (f" ({trigger})" if trigger else "")
+            caption = f"Voice sample for character {character_id}" + (
+                f" ({trigger})" if trigger else ""
             )
             source = "template"
         else:
@@ -594,8 +582,7 @@ class DatasetService:
             self.root_dir = Path(root_dir)
         else:
             self.root_dir = Path(
-                getattr(self.settings, "trainer_dataset_root", None)
-                or "data/trainer/datasets"
+                getattr(self.settings, "trainer_dataset_root", None) or "data/trainer/datasets"
             )
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -731,7 +718,7 @@ class DatasetService:
         manifest = {
             "dataset_id": ds_id,
             "character_id": character_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "image_count": image_count,
             "audio_count": audio_count,
             "caption_count": caption_count,
@@ -739,9 +726,7 @@ class DatasetService:
             "assets": [a.to_dict() for a in assets if a.validation.ok],
             "weights_storage_bucket": self.settings.weights_storage_bucket or None,
         }
-        (ds_dir / "manifest.json").write_text(
-            _json_dumps(manifest), encoding="utf-8"
-        )
+        (ds_dir / "manifest.json").write_text(_json_dumps(manifest), encoding="utf-8")
 
         # ok when at least one media asset staged; validation failures stay in errors[]
         ok = (image_count + audio_count) > 0
@@ -795,9 +780,7 @@ def _safe_filename(name: str) -> str:
     return base
 
 
-def _lookup_caption(
-    captions: dict[str, str], original_name: str, safe_name: str
-) -> str | None:
+def _lookup_caption(captions: dict[str, str], original_name: str, safe_name: str) -> str | None:
     if original_name in captions:
         return captions[original_name]
     if safe_name in captions:

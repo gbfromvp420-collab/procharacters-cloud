@@ -56,9 +56,7 @@ if (!parsed.success) {
 }
 
 const livekitConfigured =
-  !!parsed.data.LIVEKIT_URL &&
-  !!parsed.data.LIVEKIT_API_KEY &&
-  !!parsed.data.LIVEKIT_API_SECRET;
+  !!parsed.data.LIVEKIT_URL && !!parsed.data.LIVEKIT_API_KEY && !!parsed.data.LIVEKIT_API_SECRET;
 
 export const env = {
   ...parsed.data,

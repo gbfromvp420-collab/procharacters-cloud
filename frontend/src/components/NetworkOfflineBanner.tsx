@@ -31,9 +31,7 @@ export function NetworkOfflineBanner({ className = "" }: { className?: string })
       const top = getMostRecentResume();
       if (top?.resumeCode) {
         setContinueHref(buildResumeChatPath(top));
-        setContinueNick(
-          top.characterName?.trim().split(/\s+/)[0] || top.characterId || "chat",
-        );
+        setContinueNick(top.characterName?.trim().split(/\s+/)[0] || top.characterId || "chat");
         setUrgent(isResumeExpiryUrgent(top.resumeExpiresAt));
         setDnaPower(isDnaPowerTrail(top));
       } else {
@@ -65,10 +63,8 @@ export function NetworkOfflineBanner({ className = "" }: { className?: string })
       </p>
       <p className="mt-1 text-brand-muted">
         Live chat needs a connection. Drafts still auto-save on this device
-        {resumeCount > 0
-          ? ` · ${resumeCount} resume${resumeCount === 1 ? "" : "s"} cached`
-          : ""}
-        . When you’re back online, Continue picks up the heat.
+        {resumeCount > 0 ? ` · ${resumeCount} resume${resumeCount === 1 ? "" : "s"} cached` : ""}.
+        When you’re back online, Continue picks up the heat.
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {continueHref && (

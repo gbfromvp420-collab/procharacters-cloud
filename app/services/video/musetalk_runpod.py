@@ -11,7 +11,8 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -50,9 +51,7 @@ class MuseTalkRunPodProvider:
 
     def _ensure_configured(self) -> None:
         if not self.base_url:
-            raise RuntimeError(
-                "RUNPOD_MUSETALK_URL is not configured for video_provider=runpod"
-            )
+            raise RuntimeError("RUNPOD_MUSETALK_URL is not configured for video_provider=runpod")
 
     def _weight_fields(self, request: VideoGenerateRequest) -> dict[str, Any]:
         """Character / LoRA weight refs forwarded to the MuseTalk worker."""
@@ -149,9 +148,7 @@ class MuseTalkRunPodProvider:
             error=None if (ok or video_url) else (data.get("error") or status or "no_video"),
         )
 
-    async def stream_events(
-        self, request: VideoGenerateRequest
-    ) -> AsyncIterator[dict[str, Any]]:
+    async def stream_events(self, request: VideoGenerateRequest) -> AsyncIterator[dict[str, Any]]:
         """
         Stream NDJSON progress from RunPod when supported.
 
@@ -225,7 +222,7 @@ def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
         data = response.json()
         return data if isinstance(data, dict) else {"output": data}
-    except Exception:
+    except ValueError:
         return {"raw": response.text}
 
 

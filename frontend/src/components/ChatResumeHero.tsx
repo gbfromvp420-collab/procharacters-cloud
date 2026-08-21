@@ -27,10 +27,7 @@ export function ChatResumeHero({
   busy?: boolean;
 }) {
   const mind = mindFingerprint(saved.characterId);
-  const nick =
-    saved.characterName?.trim().split(/\s+/)[0] ||
-    saved.characterName ||
-    "your chat";
+  const nick = saved.characterName?.trim().split(/\s+/)[0] || saved.characterName || "your chat";
   const expiry = formatResumeExpiryShort(saved.resumeExpiresAt);
   const urgent = isResumeExpiryUrgent(saved.resumeExpiresAt);
   const [trail, setTrail] = useState<ResumeCacheEntry | null>(null);
@@ -73,11 +70,7 @@ export function ChatResumeHero({
         <div className="min-w-0">
           <p
             className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
-              urgent
-                ? "text-rose-200/90"
-                : heatDepth
-                  ? "text-amber-200/90"
-                  : "text-brand-accent"
+              urgent ? "text-rose-200/90" : heatDepth ? "text-amber-200/90" : "text-brand-accent"
             }`}
           >
             {heatDepth ? `Heat trail · ${heatDepth}` : "Ready to continue"}
@@ -133,9 +126,7 @@ export function ChatResumeHero({
           )}
 
           <p className="mt-0.5 text-[11px] text-brand-muted">
-            {recap
-              ? `“${recap}”`
-              : mind?.blurb || "Pick up the heat where you left off."}
+            {recap ? `“${recap}”` : mind?.blurb || "Pick up the heat where you left off."}
             {expiry ? ` · ${expiry}` : ""}
           </p>
         </div>

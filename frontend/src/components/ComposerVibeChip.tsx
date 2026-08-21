@@ -54,11 +54,9 @@ export function ComposerVibeChip({
   const mind = mindFingerprint(characterId);
   const edgeLive = modeState?.mode === "edge_pace" && status === "ready";
   const edgePending = sessionMode === "edge_pace" && status !== "ready";
-  const phase = modeState?.phase ? PHASE_LABEL[modeState.phase] ?? modeState.phase : null;
+  const phase = modeState?.phase ? (PHASE_LABEL[modeState.phase] ?? modeState.phase) : null;
   const remaining =
-    edgeLive && modeState
-      ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
-      : null;
+    edgeLive && modeState ? Math.max(0, modeState.phaseRemainingSec - tickOffset) : null;
   const hot = typeof arousalPct === "number" && arousalPct >= 55;
 
   if (!mind && !edgeLive && !edgePending && !(status === "ready" && hot)) return null;
@@ -66,11 +64,7 @@ export function ComposerVibeChip({
   const nick = characterName?.trim().split(/\s+/)[0] || null;
 
   return (
-    <div
-      className="mb-2 flex flex-wrap items-center gap-1.5"
-      role="status"
-      aria-live="polite"
-    >
+    <div className="mb-2 flex flex-wrap items-center gap-1.5" role="status" aria-live="polite">
       {mind && (
         <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-brand-accent/35 bg-brand-accent/10 px-2.5 py-1 text-[10px] font-medium text-brand-accent">
           <span className="uppercase tracking-[0.14em] opacity-90">

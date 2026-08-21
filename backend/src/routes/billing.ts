@@ -1,9 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import {
-  getAccountPlanSummary,
-  resolveAccountToken,
-} from "../lib/accounts/account-store.js";
+import { getAccountPlanSummary, resolveAccountToken } from "../lib/accounts/account-store.js";
 import {
   confirmCheckoutSession,
   createCheckoutSession,

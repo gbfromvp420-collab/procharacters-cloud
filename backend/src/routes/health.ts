@@ -6,11 +6,7 @@ import {
   isStripeWebhookConfigured,
   stripeMode,
 } from "../lib/billing/stripe-billing.js";
-import {
-  buildPackStatusFile,
-  listPackStatuses,
-  phase4PackIds,
-} from "../lib/media/avatar-packs.js";
+import { buildPackStatusFile, listPackStatuses, phase4PackIds } from "../lib/media/avatar-packs.js";
 import {
   isErrorEmailConfigured,
   isErrorReportingConfigured,
@@ -19,6 +15,7 @@ import {
   sendErrorWebhookTest,
 } from "../lib/observability/error-reporter.js";
 import { getLastExpiryCron, getMetrics } from "../lib/observability/metrics.js";
+import { isGenVideoConfigured } from "../lib/gen-video.js";
 import { pingPrisma } from "../lib/prisma.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
 
@@ -42,9 +39,7 @@ function deployFingerprint(): {
     gitSha,
     gitShaShort: gitSha ? gitSha.slice(0, 7) : null,
     environment:
-      process.env.RAILWAY_ENVIRONMENT_NAME?.trim() ||
-      process.env.NODE_ENV?.trim() ||
-      null,
+      process.env.RAILWAY_ENVIRONMENT_NAME?.trim() || process.env.NODE_ENV?.trim() || null,
     serviceName: process.env.RAILWAY_SERVICE_NAME?.trim() || null,
   };
 }
@@ -107,6 +102,11 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
           webhook: isStripeWebhookConfigured(),
           mode: stripeMode(),
           freePath: true,
+        },
+        generativeVideo: {
+          configured: isGenVideoConfigured(),
+          default: "loops",
+          optIn: true,
         },
       };
     });

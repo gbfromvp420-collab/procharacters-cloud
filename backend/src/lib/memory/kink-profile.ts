@@ -64,9 +64,7 @@ export function evolveKinkProfile(
     ...(prior?.dnaTreeNodeId?.trim()
       ? {
           dnaTreeNodeId: prior.dnaTreeNodeId.trim(),
-          ...(prior.dnaTreeLabel?.trim()
-            ? { dnaTreeLabel: prior.dnaTreeLabel.trim() }
-            : {}),
+          ...(prior.dnaTreeLabel?.trim() ? { dnaTreeLabel: prior.dnaTreeLabel.trim() } : {}),
           ...(prior.sessionMode === "edge_pace" || prior.sessionMode === "normal"
             ? { sessionMode: prior.sessionMode }
             : {}),
@@ -131,8 +129,7 @@ export function formatKinkProfileLine(profile: KinkProfile | null | undefined): 
   }
   if (profile.dnaTreeNodeId?.trim()) {
     const label = profile.dnaTreeLabel?.trim() || profile.dnaTreeNodeId.trim();
-    const modeBit =
-      profile.sessionMode === "edge_pace" ? " · Edge Pace" : "";
+    const modeBit = profile.sessionMode === "edge_pace" ? " · Edge Pace" : "";
     parts.push(
       `DNA power climb: ${label}${modeBit} (node=${profile.dnaTreeNodeId.trim()}). Resume this tree node — do not cold-reset to spark.`,
     );

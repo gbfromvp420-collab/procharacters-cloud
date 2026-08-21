@@ -20,11 +20,7 @@ import {
   sendResumeLinksEmail,
   type ResumeLinkItem,
 } from "../lib/accounts/mailer.js";
-import {
-  RATE_LIMITS,
-  clientIp,
-  enforceRateLimits,
-} from "../lib/rate-limit.js";
+import { RATE_LIMITS, clientIp, enforceRateLimits } from "../lib/rate-limit.js";
 import {
   buildAccountSessionsMarkdown,
   buildSessionMarkdown,
@@ -39,10 +35,7 @@ import {
 } from "../services/session-manager.js";
 import type { LiveKitService } from "../lib/livekit/service.js";
 import type { MediaWorker } from "../services/media-worker.js";
-import {
-  getAccountByEmail,
-  upsertAccountByEmail,
-} from "../lib/accounts/account-repo-prisma.js";
+import { getAccountByEmail, upsertAccountByEmail } from "../lib/accounts/account-repo-prisma.js";
 import { bump } from "../lib/observability/metrics.js";
 
 function rateLimited(
@@ -233,7 +226,9 @@ export const createAccountRoutes = (
           isNewAccount: magic.isNewAccount,
           linking: magic.linking,
           // Dev / no-mailer fallback so Gary can still sign in without SMTP setup
-          ...(includeLink ? { magicUrl, devHint: "Open this link to sign in (email not sent)" } : {}),
+          ...(includeLink
+            ? { magicUrl, devHint: "Open this link to sign in (email not sent)" }
+            : {}),
           ...(send.error ? { mailError: send.error } : {}),
         };
       } catch (error) {
@@ -306,8 +301,7 @@ export const createAccountRoutes = (
           return reply.code(400).send({ error: error.flatten() });
         }
         if (error instanceof AccountError) {
-          const status =
-            error.code === "CONFLICT" ? 409 : error.code === "NOT_FOUND" ? 404 : 400;
+          const status = error.code === "CONFLICT" ? 409 : error.code === "NOT_FOUND" ? 404 : 400;
           return reply.code(status).send({ error: error.message, code: error.code });
         }
         throw error;
@@ -348,8 +342,7 @@ export const createAccountRoutes = (
           return reply.code(400).send({ error: error.flatten() });
         }
         if (error instanceof AccountError) {
-          const status =
-            error.code === "CONFLICT" ? 409 : error.code === "AUTH" ? 401 : 400;
+          const status = error.code === "CONFLICT" ? 409 : error.code === "AUTH" ? 401 : 400;
           return reply.code(status).send({ error: error.message, code: error.code });
         }
         throw error;
@@ -399,9 +392,7 @@ export const createAccountRoutes = (
         return {
           ok: true,
           hasPassphrase: true,
-          message: accountHasPassphrase(account.id)
-            ? "Passphrase updated"
-            : "Passphrase set",
+          message: accountHasPassphrase(account.id) ? "Passphrase updated" : "Passphrase set",
         };
       } catch (error) {
         if (error instanceof z.ZodError) {
@@ -425,31 +416,25 @@ export const createAccountRoutes = (
     });
 
     /** Mint a new resume code for one saved chat (old code stops working). */
-    app.post(
-      "/accounts/me/sessions/:sessionId/refresh-resume",
-      async (request, reply) => {
-        const account = await resolveAccountToken(bearerToken(request));
-        if (!account) {
-          return reply.code(401).send({ error: "Not signed in" });
+    app.post("/accounts/me/sessions/:sessionId/refresh-resume", async (request, reply) => {
+      const account = await resolveAccountToken(bearerToken(request));
+      if (!account) {
+        return reply.code(401).send({ error: "Not signed in" });
+      }
+      const { sessionId } = request.params as { sessionId: string };
+      try {
+        const result = await sessionManager.refreshSessionResumeCode(account.id, sessionId);
+        return { ok: true, ...result };
+      } catch (error) {
+        if (error instanceof SessionNotFoundError) {
+          return reply.code(404).send({ error: "Session not found" });
         }
-        const { sessionId } = request.params as { sessionId: string };
-        try {
-          const result = await sessionManager.refreshSessionResumeCode(
-            account.id,
-            sessionId,
-          );
-          return { ok: true, ...result };
-        } catch (error) {
-          if (error instanceof SessionNotFoundError) {
-            return reply.code(404).send({ error: "Session not found" });
-          }
-          if (error instanceof SessionAuthError) {
-            return reply.code(403).send({ error: error.message });
-          }
-          throw error;
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
         }
-      },
-    );
+        throw error;
+      }
+    });
 
     /** Rotate resume codes — all, or only expiring/expired within N days. */
     app.post("/accounts/me/sessions/refresh-resumes", async (request, reply) => {
@@ -637,7 +622,11 @@ export const createAccountRoutes = (
         const body = raw as Record<string, unknown>;
         if (body.document !== undefined) document = body.document;
         if (typeof body.characterId === "string") characterId = body.characterId;
-        if (body.characterMap && typeof body.characterMap === "object" && !Array.isArray(body.characterMap)) {
+        if (
+          body.characterMap &&
+          typeof body.characterMap === "object" &&
+          !Array.isArray(body.characterMap)
+        ) {
           characterMap = body.characterMap as Record<string, string>;
         }
         if (typeof body.fallbackCharacterId === "string") {
@@ -685,7 +674,10 @@ export const createAccountRoutes = (
       ]);
       if (denied) return rateLimited(reply, denied);
 
-      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const wsBaseUrl = resolveWsBaseUrl(
+        request.headers.host,
+        request.headers["x-forwarded-proto"],
+      );
       const raw = request.body;
       let document: unknown = raw;
       let characterId: string | undefined;
@@ -699,7 +691,11 @@ export const createAccountRoutes = (
         const body = raw as Record<string, unknown>;
         if (body.document !== undefined) document = body.document;
         if (typeof body.characterId === "string") characterId = body.characterId;
-        if (body.characterMap && typeof body.characterMap === "object" && !Array.isArray(body.characterMap)) {
+        if (
+          body.characterMap &&
+          typeof body.characterMap === "object" &&
+          !Array.isArray(body.characterMap)
+        ) {
           characterMap = body.characterMap as Record<string, string>;
         }
         if (typeof body.fallbackCharacterId === "string") {
@@ -769,9 +765,7 @@ export const createAccountRoutes = (
         reply.header("Content-Disposition", `attachment; filename="${filename}"`);
         if (format === "md") {
           reply.header("Content-Type", "text/markdown; charset=utf-8");
-          return reply.send(
-            buildSessionMarkdown(doc.session, { exportedAt: doc.exportedAt }),
-          );
+          return reply.send(buildSessionMarkdown(doc.session, { exportedAt: doc.exportedAt }));
         }
         reply.header("Content-Type", "application/json; charset=utf-8");
         return doc;
@@ -871,7 +865,10 @@ export const createAccountRoutes = (
         return reply.code(401).send({ error: "Not signed in" });
       }
       const { sessionId } = request.params as { sessionId: string };
-      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const wsBaseUrl = resolveWsBaseUrl(
+        request.headers.host,
+        request.headers["x-forwarded-proto"],
+      );
 
       try {
         const session = await sessionManager.resumeForAccount(account.id, sessionId, wsBaseUrl);
@@ -908,13 +905,10 @@ export const createAccountRoutes = (
         return reply.code(401).send({ error: "Not signed in" });
       }
       const { characterId } = request.params as { characterId: string };
-      const {
-        getCrossSessionNote,
-      } = await import("../lib/memory/cross-session-notes.js");
-      const {
-        getCharacterSession,
-        priorNotesFromCharacterSession,
-      } = await import("../lib/memory/character-session-store.js");
+      const { getCrossSessionNote } = await import("../lib/memory/cross-session-notes.js");
+      const { getCharacterSession, priorNotesFromCharacterSession } = await import(
+        "../lib/memory/character-session-store.js"
+      );
       const note = await getCrossSessionNote(account.id, characterId);
       let notes = note?.notes ?? "";
       // Merge durable Prisma mirror when opt-in (or when file is empty but DB has heat).
@@ -923,10 +917,7 @@ export const createAccountRoutes = (
       if (fromDb) {
         if (!notes.trim() || fromDb.length > notes.length) {
           notes = fromDb;
-        } else if (
-          durable?.kinkProfile?.tags?.length &&
-          !notes.includes("Learned heat prefs")
-        ) {
+        } else if (durable?.kinkProfile?.tags?.length && !notes.includes("Learned heat prefs")) {
           const kinkOnly = priorNotesFromCharacterSession({
             ...durable,
             memorySummary: null,
@@ -956,9 +947,7 @@ export const createAccountRoutes = (
           optIn: z.boolean(),
         })
         .parse(request.body ?? {});
-      const {
-        setCrossSessionOptIn,
-      } = await import("../lib/memory/cross-session-notes.js");
+      const { setCrossSessionOptIn } = await import("../lib/memory/cross-session-notes.js");
       const note = await setCrossSessionOptIn(account.id, characterId, body.optIn);
       return {
         characterId,
@@ -977,12 +966,8 @@ export const createAccountRoutes = (
       const { characterId } = request.params as { characterId: string };
       const query = request.query as { optOut?: string };
       const optOut = query.optOut === "1" || query.optOut === "true";
-      const {
-        clearCrossSessionNotes,
-      } = await import("../lib/memory/cross-session-notes.js");
-      const { clearCharacterSession } = await import(
-        "../lib/memory/character-session-store.js"
-      );
+      const { clearCrossSessionNotes } = await import("../lib/memory/cross-session-notes.js");
+      const { clearCharacterSession } = await import("../lib/memory/character-session-store.js");
       const note = await clearCrossSessionNotes(account.id, characterId, { optOut });
       // Also wipe Postgres CharacterSession mirror (summary / kink / history)
       await clearCharacterSession(account.id, characterId);
@@ -996,4 +981,3 @@ export const createAccountRoutes = (
     });
   };
 };
-

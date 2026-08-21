@@ -32,9 +32,7 @@ export function AfterglowChips({
   const mind = mindFingerprint(characterId);
   const deep = heatDepth === "deep" || heatDepth === "locked";
   const dnaKey = `${dnaTreeLabel ?? ""} ${dnaTreeNodeId ?? ""}`.toLowerCase();
-  const dnaHot =
-    !!dnaKey.trim() &&
-    /edge|deny|release|gate|tease|soft/.test(dnaKey);
+  const dnaHot = !!dnaKey.trim() && /edge|deny|release|gate|tease|soft/.test(dnaKey);
   const hot = intense || deep || heatDepth === "edge" || dnaHot;
   const chips = (() => {
     const core = (() => {
@@ -84,19 +82,17 @@ export function AfterglowChips({
           : heatDepth === "locked"
             ? ["don’t finish", "right there", "stay with me", "hold…"]
             : ["don’t finish", "right there", "hold…"];
-      return [
-        ...peak,
-        ...core.filter((c) => !peak.includes(c)),
-      ].slice(0, deep || intense || dnaHot ? 8 : 6);
+      return [...peak, ...core.filter((c) => !peak.includes(c))].slice(
+        0,
+        deep || intense || dnaHot ? 8 : 6,
+      );
     }
     return core.slice(0, 5);
   })();
 
   return (
     <div
-      className={`mt-1.5 flex flex-wrap gap-1 animate-fade-in ${
-        hot ? "gap-1.5" : ""
-      }`}
+      className={`mt-1.5 flex flex-wrap gap-1 animate-fade-in ${hot ? "gap-1.5" : ""}`}
       role="group"
       aria-label="Quick reactions"
     >
@@ -119,8 +115,7 @@ export function AfterglowChips({
       )}
       {chips.map((chip, i) => {
         // First chips fire instantly when intense or when onFire provided + short chip
-        const fire =
-          !!onFire && (hot ? i < 4 : chip.length <= 8 && i < 2);
+        const fire = !!onFire && (hot ? i < 4 : chip.length <= 8 && i < 2);
         return (
           <button
             key={`${chip}-${i}`}

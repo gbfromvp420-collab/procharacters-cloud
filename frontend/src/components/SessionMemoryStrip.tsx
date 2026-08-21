@@ -134,11 +134,9 @@ export function SessionMemoryStrip({
                   {sessionParsed.lastBeat}
                 </p>
               )}
-              {!sessionParsed?.headline &&
-                !sessionParsed?.vibe &&
-                !sessionParsed?.userBeats && (
-                  <p className="mt-0.5 whitespace-pre-wrap text-brand-muted">{sessionNotes}</p>
-                )}
+              {!sessionParsed?.headline && !sessionParsed?.vibe && !sessionParsed?.userBeats && (
+                <p className="mt-0.5 whitespace-pre-wrap text-brand-muted">{sessionNotes}</p>
+              )}
             </div>
           )}
         </div>
@@ -157,12 +155,11 @@ function parseSessionNotes(raw: string): {
   const text = raw.replace(/\s+/g, " ").trim();
   const headline = text.match(/Session with [^.]+\./i)?.[0];
   const vibe = text.match(/Ongoing vibe:\s*([^.]+)/i)?.[1]?.trim();
-  const userBeats = text.match(/Recent user beats:\s*(.+?)(?:\s+Last character beat:|$)/i)?.[1]
+  const userBeats = text
+    .match(/Recent user beats:\s*(.+?)(?:\s+Last character beat:|$)/i)?.[1]
     ?.trim()
     .replace(/\s*Stay consistent.*$/i, "");
-  const lastBeat = text
-    .match(/Last character beat:\s*[“"](.+?)[”"]/i)?.[1]
-    ?.trim();
+  const lastBeat = text.match(/Last character beat:\s*[“"](.+?)[”"]/i)?.[1]?.trim();
 
   const scene = text.match(/Scene lock:\s*([^.]*(?:\.[^A-Z]*)?)/i)?.[1] ?? "";
   const chips: string[] = [];
@@ -254,10 +251,8 @@ function chipToComposerSeed(chip: string): string {
   const c = chip.trim();
   if (/^heat ·/i.test(c)) return "stay in this heat with me…";
   if (/edging|denial|peak|hold/i.test(c)) return "hold it — don’t finish yet";
-  if (/sheer|crotchless|lingerie|clothing|signature/i.test(c))
-    return `keep the ${c}… look at me`;
-  if (/kneel|on back|straddl|lean|mirror|standing|close/i.test(c))
-    return `stay ${c} for me`;
+  if (/sheer|crotchless|lingerie|clothing|signature/i.test(c)) return `keep the ${c}… look at me`;
+  if (/kneel|on back|straddl|lean|mirror|standing|close/i.test(c)) return `stay ${c} for me`;
   if (/stroke|grip|hands|kiss|grind|hover|eye contact|edging hold/i.test(c))
     return `more of that — ${c}`;
   if (/praise|soft-dom/i.test(c)) return "praise me while you edge me";

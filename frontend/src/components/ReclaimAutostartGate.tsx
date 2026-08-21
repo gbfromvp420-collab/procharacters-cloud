@@ -46,10 +46,7 @@ export function ReclaimAutostartGate({ children }: { children: ReactNode }) {
       }
 
       try {
-        const latest = await fetchLatestAccountSessionForCharacter(
-          account.token,
-          q.characterId,
-        );
+        const latest = await fetchLatestAccountSessionForCharacter(account.token, q.characterId);
         if (cancelled) return;
         if (latest?.resumeCode) {
           rememberLocalResume({

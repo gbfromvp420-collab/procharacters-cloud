@@ -75,9 +75,7 @@ class StartJobBody(BaseModel):
 
 class DatasetAssetIn(BaseModel):
     filename: str = Field(..., min_length=1)
-    content_b64: str | None = Field(
-        default=None, description="Base64-encoded file bytes"
-    )
+    content_b64: str | None = Field(default=None, description="Base64-encoded file bytes")
     content_text: str | None = Field(
         default=None, description="UTF-8 text (captions / transcripts)"
     )
@@ -145,7 +143,7 @@ def _decode_assets(assets: list[DatasetAssetIn]) -> list[tuple[str, bytes]]:
         if asset.content_b64 is not None:
             try:
                 raw = base64.b64decode(asset.content_b64, validate=False)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise HTTPException(
                     status_code=400,
                     detail=f"invalid base64 for {name}: {exc}",

@@ -32,11 +32,7 @@ import {
   exportFilename,
   parseExportFormat,
 } from "../lib/memory/session-export.js";
-import {
-  RATE_LIMITS,
-  clientIp,
-  enforceRateLimits,
-} from "../lib/rate-limit.js";
+import { RATE_LIMITS, clientIp, enforceRateLimits } from "../lib/rate-limit.js";
 import {
   SessionAuthError,
   SessionImportError,
@@ -160,9 +156,7 @@ function resolveWsBaseUrl(
   }
 
   const protocol =
-    typeof forwardedProto === "string"
-      ? forwardedProto.split(",")[0]?.trim()
-      : "http";
+    typeof forwardedProto === "string" ? forwardedProto.split(",")[0]?.trim() : "http";
   const host = requestHost ?? "localhost:3001";
   const wsProtocol = protocol === "https" ? "wss" : "ws";
   return `${wsProtocol}://${host}`;
@@ -250,9 +244,7 @@ export const createSessionRoutes = (
       const publicCustom = listPublicCustomCharacters();
       const mine = account ? listAccountCustomCharacters(account.id) : [];
       // Dedupe by id (mine may also be public in legacy cases)
-      const customMap = new Map(
-        [...publicCustom, ...mine].map((p) => [p.id, p] as const),
-      );
+      const customMap = new Map([...publicCustom, ...mine].map((p) => [p.id, p] as const));
       const custom = [...customMap.values()].map((profile) => {
         const isMine = !!account && profile.ownerAccountId === account.id;
         return {
@@ -294,8 +286,7 @@ export const createSessionRoutes = (
             energyLabel: profile.energyLabel,
             teaser: profile.teaser,
             featured: profile.featured === true,
-            openingMessage:
-              profile.openingMessage ?? getOpeningMessage(profile.id) ?? undefined,
+            openingMessage: profile.openingMessage ?? getOpeningMessage(profile.id) ?? undefined,
             clips: listClipUrls(profile.avatarBase ?? profile.id),
           })),
           ...custom,
@@ -346,9 +337,7 @@ export const createSessionRoutes = (
     app.post("/characters/forge/expand", async (request, reply) => {
       try {
         const body = forgeExpandSchema.parse(request.body ?? {});
-        const ip = clientIp(
-          request.headers as Record<string, string | string[] | undefined>,
-        );
+        const ip = clientIp(request.headers as Record<string, string | string[] | undefined>);
         const limited = enforceRateLimits([
           {
             key: `forge:${ip}`,
@@ -356,14 +345,11 @@ export const createSessionRoutes = (
           },
         ]);
         if (limited) {
-          return reply
-            .code(429)
-            .header("Retry-After", String(limited.retryAfterSec))
-            .send({
-              error: "Forge rate limit — try again shortly",
-              code: "RATE_LIMIT",
-              retryAfterSec: limited.retryAfterSec,
-            });
+          return reply.code(429).header("Retry-After", String(limited.retryAfterSec)).send({
+            error: "Forge rate limit — try again shortly",
+            code: "RATE_LIMIT",
+            retryAfterSec: limited.retryAfterSec,
+          });
         }
         const result = await expandFantasyToDna(body);
         bump("forgeExpands");
@@ -377,8 +363,7 @@ export const createSessionRoutes = (
         if (error instanceof z.ZodError) {
           return reply.code(400).send({ error: error.flatten() });
         }
-        const message =
-          error instanceof Error ? error.message : "Forge expand failed";
+        const message = error instanceof Error ? error.message : "Forge expand failed";
         return reply.code(400).send({ error: message });
       }
     });
@@ -613,7 +598,10 @@ export const createSessionRoutes = (
 
     app.post("/sessions", async (request, reply) => {
       const body = createSessionSchema.parse(request.body ?? {});
-      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const wsBaseUrl = resolveWsBaseUrl(
+        request.headers.host,
+        request.headers["x-forwarded-proto"],
+      );
       const account = await resolveAccountToken(bearerToken(request));
 
       // Private My Characters require the owning account
@@ -738,7 +726,10 @@ export const createSessionRoutes = (
         });
       }
 
-      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const wsBaseUrl = resolveWsBaseUrl(
+        request.headers.host,
+        request.headers["x-forwarded-proto"],
+      );
       const account = await resolveAccountToken(bearerToken(request));
       const raw = request.body;
 
@@ -806,7 +797,10 @@ export const createSessionRoutes = (
     });
 
     app.post("/sessions/resume-code", async (request, reply) => {
-      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const wsBaseUrl = resolveWsBaseUrl(
+        request.headers.host,
+        request.headers["x-forwarded-proto"],
+      );
       try {
         const body = resumeCodeSchema.parse(request.body ?? {});
         const session = await sessionManager.resumeByCode(body.code, wsBaseUrl, {
@@ -863,9 +857,7 @@ export const createSessionRoutes = (
         reply.header("Content-Disposition", `attachment; filename="${filename}"`);
         if (format === "md") {
           reply.header("Content-Type", "text/markdown; charset=utf-8");
-          return reply.send(
-            buildSessionMarkdown(doc.session, { exportedAt: doc.exportedAt }),
-          );
+          return reply.send(buildSessionMarkdown(doc.session, { exportedAt: doc.exportedAt }));
         }
         reply.header("Content-Type", "application/json; charset=utf-8");
         return doc;
@@ -885,7 +877,10 @@ export const createSessionRoutes = (
 
     app.post("/sessions/:sessionId/resume", async (request, reply) => {
       const { sessionId } = request.params as { sessionId: string };
-      const wsBaseUrl = resolveWsBaseUrl(request.headers.host, request.headers["x-forwarded-proto"]);
+      const wsBaseUrl = resolveWsBaseUrl(
+        request.headers.host,
+        request.headers["x-forwarded-proto"],
+      );
 
       try {
         const body = resumeSessionSchema.parse(request.body ?? {});
@@ -1002,9 +997,7 @@ export const createSessionRoutes = (
           turnNumber: injection.turnNumber,
           messageCount: injection.messages.length,
           memoryPreview: injection.layers.memory,
-          conversationPreview: injection.messages
-            .filter((m) => m.role !== "system")
-            .slice(-4),
+          conversationPreview: injection.messages.filter((m) => m.role !== "system").slice(-4),
         };
       } catch {
         return reply.code(404).send({ error: "Session not found" });

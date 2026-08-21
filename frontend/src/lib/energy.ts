@@ -5,17 +5,19 @@ export type EnergyBand = "idle" | "tease" | "play" | "edge";
 /** Client-side band from avatar intent (mirrors server clip mapping). */
 export function energyBandFromAvatar(avatar: AvatarState | null | undefined): EnergyBand {
   if (!avatar) return "idle";
-  if (avatar.energyBand === "idle" || avatar.energyBand === "tease" || avatar.energyBand === "play" || avatar.energyBand === "edge") {
+  if (
+    avatar.energyBand === "idle" ||
+    avatar.energyBand === "tease" ||
+    avatar.energyBand === "play" ||
+    avatar.energyBand === "edge"
+  ) {
     return avatar.energyBand;
   }
 
   const e = (avatar.emotion || "").toLowerCase();
   const a = avatar.arousalLevel ?? 0;
 
-  if (
-    /arous|intense|breath|edg|domin|desper|puls|denial|close/.test(e) ||
-    a >= 0.72
-  ) {
+  if (/arous|intense|breath|edg|domin|desper|puls|denial|close/.test(e) || a >= 0.72) {
     return "edge";
   }
   if (/play|brat|cocky|smirk|game|show|gym/.test(e)) return "play";
@@ -79,10 +81,7 @@ export function energyBandRoomClass(band: EnergyBand): string {
 }
 
 /** DNA tree depth 0=spark … 5=gate — for sexy atmosphere. */
-export function dnaTreeHeatLevel(
-  nodeId?: string | null,
-  label?: string | null,
-): number {
+export function dnaTreeHeatLevel(nodeId?: string | null, label?: string | null): number {
   const key = `${nodeId ?? ""} ${label ?? ""}`.toLowerCase();
   if (!key.trim()) return -1;
   if (/release|gate/.test(key)) return 5;
@@ -99,10 +98,7 @@ export function dnaTreeHeatLevel(
  * Sexy DNA room wash layered on energy band — violet→rose as the tree climbs.
  * Returns extra class(es); empty when no DNA.
  */
-export function dnaHeatRoomClass(
-  nodeId?: string | null,
-  label?: string | null,
-): string {
+export function dnaHeatRoomClass(nodeId?: string | null, label?: string | null): string {
   const level = dnaTreeHeatLevel(nodeId, label);
   if (level < 0) return "";
   switch (level) {
@@ -133,10 +129,7 @@ export function liveRoomWashClass(
 }
 
 /** SiteChrome / shell border heat when DNA is live. */
-export function dnaChromeClass(
-  nodeId?: string | null,
-  label?: string | null,
-): string {
+export function dnaChromeClass(nodeId?: string | null, label?: string | null): string {
   const level = dnaTreeHeatLevel(nodeId, label);
   if (level >= 4) {
     return "border-b-violet-400/50 shadow-[0_8px_32px_-10px_rgba(167,139,250,0.45)]";
@@ -154,10 +147,7 @@ export function dnaChromeClass(
 }
 
 /** Composer field ring when DNA climb is hot. */
-export function dnaComposerClass(
-  nodeId?: string | null,
-  label?: string | null,
-): string {
+export function dnaComposerClass(nodeId?: string | null, label?: string | null): string {
   const level = dnaTreeHeatLevel(nodeId, label);
   if (level >= 4) {
     return "border-violet-400/55 focus:ring-violet-400/35 shadow-[0_0_24px_-8px_rgba(167,139,250,0.45)]";
@@ -175,10 +165,7 @@ export function dnaComposerClass(
 }
 
 /** Avatar video ring when DNA tree is live — overrides generic energy ring when hot. */
-export function dnaAvatarRingClass(
-  nodeId?: string | null,
-  label?: string | null,
-): string {
+export function dnaAvatarRingClass(nodeId?: string | null, label?: string | null): string {
   const level = dnaTreeHeatLevel(nodeId, label);
   if (level >= 4) {
     return "ring-violet-400/85 shadow-[0_0_32px_rgba(167,139,250,0.5)]";
@@ -196,20 +183,14 @@ export function dnaAvatarRingClass(
 }
 
 /** Short display label for DNA node chips. */
-export function dnaNodeShortLabel(
-  nodeId?: string | null,
-  label?: string | null,
-): string | null {
+export function dnaNodeShortLabel(nodeId?: string | null, label?: string | null): string | null {
   const raw = (label?.trim() || nodeId?.trim() || "").trim();
   if (!raw) return null;
   return raw.split(/\s+/)[0] || raw.slice(0, 16);
 }
 
 /** Assistant bubble chrome when DNA tree is live. */
-export function dnaAssistantBubbleClass(
-  nodeId?: string | null,
-  label?: string | null,
-): string {
+export function dnaAssistantBubbleClass(nodeId?: string | null, label?: string | null): string {
   const level = dnaTreeHeatLevel(nodeId, label);
   if (level >= 4) {
     return "border-violet-400/45 bg-gradient-to-br from-violet-500/20 via-brand-panel to-rose-500/10 shadow-[0_0_24px_-10px_rgba(167,139,250,0.45)]";
@@ -227,10 +208,7 @@ export function dnaAssistantBubbleClass(
 }
 
 /** User bubble ring when DNA is mid-climb+ (your heat is in the tree). */
-export function dnaUserBubbleClass(
-  nodeId?: string | null,
-  label?: string | null,
-): string {
+export function dnaUserBubbleClass(nodeId?: string | null, label?: string | null): string {
   const level = dnaTreeHeatLevel(nodeId, label);
   if (level >= 3) {
     return "ring-1 ring-violet-300/40 shadow-[0_0_18px_-6px_rgba(167,139,250,0.5)]";

@@ -42,7 +42,7 @@ async function main(): Promise<void> {
 
   console.log("\n✓ LiveKit connected — room create, metadata update, and delete succeeded.");
   console.log("Restart backend (npm run dev) and start a chat session.");
-  console.log('Frontend footer should show: LiveKit: room synced\n');
+  console.log("Frontend footer should show: LiveKit: room synced\n");
 }
 
 main().catch((error) => {
