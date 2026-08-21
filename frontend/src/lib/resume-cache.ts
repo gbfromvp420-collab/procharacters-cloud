@@ -347,7 +347,7 @@ export function heatTrailFromSession(options: {
   const dnaTreeLabel =
     options.dnaTreeLabel?.trim() || dnaFromNotes || undefined;
   const dnaTreeNodeId = options.dnaTreeNodeId?.trim() || undefined;
-  if (dnaTreeLabel && chips.length < 5) {
+  if (dnaTreeLabel) {
     chips.unshift(
       dnaTreeLabel.length > 22 ? `DNA ${dnaTreeLabel.slice(0, 18)}…` : `DNA ${dnaTreeLabel}`,
     );

@@ -26,7 +26,7 @@
 | Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
 | Age floor | **21+** |
-| Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 · **same-night autostart reclaim** · **multi-device heat trail** (recap + DNA chips on phone B) |
+| Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 · **same-night autostart reclaim** · multi-device heat trail **shipping** (recap + DNA on phone B after this cook deploys) |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never the root `Dockerfile` (Python WebRTC).
 
