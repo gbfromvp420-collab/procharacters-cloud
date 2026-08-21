@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-14 **50 live named minds** · same-night reclaim  
+**Updated:** 2026-08-21 **50 live named minds** · multi-device heat trail  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
 **Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
@@ -26,7 +26,7 @@
 | Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
 | Age floor | **21+** |
-| Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 · **same-night autostart reclaim** |
+| Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 · **same-night autostart reclaim** · multi-device heat trail **shipping** (recap + DNA on phone B after this cook deploys) |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never the root `Dockerfile` (Python WebRTC).
 
@@ -83,8 +83,9 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 ## Your move (only if you want)
 
 1. Chat someone, leave, tap their gallery **Chat** again — should pick up, not start over  
-2. **Candy** — unique Drive link (Aria’s file is already used)  
-3. **Stripe smoke** — signed-in → Soft Support → Day Pass
+2. Sign in on a **second device** → gallery Continue should show the same recap + DNA chip  
+3. **Candy** — unique Drive link (Aria’s file is already used)  
+4. **Stripe smoke** — signed-in → Soft Support → Day Pass
 
 I will **not** invent MP4s or charge your card.
 

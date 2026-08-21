@@ -1,7 +1,7 @@
 # Smoke — Agent fleet cook loops
 
 **Owner:** Gary (phone) · **Prep:** King Grok / `kgc-smoke`  
-**Updated:** 2026-07-20  
+**Updated:** 2026-08-21  
 
 **Live web:** https://procharacters-web-production-7288.up.railway.app  
 **API health:** https://procharacters-api-production-0417.up.railway.app/health  
@@ -51,6 +51,18 @@ Expect `deploy.gitSha` to match latest ship you care about.
 
 **Pass if:** no paywall on chat.  
 **Fail →** `/kgc-ops` + growth gates.
+
+---
+
+## Smoke: E — Second device heat trail
+
+1. Sign in on phone A · chat Jenny (or anyone) until you have a recap / DNA chip  
+2. **End** or leave  
+3. Sign in on phone B (or a private window)  
+4. Gallery tile / Account Continue should show the **same recap + DNA**, not a blank Continue  
+
+**Pass if:** phone B Continue is warm (quote + DNA chip) and opens Edge when DNA is hot.  
+**Fail →** `/kgc-return`.
 
 ---
 

@@ -100,6 +100,73 @@ function writeCache(file: CacheFile) {
   }
 }
 
+/**
+ * Merge one account session into a cached resume entry.
+ * Server heat trail wins on a new device; same-session local chips stay if
+ * the list row has not derived them yet.
+ */
+export function mergeAccountSessionTrail(
+  prev: ResumeCacheEntry | undefined,
+  s: AccountSessionSummary,
+): ResumeCacheEntry | null {
+  if (!s.resumeCode || !s.characterId) return null;
+  const nextUpdated = s.updatedAt || s.createdAt;
+  if (
+    prev &&
+    prev.source === "account" &&
+    prev.updatedAt &&
+    nextUpdated &&
+    prev.updatedAt.localeCompare(nextUpdated) > 0
+  ) {
+    return prev;
+  }
+  const sameSession = prev?.sessionId === s.sessionId;
+  const serverNode = s.dnaTreeNodeId?.trim() || undefined;
+  const localNode = sameSession ? prev?.dnaTreeNodeId : undefined;
+  const dnaTreeNodeId = serverNode || localNode;
+  const serverLabel = s.dnaTreeLabel?.trim() || undefined;
+  const dnaTreeLabel =
+    serverLabel ||
+    (sameSession && prev?.dnaTreeNodeId === dnaTreeNodeId
+      ? prev?.dnaTreeLabel
+      : serverNode
+        ? dnaLabelFromNodeId(serverNode)
+        : undefined);
+  const recapLine =
+    s.recapLine?.trim() || (sameSession ? prev?.recapLine : undefined);
+  const heatChips =
+    s.heatChips?.length
+      ? s.heatChips.slice(0, 5)
+      : sameSession
+        ? prev?.heatChips
+        : undefined;
+  const heatDepth =
+    s.heatDepth ||
+    (sameSession ? prev?.heatDepth : undefined) ||
+    (s.sessionMode === "edge_pace" || isDnaPowerTrail({ dnaTreeNodeId, heatDepth: undefined })
+      ? ("edge" as HeatTrailDepth)
+      : undefined);
+
+  return {
+    characterId: s.characterId,
+    characterName: s.characterName,
+    sessionId: s.sessionId,
+    resumeCode: s.resumeCode,
+    updatedAt: nextUpdated || new Date().toISOString(),
+    source: "account",
+    resumeExpiresAt: s.resumeExpiresAt || prev?.resumeExpiresAt,
+    recapLine,
+    heatDepth,
+    heatChips,
+    messageCount: sameSession
+      ? prev?.messageCount ?? s.messageCount
+      : s.messageCount || undefined,
+    mindTag: sameSession ? prev?.mindTag : undefined,
+    dnaTreeNodeId,
+    dnaTreeLabel,
+  };
+}
+
 /** Merge account session list into local resume cache (newest per character wins). */
 export function syncResumeCacheFromAccountSessions(
   sessions: AccountSessionSummary[],
@@ -111,55 +178,8 @@ export function syncResumeCacheFromAccountSessions(
     if (!s.resumeCode || !s.characterId) continue;
     if (seen.has(s.characterId)) continue;
     seen.add(s.characterId);
-    const prev = file.byCharacter[s.characterId];
-    const nextUpdated = s.updatedAt || s.createdAt;
-    if (
-      prev &&
-      prev.source === "account" &&
-      prev.updatedAt &&
-      nextUpdated &&
-      prev.updatedAt.localeCompare(nextUpdated) > 0
-    ) {
-      continue;
-    }
-    const sameSession = prev?.sessionId === s.sessionId;
-    // Server DNA node wins for multi-device reclaim; keep local label when same node
-    const serverNode = s.dnaTreeNodeId?.trim() || undefined;
-    const localNode = sameSession ? prev?.dnaTreeNodeId : undefined;
-    const dnaTreeNodeId = serverNode || localNode;
-    const dnaTreeLabel =
-      sameSession && prev?.dnaTreeNodeId === dnaTreeNodeId
-        ? prev?.dnaTreeLabel
-        : serverNode
-          ? dnaLabelFromNodeId(serverNode)
-          : undefined;
-    // Edge Pace on server ⇒ heat trail is hot enough for reclaim chips
-    const heatDepth =
-      sameSession && prev?.heatDepth
-        ? prev.heatDepth
-        : s.sessionMode === "edge_pace" || isDnaPowerTrail({ dnaTreeNodeId, heatDepth: undefined })
-          ? ("edge" as HeatTrailDepth)
-          : undefined;
-
-    file.byCharacter[s.characterId] = {
-      characterId: s.characterId,
-      characterName: s.characterName,
-      sessionId: s.sessionId,
-      resumeCode: s.resumeCode,
-      updatedAt: nextUpdated || new Date().toISOString(),
-      source: "account",
-      resumeExpiresAt: s.resumeExpiresAt || prev?.resumeExpiresAt,
-      // Preserve local heat trail when re-syncing the same session
-      recapLine: sameSession ? prev?.recapLine : prev?.recapLine,
-      heatDepth: heatDepth ?? (sameSession ? prev?.heatDepth : undefined),
-      heatChips: sameSession ? prev?.heatChips : undefined,
-      messageCount: sameSession
-        ? prev?.messageCount ?? s.messageCount
-        : s.messageCount || undefined,
-      mindTag: sameSession ? prev?.mindTag : undefined,
-      dnaTreeNodeId,
-      dnaTreeLabel,
-    };
+    const merged = mergeAccountSessionTrail(file.byCharacter[s.characterId], s);
+    if (merged) file.byCharacter[s.characterId] = merged;
   }
   writeCache(file);
 }
@@ -327,7 +347,7 @@ export function heatTrailFromSession(options: {
   const dnaTreeLabel =
     options.dnaTreeLabel?.trim() || dnaFromNotes || undefined;
   const dnaTreeNodeId = options.dnaTreeNodeId?.trim() || undefined;
-  if (dnaTreeLabel && chips.length < 5) {
+  if (dnaTreeLabel) {
     chips.unshift(
       dnaTreeLabel.length > 22 ? `DNA ${dnaTreeLabel.slice(0, 18)}…` : `DNA ${dnaTreeLabel}`,
     );

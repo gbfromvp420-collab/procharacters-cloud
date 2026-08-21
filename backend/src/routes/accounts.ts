@@ -532,6 +532,8 @@ export const createAccountRoutes = (
             messageCount: s.messageCount,
             status: s.status,
             expiresAt: s.resumeExpiresAt,
+            ...(s.recapLine ? { recapLine: s.recapLine } : {}),
+            ...(s.dnaTreeLabel ? { dnaTreeLabel: s.dnaTreeLabel } : {}),
           };
         });
 

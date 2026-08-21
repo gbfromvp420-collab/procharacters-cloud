@@ -1577,7 +1577,9 @@ export function AccountSettings() {
                     const localTrail = getResumeForCharacter(m.id);
                     const dnaLabel =
                       localTrail?.dnaTreeLabel?.trim() ||
+                      session?.dnaTreeLabel?.trim() ||
                       localTrail?.dnaTreeNodeId?.trim() ||
+                      session?.dnaTreeNodeId?.trim() ||
                       null;
                     return (
                       <li
@@ -1619,9 +1621,9 @@ export function AccountSettings() {
                                 href={buildResumeChatPath({
                                   characterId: m.id,
                                   resumeCode: session.resumeCode,
-                                  dnaTreeLabel: localTrail?.dnaTreeLabel,
-                                  dnaTreeNodeId: localTrail?.dnaTreeNodeId,
-                                  heatDepth: localTrail?.heatDepth,
+                                  dnaTreeLabel: localTrail?.dnaTreeLabel || session.dnaTreeLabel,
+                                  dnaTreeNodeId: localTrail?.dnaTreeNodeId || session.dnaTreeNodeId,
+                                  heatDepth: localTrail?.heatDepth || session.heatDepth,
                                 })}
                                 className={`rounded-lg px-2.5 py-1.5 text-[11px] font-semibold text-white ${
                                   urgent
@@ -2352,10 +2354,18 @@ export function AccountSettings() {
                     const nick =
                       s.characterName?.trim().split(/\s+/)[0] || s.characterName || "chat";
                     const trail = getResumeForCharacter(s.characterId);
+                    const recapLine = trail?.recapLine?.trim() || s.recapLine?.trim() || null;
                     const dnaPower = !!(
                       trail?.dnaTreeLabel ||
-                      trail?.dnaTreeNodeId
+                      trail?.dnaTreeNodeId ||
+                      s.dnaTreeLabel ||
+                      s.dnaTreeNodeId
                     );
+                    const dnaLabel =
+                      trail?.dnaTreeLabel ||
+                      s.dnaTreeLabel ||
+                      trail?.dnaTreeNodeId ||
+                      s.dnaTreeNodeId;
                     return (
                     <li
                       key={s.sessionId}
@@ -2373,12 +2383,17 @@ export function AccountSettings() {
                               · {mind.tag}
                             </span>
                           ) : null}
-                          {dnaPower && trail?.dnaTreeLabel ? (
+                          {dnaPower && dnaLabel ? (
                             <span className="ml-1.5 text-[10px] font-semibold text-violet-200/90">
-                              · DNA {trail.dnaTreeLabel}
+                              · DNA {dnaLabel}
                             </span>
                           ) : null}
                         </p>
+                        {recapLine ? (
+                          <p className="mt-0.5 line-clamp-1 text-[11px] italic text-brand-soft">
+                            “{recapLine}”
+                          </p>
+                        ) : null}
                         <p className="text-brand-muted">
                           {s.messageCount} msgs · {s.status}
                           {s.resumeCode ? (
@@ -2406,12 +2421,12 @@ export function AccountSettings() {
                       </div>
                       {s.resumeCode && (
                         <Link
-                          href={buildResumeChatPath({
+                            href={buildResumeChatPath({
                             characterId: s.characterId,
                             resumeCode: s.resumeCode,
-                            dnaTreeLabel: trail?.dnaTreeLabel,
-                            dnaTreeNodeId: trail?.dnaTreeNodeId,
-                            heatDepth: trail?.heatDepth,
+                            dnaTreeLabel: trail?.dnaTreeLabel || s.dnaTreeLabel,
+                            dnaTreeNodeId: trail?.dnaTreeNodeId || s.dnaTreeNodeId,
+                            heatDepth: trail?.heatDepth || s.heatDepth,
                           })}
                           className={`btn-primary min-h-0 px-3 py-1.5 text-[11px] ${
                             urgent

@@ -79,6 +79,8 @@ export type ResumeLinkItem = {
   messageCount: number;
   status: string;
   expiresAt?: string;
+  recapLine?: string;
+  dnaTreeLabel?: string;
 };
 
 function resumeLinksEmailBodies(options: {
@@ -92,7 +94,11 @@ function resumeLinksEmailBodies(options: {
       (i) =>
         `<li style="margin-bottom:12px"><strong>${escapeHtml(i.characterName)}</strong>` +
         ` · ${i.messageCount} msgs · ${escapeHtml(i.status)}` +
+        (i.dnaTreeLabel ? ` · DNA ${escapeHtml(i.dnaTreeLabel)}` : "") +
         (i.expiresAt ? ` · expires ${escapeHtml(i.expiresAt)}` : "") +
+        (i.recapLine
+          ? `<br/><em style="color:#aaa">${escapeHtml(i.recapLine)}</em>`
+          : "") +
         `<br/><code>${escapeHtml(i.resumeCode)}</code>` +
         `<br/><a href="${escapeAttr(i.resumeUrl)}">${escapeHtml(i.resumeUrl)}</a></li>`,
     )
@@ -108,7 +114,8 @@ function resumeLinksEmailBodies(options: {
     `Hi @${options.handle} — your Procharacters resume links:`,
     ``,
     ...options.items.flatMap((i) => [
-      `${i.characterName} (${i.messageCount} msgs, ${i.status})`,
+      `${i.characterName} (${i.messageCount} msgs, ${i.status}${i.dnaTreeLabel ? `, DNA ${i.dnaTreeLabel}` : ""})`,
+      i.recapLine ? `  Left at: ${i.recapLine}` : "",
       `  Code: ${i.resumeCode}`,
       `  Link: ${i.resumeUrl}`,
       i.expiresAt ? `  Expires: ${i.expiresAt}` : "",

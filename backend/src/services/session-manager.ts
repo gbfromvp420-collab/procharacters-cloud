@@ -24,6 +24,10 @@ import {
   type CharacterSessionRecord,
 } from "../lib/memory/character-session-store.js";
 import {
+  heatTrailFromSessionNotes,
+  type HeatTrailDepth,
+} from "../lib/memory/heat-trail.js";
+import {
   buildPriorContinuitySeed,
   buildSessionNotes,
 } from "../lib/memory/session-notes.js";
@@ -56,6 +60,25 @@ import type {
   SessionRecord,
 } from "../types/session.js";
 import { MemoryManager } from "./memory-manager.js";
+
+/** Account session list row — includes heat trail for multi-device reclaim. */
+export type AccountSessionListRow = {
+  sessionId: string;
+  characterId: string;
+  characterName: string;
+  status: SessionRecord["status"];
+  messageCount: number;
+  resumeCode?: string;
+  resumeExpiresAt?: string;
+  updatedAt: string;
+  createdAt: string;
+  sessionMode?: SessionMode;
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  recapLine?: string;
+  heatDepth?: HeatTrailDepth;
+  heatChips?: string[];
+};
 
 export class SessionNotFoundError extends Error {
   constructor(sessionId: string) {
@@ -503,56 +526,40 @@ export class SessionManager {
     return updated;
   }
 
-  async listAccountSessions(accountId: string): Promise<
-    Array<{
-      sessionId: string;
-      characterId: string;
-      characterName: string;
-      status: SessionRecord["status"];
-      messageCount: number;
-      resumeCode?: string;
-      resumeExpiresAt?: string;
-      updatedAt: string;
-      createdAt: string;
-      /** Phase 10 mode for DNA power reclaim deep-links. */
-      sessionMode?: SessionMode;
-      /** Studio Forge DNA tree node (spark | tease | edge | …). */
-      dnaTreeNodeId?: string;
-    }>
-  > {
+  async listAccountSessions(accountId: string): Promise<AccountSessionListRow[]> {
     await pruneExpiredResumeCodes();
     const records = await listSessionRecords({ accountId, limit: 40 });
-    const out: Array<{
-      sessionId: string;
-      characterId: string;
-      characterName: string;
-      status: SessionRecord["status"];
-      messageCount: number;
-      resumeCode?: string;
-      resumeExpiresAt?: string;
-      updatedAt: string;
-      createdAt: string;
-      sessionMode?: SessionMode;
-      dnaTreeNodeId?: string;
-    }> = [];
+    const out: AccountSessionListRow[] = [];
 
     const toSummary = (
       record: SessionRecord,
       resumeCode: string | undefined,
       resumeExpiresAt: string | undefined,
-    ) => ({
-      sessionId: record.id,
-      characterId: record.characterId,
-      characterName: record.promptSnapshot?.characterName ?? record.characterId,
-      status: record.status,
-      messageCount: record.memory?.messages?.length ?? 0,
-      resumeCode,
-      resumeExpiresAt,
-      updatedAt: record.updatedAt,
-      createdAt: record.createdAt,
-      ...(record.sessionMode ? { sessionMode: record.sessionMode } : {}),
-      ...(record.dnaTreeNodeId ? { dnaTreeNodeId: record.dnaTreeNodeId } : {}),
-    });
+    ): AccountSessionListRow => {
+      const messageCount = record.memory?.messages?.length ?? 0;
+      const trail = heatTrailFromSessionNotes({
+        sessionNotes: record.memory?.sessionNotes,
+        messageCount,
+        dnaTreeNodeId: record.dnaTreeNodeId,
+      });
+      return {
+        sessionId: record.id,
+        characterId: record.characterId,
+        characterName: record.promptSnapshot?.characterName ?? record.characterId,
+        status: record.status,
+        messageCount,
+        resumeCode,
+        resumeExpiresAt,
+        updatedAt: record.updatedAt,
+        createdAt: record.createdAt,
+        ...(record.sessionMode ? { sessionMode: record.sessionMode } : {}),
+        ...(record.dnaTreeNodeId ? { dnaTreeNodeId: record.dnaTreeNodeId } : {}),
+        ...(trail.dnaTreeLabel ? { dnaTreeLabel: trail.dnaTreeLabel } : {}),
+        ...(trail.recapLine ? { recapLine: trail.recapLine } : {}),
+        ...(trail.heatDepth ? { heatDepth: trail.heatDepth } : {}),
+        ...(trail.heatChips?.length ? { heatChips: trail.heatChips } : {}),
+      };
+    };
 
     // Ensure every account-owned session has a non-expired resume code.
     for (const record of records) {
@@ -681,15 +688,26 @@ export class SessionManager {
   async latestAccountSessionForCharacter(
     accountId: string,
     characterId: string,
-  ): Promise<{
-    sessionId: string;
-    characterId: string;
-    characterName: string;
-    resumeCode?: string;
-    messageCount: number;
-    status: SessionRecord["status"];
-    updatedAt: string;
-  } | null> {
+  ): Promise<
+    | (Pick<
+        AccountSessionListRow,
+        | "sessionId"
+        | "characterId"
+        | "characterName"
+        | "resumeCode"
+        | "resumeExpiresAt"
+        | "messageCount"
+        | "status"
+        | "updatedAt"
+        | "sessionMode"
+        | "dnaTreeNodeId"
+        | "dnaTreeLabel"
+        | "recapLine"
+        | "heatDepth"
+        | "heatChips"
+      >)
+    | null
+  > {
     const list = await this.listAccountSessions(accountId);
     const match = list.find((s) => s.characterId === characterId);
     if (!match) return null;
@@ -698,9 +716,16 @@ export class SessionManager {
       characterId: match.characterId,
       characterName: match.characterName,
       resumeCode: match.resumeCode,
+      resumeExpiresAt: match.resumeExpiresAt,
       messageCount: match.messageCount,
       status: match.status,
       updatedAt: match.updatedAt,
+      ...(match.sessionMode ? { sessionMode: match.sessionMode } : {}),
+      ...(match.dnaTreeNodeId ? { dnaTreeNodeId: match.dnaTreeNodeId } : {}),
+      ...(match.dnaTreeLabel ? { dnaTreeLabel: match.dnaTreeLabel } : {}),
+      ...(match.recapLine ? { recapLine: match.recapLine } : {}),
+      ...(match.heatDepth ? { heatDepth: match.heatDepth } : {}),
+      ...(match.heatChips?.length ? { heatChips: match.heatChips } : {}),
     };
   }
 

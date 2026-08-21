@@ -1,4 +1,5 @@
 import type { SessionManager } from "../../services/session-manager.js";
+import { dnaLabelFromNodeId } from "../memory/heat-trail.js";
 import { bump, recordExpiryCronTick } from "../observability/metrics.js";
 import {
   deletePushByEndpoint,
@@ -36,15 +37,7 @@ export function isDnaPowerSession(
 
 /** Pretty DNA node label for push copy. */
 export function dnaNodeLabel(nodeId?: string): string | null {
-  if (!nodeId?.trim()) return null;
-  const id = nodeId.trim().toLowerCase();
-  if (id.includes("release")) return "Release";
-  if (id.includes("deny")) return "Deny";
-  if (id.includes("edge")) return "Edge";
-  if (id.includes("tease")) return "Tease";
-  if (id.includes("soft")) return "Soft lock";
-  if (id.includes("spark")) return "Spark";
-  return nodeId.trim();
+  return dnaLabelFromNodeId(nodeId) ?? null;
 }
 
 /**
@@ -106,7 +99,12 @@ export async function notifyAccountResumeExpiry(
   const more = soonSorted.length > 3 ? ` +${soonSorted.length - 3} more` : "";
 
   const dnaPower = primary ? isDnaPowerSession(primary) : false;
-  const nodeLabel = primary ? dnaNodeLabel(primary.dnaTreeNodeId) : null;
+  const nodeLabel =
+    primary?.dnaTreeLabel?.trim() ||
+    (primary ? dnaNodeLabel(primary.dnaTreeNodeId) : null);
+  const recapBit = primary?.recapLine?.trim()
+    ? ` “${primary.recapLine.trim().slice(0, 72)}${primary.recapLine.trim().length > 72 ? "…" : ""}”`
+    : "";
 
   // Prefer last-chat deep link so one tap continues the sticky loop
   let deepUrl = `${siteBase}/account`;
@@ -128,13 +126,13 @@ export async function notifyAccountResumeExpiry(
       ? `DNA power · ${nodeLabel} reclaim`
       : "DNA power · Edge reclaim";
     body = nodeLabel
-      ? `${primaryName} is still on DNA · ${nodeLabel}. Tap to reclaim Edge Pace before the code expires.`
-      : `${primaryName} held your Edge Pace heat. Tap to reclaim before the code expires.`;
+      ? `${primaryName} is still on DNA · ${nodeLabel}.${recapBit} Tap to reclaim Edge Pace before the code expires.`
+      : `${primaryName} held your Edge Pace heat.${recapBit} Tap to reclaim before the code expires.`;
   } else if (dnaPower && primaryName) {
     title = "DNA power waiting — codes expire soon";
-    body = `${primaryName}${more ? more : ""} — DNA climb still hot. Tap to reclaim Edge Pace (${soonSorted.length} code${soonSorted.length === 1 ? "" : "s"}).`;
+    body = `${primaryName}${more ? more : ""} — DNA climb still hot.${recapBit} Tap to reclaim Edge Pace (${soonSorted.length} code${soonSorted.length === 1 ? "" : "s"}).`;
   } else if (soonSorted.length === 1 && primaryName) {
-    body = `Resume with ${primaryName} before the code expires (within ${WARN_DAYS} days). Tap to continue.`;
+    body = `Resume with ${primaryName} before the code expires (within ${WARN_DAYS} days).${recapBit} Tap to continue.`;
   } else {
     body = `${soonSorted.length} code(s) expire within ${WARN_DAYS} days: ${names}${more}. Tap to jump back in.`;
   }

@@ -330,7 +330,19 @@ export async function logoutAccount(accountToken: string): Promise<void> {
   });
 }
 
-export interface AccountSessionSummary {
+export type HeatTrailDepth = "spark" | "warm" | "edge" | "deep" | "locked";
+
+/** Server-stamped heat trail — same shape on list + latest so phone B can reclaim. */
+export interface AccountHeatTrail {
+  sessionMode?: "normal" | "edge_pace";
+  dnaTreeNodeId?: string;
+  dnaTreeLabel?: string;
+  recapLine?: string;
+  heatDepth?: HeatTrailDepth;
+  heatChips?: string[];
+}
+
+export interface AccountSessionSummary extends AccountHeatTrail {
   sessionId: string;
   characterId: string;
   characterName: string;
@@ -341,10 +353,6 @@ export interface AccountSessionSummary {
   resumeExpiresAt?: string;
   updatedAt: string;
   createdAt: string;
-  /** Phase 10 mode — used for DNA power / Edge reclaim deep-links. */
-  sessionMode?: "normal" | "edge_pace";
-  /** Studio Forge DNA tree node stamped server-side. */
-  dnaTreeNodeId?: string;
 }
 
 export async function listAccountSessions(
@@ -593,11 +601,7 @@ export async function emailAccountResumeLinks(accountToken: string): Promise<{
   }>;
 }
 
-/** Latest account-owned chat for a character (includes resume code). */
-export async function fetchLatestAccountSessionForCharacter(
-  accountToken: string,
-  characterId: string,
-): Promise<{
+export type LatestAccountSession = AccountHeatTrail & {
   sessionId: string;
   characterId: string;
   characterName: string;
@@ -606,7 +610,13 @@ export async function fetchLatestAccountSessionForCharacter(
   messageCount: number;
   status: string;
   updatedAt: string;
-} | null> {
+};
+
+/** Latest account-owned chat for a character (includes resume code + heat trail). */
+export async function fetchLatestAccountSessionForCharacter(
+  accountToken: string,
+  characterId: string,
+): Promise<LatestAccountSession | null> {
   const res = await fetch(
     `${API_BASE}/api/v1/accounts/me/characters/${encodeURIComponent(characterId)}/latest`,
     { headers: authHeaders(accountToken) },
@@ -616,16 +626,7 @@ export async function fetchLatestAccountSessionForCharacter(
     const text = await res.text();
     throw new Error(`Latest session failed (${res.status}): ${text}`);
   }
-  const data = (await res.json()) as {
-    sessionId: string;
-    characterId: string;
-    characterName: string;
-    resumeCode?: string;
-    resumeExpiresAt?: string;
-    messageCount: number;
-    status: string;
-    updatedAt: string;
-  };
+  const data = (await res.json()) as LatestAccountSession;
   if (data.resumeCode) {
     try {
       const { rememberLocalResume } = await import("./resume-cache");
@@ -635,6 +636,12 @@ export async function fetchLatestAccountSessionForCharacter(
         sessionId: data.sessionId,
         resumeCode: data.resumeCode,
         resumeExpiresAt: data.resumeExpiresAt,
+        recapLine: data.recapLine,
+        heatDepth: data.heatDepth,
+        heatChips: data.heatChips,
+        messageCount: data.messageCount,
+        dnaTreeNodeId: data.dnaTreeNodeId,
+        dnaTreeLabel: data.dnaTreeLabel,
       });
     } catch {
       /* ignore */

@@ -59,6 +59,11 @@ export function ReclaimAutostartGate({ children }: { children: ReactNode }) {
             resumeCode: latest.resumeCode,
             resumeExpiresAt: latest.resumeExpiresAt,
             messageCount: latest.messageCount,
+            recapLine: latest.recapLine,
+            heatDepth: latest.heatDepth,
+            heatChips: latest.heatChips,
+            dnaTreeNodeId: latest.dnaTreeNodeId,
+            dnaTreeLabel: latest.dnaTreeLabel,
           });
           const next = rewriteAutostartToResume(search);
           finish(next);

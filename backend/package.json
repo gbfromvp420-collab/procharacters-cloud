@@ -18,6 +18,7 @@
     "test:memory": "tsx scripts/smoke-test-memory.ts",
     "test:livekit": "tsx scripts/verify-livekit.ts",
     "smoke:deploy": "tsx scripts/smoke-deploy.ts",
+    "test:heat-trail": "tsx scripts/smoke-heat-trail.ts",
     "avatar:check-packs": "tsx scripts/check-avatar-packs.ts",
     "generate:avatar-loops": "tsx scripts/generate-avatar-loops.ts"
   },

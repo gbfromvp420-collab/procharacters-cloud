@@ -56,6 +56,9 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
 
+      - name: Heat-trail derivation checks
+        run: npm run test:heat-trail
+
       - name: Build
         run: npm run build
         env:
