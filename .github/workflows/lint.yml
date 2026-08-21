@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so we can diff PR-changed files against the base.
+          fetch-depth: 0
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -25,6 +28,25 @@ jobs:
           cache-dependency-path: |
             frontend/package-lock.json
             backend/package-lock.json
+
+      # Incremental Prettier adoption: enforce formatting only on files this PR
+      # changed, so we get a consistent style on new/edited code without a
+      # disruptive repo-wide reformat. Config: root .prettierrc.json (printWidth 100).
+      - name: Prettier (changed files)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --quiet origin "$BASE_REF"
+          mapfile -t FILES < <(git diff --name-only --diff-filter=ACMR "origin/$BASE_REF...HEAD" \
+            | grep -E '^(frontend/src/.*\.(ts|tsx|css)|backend/(src|scripts)/.*\.ts)$' || true)
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No formattable TS/CSS changes in this PR."
+            exit 0
+          fi
+          printf 'Checking %s file(s):\n' "${#FILES[@]}"
+          printf '  %s\n' "${FILES[@]}"
+          npx --yes prettier@3.3.3 --check "${FILES[@]}"
 
       - name: Frontend install
         working-directory: frontend
