@@ -1,15 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
-import {
-  isGenVideoConfigured,
-  proxyGenVideoPerform,
-} from "../lib/gen-video.js";
+import { isGenVideoConfigured, proxyGenVideoPerform } from "../lib/gen-video.js";
 import { bump } from "../lib/observability/metrics.js";
-import {
-  RATE_LIMITS,
-  clientIp,
-  enforceRateLimits,
-} from "../lib/rate-limit.js";
+import { RATE_LIMITS, clientIp, enforceRateLimits } from "../lib/rate-limit.js";
 
 const performSchema = z.object({
   sessionId: z.string().min(1).max(128),
@@ -52,15 +45,12 @@ export const createGenVideoRoutes = (): FastifyPluginAsync => {
         },
       ]);
       if (denied) {
-        return reply
-          .code(429)
-          .header("Retry-After", String(denied.retryAfterSec))
-          .send({
-            ok: false,
-            configured: true,
-            error: "Too many gen-video requests",
-            retryAfterSec: denied.retryAfterSec,
-          });
+        return reply.code(429).header("Retry-After", String(denied.retryAfterSec)).send({
+          ok: false,
+          configured: true,
+          error: "Too many gen-video requests",
+          retryAfterSec: denied.retryAfterSec,
+        });
       }
 
       bump("genVideoRequests");

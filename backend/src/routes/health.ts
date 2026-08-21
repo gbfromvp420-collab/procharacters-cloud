@@ -6,11 +6,7 @@ import {
   isStripeWebhookConfigured,
   stripeMode,
 } from "../lib/billing/stripe-billing.js";
-import {
-  buildPackStatusFile,
-  listPackStatuses,
-  phase4PackIds,
-} from "../lib/media/avatar-packs.js";
+import { buildPackStatusFile, listPackStatuses, phase4PackIds } from "../lib/media/avatar-packs.js";
 import {
   isErrorEmailConfigured,
   isErrorReportingConfigured,
@@ -43,9 +39,7 @@ function deployFingerprint(): {
     gitSha,
     gitShaShort: gitSha ? gitSha.slice(0, 7) : null,
     environment:
-      process.env.RAILWAY_ENVIRONMENT_NAME?.trim() ||
-      process.env.NODE_ENV?.trim() ||
-      null,
+      process.env.RAILWAY_ENVIRONMENT_NAME?.trim() || process.env.NODE_ENV?.trim() || null,
     serviceName: process.env.RAILWAY_SERVICE_NAME?.trim() || null,
   };
 }

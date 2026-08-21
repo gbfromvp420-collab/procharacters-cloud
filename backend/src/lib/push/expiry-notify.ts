@@ -15,9 +15,7 @@ const NOTIFY_COOLDOWN_MS = Number(
 /** Background scan interval; 0 disables cron. Default 1 hour. */
 const CRON_MS = Number(process.env.RESUME_EXPIRY_PUSH_CRON_MS ?? 60 * 60 * 1000);
 
-type AccountSessionRow = Awaited<
-  ReturnType<SessionManager["listAccountSessions"]>
->[number];
+type AccountSessionRow = Awaited<ReturnType<SessionManager["listAccountSessions"]>>[number];
 
 /**
  * DNA power trail — mid climb or Edge Pace heat.
@@ -124,9 +122,7 @@ export async function notifyAccountResumeExpiry(
   let title = "Procharacters — continue before codes expire";
   let body: string;
   if (dnaPower && soonSorted.length === 1 && primaryName) {
-    title = nodeLabel
-      ? `DNA power · ${nodeLabel} reclaim`
-      : "DNA power · Edge reclaim";
+    title = nodeLabel ? `DNA power · ${nodeLabel} reclaim` : "DNA power · Edge reclaim";
     body = nodeLabel
       ? `${primaryName} is still on DNA · ${nodeLabel}. Tap to reclaim Edge Pace before the code expires.`
       : `${primaryName} held your Edge Pace heat. Tap to reclaim before the code expires.`;
@@ -158,10 +154,7 @@ export async function notifyAccountResumeExpiry(
         continue;
       }
     }
-    const result = await sendWebPush(
-      { endpoint: sub.endpoint, keys: sub.keys },
-      payload,
-    );
+    const result = await sendWebPush({ endpoint: sub.endpoint, keys: sub.keys }, payload);
     if (result.gone) {
       await deletePushByEndpoint(sub.endpoint);
       continue;
@@ -228,8 +221,7 @@ export function startResumeExpiryPushCron(
     return;
   }
 
-  const siteBase =
-    process.env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
+  const siteBase = process.env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
 
   const tick = () => {
     void notifyAllSubscribedAccounts(sessionManager, { siteBase })

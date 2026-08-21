@@ -16,11 +16,7 @@ import { bearerToken } from "./accounts.js";
 import { resolveAccountToken } from "../lib/accounts/account-store.js";
 import { env } from "../config/env.js";
 import { bump } from "../lib/observability/metrics.js";
-import {
-  RATE_LIMITS,
-  clientIp,
-  enforceRateLimits,
-} from "../lib/rate-limit.js";
+import { RATE_LIMITS, clientIp, enforceRateLimits } from "../lib/rate-limit.js";
 
 function rateLimited(
   reply: import("fastify").FastifyReply,
@@ -80,8 +76,7 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
         });
         bump("pushSubscribe");
         // Fire expiry check immediately for this account
-        const siteBase =
-          env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
+        const siteBase = env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
         const notify = await notifyAccountResumeExpiry(account.id, sessionManager, {
           siteBase,
         });
@@ -142,8 +137,7 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
       if (!account) {
         return reply.code(401).send({ error: "Not signed in" });
       }
-      const siteBase =
-        env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
+      const siteBase = env.MAGIC_LINK_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || undefined;
       const body = (request.body ?? {}) as { force?: unknown };
       const force = body.force === true;
       const result = await notifyAccountResumeExpiry(account.id, sessionManager, {

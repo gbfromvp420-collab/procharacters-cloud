@@ -2,10 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { repoPath } from "../paths.js";
 import type { MediaClipKey } from "../live/custom-characters.js";
-import {
-  type ClipFormat,
-  validateClipUpload,
-} from "./clip-validate.js";
+import { type ClipFormat, validateClipUpload } from "./clip-validate.js";
 
 export function resolveUploadsDir(): string {
   if (process.env.UPLOADS_PATH?.trim()) return process.env.UPLOADS_PATH.trim();

@@ -176,35 +176,32 @@ export function AvatarPip({
     savePos(next);
   }, []);
 
-  const endDrag = useCallback(
-    (ev: PointerEvent | React.PointerEvent, snap: boolean) => {
-      const d = dragRef.current;
-      if (!d?.active) return;
-      dragRef.current = { ...d, active: false };
-      setDragging(false);
-      try {
-        (ev.target as HTMLElement).releasePointerCapture?.(d.pointerId);
-      } catch {
-        /* ignore */
+  const endDrag = useCallback((ev: PointerEvent | React.PointerEvent, snap: boolean) => {
+    const d = dragRef.current;
+    if (!d?.active) return;
+    dragRef.current = { ...d, active: false };
+    setDragging(false);
+    try {
+      (ev.target as HTMLElement).releasePointerCapture?.(d.pointerId);
+    } catch {
+      /* ignore */
+    }
+    const el = rootRef.current;
+    if (!el) return;
+    setPos((p) => {
+      const clamped = clampPos(p, el.offsetWidth, el.offsetHeight);
+      if (snap && d.moved) {
+        const c = nearestCorner(clamped, el.offsetWidth, el.offsetHeight);
+        setCorner(c);
+        saveCorner(c);
+        const snapped = cornerPos(c);
+        savePos(snapped);
+        return snapped;
       }
-      const el = rootRef.current;
-      if (!el) return;
-      setPos((p) => {
-        const clamped = clampPos(p, el.offsetWidth, el.offsetHeight);
-        if (snap && d.moved) {
-          const c = nearestCorner(clamped, el.offsetWidth, el.offsetHeight);
-          setCorner(c);
-          saveCorner(c);
-          const snapped = cornerPos(c);
-          savePos(snapped);
-          return snapped;
-        }
-        savePos(clamped);
-        return clamped;
-      });
-    },
-    [],
-  );
+      savePos(clamped);
+      return clamped;
+    });
+  }, []);
 
   const onPointerDown = (ev: React.PointerEvent) => {
     if (ev.button !== 0 && ev.pointerType === "mouse") return;

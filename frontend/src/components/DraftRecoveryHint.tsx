@@ -18,8 +18,7 @@ export function DraftRecoveryHint({
 }) {
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "them";
-  const preview =
-    draftPreview.length > 90 ? `${draftPreview.slice(0, 87).trim()}…` : draftPreview;
+  const preview = draftPreview.length > 90 ? `${draftPreview.slice(0, 87).trim()}…` : draftPreview;
 
   return (
     <div className="animate-fade-in rounded-xl border border-amber-400/35 bg-amber-500/8 px-3 py-2 text-[11px] leading-relaxed">

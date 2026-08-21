@@ -141,10 +141,7 @@ function connectWebSocket(wsUrl: string): Promise<WebSocket> {
 async function sendUserMessage(ws: WebSocket, content: string): Promise<string> {
   ws.send(JSON.stringify({ type: "user_message", content }));
 
-  const complete = await waitForEvent<{ type: string; content: string }>(
-    ws,
-    "assistant_complete",
-  );
+  const complete = await waitForEvent<{ type: string; content: string }>(ws, "assistant_complete");
 
   return complete.content;
 }
@@ -175,10 +172,7 @@ async function main(): Promise<void> {
   log("Connecting WebSocket…", session.wsUrl);
   const ws = await connectWebSocket(session.wsUrl);
 
-  const ready = await waitForEvent<{ type: string; characterName: string }>(
-    ws,
-    "session_ready",
-  );
+  const ready = await waitForEvent<{ type: string; characterName: string }>(ws, "session_ready");
   log("WebSocket ready", ready);
 
   // Memory should be empty before any messages

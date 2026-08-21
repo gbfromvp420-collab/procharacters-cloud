@@ -5,26 +5,12 @@ import type { MediaClipKey, MediaOverrides } from "../lib/live/custom-characters
 import { getCustomCharacter, updateCustomCharacter } from "../lib/live/index.js";
 import { listClipUrls } from "../lib/media/clip-resolver.js";
 import { assertDeclaredClipMime } from "../lib/media/clip-validate.js";
-import {
-  isClipKey,
-  saveCharacterClip,
-  toPublicMediaUrl,
-} from "../lib/media/upload-store.js";
-import {
-  accountHasActivePremium,
-  resolveAccountToken,
-} from "../lib/accounts/account-store.js";
-import {
-  RATE_LIMITS,
-  clientIp,
-  enforceRateLimits,
-} from "../lib/rate-limit.js";
+import { isClipKey, saveCharacterClip, toPublicMediaUrl } from "../lib/media/upload-store.js";
+import { accountHasActivePremium, resolveAccountToken } from "../lib/accounts/account-store.js";
+import { RATE_LIMITS, clientIp, enforceRateLimits } from "../lib/rate-limit.js";
 import { bearerToken } from "./accounts.js";
 
-function rateLimited(
-  reply: FastifyReply,
-  result: { retryAfterSec: number; limit: number },
-) {
+function rateLimited(reply: FastifyReply, result: { retryAfterSec: number; limit: number }) {
   reply.header("Retry-After", String(result.retryAfterSec));
   reply.header("X-RateLimit-Limit", String(result.limit));
   return reply.code(429).send({
@@ -65,7 +51,9 @@ async function checkUploadLimits(
 async function assertClipUploadAllowed(
   request: FastifyRequest,
   characterId: string,
-): Promise<{ ok: true; accountId?: string } | { ok: false; status: number; error: string; code: string }> {
+): Promise<
+  { ok: true; accountId?: string } | { ok: false; status: number; error: string; code: string }
+> {
   const existing = getCustomCharacter(characterId);
   if (!existing) {
     return { ok: false, status: 404, error: "Custom character not found", code: "NOT_FOUND" };

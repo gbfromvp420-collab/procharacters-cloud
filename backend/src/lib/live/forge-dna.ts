@@ -355,14 +355,10 @@ export function heuristicForgeExpand(input: ForgeExpandInput): ForgeExpandResult
   const nameHint = input.displayNameHint?.trim();
   const nameMatch =
     fantasy.match(/(?:named?|call(?:ed)?|name is)\s+([A-Z][a-zA-Z]{1,20})/) ||
-    fantasy.match(
-      /\b(?:twink|boy|girl|muse|goddess|brat|jock|goth)\s+([A-Z][a-zA-Z]{1,20})\b/,
-    ) ||
+    fantasy.match(/\b(?:twink|boy|girl|muse|goddess|brat|jock|goth)\s+([A-Z][a-zA-Z]{1,20})\b/) ||
     fantasy.match(/\b([A-Z][a-z]{2,16})\b(?=.*\b(?:who|that|with|in)\b)/);
   const displayName =
-    nameHint ||
-    nameMatch?.[1] ||
-    (isFemaleBase(baseModelId) ? "Muse" : "Mateo").slice(0, 40);
+    nameHint || nameMatch?.[1] || (isFemaleBase(baseModelId) ? "Muse" : "Mateo").slice(0, 40);
 
   const vibeTags: string[] = [];
   if (/\bbrat\b/.test(lower)) vibeTags.push("brat");
@@ -387,7 +383,9 @@ export function heuristicForgeExpand(input: ForgeExpandInput): ForgeExpandResult
     intimacy: clamp01(/\blove|kiss|boyfriend|girlfriend|romantic\b/.test(lower) ? 0.75 : 0.4),
     chaos: clamp01(/\bchaos|wild|unhinged|crazy\b/.test(lower) ? 0.85 : 0.35),
     denial: clamp01(/\bedg|deny|not yet|hold it\b/.test(lower) ? 0.85 : 0.55),
-    pace: clamp01(/\bslow|tease forever|hours\b/.test(lower) ? 0.3 : /\bfast|now\b/.test(lower) ? 0.75 : 0.5),
+    pace: clamp01(
+      /\bslow|tease forever|hours\b/.test(lower) ? 0.3 : /\bfast|now\b/.test(lower) ? 0.75 : 0.5,
+    ),
   };
 
   const identity =
@@ -404,8 +402,7 @@ export function heuristicForgeExpand(input: ForgeExpandInput): ForgeExpandResult
     vibeTags.includes("sweat") ? "Sweat + interval holds" : null,
   ].filter(Boolean);
   const vibe =
-    vibeParts.join(" · ") ||
-    "Adaptive heat · match user pace · stay obsessively present";
+    vibeParts.join(" · ") || "Adaptive heat · match user pace · stay obsessively present";
 
   const keyPhrases = pickPhrases(lower, vibeTags);
   const scenes = pickScenes(displayName, lower, vibeTags);
@@ -543,10 +540,7 @@ function buildMemorySeeds(
 }
 
 /** Parse LLM JSON into DNA; fall back to heuristic on failure. */
-export function parseLlmForgeJson(
-  raw: string,
-  input: ForgeExpandInput,
-): ForgeExpandResult {
+export function parseLlmForgeJson(raw: string, input: ForgeExpandInput): ForgeExpandResult {
   const start = heuristicForgeExpand(input);
   try {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -564,18 +558,28 @@ export function parseLlmForgeJson(
       .slice(0, 400);
     const baseModelId = String(parsed.baseModelId ?? start.form.baseModelId).trim();
     const vibeTags = Array.isArray(parsed.vibeTags)
-      ? parsed.vibeTags.map((t) => String(t).trim()).filter(Boolean).slice(0, 4)
+      ? parsed.vibeTags
+          .map((t) => String(t).trim())
+          .filter(Boolean)
+          .slice(0, 4)
       : start.dna.vibeTags;
     const keyPhrases = Array.isArray(parsed.keyPhrases)
-      ? parsed.keyPhrases.map((p) => String(p).trim()).filter((p) => p.length >= 2).slice(0, 4)
+      ? parsed.keyPhrases
+          .map((p) => String(p).trim())
+          .filter((p) => p.length >= 2)
+          .slice(0, 4)
       : start.form.keyPhrases;
     const scenesRaw = Array.isArray(parsed.scenes) ? parsed.scenes : start.form.scenes;
     const scenes = scenesRaw
       .map((s) => {
         const o = s as { title?: string; body?: string };
         return {
-          title: String(o?.title ?? "").trim().slice(0, 80),
-          body: String(o?.body ?? "").trim().slice(0, 600),
+          title: String(o?.title ?? "")
+            .trim()
+            .slice(0, 80),
+          body: String(o?.body ?? "")
+            .trim()
+            .slice(0, 600),
         };
       })
       .filter((s) => s.title.length >= 2 && s.body.length >= 12)
@@ -596,12 +600,14 @@ export function parseLlmForgeJson(
             const o = s as Partial<MemorySeed>;
             return {
               id: String(o.id ?? `seed-${i}`).slice(0, 40),
-              kind: (["kink", "ritual", "name", "boundary", "obsession", "scene"] as const).includes(
-                o.kind as MemorySeed["kind"],
-              )
+              kind: (
+                ["kink", "ritual", "name", "boundary", "obsession", "scene"] as const
+              ).includes(o.kind as MemorySeed["kind"])
                 ? (o.kind as MemorySeed["kind"])
                 : "obsession",
-              text: String(o.text ?? "").trim().slice(0, 400),
+              text: String(o.text ?? "")
+                .trim()
+                .slice(0, 400),
               weight: clamp01(Number(o.weight ?? 0.6)),
             };
           })
@@ -621,10 +627,8 @@ export function parseLlmForgeJson(
       memorySeeds,
     });
     if (branches.dark) adaptivePrompt.branches.dark = String(branches.dark).slice(0, 600);
-    if (branches.chaotic)
-      adaptivePrompt.branches.chaotic = String(branches.chaotic).slice(0, 600);
-    if (branches.flirty)
-      adaptivePrompt.branches.flirty = String(branches.flirty).slice(0, 600);
+    if (branches.chaotic) adaptivePrompt.branches.chaotic = String(branches.chaotic).slice(0, 600);
+    if (branches.flirty) adaptivePrompt.branches.flirty = String(branches.flirty).slice(0, 600);
 
     const starterLine = String(
       parsed.starterLine ?? keyPhrases[0] ?? start.dna.starterLine ?? "",
@@ -694,7 +698,10 @@ export function assembleDnaCharacterPrompt(dna: NaughtySyntaxDna): string {
   const { adaptivePrompt } = dna;
   const treeNodes = (dna.behaviorTree.nodes ?? [])
     .slice(0, 8)
-    .map((n) => `- ${n.id}: ${n.action}${n.triggers?.length ? ` (when: ${n.triggers.slice(0, 4).join(", ")})` : ""}`)
+    .map(
+      (n) =>
+        `- ${n.id}: ${n.action}${n.triggers?.length ? ` (when: ${n.triggers.slice(0, 4).join(", ")})` : ""}`,
+    )
     .join("\n");
   const seedBlock = formatDnaMemorySeedsBlock(dna);
   const evo = dna.evolution;
@@ -747,7 +754,10 @@ export function formatDnaMemorySeedsBlock(dna: NaughtySyntaxDna): string {
     .slice(0, 8);
   if (!seeds.length) return "";
   return seeds
-    .map((s) => `- [${s.kind}${typeof s.weight === "number" ? `·${s.weight.toFixed(2)}` : ""}] ${s.text.trim().slice(0, 220)}`)
+    .map(
+      (s) =>
+        `- [${s.kind}${typeof s.weight === "number" ? `·${s.weight.toFixed(2)}` : ""}] ${s.text.trim().slice(0, 220)}`,
+    )
     .join("\n");
 }
 
@@ -819,8 +829,7 @@ export function dnaPresenceDefaults(dna: NaughtySyntaxDna): {
         : dna.vibeTags?.some((t) => /brat/i.test(t))
           ? "bratty"
           : emotionFromBand[band]);
-  const pose =
-    shortAvatarToken(dna.livekit.poseByBand?.[band], 24) || poseFromBand[band];
+  const pose = shortAvatarToken(dna.livekit.poseByBand?.[band], 24) || poseFromBand[band];
   const action =
     dna.evolution.denial >= 0.6
       ? "freeze_edge"
@@ -834,9 +843,7 @@ export function dnaPresenceDefaults(dna: NaughtySyntaxDna): {
     `Forge DNA body bias for ${dna.displayName}: ${dna.vibe.slice(0, 120)}.`,
     `Band order ${dna.livekit.bandOrder.join("→")}. Denial ${dna.evolution.denial.toFixed(2)} pace ${dna.evolution.pace.toFixed(2)}.`,
     "Match avatar_intent emotion/pose to dialogue heat; never thrash clips every token.",
-    dna.memorySeeds?.[0]?.text
-      ? `Callback seed: ${dna.memorySeeds[0]!.text.slice(0, 100)}`
-      : "",
+    dna.memorySeeds?.[0]?.text ? `Callback seed: ${dna.memorySeeds[0]!.text.slice(0, 100)}` : "",
   ]
     .filter(Boolean)
     .join(" ");

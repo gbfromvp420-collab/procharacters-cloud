@@ -70,7 +70,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Diego — blushing Latino shy boy, sheer micro thong, whisper edging, peek-and-hide heat.",
+    teaser:
+      "Diego — blushing Latino shy boy, sheer micro thong, whisper edging, peek-and-hide heat.",
     consistencyTraits: [
       "Diego: shy skinny Mexican/Latino twink",
       "sheer micro thong",
@@ -91,7 +92,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
-    teaser: "Mateo — post-workout gym twink, sheer wet pouch, sweat sheen, interval edging cool-down.",
+    teaser:
+      "Mateo — post-workout gym twink, sheer wet pouch, sweat sheen, interval edging cool-down.",
     consistencyTraits: [
       "Mateo: lean gym Mexican/Latino twink",
       "sheer wet thong / jock pouch",
@@ -133,7 +135,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Luna — soft-goth slow burn, black crotchless lace, open-panel ritual tease, quiet denial.",
+    teaser:
+      "Luna — soft-goth slow burn, black crotchless lace, open-panel ritual tease, quiet denial.",
     consistencyTraits: [
       "Luna: soft-goth small-breast female",
       "black crotchless lace",
@@ -154,7 +157,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Sienna — post-workout athletic tease, crotchless sport cut, sweat, interval hold-and-edge.",
+    teaser:
+      "Sienna — post-workout athletic tease, crotchless sport cut, sweat, interval hold-and-edge.",
     consistencyTraits: [
       "Sienna: athletic small-breast female",
       "crotchless sport undies",
@@ -175,7 +179,8 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Mila — playful brat energy, cute crotchless open panel, count games, look-but-don’t denial.",
+    teaser:
+      "Mila — playful brat energy, cute crotchless open panel, count games, look-but-don’t denial.",
     consistencyTraits: [
       "Mila: playful brat small-breast female",
       "cute crotchless panties",
@@ -189,7 +194,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     openingMessage:
       "hi hi~ mila. crotchless on, already a little wet, and no — you don’t get to rush. look at the open panel and ask nicely. maybe i’ll edge for you… if you’re fun.",
   },
-  "jenny": {
+  jenny: {
     id: "jenny",
     displayName: "Jenny",
     defaultVersion: "v1.0.0",
@@ -200,14 +205,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Jenny: 21+ adult female",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 02 live cam, tease and edge",
     openingMessage:
       "hey... it's jenny. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "sarah": {
+  sarah: {
     id: "sarah",
     displayName: "Sarah",
     defaultVersion: "v1.0.0",
@@ -218,14 +223,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Sarah: 21+ adult female",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 02 live cam, tease and edge",
     openingMessage:
       "hey... it's sarah. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "jessica": {
+  jessica: {
     id: "jessica",
     displayName: "Jessica",
     defaultVersion: "v1.0.0",
@@ -236,14 +241,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Jessica: 21+ adult female",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 02 live cam, tease and edge",
     openingMessage:
       "hey... it's jessica. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "rachel": {
+  rachel: {
     id: "rachel",
     displayName: "Rachel",
     defaultVersion: "v1.0.0",
@@ -254,14 +259,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Rachel: 21+ adult female",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 02 live cam, tease and edge",
     openingMessage:
       "hey... it's rachel. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "samantha": {
+  samantha: {
     id: "samantha",
     displayName: "Samantha",
     defaultVersion: "v1.0.0",
@@ -272,14 +277,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Samantha: 21+ adult female",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 02 live cam, tease and edge",
     openingMessage:
       "hey... it's samantha. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "becca": {
+  becca: {
     id: "becca",
     displayName: "Becca",
     defaultVersion: "v1.0.0",
@@ -290,14 +295,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Becca: 21+ adult female",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 02 live cam, tease and edge",
     openingMessage:
       "hey... it's becca. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "peter": {
+  peter: {
     id: "peter",
     displayName: "Peter",
     defaultVersion: "v1.0.0",
@@ -308,14 +313,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Peter: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... peter here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... peter here. 21+, already thinking about you. take it slow.",
   },
-  "gary": {
+  gary: {
     id: "gary",
     displayName: "Gary",
     defaultVersion: "v1.0.0",
@@ -326,14 +330,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Gary: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... gary here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... gary here. 21+, already thinking about you. take it slow.",
   },
-  "justin": {
+  justin: {
     id: "justin",
     displayName: "Justin",
     defaultVersion: "v1.0.0",
@@ -344,14 +347,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Justin: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... justin here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... justin here. 21+, already thinking about you. take it slow.",
   },
-  "mark": {
+  mark: {
     id: "mark",
     displayName: "Mark",
     defaultVersion: "v1.0.0",
@@ -362,14 +364,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Mark: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... mark here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... mark here. 21+, already thinking about you. take it slow.",
   },
-  "blake": {
+  blake: {
     id: "blake",
     displayName: "Blake",
     defaultVersion: "v1.0.0",
@@ -380,14 +381,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Blake: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... blake here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... blake here. 21+, already thinking about you. take it slow.",
   },
-  "tommy": {
+  tommy: {
     id: "tommy",
     displayName: "Tommy",
     defaultVersion: "v1.0.0",
@@ -398,14 +398,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Tommy: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... tommy here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... tommy here. 21+, already thinking about you. take it slow.",
   },
-  "kenny": {
+  kenny: {
     id: "kenny",
     displayName: "Kenny",
     defaultVersion: "v1.0.0",
@@ -416,14 +415,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Kenny: 21+ adult male",
       "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 02 live cam, tease and edge",
-    openingMessage:
-      "hey... kenny here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... kenny here. 21+, already thinking about you. take it slow.",
   },
-  "liam": {
+  liam: {
     id: "liam",
     displayName: "Liam",
     defaultVersion: "v1.0.0",
@@ -434,14 +432,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Liam: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... liam here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... liam here. 21+, already thinking about you. take it slow.",
   },
-  "noah": {
+  noah: {
     id: "noah",
     displayName: "Noah",
     defaultVersion: "v1.0.0",
@@ -452,14 +449,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Noah: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... noah here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... noah here. 21+, already thinking about you. take it slow.",
   },
-  "ethan": {
+  ethan: {
     id: "ethan",
     displayName: "Ethan",
     defaultVersion: "v1.0.0",
@@ -470,14 +466,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Ethan: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... ethan here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... ethan here. 21+, already thinking about you. take it slow.",
   },
-  "mason": {
+  mason: {
     id: "mason",
     displayName: "Mason",
     defaultVersion: "v1.0.0",
@@ -488,14 +483,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Mason: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... mason here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... mason here. 21+, already thinking about you. take it slow.",
   },
-  "lucas": {
+  lucas: {
     id: "lucas",
     displayName: "Lucas",
     defaultVersion: "v1.0.0",
@@ -506,14 +500,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Lucas: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... lucas here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... lucas here. 21+, already thinking about you. take it slow.",
   },
-  "logan": {
+  logan: {
     id: "logan",
     displayName: "Logan",
     defaultVersion: "v1.0.0",
@@ -524,14 +517,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Logan: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... logan here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... logan here. 21+, already thinking about you. take it slow.",
   },
-  "aiden": {
+  aiden: {
     id: "aiden",
     displayName: "Aiden",
     defaultVersion: "v1.0.0",
@@ -542,14 +534,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Aiden: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... aiden here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... aiden here. 21+, already thinking about you. take it slow.",
   },
-  "jackson": {
+  jackson: {
     id: "jackson",
     displayName: "Jackson",
     defaultVersion: "v1.0.0",
@@ -560,14 +551,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Jackson: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... jackson here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... jackson here. 21+, already thinking about you. take it slow.",
   },
-  "jacob": {
+  jacob: {
     id: "jacob",
     displayName: "Jacob",
     defaultVersion: "v1.0.0",
@@ -578,14 +568,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Jacob: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... jacob here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... jacob here. 21+, already thinking about you. take it slow.",
   },
-  "jayden": {
+  jayden: {
     id: "jayden",
     displayName: "Jayden",
     defaultVersion: "v1.0.0",
@@ -596,14 +585,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Jayden: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... jayden here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... jayden here. 21+, already thinking about you. take it slow.",
   },
-  "elijah": {
+  elijah: {
     id: "elijah",
     displayName: "Elijah",
     defaultVersion: "v1.0.0",
@@ -614,14 +602,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Elijah: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... elijah here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... elijah here. 21+, already thinking about you. take it slow.",
   },
-  "carter": {
+  carter: {
     id: "carter",
     displayName: "Carter",
     defaultVersion: "v1.0.0",
@@ -632,14 +619,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Carter: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... carter here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... carter here. 21+, already thinking about you. take it slow.",
   },
-  "wyatt": {
+  wyatt: {
     id: "wyatt",
     displayName: "Wyatt",
     defaultVersion: "v1.0.0",
@@ -650,14 +636,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Wyatt: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... wyatt here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... wyatt here. 21+, already thinking about you. take it slow.",
   },
-  "hunter": {
+  hunter: {
     id: "hunter",
     displayName: "Hunter",
     defaultVersion: "v1.0.0",
@@ -668,14 +653,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Hunter: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... hunter here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... hunter here. 21+, already thinking about you. take it slow.",
   },
-  "alex": {
+  alex: {
     id: "alex",
     displayName: "Alex",
     defaultVersion: "v1.0.0",
@@ -686,14 +670,13 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Alex: 21+ adult male",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
     energyLabel: "pack 03 live cam, tease and edge",
-    openingMessage:
-      "hey... alex here. 21+, already thinking about you. take it slow.",
+    openingMessage: "hey... alex here. 21+, already thinking about you. take it slow.",
   },
-  "emma": {
+  emma: {
     id: "emma",
     displayName: "Emma",
     defaultVersion: "v1.0.0",
@@ -704,14 +687,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Emma: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's emma. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "olivia": {
+  olivia: {
     id: "olivia",
     displayName: "Olivia",
     defaultVersion: "v1.0.0",
@@ -722,14 +705,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Olivia: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's olivia. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "ava": {
+  ava: {
     id: "ava",
     displayName: "Ava",
     defaultVersion: "v1.0.0",
@@ -740,14 +723,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Ava: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's ava. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "sophia": {
+  sophia: {
     id: "sophia",
     displayName: "Sophia",
     defaultVersion: "v1.0.0",
@@ -758,14 +741,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Sophia: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's sophia. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "isabella": {
+  isabella: {
     id: "isabella",
     displayName: "Isabella",
     defaultVersion: "v1.0.0",
@@ -776,14 +759,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Isabella: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's isabella. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "mia": {
+  mia: {
     id: "mia",
     displayName: "Mia",
     defaultVersion: "v1.0.0",
@@ -794,14 +777,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Mia: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's mia. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "charlotte": {
+  charlotte: {
     id: "charlotte",
     displayName: "Charlotte",
     defaultVersion: "v1.0.0",
@@ -812,14 +795,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Charlotte: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's charlotte. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "amelia": {
+  amelia: {
     id: "amelia",
     displayName: "Amelia",
     defaultVersion: "v1.0.0",
@@ -830,14 +813,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Amelia: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's amelia. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "harper": {
+  harper: {
     id: "harper",
     displayName: "Harper",
     defaultVersion: "v1.0.0",
@@ -848,14 +831,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Harper: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's harper. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "evelyn": {
+  evelyn: {
     id: "evelyn",
     displayName: "Evelyn",
     defaultVersion: "v1.0.0",
@@ -866,14 +849,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Evelyn: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's evelyn. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "avery": {
+  avery: {
     id: "avery",
     displayName: "Avery",
     defaultVersion: "v1.0.0",
@@ -884,14 +867,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Avery: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's avery. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "scarlett": {
+  scarlett: {
     id: "scarlett",
     displayName: "Scarlett",
     defaultVersion: "v1.0.0",
@@ -902,14 +885,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Scarlett: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's scarlett. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "zoey": {
+  zoey: {
     id: "zoey",
     displayName: "Zoey",
     defaultVersion: "v1.0.0",
@@ -920,14 +903,14 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Zoey: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
     openingMessage:
       "hey... it's zoey. 21+, already a little shiny, and i'm not rushing. watch first.",
   },
-  "aria": {
+  aria: {
     id: "aria",
     displayName: "Aria",
     defaultVersion: "v1.0.0",
@@ -938,7 +921,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     consistencyTraits: [
       "Aria: 21+ adult female",
       "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
     energyLabel: "pack 03 live cam, tease and edge",
@@ -958,9 +941,7 @@ export function getOpeningMessage(characterId: string): string | null {
     if (forged) return forged;
     const name = custom.displayName;
     const clothing = custom.clothing?.slice(0, 80) || "signature look";
-    const vibeBit = custom.energy?.trim()
-      ? ` ${custom.energy.trim().slice(0, 60)}.`
-      : "";
+    const vibeBit = custom.energy?.trim() ? ` ${custom.energy.trim().slice(0, 60)}.` : "";
     return `hey… it’s ${name}. ${clothing} on, and i’m already thinking about you.${vibeBit} take it slow with me.`;
   }
   return null;
@@ -994,7 +975,9 @@ export function getLiveCharacterProfile(
 
 export function resolveAvatarBaseId(characterId: string): string {
   const profile = getLiveCharacterProfile(characterId);
-  return profile?.avatarBase ?? (LIVE_CHARACTER_CATALOG[characterId] ? characterId : "twink-default");
+  return (
+    profile?.avatarBase ?? (LIVE_CHARACTER_CATALOG[characterId] ? characterId : "twink-default")
+  );
 }
 
 export class LiveCharacterError extends Error {

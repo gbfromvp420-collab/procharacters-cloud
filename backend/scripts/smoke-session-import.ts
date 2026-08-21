@@ -9,10 +9,7 @@ import {
   parseImportDocumentAll,
   SESSION_EXPORT_SCHEMA,
 } from "../src/lib/memory/session-export.js";
-import {
-  resolveImportCharacterId,
-  SessionManager,
-} from "../src/services/session-manager.js";
+import { resolveImportCharacterId, SessionManager } from "../src/services/session-manager.js";
 import { MemoryManager } from "../src/services/memory-manager.js";
 
 function assert(cond: unknown, msg: string) {

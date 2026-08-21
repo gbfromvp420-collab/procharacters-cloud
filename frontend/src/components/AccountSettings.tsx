@@ -239,11 +239,7 @@ export function AccountSettings() {
           .filter((c) => c.kind === "custom" && c.mine === true)
           .sort((a, b) => a.displayName.localeCompare(b.displayName)),
       );
-      setAccount((prev) =>
-        prev
-          ? { ...prev, handle: me.handle, accountId: me.accountId }
-          : prev,
-      );
+      setAccount((prev) => (prev ? { ...prev, handle: me.handle, accountId: me.accountId } : prev));
       if (push) {
         setPushConfigured(push.configured);
         setPushServerCount(push.subscriptionCount);
@@ -324,11 +320,14 @@ export function AccountSettings() {
           });
         }, 80);
       };
-      const finish = (msg: string, ceremony?: {
-        plan: string;
-        customsLimit: number;
-        planExpiresAt?: string | null;
-      }) => {
+      const finish = (
+        msg: string,
+        ceremony?: {
+          plan: string;
+          customsLimit: number;
+          planExpiresAt?: string | null;
+        },
+      ) => {
         if (done) return;
         done = true;
         if (poll != null) window.clearInterval(poll);
@@ -458,12 +457,15 @@ export function AccountSettings() {
     }
   }, [refresh]);
 
-  const applyAuth = async (result: {
-    accountId: string;
-    handle: string;
-    token: string;
-    expiresAt: string;
-  }, label: string) => {
+  const applyAuth = async (
+    result: {
+      accountId: string;
+      handle: string;
+      token: string;
+      expiresAt: string;
+    },
+    label: string,
+  ) => {
     const next: StoredAccount = {
       accountId: result.accountId,
       handle: result.handle,
@@ -549,11 +551,7 @@ export function AccountSettings() {
     setBusy(true);
     setError(null);
     try {
-      await setAccountPassphrase(
-        account.token,
-        newPass,
-        hasPassphrase ? currentPass : undefined,
-      );
+      await setAccountPassphrase(account.token, newPass, hasPassphrase ? currentPass : undefined);
       setHasPassphrase(true);
       setCurrentPass("");
       setNewPass("");
@@ -635,14 +633,11 @@ export function AccountSettings() {
     const url = buildResumeCodeShareUrl(code, {
       characterId,
       rehydrate: true,
-      sessionMode:
-        trail?.dnaTreeLabel || trail?.dnaTreeNodeId ? "edge_pace" : undefined,
+      sessionMode: trail?.dnaTreeLabel || trail?.dnaTreeNodeId ? "edge_pace" : undefined,
     });
     const result = await shareOrCopyUrl({
       url,
-      title: characterName
-        ? `Resume chat with ${characterName}`
-        : `Resume Procharacters chat`,
+      title: characterName ? `Resume chat with ${characterName}` : `Resume Procharacters chat`,
       text: characterName
         ? `Continue your chat with ${characterName} (code ${code})`
         : `Continue your chat (code ${code})`,
@@ -793,7 +788,9 @@ export function AccountSettings() {
       lines.push(`- Link: ${url}${dnaPower ? " (DNA power · Edge Pace)" : ""}`);
       lines.push(``);
     }
-    lines.push(`_Open a link on any device to continue that chat. DNA power links restore Edge Pace._`);
+    lines.push(
+      `_Open a link on any device to continue that chat. DNA power links restore Edge Pace._`,
+    );
     lines.push(``);
 
     return {
@@ -902,8 +899,7 @@ export function AccountSettings() {
         flash(`Emailed ${result.count} resume link(s) to ${result.email}`);
       } else {
         flash(
-          result.devHint ||
-            `Email not delivered (${result.provider}) — try Download resumes.md`,
+          result.devHint || `Email not delivered (${result.provider}) — try Download resumes.md`,
         );
         if (result.mailError) setError(result.mailError);
         else if (!result.delivered && result.count > 0) {
@@ -1198,7 +1194,7 @@ export function AccountSettings() {
       }
       const fb = liveIds.has("twink-default")
         ? "twink-default"
-        : [...liveIds][0] ?? "twink-default";
+        : ([...liveIds][0] ?? "twink-default");
 
       setImportDoc(document);
       setImportMissing(missing);
@@ -1304,7 +1300,7 @@ export function AccountSettings() {
   const onDeleteAccount = async () => {
     if (!account) return;
     if (deleteConfirm !== "DELETE") {
-      setError('Type DELETE in the confirm box to permanently remove your account');
+      setError("Type DELETE in the confirm box to permanently remove your account");
       return;
     }
     if (!window.confirm("Permanently delete your account and all saved chats?")) return;
@@ -1576,9 +1572,7 @@ export function AccountSettings() {
                     const expiry = formatResumeExpiryShort(session?.resumeExpiresAt);
                     const localTrail = getResumeForCharacter(m.id);
                     const dnaLabel =
-                      localTrail?.dnaTreeLabel?.trim() ||
-                      localTrail?.dnaTreeNodeId?.trim() ||
-                      null;
+                      localTrail?.dnaTreeLabel?.trim() || localTrail?.dnaTreeNodeId?.trim() || null;
                     return (
                       <li
                         key={m.id}
@@ -1686,9 +1680,7 @@ export function AccountSettings() {
                                           m.avatarBase === "twink-default"
                                             ? m.avatarBase
                                             : undefined,
-                                        keyPhrases: m.keyPhrases?.length
-                                          ? m.keyPhrases
-                                          : undefined,
+                                        keyPhrases: m.keyPhrases?.length ? m.keyPhrases : undefined,
                                         scenes: m.scenes?.length ? m.scenes : undefined,
                                       },
                                       account.token,
@@ -1712,9 +1704,7 @@ export function AccountSettings() {
                                           baseModelId: created.baseModelId || m.baseModelId,
                                         },
                                         ...prev,
-                                      ].sort((a, b) =>
-                                        a.displayName.localeCompare(b.displayName),
-                                      ),
+                                      ].sort((a, b) => a.displayName.localeCompare(b.displayName)),
                                     );
                                     flash(`${created.displayName} · duplicated`);
                                   } catch (err) {
@@ -1761,9 +1751,7 @@ export function AccountSettings() {
                                     flash(`Deleted ${m.displayName}`);
                                   } catch (err) {
                                     setError(
-                                      err instanceof Error
-                                        ? err.message
-                                        : "Could not delete model",
+                                      err instanceof Error ? err.message : "Could not delete model",
                                     );
                                   } finally {
                                     setBusy(false);
@@ -1821,9 +1809,7 @@ export function AccountSettings() {
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-muted">
                     Free · forever
                   </p>
-                  <p className="mt-1 text-sm text-brand-text">
-                    {freeCustomsLimit} My Characters
-                  </p>
+                  <p className="mt-1 text-sm text-brand-text">{freeCustomsLimit} My Characters</p>
                   <p className="mt-0.5 text-[11px] text-brand-muted">{freeBenefitLabel}</p>
                 </div>
                 <div className="rounded-xl border border-amber-500/35 bg-amber-500/10 px-3 py-2.5">
@@ -1845,10 +1831,8 @@ export function AccountSettings() {
                   <p className="mt-1 text-xs text-brand-muted">
                     You’re at{" "}
                     <strong className="text-brand-text">{customsLimit} My Characters</strong>
-                    {planExpiresAt
-                      ? ` · until ${new Date(planExpiresAt).toLocaleString()}`
-                      : ""}
-                    . Private models only you can see.
+                    {planExpiresAt ? ` · until ${new Date(planExpiresAt).toLocaleString()}` : ""}.
+                    Private models only you can see.
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     <Link
@@ -1934,15 +1918,16 @@ export function AccountSettings() {
                   </p>
                   <ol className="mt-1 list-decimal space-y-0.5 pl-4">
                     <li>
-                      Paste <code className="text-brand-muted/90">STRIPE_SECRET_KEY</code>{" "}
-                      (start with <code className="text-brand-muted/90">sk_test_…</code>)
+                      Paste <code className="text-brand-muted/90">STRIPE_SECRET_KEY</code> (start
+                      with <code className="text-brand-muted/90">sk_test_…</code>)
                     </li>
                     <li>
                       Stripe Dashboard → Webhooks → endpoint{" "}
                       <code className="break-all text-brand-muted/90">
                         …/api/v1/billing/webhook
                       </code>{" "}
-                      · event <code className="text-brand-muted/90">checkout.session.completed</code>
+                      · event{" "}
+                      <code className="text-brand-muted/90">checkout.session.completed</code>
                     </li>
                     <li>
                       Paste signing secret as{" "}
@@ -1965,10 +1950,8 @@ export function AccountSettings() {
               {activePremium && (
                 <p className="mt-2 text-xs text-amber-100/90">
                   Premium active
-                  {planExpiresAt
-                    ? ` until ${new Date(planExpiresAt).toLocaleString()}`
-                    : ""}
-                  . Stacking another pass extends your expiry — thank you.
+                  {planExpiresAt ? ` until ${new Date(planExpiresAt).toLocaleString()}` : ""}.
+                  Stacking another pass extends your expiry — thank you.
                 </p>
               )}
             </section>
@@ -2033,11 +2016,7 @@ export function AccountSettings() {
                 />
                 <button
                   type="button"
-                  disabled={
-                    busy ||
-                    newPass.length < 6 ||
-                    (hasPassphrase && currentPass.length < 6)
-                  }
+                  disabled={busy || newPass.length < 6 || (hasPassphrase && currentPass.length < 6)}
                   onClick={() => void onPassphrase()}
                   className="justify-self-start rounded-lg border border-brand-border px-4 py-2 text-sm disabled:opacity-50"
                 >
@@ -2171,8 +2150,8 @@ export function AccountSettings() {
               </div>
               <p className="mb-3 text-[11px] text-brand-muted">
                 Import JSON runs a <strong>dry-run preview</strong> first (counts + remaps, no
-                writes). Confirm to restore chats as new sessions (up to 25). Missing customs can
-                be remapped to a live model.
+                writes). Confirm to restore chats as new sessions (up to 25). Missing customs can be
+                remapped to a live model.
               </p>
 
               {expiryWarning && (
@@ -2254,9 +2233,7 @@ export function AccountSettings() {
                         {pushConfigured === false
                           ? "VAPID not configured"
                           : `${pushServerCount} device(s)`}
-                        {pushPermission !== "unknown"
-                          ? ` · permission ${pushPermission}`
-                          : ""}
+                        {pushPermission !== "unknown" ? ` · permission ${pushPermission}` : ""}
                         {pushLastNotify
                           ? ` · last expiry alert ${new Date(pushLastNotify).toLocaleString()}`
                           : " · no expiry alert yet"}
@@ -2352,158 +2329,147 @@ export function AccountSettings() {
                     const nick =
                       s.characterName?.trim().split(/\s+/)[0] || s.characterName || "chat";
                     const trail = getResumeForCharacter(s.characterId);
-                    const dnaPower = !!(
-                      trail?.dnaTreeLabel ||
-                      trail?.dnaTreeNodeId
-                    );
+                    const dnaPower = !!(trail?.dnaTreeLabel || trail?.dnaTreeNodeId);
                     return (
-                    <li
-                      key={s.sessionId}
-                      className={`flex flex-wrap items-center gap-2 rounded-xl border bg-brand-bg px-3 py-2 text-xs ${
-                        urgent
-                          ? "border-rose-400/45"
-                          : "border-brand-border/70"
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-brand-text">
-                          {s.characterName}
-                          {mind ? (
-                            <span className="ml-1.5 text-[10px] font-normal text-brand-accent">
-                              · {mind.tag}
-                            </span>
-                          ) : null}
-                          {dnaPower && trail?.dnaTreeLabel ? (
-                            <span className="ml-1.5 text-[10px] font-semibold text-violet-200/90">
-                              · DNA {trail.dnaTreeLabel}
-                            </span>
-                          ) : null}
-                        </p>
-                        <p className="text-brand-muted">
-                          {s.messageCount} msgs · {s.status}
-                          {s.resumeCode ? (
-                            <>
-                              {" · "}
-                              <span className="font-mono text-amber-200/90">{s.resumeCode}</span>
-                              {expiryShort ? (
-                                <span
-                                  className={
-                                    urgent ? "text-rose-200/90" : "text-brand-soft"
-                                  }
-                                >
-                                  {" "}
-                                  · {expiryShort}
-                                </span>
-                              ) : s.resumeExpiresAt ? (
-                                <span className="text-brand-soft">
-                                  {" "}
-                                  ({formatExpiry(s.resumeExpiresAt)})
-                                </span>
-                              ) : null}
-                            </>
-                          ) : null}
-                        </p>
-                      </div>
-                      {s.resumeCode && (
-                        <Link
-                          href={buildResumeChatPath({
-                            characterId: s.characterId,
-                            resumeCode: s.resumeCode,
-                            dnaTreeLabel: trail?.dnaTreeLabel,
-                            dnaTreeNodeId: trail?.dnaTreeNodeId,
-                            heatDepth: trail?.heatDepth,
-                          })}
-                          className={`btn-primary min-h-0 px-3 py-1.5 text-[11px] ${
-                            urgent
-                              ? "ring-1 ring-rose-400/60"
-                              : dnaPower
-                                ? "ring-1 ring-violet-400/50"
-                                : ""
-                          }`}
+                      <li
+                        key={s.sessionId}
+                        className={`flex flex-wrap items-center gap-2 rounded-xl border bg-brand-bg px-3 py-2 text-xs ${
+                          urgent ? "border-rose-400/45" : "border-brand-border/70"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-brand-text">
+                            {s.characterName}
+                            {mind ? (
+                              <span className="ml-1.5 text-[10px] font-normal text-brand-accent">
+                                · {mind.tag}
+                              </span>
+                            ) : null}
+                            {dnaPower && trail?.dnaTreeLabel ? (
+                              <span className="ml-1.5 text-[10px] font-semibold text-violet-200/90">
+                                · DNA {trail.dnaTreeLabel}
+                              </span>
+                            ) : null}
+                          </p>
+                          <p className="text-brand-muted">
+                            {s.messageCount} msgs · {s.status}
+                            {s.resumeCode ? (
+                              <>
+                                {" · "}
+                                <span className="font-mono text-amber-200/90">{s.resumeCode}</span>
+                                {expiryShort ? (
+                                  <span className={urgent ? "text-rose-200/90" : "text-brand-soft"}>
+                                    {" "}
+                                    · {expiryShort}
+                                  </span>
+                                ) : s.resumeExpiresAt ? (
+                                  <span className="text-brand-soft">
+                                    {" "}
+                                    ({formatExpiry(s.resumeExpiresAt)})
+                                  </span>
+                                ) : null}
+                              </>
+                            ) : null}
+                          </p>
+                        </div>
+                        {s.resumeCode && (
+                          <Link
+                            href={buildResumeChatPath({
+                              characterId: s.characterId,
+                              resumeCode: s.resumeCode,
+                              dnaTreeLabel: trail?.dnaTreeLabel,
+                              dnaTreeNodeId: trail?.dnaTreeNodeId,
+                              heatDepth: trail?.heatDepth,
+                            })}
+                            className={`btn-primary min-h-0 px-3 py-1.5 text-[11px] ${
+                              urgent
+                                ? "ring-1 ring-rose-400/60"
+                                : dnaPower
+                                  ? "ring-1 ring-violet-400/50"
+                                  : ""
+                            }`}
+                          >
+                            {dnaPower ? `DNA power · ${nick}` : `Continue · ${nick}`}
+                          </Link>
+                        )}
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onExportSession(s.sessionId, "json")}
+                          className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                          title="Download this chat as JSON"
                         >
-                          {dnaPower ? `DNA power · ${nick}` : `Continue · ${nick}`}
-                        </Link>
-                      )}
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId, "json")}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Download this chat as JSON"
-                      >
-                        JSON
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId, "md")}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Download this chat as Markdown"
-                      >
-                        MD
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share Markdown via system share sheet"
-                            : "Copy Markdown transcript to clipboard"
-                        }
-                      >
-                        {canNativeShare() ? "Share MD" : "Copy MD"}
-                      </button>
-                      {s.resumeCode && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void copyResume(s.resumeCode!, s.characterName, s.characterId)
-                            }
-                            className="text-brand-muted hover:text-brand-accent"
-                          >
-                            {canNativeShare() ? "Share code" : "Copy code"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPrintCard(s)}
-                            className="text-amber-200/90 hover:text-amber-100"
-                            title="QR code + print-friendly resume card"
-                          >
-                            QR / Print
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => void onDownloadOneResumeMd(s)}
-                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                            title="Download this resume as a .md snippet"
-                          >
-                            .md
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() =>
-                              void onRefreshOneResume(s.sessionId, s.characterName)
-                            }
-                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                            title="Mint a new resume code (old link stops working)"
-                          >
-                            New code
-                          </button>
-                        </>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => void onDeleteSession(s.sessionId)}
-                        className="text-red-300/80 hover:text-red-200"
-                      >
-                        Delete
-                      </button>
-                    </li>
+                          JSON
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onExportSession(s.sessionId, "md")}
+                          className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                          title="Download this chat as Markdown"
+                        >
+                          MD
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
+                          className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                          title={
+                            canNativeShare()
+                              ? "Share Markdown via system share sheet"
+                              : "Copy Markdown transcript to clipboard"
+                          }
+                        >
+                          {canNativeShare() ? "Share MD" : "Copy MD"}
+                        </button>
+                        {s.resumeCode && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                void copyResume(s.resumeCode!, s.characterName, s.characterId)
+                              }
+                              className="text-brand-muted hover:text-brand-accent"
+                            >
+                              {canNativeShare() ? "Share code" : "Copy code"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPrintCard(s)}
+                              className="text-amber-200/90 hover:text-amber-100"
+                              title="QR code + print-friendly resume card"
+                            >
+                              QR / Print
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void onDownloadOneResumeMd(s)}
+                              className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                              title="Download this resume as a .md snippet"
+                            >
+                              .md
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void onRefreshOneResume(s.sessionId, s.characterName)}
+                              className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
+                              title="Mint a new resume code (old link stops working)"
+                            >
+                              New code
+                            </button>
+                          </>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => void onDeleteSession(s.sessionId)}
+                          className="text-red-300/80 hover:text-red-200"
+                        >
+                          Delete
+                        </button>
+                      </li>
                     );
                   })}
                 </ul>

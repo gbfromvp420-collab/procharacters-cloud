@@ -137,7 +137,8 @@ export class SessionMemory {
     const sceneLock = extractSceneLock(this.messages, options?.characterId);
 
     if (!this.sessionNotes?.trim() && this.messages.length > 0 && options?.sessionNotesBuilder) {
-      this.sessionNotes = options.sessionNotesBuilder(this.messages).trim().slice(0, 1200) || undefined;
+      this.sessionNotes =
+        options.sessionNotesBuilder(this.messages).trim().slice(0, 1200) || undefined;
     }
 
     return {
@@ -158,7 +159,6 @@ export class SessionMemory {
   }
 }
 
-
 /**
  * Heuristic scene lock for resume + mid-session stickiness.
  * clothing / pose / act / arousal / game (+ optional call name).
@@ -168,46 +168,43 @@ export function extractSceneLock(messages: MemoryMessage[], characterId?: string
   const corpus = recent.map((m) => m.content.toLowerCase()).join(" ");
   const rawCorpus = recent.map((m) => m.content).join(" ");
 
-  const clothing =
-    /crotchless|open panel|open-panel/.test(corpus)
-      ? "crotchless open"
-      : /sheer|thong|g-string|mesh/.test(corpus)
-        ? "sheer signature on"
-        : /lace|lingerie|panties|undies/.test(corpus)
-          ? "lingerie / signature bottoms"
-          : characterId?.includes("female") || characterId?.includes("brat")
-            ? "crotchless open"
-            : "signature clothing on";
+  const clothing = /crotchless|open panel|open-panel/.test(corpus)
+    ? "crotchless open"
+    : /sheer|thong|g-string|mesh/.test(corpus)
+      ? "sheer signature on"
+      : /lace|lingerie|panties|undies/.test(corpus)
+        ? "lingerie / signature bottoms"
+        : characterId?.includes("female") || characterId?.includes("brat")
+          ? "crotchless open"
+          : "signature clothing on";
 
-  const pose =
-    /on (?:my |your )?back|lying back|on_back/.test(corpus)
-      ? "on back"
-      : /kneel|on (?:my |your )?knees/.test(corpus)
-        ? "kneeling"
-        : /straddl|on (?:my |your )?lap|riding/.test(corpus)
-          ? "straddling / close"
-          : /lean(?:ing)? in|close.?up|face.?to.?face|inches? away/.test(corpus)
-            ? "close / leaning in"
-            : /mirror|watching (?:myself|yourself)/.test(corpus)
-              ? "mirror view"
-              : /standing|against the wall/.test(corpus)
-                ? "standing"
-                : "live cam presence";
+  const pose = /on (?:my |your )?back|lying back|on_back/.test(corpus)
+    ? "on back"
+    : /kneel|on (?:my |your )?knees/.test(corpus)
+      ? "kneeling"
+      : /straddl|on (?:my |your )?lap|riding/.test(corpus)
+        ? "straddling / close"
+        : /lean(?:ing)? in|close.?up|face.?to.?face|inches? away/.test(corpus)
+          ? "close / leaning in"
+          : /mirror|watching (?:myself|yourself)/.test(corpus)
+            ? "mirror view"
+            : /standing|against the wall/.test(corpus)
+              ? "standing"
+              : "live cam presence";
 
-  const act =
-    /handjob|stroke|stroking|palm|grip|fist/.test(corpus)
-      ? "hands-on stroke / grip"
-      : /french kiss|tongue|making out|kiss(?:ing)?/.test(corpus)
-        ? "kissing / mouth heat"
-        : /grind|hip.?roll|rub(?:bing)? against/.test(corpus)
-          ? "grinding / friction"
-          : /hover|tease over|over.?fabric|through (?:the )?fabric/.test(corpus)
-            ? "over-fabric tease"
-            : /edge|edging|hold it|don't cum|dont cum/.test(corpus)
-              ? "edging hold"
-              : /look(?:ing)? at|eye contact|watch me/.test(corpus)
-                ? "eye contact / show-off"
-                : "tease / escalate";
+  const act = /handjob|stroke|stroking|palm|grip|fist/.test(corpus)
+    ? "hands-on stroke / grip"
+    : /french kiss|tongue|making out|kiss(?:ing)?/.test(corpus)
+      ? "kissing / mouth heat"
+      : /grind|hip.?roll|rub(?:bing)? against/.test(corpus)
+        ? "grinding / friction"
+        : /hover|tease over|over.?fabric|through (?:the )?fabric/.test(corpus)
+          ? "over-fabric tease"
+          : /edge|edging|hold it|don't cum|dont cum/.test(corpus)
+            ? "edging hold"
+            : /look(?:ing)? at|eye contact|watch me/.test(corpus)
+              ? "eye contact / show-off"
+              : "tease / escalate";
 
   let arousal = "warm / building";
   if (

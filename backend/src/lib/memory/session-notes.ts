@@ -24,18 +24,12 @@ export function buildSessionNotes(
   const characterId = options?.characterId;
   const maxSnippets = options?.maxUserSnippets ?? 3;
 
-  const presenceSeed = characterId
-    ? getPresenceProfile(characterId).defaults.emotion
-    : undefined;
-  const energyLabel = characterId
-    ? getLiveCharacterProfile(characterId)?.energyLabel
-    : undefined;
+  const presenceSeed = characterId ? getPresenceProfile(characterId).defaults.emotion : undefined;
+  const energyLabel = characterId ? getLiveCharacterProfile(characterId)?.energyLabel : undefined;
 
   if (messages.length === 0) {
     const seed =
-      energyLabel || presenceSeed
-        ? ` Signature vibe: ${energyLabel ?? presenceSeed}.`
-        : "";
+      energyLabel || presenceSeed ? ` Signature vibe: ${energyLabel ?? presenceSeed}.` : "";
     return `Just starting with ${characterName}.${seed} No prior beats yet — open slow and stay in character.`;
   }
 
@@ -49,9 +43,7 @@ export function buildSessionNotes(
     .filter(Boolean);
 
   const lastAssistant = assistantMsgs.at(-1);
-  const assistantBeat = lastAssistant
-    ? compactLine(lastAssistant.content, 100)
-    : "";
+  const assistantBeat = lastAssistant ? compactLine(lastAssistant.content, 100) : "";
 
   const corpus = messages
     .slice(-12)
@@ -146,10 +138,7 @@ export function buildSessionNotes(
  * Compact seed for a *new* session that inherits prior dossier.
  * Prefer name + wants + heat + last scene over dumping raw dossier text.
  */
-export function buildPriorContinuitySeed(
-  priorNotes: string,
-  characterName: string,
-): string {
+export function buildPriorContinuitySeed(priorNotes: string, characterName: string): string {
   const name = characterName.trim() || "the character";
   const prior = priorNotes.trim();
   if (!prior) {
@@ -187,9 +176,7 @@ function bulletSection(dossier: string, heading: string): string[] {
   for (const raw of lines) {
     const line = raw.trim();
     if (
-      /^Who they are|^What they want|^Recurring heat|^Last scene lock|^Recent sessions/i.test(
-        line,
-      )
+      /^Who they are|^What they want|^Recurring heat|^Last scene lock|^Recent sessions/i.test(line)
     ) {
       inSection = headRe.test(line);
       continue;

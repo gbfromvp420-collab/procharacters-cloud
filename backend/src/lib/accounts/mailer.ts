@@ -15,13 +15,10 @@ export async function sendMagicLinkEmail(options: {
   expiresAt: string;
 }): Promise<SendMagicLinkResult> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from =
-    process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
+  const from = process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
 
   if (!apiKey) {
-    console.info(
-      `[magic-link] No RESEND_API_KEY — link for ${options.to}: ${options.magicUrl}`,
-    );
+    console.info(`[magic-link] No RESEND_API_KEY — link for ${options.to}: ${options.magicUrl}`);
     return { delivered: false, provider: "none" };
   }
 
@@ -81,10 +78,11 @@ export type ResumeLinkItem = {
   expiresAt?: string;
 };
 
-function resumeLinksEmailBodies(options: {
-  handle: string;
-  items: ResumeLinkItem[];
-}): { html: string; text: string; subject: string } {
+function resumeLinksEmailBodies(options: { handle: string; items: ResumeLinkItem[] }): {
+  html: string;
+  text: string;
+  subject: string;
+} {
   const n = options.items.length;
   const subject = `Your Procharacters resume links (${n})`;
   const rowsHtml = options.items
@@ -139,8 +137,7 @@ export async function sendResumeLinksEmail(options: {
   items: ResumeLinkItem[];
 }): Promise<SendMagicLinkResult & { subject?: string }> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
-  const from =
-    process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
+  const from = process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
   const { html, text, subject } = resumeLinksEmailBodies(options);
 
   if (options.items.length === 0) {

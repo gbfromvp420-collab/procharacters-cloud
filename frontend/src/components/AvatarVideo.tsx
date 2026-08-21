@@ -11,15 +11,8 @@ import {
   energyBandRingClass,
   type EnergyBand,
 } from "@/lib/energy";
-import {
-  presenceMotionClass,
-  presenceVisual,
-  resolvePresenceSkin,
-} from "@/lib/presence";
-import {
-  genVideoChipLabel,
-  type GenVideoOverlayState,
-} from "@/lib/gen-video";
+import { presenceMotionClass, presenceVisual, resolvePresenceSkin } from "@/lib/presence";
+import { genVideoChipLabel, type GenVideoOverlayState } from "@/lib/gen-video";
 import type { AvatarState } from "@/lib/types";
 
 function formatLabel(value: string): string {
@@ -76,7 +69,15 @@ export function AvatarVideo({
   const dnaLevel = dnaTreeHeatLevel(dnaTreeNodeId, dnaTreeLabel);
   const dnaShort = dnaNodeShortLabel(dnaTreeNodeId, dnaTreeLabel);
   const dnaRing = dnaAvatarRingClass(dnaTreeNodeId, dnaTreeLabel);
-  const genChip = genVideoChipLabel(genOverlay ?? { optedIn: false, status: "idle", provider: null, videoUrl: null, playable: false });
+  const genChip = genVideoChipLabel(
+    genOverlay ?? {
+      optedIn: false,
+      status: "idle",
+      provider: null,
+      videoUrl: null,
+      playable: false,
+    },
+  );
   const genPlayable = genOverlay?.playable && genOverlay.videoUrl ? genOverlay.videoUrl : null;
 
   // Smooth crossfade on primary URL change (do not hard-reset activeSrc).
@@ -314,9 +315,7 @@ export function AvatarVideo({
 
       {avatar && pip && (
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/85 to-transparent px-2 pb-1.5 pt-6">
-          <p className="truncate text-[10px] font-medium text-white">
-            {characterName ?? "Live"}
-          </p>
+          <p className="truncate text-[10px] font-medium text-white">{characterName ?? "Live"}</p>
           <p className="truncate text-[9px] text-white/70">
             {dnaShort
               ? `DNA · ${dnaShort} · ${arousalPct}%`

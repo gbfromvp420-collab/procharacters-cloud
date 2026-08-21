@@ -27,9 +27,7 @@ export function registerObservability(app: FastifyInstance): void {
   });
 
   app.addHook("onResponse", async (request, reply) => {
-    const durationMs = request._startedAt
-      ? Date.now() - request._startedAt
-      : undefined;
+    const durationMs = request._startedAt ? Date.now() - request._startedAt : undefined;
     const statusCode = reply.statusCode;
     bump("httpRequests");
     if (statusCode >= 500) bump("httpErrors5xx");
@@ -86,8 +84,7 @@ export function registerObservability(app: FastifyInstance): void {
         ? (error as { statusCode: number }).statusCode
         : 500;
 
-    const message =
-      error instanceof Error ? error.message : "Internal Server Error";
+    const message = error instanceof Error ? error.message : "Internal Server Error";
 
     if (statusCode >= 500) {
       request._errorReported = true;

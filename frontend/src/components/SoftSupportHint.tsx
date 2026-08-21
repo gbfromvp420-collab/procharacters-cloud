@@ -10,10 +10,7 @@ import {
   type BillingCatalogProduct,
 } from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
-import {
-  isSessionWinActive,
-  isSoftSupportInCooldown,
-} from "@/lib/conversion-flags";
+import { isSessionWinActive, isSoftSupportInCooldown } from "@/lib/conversion-flags";
 
 const DISMISS_KEY = "procharacters.softSupport.dismissed.v1";
 
@@ -173,8 +170,7 @@ export function SoftSupportHint({
                 </>
               ) : (
                 <>
-                  Chat stays free. Optional{" "}
-                  <strong className="text-brand-text">Day Pass</strong> /{" "}
+                  Chat stays free. Optional <strong className="text-brand-text">Day Pass</strong> /{" "}
                   <strong className="text-brand-text">Supporter</strong> unlocks more My Characters
                   {checkoutReady ? " — one tap when you’re ready." : "."}
                 </>

@@ -48,9 +48,7 @@ export function isErrorEmailConfigured(): boolean {
 
 export function isErrorReportingConfigured(): boolean {
   return (
-    isErrorWebhookUrlConfigured() ||
-    isErrorEmailConfigured() ||
-    !!process.env.SENTRY_DSN?.trim()
+    isErrorWebhookUrlConfigured() || isErrorEmailConfigured() || !!process.env.SENTRY_DSN?.trim()
   );
 }
 
@@ -115,9 +113,7 @@ async function sendNtfy(
   err: ReportedError,
   line: string,
 ): Promise<{ ok: boolean; status: number; hint: string }> {
-  const title = err.test
-    ? "Procharacters · test OK"
-    : `Procharacters · ${err.statusCode ?? 500}`;
+  const title = err.test ? "Procharacters · test OK" : `Procharacters · ${err.statusCode ?? 500}`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
@@ -201,8 +197,7 @@ async function sendEmailAlert(
   if (!to || !key) {
     return { ok: false, hint: "ERROR_ALERT_EMAIL or RESEND_API_KEY missing" };
   }
-  const from =
-    process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
+  const from = process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
   const subject = err.test
     ? "[Procharacters] Error alert test OK"
     : `[Procharacters] ${err.statusCode ?? 500} ${err.path ?? "error"}`;
@@ -244,7 +239,13 @@ export async function reportError(
     error: (obj: unknown, msg?: string) => void;
     info?: (obj: unknown, msg?: string) => void;
   },
-): Promise<{ sent: boolean; configured: boolean; status?: number; error?: string; channel?: AlertChannel }> {
+): Promise<{
+  sent: boolean;
+  configured: boolean;
+  status?: number;
+  error?: string;
+  channel?: AlertChannel;
+}> {
   const payload = {
     source: "procharacters-api",
     env: process.env.NODE_ENV ?? "unknown",
@@ -307,14 +308,11 @@ export async function reportError(
       } else {
         lastStatus = result.status;
         lastError =
-          lastError ||
-          `Email HTTP ${result.status ?? "?"}${result.hint ? `: ${result.hint}` : ""}`;
+          lastError || `Email HTTP ${result.status ?? "?"}${result.hint ? `: ${result.hint}` : ""}`;
         log?.error({ ...result, channel: "email" }, "error_email_failed");
       }
     } catch (sendErr) {
-      lastError =
-        lastError ||
-        (sendErr instanceof Error ? sendErr.message : "email send failed");
+      lastError = lastError || (sendErr instanceof Error ? sendErr.message : "email send failed");
       log?.error({ sendErr }, "error_email_failed");
     }
   }
@@ -329,12 +327,10 @@ export async function reportError(
 }
 
 /** Ops smoke — posts a test message to configured channel(s). */
-export async function sendErrorWebhookTest(
-  log?: {
-    error: (obj: unknown, msg?: string) => void;
-    info?: (obj: unknown, msg?: string) => void;
-  },
-): Promise<{
+export async function sendErrorWebhookTest(log?: {
+  error: (obj: unknown, msg?: string) => void;
+  info?: (obj: unknown, msg?: string) => void;
+}): Promise<{
   sent: boolean;
   configured: boolean;
   status?: number;

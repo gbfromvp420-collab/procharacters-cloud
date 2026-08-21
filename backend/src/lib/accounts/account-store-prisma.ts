@@ -1,10 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "../prisma.js";
-import type {
-  AccountPlan,
-  AccountRecord,
-  ResumeCodeRecord,
-} from "./account-store.js";
+import type { AccountPlan, AccountRecord, ResumeCodeRecord } from "./account-store.js";
 
 const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAGIC_TTL_MS = 15 * 60 * 1000;
@@ -50,7 +46,11 @@ export function prismaDropCachedAccount(accountId: string): void {
 }
 
 function normalizeHandle(handle: string): string {
-  return handle.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32);
+  return handle
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 32);
 }
 
 function normalizeEmail(email: string): string {
@@ -98,9 +98,7 @@ function asAccountRecord(user: {
   return record;
 }
 
-async function issuePrismaToken(
-  accountId: string,
-): Promise<{ token: string; expiresAt: string }> {
+async function issuePrismaToken(accountId: string): Promise<{ token: string; expiresAt: string }> {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS);
   await prisma.authToken.create({
@@ -371,10 +369,7 @@ export async function prismaGrantAccountPlan(
   if (!user) throw new Error("NOT_FOUND");
 
   // Idempotent: same Checkout Session must not stack twice (webhook + confirm).
-  if (
-    options?.checkoutSessionId &&
-    user.lastCheckoutSessionId === options.checkoutSessionId
-  ) {
+  if (options?.checkoutSessionId && user.lastCheckoutSessionId === options.checkoutSessionId) {
     return asAccountRecord(user);
   }
 
@@ -398,9 +393,7 @@ export async function prismaGrantAccountPlan(
       plan,
       planExpiresAt,
       ...(options?.stripeCustomerId ? { stripeCustomerId: options.stripeCustomerId } : {}),
-      ...(options?.checkoutSessionId
-        ? { lastCheckoutSessionId: options.checkoutSessionId }
-        : {}),
+      ...(options?.checkoutSessionId ? { lastCheckoutSessionId: options.checkoutSessionId } : {}),
     },
     include: { credentials: true },
   });

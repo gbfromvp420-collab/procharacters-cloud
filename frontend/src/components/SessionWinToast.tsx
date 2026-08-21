@@ -9,10 +9,7 @@ import {
   startBillingCheckout,
 } from "@/lib/api";
 import { loadStoredAccount } from "@/lib/account-storage";
-import {
-  markSoftSupportCooldownAfterWin,
-  setSessionWinActive,
-} from "@/lib/conversion-flags";
+import { markSoftSupportCooldownAfterWin, setSessionWinActive } from "@/lib/conversion-flags";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
   buildForgeFromHeatPath,
@@ -69,24 +66,21 @@ export function SessionWinToast({
   const mind = mindFingerprint(characterId);
   const nick = characterName?.trim().split(/\s+/)[0] || "them";
   const dnaLabel = dnaTreeLabel?.trim() || dnaTreeNodeId?.trim() || null;
-  const deepDna =
-    !!dnaLabel &&
-    /edge|deny|release|gate|tease/i.test(dnaLabel);
-  const forgeHeatCtx: ForgeHeatContext | null =
-    characterId
-      ? {
-          characterId,
-          characterName,
-          baseModelId: baseModelId || characterId,
-          dnaTreeLabel,
-          dnaTreeNodeId,
-          heatDepth,
-          heatChips,
-          recapLine,
-          messageCount,
-          isMine,
-        }
-      : null;
+  const deepDna = !!dnaLabel && /edge|deny|release|gate|tease/i.test(dnaLabel);
+  const forgeHeatCtx: ForgeHeatContext | null = characterId
+    ? {
+        characterId,
+        characterName,
+        baseModelId: baseModelId || characterId,
+        dnaTreeLabel,
+        dnaTreeNodeId,
+        heatDepth,
+        heatChips,
+        recapLine,
+        messageCount,
+        isMine,
+      }
+    : null;
   const offerForge =
     !!forgeHeatCtx &&
     shouldOfferForgeFromHeat({
@@ -245,18 +239,17 @@ export function SessionWinToast({
             {dnaLabel ? (
               <>
                 {" "}
-                on{" "}
-                <strong className="text-violet-200">DNA · {dnaLabel}</strong>
+                on <strong className="text-violet-200">DNA · {dnaLabel}</strong>
               </>
             ) : null}
-            . Resume code{" "}
-            <span className="font-mono text-emerald-100">{resumeCode}</span> saves this climb —
-            come back anytime{messageCount >= 3 ? ` · ${messageCount} messages deep` : ""}.
+            . Resume code <span className="font-mono text-emerald-100">{resumeCode}</span> saves
+            this climb — come back anytime
+            {messageCount >= 3 ? ` · ${messageCount} messages deep` : ""}.
             {offerCheckout ? (
               <>
                 {" "}
-                Optional <strong className="text-amber-100">Day Pass</strong> unlocks more forged
-                My Characters — free chat never paywalls.
+                Optional <strong className="text-amber-100">Day Pass</strong> unlocks more forged My
+                Characters — free chat never paywalls.
               </>
             ) : null}
           </p>

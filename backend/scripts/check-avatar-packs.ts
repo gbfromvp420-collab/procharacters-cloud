@@ -33,7 +33,9 @@ for (const s of statuses) {
 }
 
 const file = buildPackStatusFile();
-console.log(`\n   dedicated ready: ${file.ready.filter((id) => phase4.has(id)).join(", ") || "(none yet)"}`);
+console.log(
+  `\n   dedicated ready: ${file.ready.filter((id) => phase4.has(id)).join(", ") || "(none yet)"}`,
+);
 
 if (write && root) {
   const outDir = join(root, "packs");

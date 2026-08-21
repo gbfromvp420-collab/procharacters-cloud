@@ -31,10 +31,7 @@ function dnaNodeIndex(nodeId?: string | null): number {
 }
 
 /** Pretty node name for milestone toast (Edge, Soft lock, …). */
-function dnaClimbDisplayLabel(
-  label?: string | null,
-  nodeId?: string | null,
-): string {
+function dnaClimbDisplayLabel(label?: string | null, nodeId?: string | null): string {
   if (nodeId) {
     const known = DNA_TREE_NODES.find((n) => n.id === nodeId);
     if (known) {
@@ -151,15 +148,10 @@ export function HeatWhisperStrip({
   const dnaTree = modeState?.dnaTreeLabel || modeState?.dnaTreeNodeId;
   const cue = edge && modeState?.coachCue?.trim() ? modeState.coachCue.trim() : null;
   const remaining =
-    edge && modeState
-      ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
-      : null;
+    edge && modeState ? Math.max(0, modeState.phaseRemainingSec - tickOffset) : null;
   const almost = edge && modeState?.phase === "almost";
   const dnaGlow = !!dnaTree && !edge;
-  const chips =
-    !edge && modeState?.phaseChips?.length
-      ? modeState.phaseChips.slice(0, 3)
-      : [];
+  const chips = !edge && modeState?.phaseChips?.length ? modeState.phaseChips.slice(0, 3) : [];
   const activeDnaIdx = dnaNodeIndex(modeState?.dnaTreeNodeId);
 
   const [climbFlash, setClimbFlash] = useState(false);
@@ -172,10 +164,7 @@ export function HeatWhisperStrip({
       prevNode.current &&
       prevNode.current !== modeState.dnaTreeNodeId
     ) {
-      const label = dnaClimbDisplayLabel(
-        modeState.dnaTreeLabel,
-        modeState.dnaTreeNodeId,
-      );
+      const label = dnaClimbDisplayLabel(modeState.dnaTreeLabel, modeState.dnaTreeNodeId);
       setClimbToastLabel(label);
       setClimbFlash(true);
       const t = window.setTimeout(() => {
@@ -198,11 +187,7 @@ export function HeatWhisperStrip({
     whisperForMind(characterId);
   const fire = climbBeat
     ? climbFireBeat(modeState?.dnaTreeNodeId)
-    : fireLineFor(
-        characterId,
-        edge ? modeState?.phase : null,
-        modeState?.fireLine ?? null,
-      );
+    : fireLineFor(characterId, edge ? modeState?.phase : null, modeState?.fireLine ?? null);
 
   return (
     <div
@@ -242,11 +227,7 @@ export function HeatWhisperStrip({
       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
         <span
           className={`font-semibold uppercase tracking-[0.16em] ${
-            edge
-              ? "text-rose-200/90"
-              : dnaGlow
-                ? "text-violet-200/95"
-                : "text-brand-accent"
+            edge ? "text-rose-200/90" : dnaGlow ? "text-violet-200/95" : "text-brand-accent"
           }`}
         >
           {edge
@@ -275,10 +256,7 @@ export function HeatWhisperStrip({
 
       {/* DNA tree path — where heat lives right now */}
       {dnaGlow && (
-        <div
-          className="mt-1.5 grid grid-cols-6 gap-0.5"
-          aria-label="Forge DNA heat path"
-        >
+        <div className="mt-1.5 grid grid-cols-6 gap-0.5" aria-label="Forge DNA heat path">
           {DNA_TREE_NODES.map((n, i) => {
             const active = i === activeDnaIdx;
             const done = i < activeDnaIdx;

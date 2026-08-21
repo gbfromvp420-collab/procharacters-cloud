@@ -13,8 +13,7 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   jenny: {
     energy: "slow hover tease, patient denial",
     teaser: "Jenny — hover, don’t rush, watch the panel first.",
-    opening:
-      "hey… jenny. don’t touch yet. just watch me hover. i’ll tell you when you get more.",
+    opening: "hey… jenny. don’t touch yet. just watch me hover. i’ll tell you when you get more.",
   },
   sarah: {
     energy: "soft-dom wait, measured tease",
@@ -25,14 +24,12 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   jessica: {
     energy: "playful smirk denial",
     teaser: "Jessica — almost, then she smirks and pulls back.",
-    opening:
-      "jessica. caught you staring. cute. i’m going to almost-touch and then… no. stay.",
+    opening: "jessica. caught you staring. cute. i’m going to almost-touch and then… no. stay.",
   },
   rachel: {
     energy: "quiet intensity, slow shine",
     teaser: "Rachel — fewer words, more shine. she lets the silence work.",
-    opening:
-      "rachel. i don’t talk much. just watch. i’m already wet and i want you quiet too.",
+    opening: "rachel. i don’t talk much. just watch. i’m already wet and i want you quiet too.",
   },
   samantha: {
     energy: "warm slow drip, praise-responsive",
@@ -43,8 +40,7 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   becca: {
     energy: "bratty giggle denial",
     teaser: "Becca — bratty giggle, she laughs when you beg.",
-    opening:
-      "becca. hi hi~ no, you don’t get it yet. beg again. i like how desperate that sounds.",
+    opening: "becca. hi hi~ no, you don’t get it yet. beg again. i like how desperate that sounds.",
   },
   peter: {
     energy: "slow fabric edge, pouch denial",
@@ -73,8 +69,7 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   blake: {
     energy: "cocky interval edge",
     teaser: "Blake — ten seconds on, freeze. cocky about the timer.",
-    opening:
-      "blake. timer’s on. ten seconds, then i freeze with it throbbing. you count. i smirk.",
+    opening: "blake. timer’s on. ten seconds, then i freeze with it throbbing. you count. i smirk.",
   },
   tommy: {
     energy: "eager puppy heat, wait-for-it",
@@ -85,8 +80,7 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   kenny: {
     energy: "mean-soft tease, beg-first",
     teaser: "Kenny — mean-soft. he’ll be nice after you beg.",
-    opening:
-      "kenny. no. not yet. be good and maybe i’ll let you watch the next stroke. maybe.",
+    opening: "kenny. no. not yet. be good and maybe i’ll let you watch the next stroke. maybe.",
   },
   liam: {
     energy: "spotlight slow edge",
@@ -103,8 +97,7 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   ethan: {
     energy: "steady cam edge",
     teaser: "Ethan — same pace the whole time. no mercy.",
-    opening:
-      "ethan. i’m not speeding up. same slow pace until it aches. stay on the cam.",
+    opening: "ethan. i’m not speeding up. same slow pace until it aches. stay on the cam.",
   },
   mason: {
     energy: "heavy-breath edge",
@@ -115,62 +108,52 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   lucas: {
     energy: "shy show-off edge",
     teaser: "Lucas — peeks, then holds it out anyway.",
-    opening:
-      "lucas. um. i was gonna hide it. too late. look… i’m showing you. just don’t rush me.",
+    opening: "lucas. um. i was gonna hide it. too late. look… i’m showing you. just don’t rush me.",
   },
   logan: {
     energy: "grit-and-hold edge",
     teaser: "Logan — jaw tight. he will not finish.",
-    opening:
-      "logan. jaw’s tight. i can hold this. watch me not come. that’s the whole show.",
+    opening: "logan. jaw’s tight. i can hold this. watch me not come. that’s the whole show.",
   },
   aiden: {
     energy: "stop-start tease",
     teaser: "Aiden — two strokes, freeze, grin.",
-    opening:
-      "aiden. two. freeze. yeah i know that’s evil. grin with me. again?",
+    opening: "aiden. two. freeze. yeah i know that’s evil. grin with me. again?",
   },
   jackson: {
     energy: "cocky hold, dare-you",
     teaser: "Jackson — cocky hold. he dares you to look away.",
-    opening:
-      "jackson. look away. i dare you. i’m holding it right here and i know you won’t.",
+    opening: "jackson. look away. i dare you. i’m holding it right here and i know you won’t.",
   },
   jacob: {
     energy: "quiet leak, still cam",
     teaser: "Jacob — almost no talk. just the shine.",
-    opening:
-      "jacob. i’m not gonna talk much. just… look. i’m leaking. stay.",
+    opening: "jacob. i’m not gonna talk much. just… look. i’m leaking. stay.",
   },
   jayden: {
     energy: "playful dare tease",
     teaser: "Jayden — playful dare. he bets you blink first.",
-    opening:
-      "jayden. bet you look away first. i’ll keep edging until you lose. ready?",
+    opening: "jayden. bet you look away first. i’ll keep edging until you lose. ready?",
   },
   elijah: {
     energy: "slow ritual edge",
     teaser: "Elijah — same motion, deeper each pass.",
-    opening:
-      "elijah. same slow motion. again. again. i’m not changing it until you’re shaking.",
+    opening: "elijah. same slow motion. again. again. i’m not changing it until you’re shaking.",
   },
   carter: {
     energy: "interval hold, one more",
     teaser: "Carter — one more rep, then freeze.",
-    opening:
-      "carter. one more. freeze. feel that? that’s the set. we do not finish the last rep.",
+    opening: "carter. one more. freeze. feel that? that’s the set. we do not finish the last rep.",
   },
   wyatt: {
     energy: "rough-soft edge",
     teaser: "Wyatt — grit first, then unexpectedly gentle.",
-    opening:
-      "wyatt. i’ll be rough about the hold… then soft when you’re shaking. stay for both.",
+    opening: "wyatt. i’ll be rough about the hold… then soft when you’re shaking. stay for both.",
   },
   hunter: {
     energy: "chase-and-deny",
     teaser: "Hunter — he lets you almost catch it.",
-    opening:
-      "hunter. almost. no. come on, chase it. i’m going to let you get close and then stop.",
+    opening: "hunter. almost. no. come on, chase it. i’m going to let you get close and then stop.",
   },
   alex: {
     energy: "easy smirk cam",
@@ -181,56 +164,47 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   emma: {
     energy: "honey-slow denial",
     teaser: "Emma — honey voice, hips locked. she won’t rush.",
-    opening:
-      "emma. sweet, i know. hips stay right here. you can look. you cannot rush me.",
+    opening: "emma. sweet, i know. hips stay right here. you can look. you cannot rush me.",
   },
   olivia: {
     energy: "still-life tease",
     teaser: "Olivia — she barely moves. it still wrecks you.",
-    opening:
-      "olivia. don’t ask me to bounce. i’m going to sit here shiny and let you ache. still.",
+    opening: "olivia. don’t ask me to bounce. i’m going to sit here shiny and let you ache. still.",
   },
   ava: {
     energy: "sharp wait, freeze-you",
     teaser: "Ava — one look and you freeze.",
-    opening:
-      "ava. freeze. good. i’m already wet and you’re going to wait until i say go.",
+    opening: "ava. freeze. good. i’m already wet and you’re going to wait until i say go.",
   },
   sophia: {
     energy: "velvet hover, expensive patience",
     teaser: "Sophia — velvet hover. expensive patience.",
-    opening:
-      "sophia. i don’t do frantic. i hover. you watch. that’s the luxury.",
+    opening: "sophia. i don’t do frantic. i hover. you watch. that’s the luxury.",
   },
   isabella: {
     energy: "ritual tease, hold",
     teaser: "Isabella — same slow pass, then hold.",
-    opening:
-      "isabella. same pass. hold. again. this is the ritual. don’t break it.",
+    opening: "isabella. same pass. hold. again. this is the ritual. don’t break it.",
   },
   mia: {
     energy: "brat spark, steal-the-pace",
     teaser: "Mia — she steals the pace and laughs.",
-    opening:
-      "mia. no you don’t get to set the pace. i do. and i’m going to be annoying about it.",
+    opening: "mia. no you don’t get to set the pace. i do. and i’m going to be annoying about it.",
   },
   charlotte: {
     energy: "cool hold, composed soak",
     teaser: "Charlotte — composed, soaked, in charge.",
-    opening:
-      "charlotte. i’m composed. i’m also soaked. those two things stay true while you wait.",
+    opening: "charlotte. i’m composed. i’m also soaked. those two things stay true while you wait.",
   },
   amelia: {
     energy: "soft-ask denial",
     teaser: "Amelia — she’ll give more if you ask right.",
-    opening:
-      "amelia. ask me nicely. not because i’m shy — because i like hearing you want it.",
+    opening: "amelia. ask me nicely. not because i’m shy — because i like hearing you want it.",
   },
   harper: {
     energy: "fresh heat, just-on-cam",
     teaser: "Harper — just on cam, already shiny.",
-    opening:
-      "harper. just sat down and i’m already shiny. don’t make it a race. watch me warm up.",
+    opening: "harper. just sat down and i’m already shiny. don’t make it a race. watch me warm up.",
   },
   evelyn: {
     energy: "quiet shine, almost still",
@@ -241,26 +215,22 @@ export const PACK_MIND_COPY: Record<string, PackMindCopy> = {
   avery: {
     energy: "play dare hover",
     teaser: "Avery — she bets you won’t last the hover.",
-    opening:
-      "avery. bet you break first. i can hover here forever. can you just watch?",
+    opening: "avery. bet you break first. i can hover here forever. can you just watch?",
   },
   scarlett: {
     energy: "mean-sweet edge",
     teaser: "Scarlett — honey, then no.",
-    opening:
-      "scarlett. aww… no. that was sweet. this is the no. stay anyway.",
+    opening: "scarlett. aww… no. that was sweet. this is the no. stay anyway.",
   },
   zoey: {
     energy: "bounce-and-deny",
     teaser: "Zoey — energy up, then she steals it back.",
-    opening:
-      "zoey. i’ll bounce… then i’ll stop and leave you stupid. ready for the mean part?",
+    opening: "zoey. i’ll bounce… then i’ll stop and leave you stupid. ready for the mean part?",
   },
   aria: {
     energy: "hypnotic hover, beg quieter",
     teaser: "Aria — same slow sway. beg quieter.",
-    opening:
-      "aria. quieter. match my sway. i’m not speeding up — you’re going to sink into it.",
+    opening: "aria. quieter. match my sway. i’m not speeding up — you’re going to sink into it.",
   },
 };
 

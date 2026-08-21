@@ -121,11 +121,7 @@ export function EdgePaceStrip({
   const [dnaFlash, setDnaFlash] = useState(false);
   const prevDna = useRef(modeState.dnaTreeNodeId);
   useEffect(() => {
-    if (
-      modeState.dnaTreeNodeId &&
-      prevDna.current &&
-      prevDna.current !== modeState.dnaTreeNodeId
-    ) {
+    if (modeState.dnaTreeNodeId && prevDna.current && prevDna.current !== modeState.dnaTreeNodeId) {
       setDnaFlash(true);
       const t = window.setTimeout(() => setDnaFlash(false), 1100);
       prevDna.current = modeState.dnaTreeNodeId;
@@ -143,8 +139,7 @@ export function EdgePaceStrip({
       : Math.max(remaining + (modeState.phaseElapsedSec ?? 0), 1);
   const elapsed = Math.min(
     duration,
-    (modeState.phaseElapsedSec ?? Math.max(0, duration - modeState.phaseRemainingSec)) +
-      tickOffset,
+    (modeState.phaseElapsedSec ?? Math.max(0, duration - modeState.phaseRemainingSec)) + tickOffset,
   );
   const progress = Math.min(1, Math.max(0, elapsed / duration));
   const activeIdx = Math.max(
@@ -155,12 +150,10 @@ export function EdgePaceStrip({
   const isHold = modeState.phase === "hold";
   const isBreathe = modeState.phase === "breathe";
   const urgent = remaining > 0 && remaining <= 8;
-  const fire =
-    modeState.fireLine?.trim() || fallbackFire(modeState.phase);
-  const chips =
-    modeState.phaseChips?.length
-      ? modeState.phaseChips.slice(0, 4)
-      : fallbackChips(modeState.phase);
+  const fire = modeState.fireLine?.trim() || fallbackFire(modeState.phase);
+  const chips = modeState.phaseChips?.length
+    ? modeState.phaseChips.slice(0, 4)
+    : fallbackChips(modeState.phase);
   const dnaLabel = modeState.dnaTreeLabel || modeState.dnaTreeNodeId;
   const dnaIdx = dnaNodeIndex(modeState.dnaTreeNodeId);
 
@@ -194,13 +187,10 @@ export function EdgePaceStrip({
         </p>
         <p
           className={`font-mono text-xs tabular-nums ${
-            isAlmost || urgent
-              ? "scale-105 font-semibold text-rose-50"
-              : "text-rose-100/90"
+            isAlmost || urgent ? "scale-105 font-semibold text-rose-50" : "text-rose-100/90"
           }`}
         >
-          {remaining}s
-          {urgent ? " · soon" : ""}
+          {remaining}s{urgent ? " · soon" : ""}
         </p>
       </div>
 
@@ -272,9 +262,7 @@ export function EdgePaceStrip({
       )}
 
       <div
-        className={`mt-2 h-1.5 overflow-hidden rounded-full bg-black/30 ${
-          isAlmost ? "h-2" : ""
-        }`}
+        className={`mt-2 h-1.5 overflow-hidden rounded-full bg-black/30 ${isAlmost ? "h-2" : ""}`}
         aria-hidden
       >
         <div

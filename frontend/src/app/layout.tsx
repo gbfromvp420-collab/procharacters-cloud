@@ -12,8 +12,7 @@ export const metadata: Metadata = {
   description:
     "Naughty Syntax live uncensored character chat — share cards, resume codes, custom models.",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ||
-      "https://procharacters-web-production-7288.up.railway.app",
+    process.env.NEXT_PUBLIC_SITE_URL || "https://procharacters-web-production-7288.up.railway.app",
   ),
   applicationName: "Procharacters",
   manifest: "/manifest.webmanifest",

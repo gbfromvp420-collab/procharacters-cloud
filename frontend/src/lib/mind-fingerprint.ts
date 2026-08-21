@@ -15,8 +15,7 @@ export interface MindFingerprint {
 const FINGERPRINTS: Record<string, MindFingerprint> = {
   "twink-default": {
     tag: "Flagship edge",
-    blurb:
-      "Sheer-pouch cam boy · slow fabric handjob denial · soft Spanish when it hits",
+    blurb: "Sheer-pouch cam boy · slow fabric handjob denial · soft Spanish when it hits",
     bilingual: true,
   },
   "female-default": {
@@ -25,8 +24,7 @@ const FINGERPRINTS: Record<string, MindFingerprint> = {
   },
   "twink-shy-boy": {
     tag: "Shy heat",
-    blurb:
-      "Diego · whisper exhibition · peek-and-hide · praise makes him leak Spanish",
+    blurb: "Diego · whisper exhibition · peek-and-hide · praise makes him leak Spanish",
     bilingual: true,
   },
   "twink-gym": {
@@ -51,175 +49,174 @@ const FINGERPRINTS: Record<string, MindFingerprint> = {
     tag: "Brat game",
     blurb: "Mila · count games · look-but-don’t · cute denial with a laugh",
   },
-  "jenny": {
+  jenny: {
     tag: "Slow hover",
     blurb: "Jenny · hover first · open-panel still-life · don’t rush her",
   },
-  "sarah": {
+  sarah: {
     tag: "Soft wait",
     blurb: "Sarah · soft-dom wait · she decides the next inch",
   },
-  "jessica": {
+  jessica: {
     tag: "Smirk deny",
     blurb: "Jessica · playful smirk · almost, then no",
   },
-  "rachel": {
+  rachel: {
     tag: "Quiet heat",
     blurb: "Rachel · quiet intensity · fewer words, more shine",
   },
-  "samantha": {
+  samantha: {
     tag: "Warm drip",
     blurb: "Samantha · warm slow drip · praise her and she leaks more",
   },
-  "becca": {
+  becca: {
     tag: "Giggle deny",
     blurb: "Becca · bratty giggle · she laughs when you beg",
   },
-  "peter": {
+  peter: {
     tag: "Slow pouch",
     blurb: "Peter · slow fabric edge · one finger on the sheer, then stop",
   },
-  "gary": {
+  gary: {
     tag: "Smirk edge",
     blurb: "Gary · confident smirk · he knows you’re watching the bulge",
   },
-  "justin": {
+  justin: {
     tag: "Clean deny",
     blurb: "Justin · clean-cut denial · polite voice, filthy hold",
   },
-  "mark": {
+  mark: {
     tag: "Low voice",
     blurb: "Mark · low-voice edge · almost a whisper when it gets wet",
   },
-  "blake": {
+  blake: {
     tag: "Interval",
     blurb: "Blake · cocky interval · ten seconds on, freeze",
   },
-  "tommy": {
+  tommy: {
     tag: "Eager heat",
     blurb: "Tommy · eager puppy · too ready, you make him wait",
   },
-  "kenny": {
+  kenny: {
     tag: "Mean-soft",
     blurb: "Kenny · mean-soft tease · he’ll be nice after you beg",
   },
-  "liam": {
+  liam: {
     tag: "Spotlight",
     blurb: "Liam · spotlight slow edge · he performs the hold",
   },
-  "noah": {
+  noah: {
     tag: "Soft talk",
     blurb: "Noah · soft-talk denial · sweet voice, filthy stop",
   },
-  "ethan": {
+  ethan: {
     tag: "Steady cam",
     blurb: "Ethan · steady cam edge · same pace, no mercy",
   },
-  "mason": {
+  mason: {
     tag: "Heavy breath",
     blurb: "Mason · heavy-breath edge · you hear it before he talks",
   },
-  "lucas": {
+  lucas: {
     tag: "Shy show",
     blurb: "Lucas · shy show-off · peeks, then holds it out",
   },
-  "logan": {
+  logan: {
     tag: "Grit hold",
     blurb: "Logan · grit-and-hold · jaw tight, won’t finish",
   },
-  "aiden": {
+  aiden: {
     tag: "Stop-start",
     blurb: "Aiden · stop-start tease · two strokes, freeze, grin",
   },
-  "jackson": {
+  jackson: {
     tag: "Cocky hold",
     blurb: "Jackson · cocky hold · he dares you to look away",
   },
-  "jacob": {
+  jacob: {
     tag: "Quiet leak",
     blurb: "Jacob · quiet leak · almost no talk, just shine",
   },
-  "jayden": {
+  jayden: {
     tag: "Play dare",
     blurb: "Jayden · playful dare · he bets you blink first",
   },
-  "elijah": {
+  elijah: {
     tag: "Slow ritual",
     blurb: "Elijah · slow ritual · same motion, deeper each pass",
   },
-  "carter": {
+  carter: {
     tag: "Rep hold",
     blurb: "Carter · interval hold · one more rep, then freeze",
   },
-  "wyatt": {
+  wyatt: {
     tag: "Rough-soft",
     blurb: "Wyatt · rough-soft edge · grit first, then gentle",
   },
-  "hunter": {
+  hunter: {
     tag: "Chase deny",
     blurb: "Hunter · chase-and-deny · he lets you almost catch it",
   },
-  "alex": {
+  alex: {
     tag: "Easy smirk",
     blurb: "Alex · easy smirk cam · casual, filthy, unbothered",
   },
-  "emma": {
+  emma: {
     tag: "Honey deny",
     blurb: "Emma · honey-slow denial · sweet voice, locked hips",
   },
-  "olivia": {
+  olivia: {
     tag: "Still-life",
     blurb: "Olivia · still-life tease · she barely moves and it still wrecks you",
   },
-  "ava": {
+  ava: {
     tag: "Sharp wait",
     blurb: "Ava · sharp wait · one look and you freeze",
   },
-  "sophia": {
+  sophia: {
     tag: "Velvet",
     blurb: "Sophia · velvet hover · expensive patience",
   },
-  "isabella": {
+  isabella: {
     tag: "Ritual",
     blurb: "Isabella · ritual tease · same slow pass, then hold",
   },
-  "mia": {
+  mia: {
     tag: "Brat spark",
     blurb: "Mia · brat spark · she steals the pace and laughs",
   },
-  "charlotte": {
+  charlotte: {
     tag: "Cool hold",
     blurb: "Charlotte · cool hold · composed, soaked, in charge",
   },
-  "amelia": {
+  amelia: {
     tag: "Soft ask",
     blurb: "Amelia · soft-ask denial · she’ll give more if you ask right",
   },
-  "harper": {
+  harper: {
     tag: "Fresh heat",
     blurb: "Harper · fresh heat · just-on-cam, already shiny",
   },
-  "evelyn": {
+  evelyn: {
     tag: "Quiet shine",
     blurb: "Evelyn · quiet shine · almost still, almost dripping",
   },
-  "avery": {
+  avery: {
     tag: "Play dare",
     blurb: "Avery · play dare · she bets you won’t last the hover",
   },
-  "scarlett": {
+  scarlett: {
     tag: "Mean-sweet",
     blurb: "Scarlett · mean-sweet edge · honey, then no",
   },
-  "zoey": {
+  zoey: {
     tag: "Bounce deny",
     blurb: "Zoey · bounce-and-deny · energy up, then she steals it",
   },
-  "aria": {
+  aria: {
     tag: "Hypnotic",
     blurb: "Aria · hypnotic hover · same slow sway, beg quieter",
   },
-
 };
 
 export function mindFingerprint(
@@ -243,11 +240,7 @@ export function mindFingerprint(
 
 /** UTC calendar day as YYYYMMDD int — stable “tonight’s cast” seed. */
 export function calendarDaySeed(date = new Date()): number {
-  return (
-    date.getUTCFullYear() * 10000 +
-    (date.getUTCMonth() + 1) * 100 +
-    date.getUTCDate()
-  );
+  return date.getUTCFullYear() * 10000 + (date.getUTCMonth() + 1) * 100 + date.getUTCDate();
 }
 
 /** Deterministic PRNG (Mulberry32). */

@@ -1,8 +1,4 @@
-import {
-  energyBandFromAvatar,
-  energyBandLabel,
-  energyBandBadgeClass,
-} from "@/lib/energy";
+import { energyBandFromAvatar, energyBandLabel, energyBandBadgeClass } from "@/lib/energy";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import type { AvatarState } from "@/lib/types";
 
@@ -47,11 +43,7 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
             {characterName ?? "No character"}
           </p>
           <p className="truncate text-[11px] text-brand-muted sm:text-xs">
-            {mind
-              ? mind.tag
-              : characterId
-                ? formatLabel(characterId)
-                : "Start a session"}
+            {mind ? mind.tag : characterId ? formatLabel(characterId) : "Start a session"}
             {avatar ? ` · ${formatLabel(avatar.emotion)}` : ""}
           </p>
           <div className="mt-1 flex flex-wrap items-center gap-1">
@@ -136,8 +128,8 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
         </div>
       ) : (
         <p className="hidden text-xs leading-relaxed text-brand-muted sm:block">
-          Avatar state updates live as the character responds — emotion, pose, and energy sync
-          from each Grok reply.
+          Avatar state updates live as the character responds — emotion, pose, and energy sync from
+          each Grok reply.
         </p>
       )}
 

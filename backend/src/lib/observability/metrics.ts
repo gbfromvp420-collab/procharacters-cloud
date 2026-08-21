@@ -84,10 +84,7 @@ let lastExpiryCron: {
   skipped: number;
 } | null = null;
 
-export function bump(
-  key: keyof Omit<MetricCounters, "startedAt">,
-  by = 1,
-): void {
+export function bump(key: keyof Omit<MetricCounters, "startedAt">, by = 1): void {
   counters[key] += by;
 }
 

@@ -24,11 +24,7 @@ import {
 } from "@/lib/forge-dna";
 import { takeForgeHeatSeed } from "@/lib/forge-from-heat";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
-import type {
-  CustomSceneInput,
-  LiveCharacterOption,
-  MediaClipKey,
-} from "@/lib/types";
+import type { CustomSceneInput, LiveCharacterOption, MediaClipKey } from "@/lib/types";
 import { ClipPreview } from "@/components/ClipPreview";
 import { ForgeAvatarComposer } from "@/components/ForgeAvatarComposer";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
@@ -110,16 +106,14 @@ function detectBandFromName(fileName: string): MediaClipKey | null {
   if (base.includes("idle")) return "idle";
   if (base.includes("teas") || base.includes("tease")) return "teasing";
   if (base.includes("play")) return "playful";
-  if (base.includes("arous") || base.includes("edge") || base.includes("hot"))
-    return "aroused";
+  if (base.includes("arous") || base.includes("edge") || base.includes("hot")) return "aroused";
   return null;
 }
 
 function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   const router = useRouter();
   const search = useSearchParams();
-  const queryEdit =
-    search.get("edit")?.trim() || search.get("character")?.trim() || "";
+  const queryEdit = search.get("edit")?.trim() || search.get("character")?.trim() || "";
   const editId = (initialEditId || queryEdit).trim();
 
   useEffect(() => {
@@ -155,9 +149,9 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     Partial<Record<MediaClipKey, { file: File; url: string }>>
   >({});
   /** Files that need a band — auto-detect failed or user will 1-click assign. */
-  const [pendingClips, setPendingClips] = useState<
-    Array<{ file: File; url: string; id: string }>
-  >([]);
+  const [pendingClips, setPendingClips] = useState<Array<{ file: File; url: string; id: string }>>(
+    [],
+  );
   const [previewBand, setPreviewBand] = useState<MediaClipKey>("teasing");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [justCreated, setJustCreated] = useState<{
@@ -212,14 +206,8 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     router.replace("/models/studio", { scroll: false });
   }, [editId, search, router]);
 
-  const defaults = useMemo(
-    () => characters.filter((c) => c.kind === "default"),
-    [characters],
-  );
-  const mine = useMemo(
-    () => characters.filter((c) => c.mine === true),
-    [characters],
-  );
+  const defaults = useMemo(() => characters.filter((c) => c.kind === "default"), [characters]);
+  const mine = useMemo(() => characters.filter((c) => c.mine === true), [characters]);
   const used = mine.length;
   const capFull = !editingId && used >= customsLimit;
   const nearCap = !editingId && used >= customsLimit - 1 && used < customsLimit;
@@ -262,8 +250,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
       }
 
       if (!editId) {
-        const first =
-          list.find((c) => c.kind === "default")?.id || "twink-default";
+        const first = list.find((c) => c.kind === "default")?.id || "twink-default";
         setBaseModelId(first);
         // No heavy auto-fill — blank canvas on purpose
       } else {
@@ -271,9 +258,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         if (target) {
           setEditingId(target.id);
           setName(target.displayName || "");
-          setBaseModelId(
-            target.baseModelId || target.avatarBase || "twink-default",
-          );
+          setBaseModelId(target.baseModelId || target.avatarBase || "twink-default");
           const rawApp = target.appearance || "";
           const boostSplit = rawApp.split(/\n\n## Naughty Syntax booster\n/i);
           setAppearance((boostSplit[0]?.trim() || rawApp).slice(0, VISUAL_MAX));
@@ -299,9 +284,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             .trim();
           setEnergy(cleanEnergy || rawEnergy);
           const matched = ENERGY_PRESETS.find(
-            (p) =>
-              cleanEnergy.includes(p.energy.slice(0, 20)) ||
-              (tagsMatch || "").includes(p.tag),
+            (p) => cleanEnergy.includes(p.energy.slice(0, 20)) || (tagsMatch || "").includes(p.tag),
           );
           if (matched) setPresetId(matched.id);
 
@@ -387,7 +370,9 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     }
     setPresetId(id);
     setEnergy(p.energy);
-    setVibeTags((prev) => uniqueTags([p.tag, ...prev.filter((t) => t !== p.tag)]).slice(0, TAG_MAX));
+    setVibeTags((prev) =>
+      uniqueTags([p.tag, ...prev.filter((t) => t !== p.tag)]).slice(0, TAG_MAX),
+    );
     showFlash(p.label);
   };
 
@@ -539,17 +524,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     return lines.join("\n");
     // validScenes/mergeEnergy depend on form state already in deps via scenes/energy/tags
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    name,
-    appearance,
-    nsBoostOn,
-    promptBoost,
-    energy,
-    vibeTags,
-    phrases,
-    scenes,
-    baseModelId,
-  ]);
+  }, [name, appearance, nsBoostOn, promptBoost, energy, vibeTags, phrases, scenes, baseModelId]);
 
   const smartStarter = useMemo(() => {
     if (dna?.starterLine) return dna.starterLine;
@@ -598,14 +573,10 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     } else if (result.dna.vibeTags?.length) {
       setVibeTags(uniqueTags(result.dna.vibeTags).slice(0, TAG_MAX));
     }
-    const cleanEnergy = result.form.energy
-      .replace(/\s*Tags:\s*[^.]*\.?/gi, "")
-      .trim();
+    const cleanEnergy = result.form.energy.replace(/\s*Tags:\s*[^.]*\.?/gi, "").trim();
     setEnergy(cleanEnergy || result.dna.vibe);
     const matched = ENERGY_PRESETS.find(
-      (p) =>
-        result.dna.vibeTags?.includes(p.tag) ||
-        cleanEnergy.toLowerCase().includes(p.tag),
+      (p) => result.dna.vibeTags?.includes(p.tag) || cleanEnergy.toLowerCase().includes(p.tag),
     );
     if (matched) setPresetId(matched.id);
     setPhrases((result.form.keyPhrases ?? []).slice(0, PHRASE_MAX));
@@ -791,11 +762,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         forged: !!dna,
         forgeSource: dna?.source ?? forgeSource,
       });
-      showFlash(
-        dna
-          ? `${displayName} · DNA forged · Edge Pace ready`
-          : `${displayName} · ready`,
-      );
+      showFlash(dna ? `${displayName} · DNA forged · Edge Pace ready` : `${displayName} · ready`);
       if (id && wasCreate) {
         router.replace(`/models/studio/edit/${encodeURIComponent(id)}`);
       }
@@ -840,9 +807,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         active="studio"
         title="Studio Forge"
         subtitle={
-          editingId
-            ? "Unchained edit · DNA + clips"
-            : "Conversational forge · DNA under 5s"
+          editingId ? "Unchained edit · DNA + clips" : "Conversational forge · DNA under 5s"
         }
         className="pt-[env(safe-area-inset-top,0px)]"
       />
@@ -857,8 +822,8 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
               {editingId ? "Tune the god you made" : "Speak it into heat"}
             </h1>
             <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-brand-muted">
-              Type the fantasy. Forge expands identity, branches, behavior tree,
-              LiveKit reactivity, and memory seeds — then Chat Now.
+              Type the fantasy. Forge expands identity, branches, behavior tree, LiveKit reactivity,
+              and memory seeds — then Chat Now.
             </p>
             {heatSeedBanner && (
               <p
@@ -891,10 +856,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                 Sign in
               </Link>
             )}
-            <Link
-              href="/?filter=owned"
-              className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
-            >
+            <Link href="/?filter=owned" className="btn-ghost min-h-0 px-3 py-1.5 text-xs">
               My models
             </Link>
             <Link href="/account#my-models" className="btn-ghost min-h-0 px-3 py-1.5 text-xs">
@@ -941,7 +903,10 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             <p className="mt-1 text-[12px] text-brand-muted">
               Private models only. Sign in, then forge in under a minute.
             </p>
-            <Link href="/account" className="btn-primary mt-3 inline-flex min-h-0 px-4 py-2 text-sm">
+            <Link
+              href="/account"
+              className="btn-primary mt-3 inline-flex min-h-0 px-4 py-2 text-sm"
+            >
               Sign in
             </Link>
           </div>
@@ -1032,8 +997,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                       </p>
                       <p className="mt-1 text-[10px] leading-relaxed text-brand-text">
                         power {dna.evolution.power.toFixed(2)} · intimacy{" "}
-                        {dna.evolution.intimacy.toFixed(2)} · chaos{" "}
-                        {dna.evolution.chaos.toFixed(2)}
+                        {dna.evolution.intimacy.toFixed(2)} · chaos {dna.evolution.chaos.toFixed(2)}
                         <br />
                         denial {dna.evolution.denial.toFixed(2)} · pace{" "}
                         {dna.evolution.pace.toFixed(2)}
@@ -1061,8 +1025,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                             className="truncate text-[10px] text-brand-text"
                             title={s.text}
                           >
-                            <span className="text-rose-200/80">[{s.kind}]</span>{" "}
-                            {s.text}
+                            <span className="text-rose-200/80">[{s.kind}]</span> {s.text}
                           </li>
                         ))}
                       </ul>
@@ -1085,447 +1048,448 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                       : "Manual forge · fields without LLM"}
                 </button>
                 {dna && !showAdvanced && (
-                  <span className="text-[10px] text-brand-soft">
-                    DNA filled · save when ready
-                  </span>
+                  <span className="text-[10px] text-brand-soft">DNA filled · save when ready</span>
                 )}
               </div>
 
               {(showAdvanced || editingId || !dna) && (
-              <>
-              {/* 1 · Base */}
-              <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                    1 · Base (video)
-                  </h2>
-                  {editingId ? (
-                    <span className="text-[10px] text-brand-muted">Locked</span>
-                  ) : (
-                    <span className="text-[10px] text-brand-soft">1-tap · no identity fill</span>
-                  )}
-                </div>
-                <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x">
-                  {defaults.map((c) => {
-                    const active = c.id === baseModelId;
-                    const poster =
-                      c.clips?.teasing || c.clips?.idle || clipUrlForBase(c.id, "teasing");
-                    return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        disabled={!!editingId}
-                        onClick={() => onPickBase(c.id)}
-                        className={`snap-start shrink-0 w-[6.75rem] overflow-hidden rounded-xl border text-left transition sm:w-32 ${
-                          active
-                            ? "border-violet-400/60 ring-2 ring-violet-400/40"
-                            : "border-brand-border hover:border-brand-accent/50"
-                        } disabled:opacity-70`}
-                      >
-                        <div className="relative aspect-[3/4] bg-black">
-                          <video
-                            src={poster}
-                            className="h-full w-full object-cover"
-                            muted
-                            loop
-                            playsInline
-                            autoPlay
-                          />
-                          {active && (
-                            <span className="absolute left-1.5 top-1.5 rounded-full bg-violet-500/90 px-1.5 py-0.5 text-[9px] font-semibold text-white">
-                              Base
-                            </span>
-                          )}
-                        </div>
-                        <div className="p-1.5">
-                          <p className="truncate text-[11px] font-medium text-brand-text">
-                            {c.displayName}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              {/* 2 · Quick identity */}
-              <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                  2 · Quick identity
-                </h2>
-                <label className="block">
-                  <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                    Name
-                  </span>
-                  <input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Your muse…"
-                    className="field w-full text-sm"
-                    maxLength={80}
-                    autoComplete="off"
-                  />
-                </label>
-
-                <p className="mb-1.5 mt-3 text-[10px] uppercase tracking-wide text-brand-muted">
-                  Vibe · pick 1 (or 2 tags)
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {ENERGY_PRESETS.map((p) => {
-                    const on = presetId === p.id || vibeTags.includes(p.tag);
-                    return (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => applyPreset(p.id)}
-                        className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
-                          on
-                            ? "border-rose-400/50 bg-rose-500/20 text-rose-50"
-                            : "border-brand-border bg-brand-bg text-brand-muted hover:border-brand-accent/50"
-                        }`}
-                      >
-                        {p.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                {vibeTags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {vibeTags.map((t) => (
-                      <button
-                        key={t}
-                        type="button"
-                        onClick={() => toggleTag(t)}
-                        className="rounded-full border border-violet-400/35 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-100"
-                      >
-                        {t} ×
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <label className="mt-3 block">
-                  <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
-                    Visual · 1–2 sentences
-                  </span>
-                  <textarea
-                    value={appearance}
-                    onChange={(e) => setAppearance(e.target.value.slice(0, VISUAL_MAX))}
-                    rows={3}
-                    placeholder="Who they look like in the room — body, hair, outfit vibe. Keep it short; identity wins over base video."
-                    className="field w-full resize-none text-sm leading-relaxed"
-                    maxLength={VISUAL_MAX}
-                  />
-                  <span className="mt-0.5 block text-[10px] text-brand-soft">
-                    {appearance.trim().length}/{VISUAL_MAX} · min 12
-                  </span>
-                </label>
-              </section>
-
-              {/* 3 · Phrases */}
-              <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                  3 · Key phrases
-                </h2>
-                <p className="mb-2 text-[11px] text-brand-muted">
-                  Optional · max {PHRASE_MAX}. Tap a suggestion or type your own — nothing forced.
-                </p>
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {PHRASE_SUGGESTIONS.map((s) => {
-                    const usedPhrase = phrases.some(
-                      (p) => p.toLowerCase() === s.toLowerCase(),
-                    );
-                    return (
-                      <button
-                        key={s}
-                        type="button"
-                        disabled={usedPhrase || phrases.length >= PHRASE_MAX}
-                        onClick={() => addPhrase(s)}
-                        className="rounded-full border border-brand-border bg-brand-bg px-2 py-0.5 text-[10px] text-brand-muted transition hover:border-rose-400/40 hover:text-rose-100 disabled:opacity-35"
-                      >
-                        + {s}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {phrases.map((p, i) => (
-                    <button
-                      key={`${p}-${i}`}
-                      type="button"
-                      onClick={() => setPhrases((prev) => prev.filter((_, j) => j !== i))}
-                      className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2.5 py-1 text-[11px] text-rose-50"
-                    >
-                      “{p.length > 32 ? `${p.slice(0, 30)}…` : p}” ×
-                    </button>
-                  ))}
-                </div>
-                <div className="mt-2 flex gap-2">
-                  <input
-                    value={phraseDraft}
-                    onChange={(e) => setPhraseDraft(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addPhrase();
-                      }
-                    }}
-                    placeholder="Your line…"
-                    className="field min-w-0 flex-1 text-sm"
-                    disabled={phrases.length >= PHRASE_MAX}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => addPhrase()}
-                    disabled={phrases.length >= PHRASE_MAX}
-                    className="btn-ghost min-h-0 px-3 py-1.5 text-xs disabled:opacity-40"
-                  >
-                    Add
-                  </button>
-                </div>
-              </section>
-
-              {/* 4 · Scenes optional */}
-              <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <div className="mb-2 flex items-center justify-between gap-2">
-                  <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                    4 · Scenes
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={addSceneSlot}
-                    disabled={scenes.length >= SCENE_MAX}
-                    className="text-[11px] text-brand-accent hover:underline disabled:opacity-40"
-                  >
-                    {scenes.length === 0 ? "+ Add scene (optional)" : `+ Scene (${scenes.length}/${SCENE_MAX})`}
-                  </button>
-                </div>
-                {scenes.length === 0 ? (
-                  <p className="text-[11px] text-brand-muted">
-                    Skip if you want — vibe + visual is enough to chat.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {scenes.map((s, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-xl border border-brand-border/60 bg-brand-bg/50 p-2.5"
-                      >
-                        <div className="mb-1.5 flex items-center justify-between">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
-                            Scene {idx + 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => removeSceneSlot(idx)}
-                            className="text-[10px] text-brand-soft hover:text-rose-200"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                        <input
-                          value={s.title}
-                          onChange={(e) => updateScene(idx, "title", e.target.value)}
-                          placeholder="Title"
-                          className="field mb-1.5 w-full text-xs"
-                          maxLength={80}
-                        />
-                        <textarea
-                          value={s.body}
-                          onChange={(e) => updateScene(idx, "body", e.target.value)}
-                          placeholder="Short beat + one line of dialogue"
-                          rows={2}
-                          className="field w-full resize-none text-xs leading-relaxed"
-                          maxLength={400}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </section>
-
-              {/* 5 · Clips */}
-              <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
-                <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
-                  5 · Clips
-                </h2>
-                <p className="mb-2 text-[11px] text-brand-muted">
-                  Drop files — auto-band from filename, or 1-click assign. Uploads after save.
-                </p>
-                <label className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-violet-400/40 bg-violet-500/5 px-3 py-3 text-center transition hover:border-violet-400/70">
-                  <span className="text-sm font-medium text-brand-text">Upload clips</span>
-                  <span className="text-[11px] text-brand-muted">
-                    idle / teasing / playful / aroused in name · MP4/WebM
-                  </span>
-                  <input
-                    type="file"
-                    accept={CLIP_FILE_ACCEPT}
-                    multiple
-                    className="hidden"
-                    onChange={(e) => {
-                      onBatchFiles(e.target.files);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
-
-                {pendingClips.length > 0 && (
-                  <div className="mb-3 space-y-2 rounded-xl border border-amber-400/30 bg-amber-500/5 p-2">
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-100/90">
-                      Assign band
-                    </p>
-                    {pendingClips.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex flex-wrap items-center gap-1.5 border-b border-brand-border/40 pb-2 last:border-0 last:pb-0"
-                      >
-                        <span className="min-w-0 flex-1 truncate text-[11px] text-brand-text">
-                          {p.file.name}
+                <>
+                  {/* 1 · Base */}
+                  <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                        1 · Base (video)
+                      </h2>
+                      {editingId ? (
+                        <span className="text-[10px] text-brand-muted">Locked</span>
+                      ) : (
+                        <span className="text-[10px] text-brand-soft">
+                          1-tap · no identity fill
                         </span>
-                        {CLIP_KEYS.map((k) => (
+                      )}
+                    </div>
+                    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 snap-x">
+                      {defaults.map((c) => {
+                        const active = c.id === baseModelId;
+                        const poster =
+                          c.clips?.teasing || c.clips?.idle || clipUrlForBase(c.id, "teasing");
+                        return (
                           <button
-                            key={k}
+                            key={c.id}
                             type="button"
-                            onClick={() => assignPending(p.id, k)}
-                            className="rounded-full border border-brand-border px-2 py-0.5 text-[9px] font-semibold uppercase text-brand-muted hover:border-rose-400/50 hover:text-rose-100"
+                            disabled={!!editingId}
+                            onClick={() => onPickBase(c.id)}
+                            className={`snap-start shrink-0 w-[6.75rem] overflow-hidden rounded-xl border text-left transition sm:w-32 ${
+                              active
+                                ? "border-violet-400/60 ring-2 ring-violet-400/40"
+                                : "border-brand-border hover:border-brand-accent/50"
+                            } disabled:opacity-70`}
                           >
-                            {BAND_LABEL[k]}
+                            <div className="relative aspect-[3/4] bg-black">
+                              <video
+                                src={poster}
+                                className="h-full w-full object-cover"
+                                muted
+                                loop
+                                playsInline
+                                autoPlay
+                              />
+                              {active && (
+                                <span className="absolute left-1.5 top-1.5 rounded-full bg-violet-500/90 px-1.5 py-0.5 text-[9px] font-semibold text-white">
+                                  Base
+                                </span>
+                              )}
+                            </div>
+                            <div className="p-1.5">
+                              <p className="truncate text-[11px] font-medium text-brand-text">
+                                {c.displayName}
+                              </p>
+                            </div>
                           </button>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => dismissPending(p.id)}
-                          className="text-[10px] text-brand-soft hover:text-rose-200"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        );
+                      })}
+                    </div>
+                  </section>
 
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {CLIP_KEYS.map((key) => {
-                    const local = localClipFiles[key]?.url;
-                    const src =
-                      local ||
-                      clips[key] ||
-                      baseCard?.clips?.[key] ||
-                      clipUrlForBase(baseModelId, key);
-                    const custom = !!(local || clips[key]);
-                    return (
-                      <div key={key} className="space-y-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
-                            {BAND_LABEL[key]}
-                            {custom ? " · yours" : ""}
-                          </span>
+                  {/* 2 · Quick identity */}
+                  <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
+                    <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                      2 · Quick identity
+                    </h2>
+                    <label className="block">
+                      <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
+                        Name
+                      </span>
+                      <input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Your muse…"
+                        className="field w-full text-sm"
+                        maxLength={80}
+                        autoComplete="off"
+                      />
+                    </label>
+
+                    <p className="mb-1.5 mt-3 text-[10px] uppercase tracking-wide text-brand-muted">
+                      Vibe · pick 1 (or 2 tags)
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ENERGY_PRESETS.map((p) => {
+                        const on = presetId === p.id || vibeTags.includes(p.tag);
+                        return (
                           <button
+                            key={p.id}
                             type="button"
-                            onClick={() => setPreviewBand(key)}
-                            className={`text-[9px] ${
-                              previewBand === key ? "text-rose-200" : "text-brand-soft"
+                            onClick={() => applyPreset(p.id)}
+                            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+                              on
+                                ? "border-rose-400/50 bg-rose-500/20 text-rose-50"
+                                : "border-brand-border bg-brand-bg text-brand-muted hover:border-brand-accent/50"
                             }`}
                           >
-                            ▶
+                            {p.label}
                           </button>
-                        </div>
-                        <ClipPreview src={src} label={key} />
-                        <label className="btn-ghost flex min-h-0 cursor-pointer items-center justify-center px-1 py-1 text-[9px]">
-                          {local ? "Replace" : "Assign"}
-                          <input
-                            type="file"
-                            accept={CLIP_FILE_ACCEPT}
-                            className="hidden"
-                            onChange={(e) => {
-                              onLocalClip(key, e.target.files?.[0] ?? null);
-                              e.target.value = "";
-                            }}
-                          />
-                        </label>
+                        );
+                      })}
+                    </div>
+                    {vibeTags.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {vibeTags.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => toggleTag(t)}
+                            className="rounded-full border border-violet-400/35 bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-100"
+                          >
+                            {t} ×
+                          </button>
+                        ))}
                       </div>
-                    );
-                  })}
-                </div>
-              </section>
+                    )}
 
-              {/* 6 · NS booster toggle */}
-              <section className="rounded-2xl border border-violet-400/25 bg-violet-500/5 p-3 sm:p-4">
-                <label className="flex cursor-pointer items-start gap-2.5">
-                  <input
-                    type="checkbox"
-                    checked={nsBoostOn}
-                    onChange={(e) => setNsBoostOn(e.target.checked)}
-                    className="mt-0.5 rounded border-brand-border"
-                  />
-                  <span>
-                    <span className="block text-[12px] font-medium text-violet-100">
-                      Naughty Syntax booster
-                    </span>
-                    <span className="mt-0.5 block text-[11px] text-brand-muted">
-                      One slim overlay — filthy specificity without rewriting identity.
-                    </span>
-                  </span>
-                </label>
-                {nsBoostOn && (
-                  <textarea
-                    value={promptBoost}
-                    onChange={(e) => setPromptBoost(e.target.value.slice(0, 400))}
-                    rows={2}
-                    placeholder="e.g. sheer fabric physics · deny climax · soft Spanish optional"
-                    className="field mt-2 w-full resize-none text-sm leading-relaxed"
-                    maxLength={400}
-                  />
-                )}
-              </section>
+                    <label className="mt-3 block">
+                      <span className="mb-1 block text-[10px] uppercase tracking-wide text-brand-muted">
+                        Visual · 1–2 sentences
+                      </span>
+                      <textarea
+                        value={appearance}
+                        onChange={(e) => setAppearance(e.target.value.slice(0, VISUAL_MAX))}
+                        rows={3}
+                        placeholder="Who they look like in the room — body, hair, outfit vibe. Keep it short; identity wins over base video."
+                        className="field w-full resize-none text-sm leading-relaxed"
+                        maxLength={VISUAL_MAX}
+                      />
+                      <span className="mt-0.5 block text-[10px] text-brand-soft">
+                        {appearance.trim().length}/{VISUAL_MAX} · min 12
+                      </span>
+                    </label>
+                  </section>
 
-              {/* Save bar */}
-              <section className="sticky bottom-0 z-20 -mx-3 border-t border-brand-border/80 bg-brand-bg/95 px-3 py-3 backdrop-blur-md sm:static sm:mx-0 sm:rounded-2xl sm:border sm:border-brand-border/80 sm:bg-brand-panel/90 sm:px-4 sm:py-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <label className="flex items-center gap-2 text-[12px] text-brand-muted">
-                    <input
-                      type="checkbox"
-                      checked={featured}
-                      onChange={(e) => setFeatured(e.target.checked)}
-                      className="rounded border-brand-border"
-                    />
-                    Soft Featured
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    <Link href="/chat" className="btn-ghost min-h-0 px-3 py-2 text-xs">
-                      Cancel
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => void handleSave()}
-                      disabled={!canSave}
-                      className="btn-primary min-h-0 flex-1 px-5 py-2.5 text-sm disabled:opacity-50 sm:flex-none"
-                    >
-                      {saving
-                        ? editingId
-                          ? "Saving…"
-                          : "Forging…"
-                        : !account
-                          ? "Sign in to save"
-                          : capFull
-                            ? "Cap full"
-                            : editingId
-                              ? "Save · Chat ready"
-                              : "Save · Chat Now"}
-                    </button>
-                  </div>
-                </div>
-                {capFull && (
-                  <p className="mt-2 text-[11px] text-amber-100/90">
-                    Cap reached.{" "}
-                    <Link href="/account#my-models" className="underline">
-                      Manage models
-                    </Link>
-                    .
-                  </p>
-                )}
-              </section>
-              </>
+                  {/* 3 · Phrases */}
+                  <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
+                    <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                      3 · Key phrases
+                    </h2>
+                    <p className="mb-2 text-[11px] text-brand-muted">
+                      Optional · max {PHRASE_MAX}. Tap a suggestion or type your own — nothing
+                      forced.
+                    </p>
+                    <div className="mb-2 flex flex-wrap gap-1.5">
+                      {PHRASE_SUGGESTIONS.map((s) => {
+                        const usedPhrase = phrases.some((p) => p.toLowerCase() === s.toLowerCase());
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            disabled={usedPhrase || phrases.length >= PHRASE_MAX}
+                            onClick={() => addPhrase(s)}
+                            className="rounded-full border border-brand-border bg-brand-bg px-2 py-0.5 text-[10px] text-brand-muted transition hover:border-rose-400/40 hover:text-rose-100 disabled:opacity-35"
+                          >
+                            + {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {phrases.map((p, i) => (
+                        <button
+                          key={`${p}-${i}`}
+                          type="button"
+                          onClick={() => setPhrases((prev) => prev.filter((_, j) => j !== i))}
+                          className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2.5 py-1 text-[11px] text-rose-50"
+                        >
+                          “{p.length > 32 ? `${p.slice(0, 30)}…` : p}” ×
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={phraseDraft}
+                        onChange={(e) => setPhraseDraft(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addPhrase();
+                          }
+                        }}
+                        placeholder="Your line…"
+                        className="field min-w-0 flex-1 text-sm"
+                        disabled={phrases.length >= PHRASE_MAX}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addPhrase()}
+                        disabled={phrases.length >= PHRASE_MAX}
+                        className="btn-ghost min-h-0 px-3 py-1.5 text-xs disabled:opacity-40"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* 4 · Scenes optional */}
+                  <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
+                    <div className="mb-2 flex items-center justify-between gap-2">
+                      <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                        4 · Scenes
+                      </h2>
+                      <button
+                        type="button"
+                        onClick={addSceneSlot}
+                        disabled={scenes.length >= SCENE_MAX}
+                        className="text-[11px] text-brand-accent hover:underline disabled:opacity-40"
+                      >
+                        {scenes.length === 0
+                          ? "+ Add scene (optional)"
+                          : `+ Scene (${scenes.length}/${SCENE_MAX})`}
+                      </button>
+                    </div>
+                    {scenes.length === 0 ? (
+                      <p className="text-[11px] text-brand-muted">
+                        Skip if you want — vibe + visual is enough to chat.
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        {scenes.map((s, idx) => (
+                          <div
+                            key={idx}
+                            className="rounded-xl border border-brand-border/60 bg-brand-bg/50 p-2.5"
+                          >
+                            <div className="mb-1.5 flex items-center justify-between">
+                              <span className="text-[10px] font-semibold uppercase tracking-wide text-brand-muted">
+                                Scene {idx + 1}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => removeSceneSlot(idx)}
+                                className="text-[10px] text-brand-soft hover:text-rose-200"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                            <input
+                              value={s.title}
+                              onChange={(e) => updateScene(idx, "title", e.target.value)}
+                              placeholder="Title"
+                              className="field mb-1.5 w-full text-xs"
+                              maxLength={80}
+                            />
+                            <textarea
+                              value={s.body}
+                              onChange={(e) => updateScene(idx, "body", e.target.value)}
+                              placeholder="Short beat + one line of dialogue"
+                              rows={2}
+                              className="field w-full resize-none text-xs leading-relaxed"
+                              maxLength={400}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* 5 · Clips */}
+                  <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
+                    <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-brand-accent">
+                      5 · Clips
+                    </h2>
+                    <p className="mb-2 text-[11px] text-brand-muted">
+                      Drop files — auto-band from filename, or 1-click assign. Uploads after save.
+                    </p>
+                    <label className="mb-3 flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-violet-400/40 bg-violet-500/5 px-3 py-3 text-center transition hover:border-violet-400/70">
+                      <span className="text-sm font-medium text-brand-text">Upload clips</span>
+                      <span className="text-[11px] text-brand-muted">
+                        idle / teasing / playful / aroused in name · MP4/WebM
+                      </span>
+                      <input
+                        type="file"
+                        accept={CLIP_FILE_ACCEPT}
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          onBatchFiles(e.target.files);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+
+                    {pendingClips.length > 0 && (
+                      <div className="mb-3 space-y-2 rounded-xl border border-amber-400/30 bg-amber-500/5 p-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-wide text-amber-100/90">
+                          Assign band
+                        </p>
+                        {pendingClips.map((p) => (
+                          <div
+                            key={p.id}
+                            className="flex flex-wrap items-center gap-1.5 border-b border-brand-border/40 pb-2 last:border-0 last:pb-0"
+                          >
+                            <span className="min-w-0 flex-1 truncate text-[11px] text-brand-text">
+                              {p.file.name}
+                            </span>
+                            {CLIP_KEYS.map((k) => (
+                              <button
+                                key={k}
+                                type="button"
+                                onClick={() => assignPending(p.id, k)}
+                                className="rounded-full border border-brand-border px-2 py-0.5 text-[9px] font-semibold uppercase text-brand-muted hover:border-rose-400/50 hover:text-rose-100"
+                              >
+                                {BAND_LABEL[k]}
+                              </button>
+                            ))}
+                            <button
+                              type="button"
+                              onClick={() => dismissPending(p.id)}
+                              className="text-[10px] text-brand-soft hover:text-rose-200"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {CLIP_KEYS.map((key) => {
+                        const local = localClipFiles[key]?.url;
+                        const src =
+                          local ||
+                          clips[key] ||
+                          baseCard?.clips?.[key] ||
+                          clipUrlForBase(baseModelId, key);
+                        const custom = !!(local || clips[key]);
+                        return (
+                          <div key={key} className="space-y-1">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
+                                {BAND_LABEL[key]}
+                                {custom ? " · yours" : ""}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setPreviewBand(key)}
+                                className={`text-[9px] ${
+                                  previewBand === key ? "text-rose-200" : "text-brand-soft"
+                                }`}
+                              >
+                                ▶
+                              </button>
+                            </div>
+                            <ClipPreview src={src} label={key} />
+                            <label className="btn-ghost flex min-h-0 cursor-pointer items-center justify-center px-1 py-1 text-[9px]">
+                              {local ? "Replace" : "Assign"}
+                              <input
+                                type="file"
+                                accept={CLIP_FILE_ACCEPT}
+                                className="hidden"
+                                onChange={(e) => {
+                                  onLocalClip(key, e.target.files?.[0] ?? null);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+
+                  {/* 6 · NS booster toggle */}
+                  <section className="rounded-2xl border border-violet-400/25 bg-violet-500/5 p-3 sm:p-4">
+                    <label className="flex cursor-pointer items-start gap-2.5">
+                      <input
+                        type="checkbox"
+                        checked={nsBoostOn}
+                        onChange={(e) => setNsBoostOn(e.target.checked)}
+                        className="mt-0.5 rounded border-brand-border"
+                      />
+                      <span>
+                        <span className="block text-[12px] font-medium text-violet-100">
+                          Naughty Syntax booster
+                        </span>
+                        <span className="mt-0.5 block text-[11px] text-brand-muted">
+                          One slim overlay — filthy specificity without rewriting identity.
+                        </span>
+                      </span>
+                    </label>
+                    {nsBoostOn && (
+                      <textarea
+                        value={promptBoost}
+                        onChange={(e) => setPromptBoost(e.target.value.slice(0, 400))}
+                        rows={2}
+                        placeholder="e.g. sheer fabric physics · deny climax · soft Spanish optional"
+                        className="field mt-2 w-full resize-none text-sm leading-relaxed"
+                        maxLength={400}
+                      />
+                    )}
+                  </section>
+
+                  {/* Save bar */}
+                  <section className="sticky bottom-0 z-20 -mx-3 border-t border-brand-border/80 bg-brand-bg/95 px-3 py-3 backdrop-blur-md sm:static sm:mx-0 sm:rounded-2xl sm:border sm:border-brand-border/80 sm:bg-brand-panel/90 sm:px-4 sm:py-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <label className="flex items-center gap-2 text-[12px] text-brand-muted">
+                        <input
+                          type="checkbox"
+                          checked={featured}
+                          onChange={(e) => setFeatured(e.target.checked)}
+                          className="rounded border-brand-border"
+                        />
+                        Soft Featured
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        <Link href="/chat" className="btn-ghost min-h-0 px-3 py-2 text-xs">
+                          Cancel
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => void handleSave()}
+                          disabled={!canSave}
+                          className="btn-primary min-h-0 flex-1 px-5 py-2.5 text-sm disabled:opacity-50 sm:flex-none"
+                        >
+                          {saving
+                            ? editingId
+                              ? "Saving…"
+                              : "Forging…"
+                            : !account
+                              ? "Sign in to save"
+                              : capFull
+                                ? "Cap full"
+                                : editingId
+                                  ? "Save · Chat ready"
+                                  : "Save · Chat Now"}
+                        </button>
+                      </div>
+                    </div>
+                    {capFull && (
+                      <p className="mt-2 text-[11px] text-amber-100/90">
+                        Cap reached.{" "}
+                        <Link href="/account#my-models" className="underline">
+                          Manage models
+                        </Link>
+                        .
+                      </p>
+                    )}
+                  </section>
+                </>
               )}
 
               {/* Always-visible save when DNA forged without advanced open */}
@@ -1565,11 +1529,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                     playsInline
                     autoPlay
                   />
-                  <ForgeAvatarComposer
-                    band={previewBand}
-                    intensity={forgeIntensity}
-                    dna={dna}
-                  />
+                  <ForgeAvatarComposer band={previewBand} intensity={forgeIntensity} dna={dna} />
                   <div className="pointer-events-none absolute inset-0 z-[2] bg-gradient-to-t from-black via-black/30 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 z-[3] p-3 sm:p-4">
                     <p className="text-[10px] uppercase tracking-[0.25em] text-violet-200/90">
@@ -1632,9 +1592,11 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   )}
                   {dna && (
                     <div className="flex flex-wrap gap-1">
-                      {(Object.keys(dna.adaptivePrompt.branches) as Array<
-                        keyof typeof dna.adaptivePrompt.branches
-                      >).map((b) => (
+                      {(
+                        Object.keys(dna.adaptivePrompt.branches) as Array<
+                          keyof typeof dna.adaptivePrompt.branches
+                        >
+                      ).map((b) => (
                         <span
                           key={b}
                           className="rounded-full border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-rose-100/90"
@@ -1656,7 +1618,9 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   {canSave && (
                     <p className="rounded-lg border border-violet-400/25 bg-violet-500/10 px-2 py-1.5 text-[10px] text-violet-100/90">
                       After save → <strong>Chat Now</strong>
-                      {smartStarter ? ` · “${smartStarter.slice(0, 48)}${smartStarter.length > 48 ? "…" : ""}”` : ""}
+                      {smartStarter
+                        ? ` · “${smartStarter.slice(0, 48)}${smartStarter.length > 48 ? "…" : ""}”`
+                        : ""}
                     </p>
                   )}
                 </div>

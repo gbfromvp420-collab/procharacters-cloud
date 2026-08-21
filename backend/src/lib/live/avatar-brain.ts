@@ -157,10 +157,7 @@ export function blendAvatarFromBrain(
     previous.emotion ??
     base.emotion;
   const pose =
-    sanitizeToken(fromGrok?.pose) ??
-    sanitizeToken(tree?.pose) ??
-    previous.pose ??
-    base.pose;
+    sanitizeToken(fromGrok?.pose) ?? sanitizeToken(tree?.pose) ?? previous.pose ?? base.pose;
   const action =
     sanitizeToken(fromGrok?.action) ??
     phaseAction ??

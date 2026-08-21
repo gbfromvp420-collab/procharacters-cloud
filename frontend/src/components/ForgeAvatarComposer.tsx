@@ -69,14 +69,7 @@ export function ForgeAvatarComposer({
       ctx.clearRect(0, 0, w, h);
 
       // Vignette
-      const g = ctx.createRadialGradient(
-        w * 0.5,
-        h * 0.45,
-        w * 0.1,
-        w * 0.5,
-        h * 0.5,
-        w * 0.75,
-      );
+      const g = ctx.createRadialGradient(w * 0.5, h * 0.45, w * 0.1, w * 0.5, h * 0.5, w * 0.75);
       g.addColorStop(0, `rgba(${rgb}, 0)`);
       g.addColorStop(0.55, `rgba(${rgb}, ${0.04 + intensity * 0.06})`);
       g.addColorStop(1, `rgba(0, 0, 0, ${0.35 + intensity * 0.25})`);
@@ -109,7 +102,7 @@ export function ForgeAvatarComposer({
       // Scanline heat (subtle)
       if (intensity > 0.55) {
         ctx.fillStyle = `rgba(${rgb}, ${0.03 + (intensity - 0.55) * 0.08})`;
-        const yLine = ((t * 40) % h);
+        const yLine = (t * 40) % h;
         ctx.fillRect(0, yLine, w, 2);
       }
 

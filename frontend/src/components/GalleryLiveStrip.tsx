@@ -44,20 +44,28 @@ export function GalleryLiveStrip({
   const chips: Chip[] = [
     { label: `${signature} minds`, tone: "accent" },
     pack01 > 0
-      ? { label: `Pack 01 · ${pack01}`, tone: "emerald", onClick: onPackLane ? () => onPackLane("01") : onPacks }
+      ? {
+          label: `Pack 01 · ${pack01}`,
+          tone: "emerald",
+          onClick: onPackLane ? () => onPackLane("01") : onPacks,
+        }
       : null,
     pack02 > 0
-      ? { label: `Pack 02 · ${pack02}`, tone: "emerald", onClick: onPackLane ? () => onPackLane("02") : onPacks }
+      ? {
+          label: `Pack 02 · ${pack02}`,
+          tone: "emerald",
+          onClick: onPackLane ? () => onPackLane("02") : onPacks,
+        }
       : null,
     pack03 > 0
-      ? { label: `Pack 03 · ${pack03}`, tone: "emerald", onClick: onPackLane ? () => onPackLane("03") : onPacks }
+      ? {
+          label: `Pack 03 · ${pack03}`,
+          tone: "emerald",
+          onClick: onPackLane ? () => onPackLane("03") : onPacks,
+        }
       : null,
-    packs > 0
-      ? { label: `${packs}× 4K`, tone: "emerald", onClick: onPacks }
-      : null,
-    featured > 0
-      ? { label: `${featured} featured`, tone: "accent", onClick: onFeatured }
-      : null,
+    packs > 0 ? { label: `${packs}× 4K`, tone: "emerald", onClick: onPacks } : null,
+    featured > 0 ? { label: `${featured} featured`, tone: "accent", onClick: onFeatured } : null,
     owned > 0
       ? {
           label: `${owned} my model${owned === 1 ? "" : "s"}`,

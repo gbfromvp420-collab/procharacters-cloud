@@ -39,20 +39,14 @@ export function ContinueBanner({
   const [qrError, setQrError] = useState<string | null>(null);
   const mind = mindFingerprint(continueTarget.characterId);
   const recap =
-    continueTarget.recapLine?.trim() ||
-    continueCard?.teaser?.trim() ||
-    mind?.blurb ||
-    null;
-  const displayName =
-    continueCard?.displayName || continueTarget.characterName || "Your last chat";
+    continueTarget.recapLine?.trim() || continueCard?.teaser?.trim() || mind?.blurb || null;
+  const displayName = continueCard?.displayName || continueTarget.characterName || "Your last chat";
   const nick = displayName.trim().split(/\s+/)[0] || displayName;
   const trailDepth = continueTarget.heatDepth;
   const trailChips = continueTarget.heatChips?.slice(0, 4) ?? [];
   const trailMind = continueTarget.mindTag || mind?.tag;
   const dnaLabel =
-    continueTarget.dnaTreeLabel?.trim() ||
-    continueTarget.dnaTreeNodeId?.trim() ||
-    null;
+    continueTarget.dnaTreeLabel?.trim() || continueTarget.dnaTreeNodeId?.trim() || null;
   const depthLevel =
     trailDepth === "locked"
       ? 4
@@ -76,9 +70,7 @@ export function ContinueBanner({
     characterName: displayName,
     baseModelId:
       continueCard?.avatarBase ||
-      (continueTarget.characterId.startsWith("custom-")
-        ? undefined
-        : continueTarget.characterId),
+      (continueTarget.characterId.startsWith("custom-") ? undefined : continueTarget.characterId),
     dnaTreeLabel: continueTarget.dnaTreeLabel,
     dnaTreeNodeId: continueTarget.dnaTreeNodeId,
     heatDepth: continueTarget.heatDepth,
@@ -144,9 +136,7 @@ export function ContinueBanner({
   return (
     <section
       className={`mb-6 animate-rise-in overflow-hidden rounded-2xl border bg-gradient-to-r via-brand-panel to-brand-panel shadow-glow-sm sm:mb-8 ${
-        urgent
-          ? "border-rose-500/50 from-rose-500/20"
-          : "border-amber-500/40 from-amber-500/15"
+        urgent ? "border-rose-500/50 from-rose-500/20" : "border-amber-500/40 from-amber-500/15"
       }`}
       aria-label="Continue where you left off"
     >
@@ -184,9 +174,7 @@ export function ContinueBanner({
             <p className="truncate text-base font-semibold text-brand-text sm:text-lg">
               {displayName}
               {trailMind ? (
-                <span className="ml-2 text-xs font-normal text-brand-muted">
-                  · {trailMind}
-                </span>
+                <span className="ml-2 text-xs font-normal text-brand-muted">· {trailMind}</span>
               ) : null}
               {dnaLabel ? (
                 <span className="ml-2 rounded-full border border-violet-400/40 bg-violet-500/15 px-1.5 py-0.5 text-[10px] font-medium text-violet-100">

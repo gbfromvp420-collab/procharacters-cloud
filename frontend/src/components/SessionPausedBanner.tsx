@@ -9,15 +9,9 @@ import {
   stashForgeHeatSeed,
 } from "@/lib/forge-from-heat";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
-import {
-  buildResumeChatPath,
-  type HeatTrailDepth,
-} from "@/lib/resume-cache";
+import { buildResumeChatPath, type HeatTrailDepth } from "@/lib/resume-cache";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
-import {
-  getLocalPushSubscription,
-  isPushSupported,
-} from "@/lib/web-push-client";
+import { getLocalPushSubscription, isPushSupported } from "@/lib/web-push-client";
 
 /**
  * After End — heat is saved, path back is one tap. Morph the goodbye into return.
@@ -97,9 +91,7 @@ export function SessionPausedBanner({
   const forgeHeatCtx = {
     characterId,
     characterName,
-    baseModelId:
-      baseModelId ||
-      (characterId.startsWith("custom-") ? undefined : characterId),
+    baseModelId: baseModelId || (characterId.startsWith("custom-") ? undefined : characterId),
     dnaTreeLabel,
     dnaTreeNodeId,
     heatDepth,
@@ -163,11 +155,7 @@ export function SessionPausedBanner({
     >
       <p
         className={`text-[10px] font-semibold uppercase tracking-[0.22em] ${
-          isMine
-            ? "text-violet-200/90"
-            : deep
-              ? "text-rose-200/90"
-              : "text-brand-accent"
+          isMine ? "text-violet-200/90" : deep ? "text-rose-200/90" : "text-brand-accent"
         }`}
       >
         Session paused · heat trail saved
@@ -190,8 +178,7 @@ export function SessionPausedBanner({
         {resumeCode ? (
           <>
             {" "}
-            Code{" "}
-            <span className="font-mono text-amber-100">{resumeCode}</span> brings you back.
+            Code <span className="font-mono text-amber-100">{resumeCode}</span> brings you back.
           </>
         ) : (
           " Start again anytime — free path stays open."
@@ -246,9 +233,7 @@ export function SessionPausedBanner({
             </div>
           )}
           {recapLine?.trim() && (
-            <p className="line-clamp-2 text-[11px] italic text-brand-muted">
-              “{recapLine.trim()}”
-            </p>
+            <p className="line-clamp-2 text-[11px] italic text-brand-muted">“{recapLine.trim()}”</p>
           )}
         </div>
       )}

@@ -15,9 +15,7 @@ export function snapshotShareQuery(search?: string): ShareQuery {
 }
 
 /** Incoming share query that ChatApp must apply before rewriting the address bar. */
-export function hasPendingShareDeepLink(
-  query: ShareQuery | null | undefined,
-): boolean {
+export function hasPendingShareDeepLink(query: ShareQuery | null | undefined): boolean {
   if (!query) return false;
   return !!(
     query.characterId ||
@@ -54,9 +52,7 @@ export function resolveCharacterDeepLink(options: {
 
   const exists = options.catalogIds.includes(characterId);
   if (!exists) {
-    return options.catalogReady
-      ? { action: "unknown", characterId }
-      : { action: "wait" };
+    return options.catalogReady ? { action: "unknown", characterId } : { action: "wait" };
   }
 
   return {
@@ -68,10 +64,7 @@ export function resolveCharacterDeepLink(options: {
 }
 
 /** Picker id for first ChatApp paint — honor ?character= instead of twink-default. */
-export function initialPickerCharacterId(
-  search?: string,
-  fallback = "twink-default",
-): string {
+export function initialPickerCharacterId(search?: string, fallback = "twink-default"): string {
   return snapshotShareQuery(search).characterId || fallback;
 }
 
@@ -109,11 +102,7 @@ export function resolveChatBootIdentity(options: {
   // Stale snapshot must not override a later picker hop once the link is applied.
   const queryId = rawQuery && !options.queryConsumed ? rawQuery : null;
   const intendedCharacterId = queryId || activeId || selectedId || null;
-  const pendingRequested = !!(
-    queryId &&
-    queryId !== selectedId &&
-    queryId !== activeId
-  );
+  const pendingRequested = !!(queryId && queryId !== selectedId && queryId !== activeId);
 
   if (pendingRequested || !intendedCharacterId) {
     return {
@@ -128,8 +117,7 @@ export function resolveChatBootIdentity(options: {
   const selectedName = options.selectedDisplayName?.trim() || null;
   const savedId = options.savedSession?.characterId?.trim() || null;
   const savedName = options.savedSession?.characterName?.trim() || null;
-  const savedNameIfMatch =
-    savedId && savedId === intendedCharacterId ? savedName : null;
+  const savedNameIfMatch = savedId && savedId === intendedCharacterId ? savedName : null;
 
   return {
     intendedCharacterId,

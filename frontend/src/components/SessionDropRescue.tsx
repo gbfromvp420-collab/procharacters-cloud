@@ -66,9 +66,10 @@ export function SessionDropRescue({
             {dnaPower ? " · DNA power" : ""}
           </p>
           <p className="mt-1 text-brand-muted">
-            Link to <strong className="text-brand-text">{who}</strong> cut out.
-            Rejoin with {via}
-            {dnaPower ? " — Edge Pace + DNA climb stay on the server" : " to keep chatting — memory stays on the server"}
+            Link to <strong className="text-brand-text">{who}</strong> cut out. Rejoin with {via}
+            {dnaPower
+              ? " — Edge Pace + DNA climb stay on the server"
+              : " to keep chatting — memory stays on the server"}
             .
           </p>
         </div>
@@ -78,16 +79,10 @@ export function SessionDropRescue({
             disabled={busy}
             onClick={onRejoin}
             className={`btn-primary min-h-0 px-3 py-1.5 text-xs disabled:opacity-50 ${
-              dnaPower
-                ? "ring-1 ring-violet-400/50"
-                : "ring-1 ring-amber-400/40"
+              dnaPower ? "ring-1 ring-violet-400/50" : "ring-1 ring-amber-400/40"
             }`}
           >
-            {busy
-              ? "Rejoining…"
-              : dnaPower
-                ? `DNA power · ${nick}`
-                : `Rejoin · ${nick}`}
+            {busy ? "Rejoining…" : dnaPower ? `DNA power · ${nick}` : `Rejoin · ${nick}`}
           </button>
           <button
             type="button"
