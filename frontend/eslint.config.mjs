@@ -10,10 +10,12 @@ export default [
     // before this upgrade — keep them visible as warnings and fix incrementally
     // rather than block the Next 16 adoption on a large refactor.
     rules: {
+      // `purity` is fully cleared and enforced as an error (see burndown PR).
+      // The rest remain warnings pending manual-QA-backed passes on the hot
+      // components (ChatApp/AccountSettings) — fix incrementally, then promote.
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/refs": "warn",
       "react-hooks/immutability": "warn",
-      "react-hooks/purity": "warn",
       "react-hooks/preserve-manual-memoization": "warn",
     },
   },
