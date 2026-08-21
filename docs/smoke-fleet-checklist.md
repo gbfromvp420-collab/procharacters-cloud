@@ -1,7 +1,7 @@
 # Smoke — Agent fleet cook loops
 
 **Owner:** Gary (phone) · **Prep:** King Grok / `kgc-smoke`  
-**Updated:** 2026-07-20  
+**Updated:** 2026-08-21  
 
 **Live web:** https://procharacters-web-production-7288.up.railway.app  
 **API health:** https://procharacters-api-production-0417.up.railway.app/health  
@@ -40,6 +40,17 @@ Expect `deploy.gitSha` to match latest ship you care about.
 2. Should open Edge Pace + tree node restored  
 
 **Pass if:** not a cold normal session.  
+**Fail →** `/kgc-return`.
+
+---
+
+## Smoke: C2 — Send test reclaim
+
+1. After a signed-in chat (DNA climb is best)  
+2. Chat strip or Account → **Enable alerts** → **Send test**  
+3. Tap the notification  
+
+**Pass if:** opens that chat (Edge when DNA is hot) — not a blank Account page.  
 **Fail →** `/kgc-return`.
 
 ---

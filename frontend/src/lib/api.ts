@@ -499,7 +499,7 @@ export function formatRetryAfter(sec: number): string {
   return min === 1 ? "1 min" : `${min} min`;
 }
 
-/** One-shot test notification (phone smoke). */
+/** One-shot test notification (phone smoke). Tap should reclaim last chat when one exists. */
 export async function sendTestPush(accountToken: string): Promise<{
   ok: boolean;
   sent: number;
@@ -507,6 +507,10 @@ export async function sendTestPush(accountToken: string): Promise<{
   gone?: number;
   devices?: number;
   error?: string;
+  dnaPower?: boolean;
+  characterName?: string | null;
+  characterId?: string | null;
+  url?: string;
 }> {
   const res = await fetch(`${API_BASE}/api/v1/accounts/me/push/test`, {
     method: "POST",
@@ -523,6 +527,10 @@ export async function sendTestPush(accountToken: string): Promise<{
     error?: string;
     retryAfterSec?: number;
     code?: string;
+    dnaPower?: boolean;
+    characterName?: string | null;
+    characterId?: string | null;
+    url?: string;
   } = {};
   try {
     data = JSON.parse(text) as typeof data;
@@ -552,6 +560,10 @@ export async function sendTestPush(accountToken: string): Promise<{
     gone: data.gone,
     devices: data.devices,
     error: data.error,
+    dnaPower: data.dnaPower,
+    characterName: data.characterName,
+    characterId: data.characterId,
+    url: data.url,
   };
 }
 

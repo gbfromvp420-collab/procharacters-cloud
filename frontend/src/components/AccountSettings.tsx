@@ -997,7 +997,14 @@ export function AccountSettings() {
     try {
       const result = await sendTestPush(account.token);
       if (result.sent > 0) {
-        flash(`Test alert sent to ${result.sent} device(s) — check your notification shade`);
+        const nick = result.characterName?.trim().split(/\s+/)[0];
+        flash(
+          nick
+            ? result.dnaPower
+              ? `Test sent — tap it to DNA-reclaim ${nick}`
+              : `Test sent — tap it to continue ${nick}`
+            : `Test alert sent to ${result.sent} device(s) — tap opens Account (no saved chat yet)`,
+        );
       } else {
         setError("Test push did not deliver — re-enable push on this browser");
       }
@@ -2282,7 +2289,7 @@ export function AccountSettings() {
                             disabled={busy}
                             onClick={() => void onTestPush()}
                             className="shrink-0 rounded-lg bg-sky-500/20 px-3 py-1.5 text-xs font-medium text-sky-100 hover:bg-sky-500/30 disabled:opacity-50"
-                            title="Send a test notification now"
+                            title="Send a test — tap opens last chat / DNA reclaim, not just Account"
                           >
                             Send test
                           </button>

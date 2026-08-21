@@ -175,7 +175,14 @@ export function PushEnableHint({
       const result = await sendTestPush(t);
       if (result.ok && result.sent > 0) {
         markTested();
-        setStatus(`Test sent to ${result.sent} device(s) — check the notification shade.`);
+        const nick = result.characterName?.trim().split(/\s+/)[0];
+        setStatus(
+          nick
+            ? result.dnaPower
+              ? `Test sent — tap the shade to DNA-reclaim ${nick}.`
+              : `Test sent — tap the shade to continue ${nick}.`
+            : `Test sent to ${result.sent} device(s) — check the notification shade.`,
+        );
         window.setTimeout(() => hide(true), 2800);
       } else if (result.ok && result.sent === 0) {
         setStatus("No devices got the test — try Enable alerts again.");
@@ -204,7 +211,7 @@ export function PushEnableHint({
     mode === "sign_in"
       ? "Sign in so we can alert you when your resume code is about to expire — even with the tab closed."
       : mode === "verify"
-        ? "You’re subscribed. Send a one-shot test now — no need to open Account."
+        ? "You’re subscribed. Send a test — tap it to reclaim this chat, not just open Account."
         : "Enable alerts so we can warn you when your resume code is about to expire — even with the tab closed.";
 
   return (

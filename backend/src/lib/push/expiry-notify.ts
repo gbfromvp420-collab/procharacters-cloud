@@ -6,7 +6,10 @@ import {
   listPushSubscriptionsForAccount,
   markExpiryNotified,
 } from "./push-store.js";
+import { buildReclaimChatUrl, dnaNodeLabel, isDnaPowerSession } from "./reclaim-push.js";
 import { isWebPushConfigured, sendWebPush } from "./web-push-service.js";
+
+export { dnaNodeLabel, isDnaPowerSession } from "./reclaim-push.js";
 
 const WARN_DAYS = Number(process.env.RESUME_EXPIRY_PUSH_DAYS ?? 3);
 const NOTIFY_COOLDOWN_MS = Number(
@@ -14,38 +17,6 @@ const NOTIFY_COOLDOWN_MS = Number(
 );
 /** Background scan interval; 0 disables cron. Default 1 hour. */
 const CRON_MS = Number(process.env.RESUME_EXPIRY_PUSH_CRON_MS ?? 60 * 60 * 1000);
-
-type AccountSessionRow = Awaited<
-  ReturnType<SessionManager["listAccountSessions"]>
->[number];
-
-/**
- * DNA power trail — mid climb or Edge Pace heat.
- * Mirrors frontend isDnaPowerTrail so push deep-links reclaim Edge Pace.
- */
-export function isDnaPowerSession(
-  s: Pick<AccountSessionRow, "dnaTreeNodeId" | "sessionMode" | "messageCount">,
-): boolean {
-  if (s.sessionMode === "edge_pace") return true;
-  const node = (s.dnaTreeNodeId || "").toLowerCase();
-  if (/edge|deny|release|gate|tease/.test(node)) return true;
-  // Engaged DNA forge with a stamped node — still reclaim climb energy
-  if (s.dnaTreeNodeId && (s.messageCount ?? 0) >= 4) return true;
-  return false;
-}
-
-/** Pretty DNA node label for push copy. */
-export function dnaNodeLabel(nodeId?: string): string | null {
-  if (!nodeId?.trim()) return null;
-  const id = nodeId.trim().toLowerCase();
-  if (id.includes("release")) return "Release";
-  if (id.includes("deny")) return "Deny";
-  if (id.includes("edge")) return "Edge";
-  if (id.includes("tease")) return "Tease";
-  if (id.includes("soft")) return "Soft lock";
-  if (id.includes("spark")) return "Spark";
-  return nodeId.trim();
-}
 
 /**
  * If the account has push subscriptions and any resume codes expire soon,
@@ -108,17 +79,9 @@ export async function notifyAccountResumeExpiry(
   const dnaPower = primary ? isDnaPowerSession(primary) : false;
   const nodeLabel = primary ? dnaNodeLabel(primary.dnaTreeNodeId) : null;
 
-  // Prefer last-chat deep link so one tap continues the sticky loop
-  let deepUrl = `${siteBase}/account`;
-  if (primary?.resumeCode) {
-    const q = new URLSearchParams({
-      resume: primary.resumeCode.toUpperCase(),
-      rehydrate: "1",
-    });
-    if (primary.characterId) q.set("character", primary.characterId);
-    if (dnaPower) q.set("mode", "edge_pace");
-    deepUrl = `${siteBase}/chat?${q.toString()}`;
-  }
+  const deepUrl = primary?.resumeCode
+    ? buildReclaimChatUrl(siteBase, primary, dnaPower)
+    : `${siteBase}/account`;
 
   const primaryName = primary?.characterName?.trim();
   let title = "Procharacters — continue before codes expire";
