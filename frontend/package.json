@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "livekit-client": "^2.15.4",
-    "next": "^15.3.3",
+    "next": "^15.5.23",
     "qrcode": "^1.5.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
