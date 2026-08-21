@@ -1,0 +1,26 @@
+{
+  "name": "procharacters.cloud",
+  "install": "bash .cursor/install.sh",
+  "terminals": [
+    {
+      "name": "backend",
+      "command": "cd backend && ACCOUNTS_PROVIDER=json npm run dev",
+      "description": "Product API — Fastify REST + WebSocket + Grok on http://localhost:3001 (JSON accounts, stub chat when XAI_API_KEY unset)."
+    },
+    {
+      "name": "frontend",
+      "command": "cd frontend && NEXT_PUBLIC_API_URL=http://localhost:3001 npm run dev",
+      "description": "Product web — Next.js gallery/chat/Studio/account on http://localhost:3000."
+    },
+    {
+      "name": "webrtc",
+      "command": "source .venv/bin/activate && VIDEO_PROVIDER=mock LLM_PROVIDER=mock python -m uvicorn app.main:app --host 0.0.0.0 --port 8000",
+      "description": "Optional WebRTC signaling + trainer studio (FastAPI, mock providers) on http://localhost:8000."
+    }
+  ],
+  "ports": [
+    { "name": "frontend", "port": 3000 },
+    { "name": "backend", "port": 3001 },
+    { "name": "webrtc", "port": 8000 }
+  ]
+}
