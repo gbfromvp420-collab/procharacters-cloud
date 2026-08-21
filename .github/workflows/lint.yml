@@ -30,12 +30,11 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # next lint has no ESLint config and prompts in CI (exit 1). Same
-      # best-effort as ci-frontend.yml. Product gate there is test:deeplink + build.
+      # ESLint config lives in frontend/.eslintrc.json (next/core-web-vitals).
+      # Enforced: fails on lint errors, warnings stay non-blocking.
       - name: Frontend lint
         working-directory: frontend
-        run: npm run lint --if-present
-        continue-on-error: true
+        run: npm run lint
 
       - name: Backend install
         working-directory: backend
