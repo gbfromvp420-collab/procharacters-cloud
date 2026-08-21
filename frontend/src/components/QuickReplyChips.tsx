@@ -2,11 +2,7 @@
 
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 
-function chipsFor(
-  characterId?: string | null,
-  nick?: string,
-  heatDepth?: string | null,
-): string[] {
+function chipsFor(characterId?: string | null, nick?: string, heatDepth?: string | null): string[] {
   const mind = mindFingerprint(characterId);
   const n = nick || "you";
   const deep = heatDepth === "deep" || heatDepth === "locked" || heatDepth === "edge";
@@ -60,8 +56,7 @@ export function QuickReplyChips({
   heatDepth?: "spark" | "warm" | "edge" | "deep" | "locked" | null;
 }) {
   const nick = characterName?.trim().split(/\s+/)[0] || undefined;
-  const deep =
-    heatDepth === "deep" || heatDepth === "locked" || heatDepth === "edge";
+  const deep = heatDepth === "deep" || heatDepth === "locked" || heatDepth === "edge";
   const chips = chipsFor(characterId, nick, heatDepth).slice(0, deep ? 7 : 6);
 
   return (

@@ -40,13 +40,10 @@ export function PremiumUnlockCeremony({
               : "Premium is live — use the forge headroom"}
           </h2>
           <p className="mt-1.5 text-sm text-brand-muted">
-            Cap is now{" "}
-            <strong className="text-amber-100">{customsLimit} My Characters</strong>
-            {planExpiresAt
-              ? ` · until ${new Date(planExpiresAt).toLocaleString()}`
-              : ""}
-            . Type a fantasy in Studio — conversational forge builds adaptive DNA under 5s. Free chat
-            never paywalled.
+            Cap is now <strong className="text-amber-100">{customsLimit} My Characters</strong>
+            {planExpiresAt ? ` · until ${new Date(planExpiresAt).toLocaleString()}` : ""}. Type a
+            fantasy in Studio — conversational forge builds adaptive DNA under 5s. Free chat never
+            paywalled.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Link
@@ -81,7 +78,8 @@ export function PremiumUnlockCeremony({
             </Link>
           </div>
           <p className="mt-3 text-[11px] text-brand-muted">
-            Higher upload limits are on — drop clips after forge, then Chat Now and climb the DNA tree.
+            Higher upload limits are on — drop clips after forge, then Chat Now and climb the DNA
+            tree.
           </p>
         </div>
         {onDismiss && (

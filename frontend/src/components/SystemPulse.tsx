@@ -148,17 +148,12 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       key: "deploy",
       label: `API ${sha}`,
       ok: health.status === "ok" ? true : "warn",
-      title: [
-        health.deploy?.serviceName,
-        health.deploy?.environment,
-        health.deploy?.gitShaShort,
-      ]
+      title: [health.deploy?.serviceName, health.deploy?.environment, health.deploy?.gitShaShort]
         .filter(Boolean)
         .join(" · "),
     });
 
-    const dbOk =
-      health.accounts?.provider === "prisma" ? !!health.accounts.database?.ok : true;
+    const dbOk = health.accounts?.provider === "prisma" ? !!health.accounts.database?.ok : true;
     chips.push({
       key: "db",
       label:
@@ -201,11 +196,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
     const stripeMode = health.billing?.mode ?? (stripeOn ? "live" : "off");
     chips.push({
       key: "stripe",
-      label: stripeOn
-        ? stripeMode === "test"
-          ? "Stripe test"
-          : "Stripe live"
-        : "Stripe off",
+      label: stripeOn ? (stripeMode === "test" ? "Stripe test" : "Stripe live") : "Stripe off",
       ok: stripeOn ? true : "info",
       title: health.billing?.freePath
         ? `Free chat always works; mode=${stripeMode}; webhook=${
@@ -218,8 +209,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         key: "stripeWebhook",
         label: health.billing?.webhook ? "Pay webhook on" : "Pay webhook off",
         ok: health.billing?.webhook ? true : "warn",
-        title:
-          "STRIPE_WEBHOOK_SECRET — checkout.session.completed on API /billing/webhook",
+        title: "STRIPE_WEBHOOK_SECRET — checkout.session.completed on API /billing/webhook",
       });
     }
 
@@ -255,17 +245,12 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       key: "uptime",
       label: `Up ${formatUptime(metrics.uptimeSec)}`,
       ok: true,
-      title: metrics.startedAt
-        ? `Process started ${metrics.startedAt}`
-        : "API process uptime",
+      title: metrics.startedAt ? `Process started ${metrics.startedAt}` : "API process uptime",
     });
     chips.push({
       key: "http",
       label: `${formatCount(metrics.httpRequests)} req`,
-      ok:
-        (metrics.httpErrors5xx ?? 0) > 0
-          ? "warn"
-          : true,
+      ok: (metrics.httpErrors5xx ?? 0) > 0 ? "warn" : true,
       title: `HTTP requests this process · 4xx ${metrics.httpErrors4xx ?? 0} · 5xx ${
         metrics.httpErrors5xx ?? 0
       }`,
@@ -405,10 +390,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         channel?: string;
       };
       if (res.status === 429) {
-        setAlertNotice(
-          data.error ||
-            `Slow down — try again in ${data.retryAfterSec ?? 60}s`,
-        );
+        setAlertNotice(data.error || `Slow down — try again in ${data.retryAfterSec ?? 60}s`);
         return;
       }
       if (res.status === 503 || data.configured === false) {
@@ -438,8 +420,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
   const climbs = metrics?.dnaTreeAdvances ?? 0;
   const payStarts = metrics?.checkoutStarts ?? 0;
   const payConfirms = metrics?.checkoutConfirms ?? 0;
-  const funnelActive =
-    expands + dnaSaves + edgeSessions + climbs + payStarts + payConfirms > 0;
+  const funnelActive = expands + dnaSaves + edgeSessions + climbs + payStarts + payConfirms > 0;
   const funnelPct = (num: number, den: number) =>
     den > 0 ? Math.min(999, Math.round((num / den) * 100)) : null;
 
@@ -452,9 +433,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-brand-muted">
-            System pulse
-          </p>
+          <p className="text-[10px] uppercase tracking-[0.28em] text-brand-muted">System pulse</p>
           <p className="mt-0.5 text-sm font-medium text-brand-text">
             {loading && !health
               ? "Checking API…"
@@ -497,9 +476,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
       {alertNotice && (
         <p
           className={`mt-2 text-xs ${
-            alertNotice.startsWith("Test alert")
-              ? "text-emerald-200/90"
-              : "text-amber-100/90"
+            alertNotice.startsWith("Test alert") ? "text-emerald-200/90" : "text-amber-100/90"
           }`}
           role="status"
         >
@@ -597,9 +574,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
           </div>
           <p className="mt-2 text-[10px] text-brand-muted">
             Expand→save{" "}
-            <strong className="text-violet-100/90">
-              {funnelPct(dnaSaves, expands) ?? "—"}%
-            </strong>
+            <strong className="text-violet-100/90">{funnelPct(dnaSaves, expands) ?? "—"}%</strong>
             {" · "}
             Pay{" "}
             <strong className="text-amber-100/90">
@@ -618,8 +593,7 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
         <p className="mt-2 text-[10px] text-brand-muted">
           Sleep-at-night (no Discord needed): Railway{" "}
           <strong className="text-brand-text/80">procharacters-api</strong> →{" "}
-          <code className="text-brand-muted/90">ERROR_WEBHOOK_URL</code>
-          ={" "}
+          <code className="text-brand-muted/90">ERROR_WEBHOOK_URL</code>={" "}
           <code className="text-brand-muted/90">https://ntfy.sh/your-secret-topic</code>
           {" · "}
           install free <strong className="text-brand-text/80">ntfy</strong> app → subscribe →{" "}

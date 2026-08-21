@@ -1,7 +1,11 @@
 /** Trigger a browser download of a JSON document. */
 export function downloadJson(filename: string, data: unknown): void {
   const text = typeof data === "string" ? data : JSON.stringify(data, null, 2);
-  downloadText(filename, text.endsWith("\n") ? text : `${text}\n`, "application/json;charset=utf-8");
+  downloadText(
+    filename,
+    text.endsWith("\n") ? text : `${text}\n`,
+    "application/json;charset=utf-8",
+  );
 }
 
 /** Trigger a browser download of plain text / markdown. */
@@ -26,10 +30,7 @@ export function downloadMarkdown(filename: string, markdown: string): void {
   downloadText(filename, markdown, "text/markdown;charset=utf-8");
 }
 
-export function dispositionFilename(
-  header: string | null,
-  fallback: string,
-): string {
+export function dispositionFilename(header: string | null, fallback: string): string {
   if (!header) return fallback;
   const match = /filename\*?=(?:UTF-8''|")?([^\";]+)/i.exec(header);
   if (!match?.[1]) return fallback;

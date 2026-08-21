@@ -59,10 +59,8 @@ function extractAvatarIntent(jsonText: string): Partial<AvatarState> | undefined
     const emotion = asString(intentRaw.emotion);
     const pose = asString(intentRaw.pose);
     const action = asString(intentRaw.action);
-    const clothing =
-      asString(intentRaw.clothing_state) ?? asString(intentRaw.clothingState);
-    const arousal =
-      asNumber(intentRaw.arousal_level) ?? asNumber(intentRaw.arousalLevel);
+    const clothing = asString(intentRaw.clothing_state) ?? asString(intentRaw.clothingState);
+    const arousal = asNumber(intentRaw.arousal_level) ?? asNumber(intentRaw.arousalLevel);
 
     if (!emotion && !pose && !action && arousal === undefined && !clothing) {
       return undefined;

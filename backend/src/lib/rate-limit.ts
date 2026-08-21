@@ -26,11 +26,7 @@ function prune(hits: number[], windowMs: number, now: number): number[] {
  * @param limit max hits in window
  * @param windowMs window length
  */
-export function checkRateLimit(
-  key: string,
-  limit: number,
-  windowMs: number,
-): RateLimitResult {
+export function checkRateLimit(key: string, limit: number, windowMs: number): RateLimitResult {
   const now = Date.now();
   const bucket = buckets.get(key) ?? { hits: [] };
   bucket.hits = prune(bucket.hits, windowMs, now);

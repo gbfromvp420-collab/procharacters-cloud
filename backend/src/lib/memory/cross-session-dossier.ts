@@ -48,10 +48,7 @@ export function buildCrossSessionDossier(input: DossierBuildInput): string {
   ]).slice(0, 7);
 
   // Last scene fingerprint (pose/act/clothing) — gold for re-entry
-  const lastScene = unique([
-    ...extracted.lastScene,
-    ...prior.lastScene,
-  ]).slice(0, 4);
+  const lastScene = unique([...extracted.lastScene, ...prior.lastScene]).slice(0, 4);
 
   // Rolling session log (newest first)
   const sessionLine = compactSessionLine(input.sessionNotes, characterName);
@@ -99,9 +96,7 @@ export function parseReturnSignals(priorDossier?: string | null): {
 } {
   const prior = parseSections(priorDossier ?? "");
   const nameRaw =
-    prior.who
-      .map((w) => w.match(/^Called:\s*(.+)/i)?.[1]?.trim())
-      .find(Boolean) ??
+    prior.who.map((w) => w.match(/^Called:\s*(.+)/i)?.[1]?.trim()).find(Boolean) ??
     priorDossier?.match(/(?:Called|call(?:ed)? me)\s*[:\s]+([A-Za-z][\w.-]{1,24})/i)?.[1] ??
     null;
   const name = cleanName(nameRaw);
@@ -118,10 +113,7 @@ export function parseReturnSignals(priorDossier?: string | null): {
  * One-line cue for opening when they return — specific when we have signals.
  * Character-flavored soft spice when characterId known.
  */
-export function returnGreetingHint(
-  priorDossier?: string,
-  characterId?: string,
-): string | null {
+export function returnGreetingHint(priorDossier?: string, characterId?: string): string | null {
   if (!priorDossier?.trim()) return null;
 
   const sig = parseReturnSignals(priorDossier);
@@ -169,10 +161,7 @@ export function returnGreetingHint(
     );
   }
   if (name && wantBit) {
-    return softLine(
-      `hey ${name}… i kept what you wanted — “${wantBit}”. show me again.`,
-      mind,
-    );
+    return softLine(`hey ${name}… i kept what you wanted — “${wantBit}”. show me again.`, mind);
   }
   if (name) {
     return softLine(
@@ -181,10 +170,7 @@ export function returnGreetingHint(
     );
   }
   if (sceneBit) {
-    return softLine(
-      `i kept our last pose — ${sceneBit}. don’t make me start over.`,
-      mind,
-    );
+    return softLine(`i kept our last pose — ${sceneBit}. don’t make me start over.`, mind);
   }
   if (heatBit) {
     return softLine(
@@ -283,7 +269,10 @@ function extractSignals(
     .filter((m) => m.role === "user")
     .map((m) => m.content)
     .join("\n");
-  const allText = messages.map((m) => m.content).join("\n").toLowerCase();
+  const allText = messages
+    .map((m) => m.content)
+    .join("\n")
+    .toLowerCase();
 
   const names = new Set<string>();
   const who: string[] = [];
@@ -305,9 +294,7 @@ function extractSignals(
   }
 
   // Scene lock may carry called=
-  const calledFromNotes = cleanName(
-    sessionNotes?.match(/called=([A-Za-z][\w.-]{1,18})/i)?.[1],
-  );
+  const calledFromNotes = cleanName(sessionNotes?.match(/called=([A-Za-z][\w.-]{1,18})/i)?.[1]);
   if (calledFromNotes) names.add(calledFromNotes);
 
   // Preference lines from user
@@ -415,8 +402,10 @@ function beatsFromNotes(notes: string): string[] {
 function compactSessionLine(sessionNotes: string, characterName: string): string {
   const date = new Date().toISOString().slice(0, 10);
   const vibe =
-    sessionNotes.match(/Ongoing vibe:\s*([^.]+)/i)?.[1]?.trim().slice(0, 90) ||
-    sessionNotes.slice(0, 90).replace(/\s+/g, " ");
+    sessionNotes
+      .match(/Ongoing vibe:\s*([^.]+)/i)?.[1]
+      ?.trim()
+      .slice(0, 90) || sessionNotes.slice(0, 90).replace(/\s+/g, " ");
   const scene =
     sessionNotes.match(/pose=([^;]+)/i)?.[1]?.trim() ||
     sessionNotes.match(/act=([^;]+)/i)?.[1]?.trim() ||

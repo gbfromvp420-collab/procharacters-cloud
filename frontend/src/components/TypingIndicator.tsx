@@ -2,10 +2,7 @@
 
 import { dnaAssistantBubbleClass, dnaNodeShortLabel, dnaTreeHeatLevel } from "@/lib/energy";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
-import {
-  presenceBubbleClass,
-  resolvePresenceSkin,
-} from "@/lib/presence";
+import { presenceBubbleClass, resolvePresenceSkin } from "@/lib/presence";
 
 export function TypingIndicator({
   name,
@@ -36,12 +33,8 @@ export function TypingIndicator({
       >
         <span className="flex gap-1" aria-hidden>
           <span className={`typing-dot ${hot ? "typing-dot-dna" : ""}`} />
-          <span
-            className={`typing-dot animation-delay-150 ${hot ? "typing-dot-dna" : ""}`}
-          />
-          <span
-            className={`typing-dot animation-delay-300 ${hot ? "typing-dot-dna" : ""}`}
-          />
+          <span className={`typing-dot animation-delay-150 ${hot ? "typing-dot-dna" : ""}`} />
+          <span className={`typing-dot animation-delay-300 ${hot ? "typing-dot-dna" : ""}`} />
         </span>
         <span className="text-xs text-brand-muted">
           {nick ? (

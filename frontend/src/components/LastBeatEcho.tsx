@@ -27,9 +27,7 @@ export function LastBeatEcho({
       <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-brand-accent/90">
         Last beat · {nick}
       </p>
-      <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-brand-muted">
-        “{preview}”
-      </p>
+      <p className="mt-0.5 line-clamp-2 text-[10px] leading-snug text-brand-muted">“{preview}”</p>
     </button>
   );
 }

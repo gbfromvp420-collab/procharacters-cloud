@@ -22,24 +22,16 @@ export type ForgeHeatContext = {
 };
 
 export function buildForgeHeatFantasy(ctx: ForgeHeatContext): string {
-  const nick =
-    ctx.characterName?.trim().split(/\s+/)[0] ||
-    ctx.characterName?.trim() ||
-    "them";
+  const nick = ctx.characterName?.trim().split(/\s+/)[0] || ctx.characterName?.trim() || "them";
   const mind = mindFingerprint(ctx.characterId, {
     displayName: ctx.characterName,
   });
-  const dna =
-    ctx.dnaTreeLabel?.trim() ||
-    ctx.dnaTreeNodeId?.trim() ||
-    null;
+  const dna = ctx.dnaTreeLabel?.trim() || ctx.dnaTreeNodeId?.trim() || null;
   const chips = (ctx.heatChips ?? []).filter(Boolean).slice(0, 5);
   const recap = ctx.recapLine?.trim().slice(0, 160) || null;
   const depth = ctx.heatDepth?.trim() || null;
   const msgs =
-    typeof ctx.messageCount === "number" && ctx.messageCount > 0
-      ? ctx.messageCount
-      : null;
+    typeof ctx.messageCount === "number" && ctx.messageCount > 0 ? ctx.messageCount : null;
 
   const lines: string[] = [
     `Forge a private Naughty Syntax DNA model from live heat with ${nick}.`,
@@ -93,10 +85,12 @@ export function stashForgeHeatSeed(ctx: ForgeHeatContext): void {
   }
 }
 
-export function takeForgeHeatSeed(): (ForgeHeatContext & {
-  fantasy?: string;
-  at?: number;
-}) | null {
+export function takeForgeHeatSeed():
+  | (ForgeHeatContext & {
+      fantasy?: string;
+      at?: number;
+    })
+  | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(STASH_KEY);
@@ -126,13 +120,9 @@ export function buildForgeFromHeatPath(ctx: ForgeHeatContext): string {
     (ctx.characterId.startsWith("custom-") ? null : ctx.characterId) ||
     "twink-default";
   params.set("base", base);
-  const nick =
-    ctx.characterName?.trim().split(/\s+/)[0] ||
-    ctx.characterName?.trim() ||
-    "";
+  const nick = ctx.characterName?.trim().split(/\s+/)[0] || ctx.characterName?.trim() || "";
   if (nick) params.set("nick", nick.slice(0, 32));
-  const dna =
-    ctx.dnaTreeLabel?.trim() || ctx.dnaTreeNodeId?.trim() || "";
+  const dna = ctx.dnaTreeLabel?.trim() || ctx.dnaTreeNodeId?.trim() || "";
   if (dna) params.set("dna", dna.slice(0, 40));
   if (ctx.heatDepth?.trim()) params.set("depth", ctx.heatDepth.trim().slice(0, 16));
   // Tiny seed fragment for shareable URLs without stash
@@ -150,11 +140,7 @@ export function shouldOfferForgeFromHeat(ctx: {
 }): boolean {
   const dna = ctx.dnaTreeLabel?.trim() || ctx.dnaTreeNodeId?.trim();
   if (dna && /edge|deny|release|gate|tease/i.test(dna)) return true;
-  if (
-    ctx.heatDepth === "deep" ||
-    ctx.heatDepth === "locked" ||
-    ctx.heatDepth === "edge"
-  ) {
+  if (ctx.heatDepth === "deep" || ctx.heatDepth === "locked" || ctx.heatDepth === "edge") {
     return true;
   }
   return (ctx.messageCount ?? 0) >= 4;

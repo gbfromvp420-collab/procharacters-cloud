@@ -128,7 +128,11 @@ function resolvePath(): string {
 }
 
 function normalizeHandle(handle: string): string {
-  return handle.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32);
+  return handle
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 32);
 }
 
 function hashPassphrase(passphrase: string, salt: string): string {
@@ -274,7 +278,10 @@ function mapPrismaAuthError(error: unknown): never {
   throw error;
 }
 
-export async function createAccount(handleRaw: string, passphrase: string): Promise<{
+export async function createAccount(
+  handleRaw: string,
+  passphrase: string,
+): Promise<{
   id: string;
   handle: string;
   email?: string;
@@ -320,7 +327,10 @@ export async function createAccount(handleRaw: string, passphrase: string): Prom
   return { id, handle, ...issued };
 }
 
-export async function loginAccount(handleRaw: string, passphrase: string): Promise<{
+export async function loginAccount(
+  handleRaw: string,
+  passphrase: string,
+): Promise<{
   id: string;
   handle: string;
   email?: string;
@@ -556,7 +566,9 @@ async function issueToken(accountId: string): Promise<{ token: string; expiresAt
   return { token, expiresAt };
 }
 
-export async function resolveAccountToken(token: string | undefined | null): Promise<AccountRecord | null> {
+export async function resolveAccountToken(
+  token: string | undefined | null,
+): Promise<AccountRecord | null> {
   if (!token?.trim()) return null;
 
   if (accountsProvider() === "prisma") {
@@ -644,10 +656,7 @@ export async function grantAccountPlan(
   }
 
   // Idempotent: webhook + return-page confirm must not double-stack the same session.
-  if (
-    options?.checkoutSessionId &&
-    account.lastCheckoutSessionId === options.checkoutSessionId
-  ) {
+  if (options?.checkoutSessionId && account.lastCheckoutSessionId === options.checkoutSessionId) {
     return account;
   }
 
@@ -670,12 +679,8 @@ export async function grantAccountPlan(
     ...account,
     plan,
     planExpiresAt,
-    ...(options?.stripeCustomerId
-      ? { stripeCustomerId: options.stripeCustomerId }
-      : {}),
-    ...(options?.checkoutSessionId
-      ? { lastCheckoutSessionId: options.checkoutSessionId }
-      : {}),
+    ...(options?.stripeCustomerId ? { stripeCustomerId: options.stripeCustomerId } : {}),
+    ...(options?.checkoutSessionId ? { lastCheckoutSessionId: options.checkoutSessionId } : {}),
   };
   accounts.set(accountId, next);
   await persist();
@@ -693,12 +698,7 @@ export async function setAccountPassphrase(
 
   if (accountsProvider() === "prisma") {
     try {
-      return await prismaSetAccountPassphrase(
-        accountId,
-        options,
-        hashPassphrase,
-        safeEqualHex,
-      );
+      return await prismaSetAccountPassphrase(accountId, options, hashPassphrase, safeEqualHex);
     } catch (error) {
       mapPrismaAuthError(error);
     }
@@ -757,7 +757,10 @@ export async function deleteAccount(accountId: string): Promise<boolean> {
     if (token.accountId === accountId) tokens.delete(hash);
   }
   for (const [hash, magic] of magicLinks) {
-    if (magic.linkAccountId === accountId || (account.email && magic.email === normalizeEmail(account.email))) {
+    if (
+      magic.linkAccountId === accountId ||
+      (account.email && magic.email === normalizeEmail(account.email))
+    ) {
       magicLinks.delete(hash);
     }
   }
@@ -891,9 +894,7 @@ export async function resolveResumeCode(codeRaw: string): Promise<ResumeCodeReco
   return record;
 }
 
-export async function getResumeCodeForSession(
-  sessionId: string,
-): Promise<ResumeCodeRecord | null> {
+export async function getResumeCodeForSession(sessionId: string): Promise<ResumeCodeRecord | null> {
   if (accountsProvider() === "prisma") {
     return prismaGetResumeCodeForSession(sessionId);
   }
@@ -953,7 +954,3 @@ export async function bindResumeCodeAccount(sessionId: string, accountId: string
   }
   await persist();
 }
-
-
-
-

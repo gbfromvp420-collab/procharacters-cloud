@@ -10,8 +10,7 @@
  *   API_BASE=http://localhost:3001 npm run smoke:deploy
  */
 
-const DEFAULT_PROD =
-  "https://procharacters-api-production-0417.up.railway.app";
+const DEFAULT_PROD = "https://procharacters-api-production-0417.up.railway.app";
 
 function parseBase(): string {
   const args = process.argv.slice(2);
@@ -91,10 +90,7 @@ async function main() {
       uptimeSec?: number;
     }>("/metrics");
     if (status === 200 && typeof body?.httpRequests === "number") {
-      pass(
-        "metrics",
-        `requests=${body.httpRequests} uptimeSec=${body.uptimeSec ?? "?"}`,
-      );
+      pass("metrics", `requests=${body.httpRequests} uptimeSec=${body.uptimeSec ?? "?"}`);
     } else {
       fail("metrics", `HTTP ${status}`);
     }
@@ -138,18 +134,13 @@ async function main() {
     const ids = (body.live ?? []).map((c) => c.id);
     const missing = need.filter((id) => !ids.includes(id));
     if (status === 200 && missing.length === 0) {
-      const featured = (body.live ?? [])
-        .filter((c) => c.featured)
-        .map((c) => c.id);
+      const featured = (body.live ?? []).filter((c) => c.featured).map((c) => c.id);
       pass(
         "characters",
         `live=${ids.length} featured=${featured.slice(0, 5).join(",")}${featured.length > 5 ? "…" : ""}`,
       );
     } else {
-      fail(
-        "characters",
-        missing.length ? `missing ${missing.join(",")}` : `HTTP ${status}`,
-      );
+      fail("characters", missing.length ? `missing ${missing.join(",")}` : `HTTP ${status}`);
     }
   } catch (e) {
     fail("characters", e instanceof Error ? e.message : String(e));
@@ -195,10 +186,7 @@ async function main() {
       products?: unknown[];
     }>(`${PREFIX}/billing/catalog`);
     if (status === 200 && Array.isArray(body.products)) {
-      pass(
-        "billing_catalog",
-        `configured=${body.configured} products=${body.products.length}`,
-      );
+      pass("billing_catalog", `configured=${body.configured} products=${body.products.length}`);
     } else {
       fail("billing_catalog", `HTTP ${status}`);
     }
@@ -280,16 +268,13 @@ async function main() {
   const handle = `smoke${Math.floor(Math.random() * 1e6)}`;
   let token: string | null = null;
   try {
-    const { status, body } = await json<{ token?: string }>(
-      `${PREFIX}/accounts/register`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          handle,
-          passphrase: "smoke-deploy-pass-9",
-        }),
-      },
-    );
+    const { status, body } = await json<{ token?: string }>(`${PREFIX}/accounts/register`, {
+      method: "POST",
+      body: JSON.stringify({
+        handle,
+        passphrase: "smoke-deploy-pass-9",
+      }),
+    });
     if (status === 201 && body.token) {
       token = body.token;
       pass("account_register", `@${handle}`);
@@ -311,8 +296,7 @@ async function main() {
         headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           name: "Smoke MyChar",
-          appearance:
-            "18yo skinny Latino twink, sheer thong, photorealistic Naughty Syntax model",
+          appearance: "18yo skinny Latino twink, sheer thong, photorealistic Naughty Syntax model",
           baseModelId: "twink-gym",
           energy: "gym cool-down edging",
           keyPhrases: ["hold the burn"],

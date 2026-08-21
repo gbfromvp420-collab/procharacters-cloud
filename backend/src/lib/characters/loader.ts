@@ -47,7 +47,9 @@ export async function loadCharacterBundle(
 
   const modelPath = repoPath("characters", registryEntry.path);
   if (!existsSync(modelPath)) {
-    throw new CharacterNotFoundError(`Model file missing for '${characterId}': ${registryEntry.path}`);
+    throw new CharacterNotFoundError(
+      `Model file missing for '${characterId}': ${registryEntry.path}`,
+    );
   }
 
   const model = JSON.parse(await readFile(modelPath, "utf-8")) as CharacterModelJson;

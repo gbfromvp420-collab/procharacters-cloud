@@ -2,8 +2,7 @@ import type { SessionRecord } from "../../types/session.js";
 import type { MemoryMessage } from "./types.js";
 
 export const SESSION_EXPORT_SCHEMA = "procharacters.session-export/v1" as const;
-export const ACCOUNT_SESSIONS_EXPORT_SCHEMA =
-  "procharacters.account-sessions-export/v1" as const;
+export const ACCOUNT_SESSIONS_EXPORT_SCHEMA = "procharacters.account-sessions-export/v1" as const;
 
 /** Public message row in an export (no server-only fields). */
 export interface ExportedMessage {
@@ -137,7 +136,10 @@ export function exportFilename(
 function formatStamp(iso: string): string {
   const t = Date.parse(iso);
   if (Number.isNaN(t)) return iso;
-  return new Date(t).toISOString().replace("T", " ").replace(/\.\d{3}Z$/, " UTC");
+  return new Date(t)
+    .toISOString()
+    .replace("T", " ")
+    .replace(/\.\d{3}Z$/, " UTC");
 }
 
 function escapeMd(text: string): string {
@@ -557,7 +559,10 @@ export function parseImportDocumentAll(input: unknown): ParseImportAllResult {
   const schema = typeof root.schema === "string" ? root.schema : "";
 
   // Single → one entry
-  if (schema === SESSION_EXPORT_SCHEMA || ("session" in root && root.session && !Array.isArray(root.sessions))) {
+  if (
+    schema === SESSION_EXPORT_SCHEMA ||
+    ("session" in root && root.session && !Array.isArray(root.sessions))
+  ) {
     const one = parseImportDocument(doc);
     if (!one.ok) return one;
     return {

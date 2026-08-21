@@ -10,9 +10,7 @@ const ALLOWED_TYPES = new Set([
 
 const ALLOWED_EXT = new Set(["mp4", "webm"]);
 
-export type ClipFileCheck =
-  | { ok: true }
-  | { ok: false; error: string };
+export type ClipFileCheck = { ok: true } | { ok: false; error: string };
 
 function extOf(name: string): string {
   const base = name.split(/[/\\]/).pop() ?? name;
@@ -33,7 +31,10 @@ export function validateClipFileClient(file: File): ClipFileCheck {
 
   if (mime && !ALLOWED_TYPES.has(mime) && !mime.startsWith("video/mp4") && mime !== "video/webm") {
     // Reject video/avi, image/*, etc. before upload
-    if (!mime.startsWith("video/") || (mime !== "video/mp4" && mime !== "video/webm" && mime !== "video/x-m4v")) {
+    if (
+      !mime.startsWith("video/") ||
+      (mime !== "video/mp4" && mime !== "video/webm" && mime !== "video/x-m4v")
+    ) {
       return {
         ok: false,
         error: `${file.name}: unsupported type "${mime || "unknown"}" — use MP4 or WebM`,

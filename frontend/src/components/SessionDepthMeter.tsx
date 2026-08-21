@@ -8,7 +8,15 @@ export function heatDepthFromMessages(messageCount: number): {
   label: HeatDepthLabel;
 } {
   const level =
-    messageCount >= 20 ? 4 : messageCount >= 12 ? 3 : messageCount >= 6 ? 2 : messageCount >= 2 ? 1 : 0;
+    messageCount >= 20
+      ? 4
+      : messageCount >= 12
+        ? 3
+        : messageCount >= 6
+          ? 2
+          : messageCount >= 2
+            ? 1
+            : 0;
   const labels: HeatDepthLabel[] = ["spark", "warm", "edge", "deep", "locked"];
   return { level, label: labels[level] ?? "spark" };
 }
@@ -27,10 +35,7 @@ export function SessionDepthMeter({
 
   const { level, label } = heatDepthFromMessages(messageCount);
 
-  const mins =
-    liveSeconds != null && liveSeconds >= 60
-      ? Math.floor(liveSeconds / 60)
-      : null;
+  const mins = liveSeconds != null && liveSeconds >= 60 ? Math.floor(liveSeconds / 60) : null;
   const secs =
     liveSeconds != null && liveSeconds < 60
       ? liveSeconds

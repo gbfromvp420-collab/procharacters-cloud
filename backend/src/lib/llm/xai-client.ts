@@ -79,7 +79,7 @@ export class XaiChatClient {
         const message =
           typeof raw === "string"
             ? raw
-            : raw?.message ?? `xAI request failed (${response.status})`;
+            : (raw?.message ?? `xAI request failed (${response.status})`);
         const code = typeof raw === "object" ? raw?.code : body.code;
         throw new XaiApiError(message, response.status, code);
       }

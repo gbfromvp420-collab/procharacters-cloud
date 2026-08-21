@@ -15,11 +15,7 @@ export const ALLOWED_CLIP_MIMES = new Set([
 ]);
 
 /** Mimes that are only accepted if magic bytes prove the real format. */
-export const PROVISIONAL_MIMES = new Set([
-  "application/octet-stream",
-  "binary/octet-stream",
-  "",
-]);
+export const PROVISIONAL_MIMES = new Set(["application/octet-stream", "binary/octet-stream", ""]);
 
 const ALLOWED_EXT = new Set<ClipFormat>(["mp4", "webm"]);
 
@@ -64,12 +60,7 @@ export function sniffClipFormat(buffer: Buffer): ClipFormat | null {
   if (buffer.byteLength < 12) return null;
 
   // WebM / Matroska EBML: 1A 45 DF A3
-  if (
-    buffer[0] === 0x1a &&
-    buffer[1] === 0x45 &&
-    buffer[2] === 0xdf &&
-    buffer[3] === 0xa3
-  ) {
+  if (buffer[0] === 0x1a && buffer[1] === 0x45 && buffer[2] === 0xdf && buffer[3] === 0xa3) {
     return "webm";
   }
 

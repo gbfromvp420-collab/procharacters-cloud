@@ -9,10 +9,7 @@ import {
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
 import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
-import {
-  stepDnaBehaviorTree,
-  type DnaTreeStep,
-} from "../lib/live/dna-tree-stepper.js";
+import { stepDnaBehaviorTree, type DnaTreeStep } from "../lib/live/dna-tree-stepper.js";
 import {
   buildSessionModeInstructions,
   computeModeState,
@@ -109,10 +106,7 @@ export class ChatOrchestrator {
       Date.now(),
       session.characterId,
     );
-    let sessionModeBlock = buildSessionModeInstructions(
-      modeState,
-      session.characterId,
-    );
+    let sessionModeBlock = buildSessionModeInstructions(modeState, session.characterId);
 
     // Studio Forge DNA soft tree — advance before inject so this turn feels the node
     const custom = getCustomCharacter(session.characterId);
@@ -125,9 +119,7 @@ export class ChatOrchestrator {
         userMessage: content,
         turnCount: priorTurns,
       });
-      sessionModeBlock = [sessionModeBlock, dnaTreeStep.promptBlock]
-        .filter(Boolean)
-        .join("\n\n");
+      sessionModeBlock = [sessionModeBlock, dnaTreeStep.promptBlock].filter(Boolean).join("\n\n");
     }
 
     // First turn after resume (or any turn with a scene lock in notes) rehydrates hard.
@@ -206,19 +198,18 @@ export class ChatOrchestrator {
         characterName: session.promptSnapshot.characterName,
       });
       priorNotesOut = dossier;
-      const dnaClimb =
-        dnaTreeStep
+      const dnaClimb = dnaTreeStep
+        ? {
+            dnaTreeNodeId: dnaTreeStep.nodeId,
+            dnaTreeLabel: dnaTreeStep.ui.label,
+            sessionMode: modeState.mode as "normal" | "edge_pace",
+          }
+        : session.dnaTreeNodeId
           ? {
-              dnaTreeNodeId: dnaTreeStep.nodeId,
-              dnaTreeLabel: dnaTreeStep.ui.label,
-              sessionMode: modeState.mode as "normal" | "edge_pace",
+              dnaTreeNodeId: session.dnaTreeNodeId,
+              sessionMode: (session.sessionMode ?? "normal") as "normal" | "edge_pace",
             }
-          : session.dnaTreeNodeId
-            ? {
-                dnaTreeNodeId: session.dnaTreeNodeId,
-                sessionMode: (session.sessionMode ?? "normal") as "normal" | "edge_pace",
-              }
-            : {};
+          : {};
       void saveCrossSessionNotes(session.accountId, session.characterId, dossier, {
         messageCountHint: recent.messageCount,
       }).then((saved) => {

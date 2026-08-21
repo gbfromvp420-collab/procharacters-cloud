@@ -112,10 +112,7 @@ export interface ForgeExpandResponse {
 }
 
 /** Map free text → clip band using DNA sentiment keywords (or defaults). */
-export function sentimentToBand(
-  text: string,
-  dna?: NaughtySyntaxDna | null,
-): MediaClipKey {
+export function sentimentToBand(text: string, dna?: NaughtySyntaxDna | null): MediaClipKey {
   const lower = text.toLowerCase();
   const clips = dna?.livekit?.sentimentClips ?? [
     {
@@ -155,10 +152,7 @@ export function sentimentToBand(
 }
 
 /** Intensity 0–1 from evolution + fantasy heat words. */
-export function estimateIntensity(
-  text: string,
-  dna?: NaughtySyntaxDna | null,
-): number {
+export function estimateIntensity(text: string, dna?: NaughtySyntaxDna | null): number {
   const lower = text.toLowerCase();
   let n = 0.35 + (dna?.evolution.denial ?? 0.5) * 0.2;
   if (/\bedg|hard|cum|finish|beg|obsess\b/.test(lower)) n += 0.35;

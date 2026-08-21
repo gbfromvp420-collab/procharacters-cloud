@@ -65,7 +65,10 @@ const EMOTION_TO_CLIP: Record<string, ClipKey> = {
 };
 
 function normalizeToken(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
 }
 
 const CLIP_TO_BAND: Record<ClipKey, EnergyBand> = {
@@ -107,8 +110,9 @@ function pickClipName(state: AvatarState, characterId?: string): ClipKey {
   const emotion = normalizeToken(state.emotion);
   const action = normalizeToken(state.action ?? "");
   const emotionMapped = !!EMOTION_TO_CLIP[emotion];
-  const actionHard =
-    /edge|stroke|freeze|denial|climax|hip|grind|show|flex|hover|tease|trace/.test(action);
+  const actionHard = /edge|stroke|freeze|denial|climax|hip|grind|show|flex|hover|tease|trace/.test(
+    action,
+  );
 
   if (emotionMapped || actionHard) {
     // Still soft-stick one notch on pure arousal push-ups from idle/tease.
@@ -135,11 +139,7 @@ function pickClipName(state: AvatarState, characterId?: string): ClipKey {
   return applyArousalHysteresis(state.arousalLevel, prevClip, raw);
 }
 
-function applyArousalHysteresis(
-  arousal: number,
-  prev: ClipKey,
-  next: ClipKey,
-): ClipKey {
+function applyArousalHysteresis(arousal: number, prev: ClipKey, next: ClipKey): ClipKey {
   // Stay in edge until cool enough; enter edge only when hot.
   if (prev === "aroused" && next !== "aroused" && arousal >= 0.64) return "aroused";
   if (prev !== "aroused" && next === "aroused" && arousal < 0.72) return prev;
@@ -262,8 +262,7 @@ export function resolveClipFallbackPath(
 export function enrichAvatarWithMedia(characterId: string, state: AvatarState): AvatarState {
   const mediaUrl = resolveClipPath(characterId, state);
   const mediaFallbackUrl = resolveClipFallbackPath(characterId, state);
-  const presenceSkin =
-    state.presenceSkin ?? getPresenceProfile(characterId).presenceSkin;
+  const presenceSkin = state.presenceSkin ?? getPresenceProfile(characterId).presenceSkin;
   const energyBand = resolveEnergyBand(state, characterId);
   return {
     ...state,

@@ -7,10 +7,7 @@ import {
   rotateResumeCode,
 } from "../lib/accounts/account-store.js";
 import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
-import {
-  assertLiveCharacter,
-  getOpeningMessage,
-} from "../lib/live/character-catalog.js";
+import { assertLiveCharacter, getOpeningMessage } from "../lib/live/character-catalog.js";
 import { getCustomCharacter } from "../lib/live/custom-characters.js";
 import { initialDnaTreeNodeId, uiForTreeNode } from "../lib/live/dna-tree-stepper.js";
 import { formatDnaSessionSeed } from "../lib/live/forge-dna.js";
@@ -23,10 +20,7 @@ import {
   priorNotesFromCharacterSession,
   type CharacterSessionRecord,
 } from "../lib/memory/character-session-store.js";
-import {
-  buildPriorContinuitySeed,
-  buildSessionNotes,
-} from "../lib/memory/session-notes.js";
+import { buildPriorContinuitySeed, buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { bump } from "../lib/observability/metrics.js";
 import {
@@ -39,10 +33,7 @@ import {
   type ImportSessionPayload,
   type SessionExport,
 } from "../lib/memory/session-export.js";
-import {
-  getLiveCharacterProfile,
-  LiveCharacterError,
-} from "../lib/live/character-catalog.js";
+import { getLiveCharacterProfile, LiveCharacterError } from "../lib/live/character-catalog.js";
 import {
   deleteSessionRecord,
   listSessionRecords,
@@ -50,11 +41,7 @@ import {
   saveSessionRecord,
 } from "../lib/memory/session-store.js";
 import { clearAccountResumeCodes } from "../lib/accounts/account-store.js";
-import type {
-  CreateSessionInput,
-  CreateSessionResult,
-  SessionRecord,
-} from "../types/session.js";
+import type { CreateSessionInput, CreateSessionResult, SessionRecord } from "../types/session.js";
 import { MemoryManager } from "./memory-manager.js";
 
 export class SessionNotFoundError extends Error {
@@ -282,10 +269,7 @@ export class SessionManager {
           // Prefer longer of file vs DB (DB may include kink line)
           if (!priorNotes || fromDb.length > priorNotes.length) {
             priorNotes = fromDb;
-          } else if (
-            durable?.kinkProfile?.tags?.length ||
-            durable?.kinkProfile?.dnaTreeNodeId
-          ) {
+          } else if (durable?.kinkProfile?.tags?.length || durable?.kinkProfile?.dnaTreeNodeId) {
             // File dossier won length — still append kink/DNA prefs once if missing
             const kinkHint = priorNotesFromCharacterSession({
               ...durable!,
@@ -345,9 +329,7 @@ export class SessionManager {
     const resumeCode = await registerResumeCode(sessionId, input.accountId);
 
     // DNA power dossier reclaim: restore last tree node across sessions / expired codes
-    let dnaTreeNodeId = custom?.dna
-      ? initialDnaTreeNodeId(custom.dna)
-      : undefined;
+    let dnaTreeNodeId = custom?.dna ? initialDnaTreeNodeId(custom.dna) : undefined;
     let dnaDossierReclaim = false;
     let dnaDossierLabel: string | undefined;
     const dossierNode = durable?.kinkProfile?.dnaTreeNodeId?.trim();
@@ -356,8 +338,7 @@ export class SessionManager {
       if (node) {
         dnaTreeNodeId = dossierNode;
         dnaDossierReclaim = true;
-        dnaDossierLabel =
-          durable?.kinkProfile?.dnaTreeLabel?.trim() || uiForTreeNode(node).label;
+        dnaDossierLabel = durable?.kinkProfile?.dnaTreeLabel?.trim() || uiForTreeNode(node).label;
       }
     }
 
@@ -645,8 +626,7 @@ export class SessionManager {
         })
       : listed;
 
-    const sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }> =
-      [];
+    const sessions: Array<{ sessionId: string; resumeCode: string; resumeExpiresAt: string }> = [];
     for (const summary of targets) {
       const { code, expiresAt } = await rotateResumeCode(summary.sessionId, accountId);
       // loadSession may miss disk-only; fall back to list record shape via persist path
@@ -831,10 +811,7 @@ export class SessionManager {
     return buildSessionExport(session);
   }
 
-  async exportAccountSessions(
-    accountId: string,
-    handle?: string,
-  ): Promise<AccountSessionsExport> {
+  async exportAccountSessions(accountId: string, handle?: string): Promise<AccountSessionsExport> {
     const records = await listSessionRecords({ accountId, limit: 100 });
     for (const record of records) {
       this.sessions.set(record.id, record);
@@ -910,7 +887,14 @@ export class SessionManager {
     const sessions: ImportPreviewSession[] = [];
     const charAgg = new Map<
       string,
-      { name: string; sessionCount: number; available: boolean; resolvedTo?: string; remapped: boolean; error?: string }
+      {
+        name: string;
+        sessionCount: number;
+        available: boolean;
+        resolvedTo?: string;
+        remapped: boolean;
+        error?: string;
+      }
     >();
 
     for (const entry of parsed.entries) {
@@ -972,9 +956,7 @@ export class SessionManager {
 
     const willSucceed = sessions.filter((s) => s.ok).length;
     const willFail = sessions.length - willSucceed;
-    const totalMessages = sessions
-      .filter((s) => s.ok)
-      .reduce((n, s) => n + s.messageCount, 0);
+    const totalMessages = sessions.filter((s) => s.ok).reduce((n, s) => n + s.messageCount, 0);
 
     const characters: ImportPreviewCharacter[] = [...charAgg.entries()]
       .map(([id, v]) => ({
@@ -1101,15 +1083,11 @@ export class SessionManager {
           remappedFrom: created.imported.remappedFrom,
         });
         if (!first) first = created;
-        if (
-          typeof options.openIndex === "number" &&
-          options.openIndex === entry.index
-        ) {
+        if (typeof options.openIndex === "number" && options.openIndex === entry.index) {
           preferred = created;
         }
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Import failed for this session";
+        const message = error instanceof Error ? error.message : "Import failed for this session";
         const code = error instanceof SessionImportError ? error.code : undefined;
         results.push({
           ok: false,
@@ -1194,9 +1172,7 @@ export class SessionManager {
     }));
 
     const windowed =
-      messages.length > this.maxMessageWindow
-        ? messages.slice(-this.maxMessageWindow)
-        : messages;
+      messages.length > this.maxMessageWindow ? messages.slice(-this.maxMessageWindow) : messages;
 
     const defaultAvatar = this.memory.defaultAvatarState(promptSnapshot.characterId);
     const avatarState = payload.avatarState
@@ -1209,8 +1185,7 @@ export class SessionManager {
             typeof payload.avatarState.arousalLevel === "number"
               ? payload.avatarState.arousalLevel
               : defaultAvatar.arousalLevel,
-          clothingState:
-            payload.avatarState.clothingState || defaultAvatar.clothingState,
+          clothingState: payload.avatarState.clothingState || defaultAvatar.clothingState,
         }
       : defaultAvatar;
 
@@ -1238,8 +1213,7 @@ export class SessionManager {
       messages: windowed,
       imported: {
         messageCount: windowed.length,
-        originalSessionId:
-          payload.sessionId !== "imported" ? payload.sessionId : undefined,
+        originalSessionId: payload.sessionId !== "imported" ? payload.sessionId : undefined,
         originalCharacterId: payload.characterId,
         characterId: promptSnapshot.characterId,
         ...(resolved.remappedFrom ? { remappedFrom: resolved.remappedFrom } : {}),
@@ -1321,9 +1295,7 @@ export class SessionManager {
           if (dnaOnly?.includes("DNA power climb")) {
             const cur = memory.getPriorNotes() || "";
             if (!cur.includes("DNA power climb")) {
-              memory.setPriorNotes(
-                cur ? `${cur}\n\n${dnaOnly}`.slice(0, 1600) : dnaOnly,
-              );
+              memory.setPriorNotes(cur ? `${cur}\n\n${dnaOnly}`.slice(0, 1600) : dnaOnly);
             }
           }
         }
@@ -1365,9 +1337,7 @@ export class SessionManager {
     let dnaTreeNodeId = session.dnaTreeNodeId;
     if (!dnaTreeNodeId && durable?.kinkProfile?.dnaTreeNodeId) {
       const dossierNode = durable.kinkProfile.dnaTreeNodeId.trim();
-      if (
-        custom?.dna?.behaviorTree?.nodes?.some((n) => n.id === dossierNode)
-      ) {
+      if (custom?.dna?.behaviorTree?.nodes?.some((n) => n.id === dossierNode)) {
         dnaTreeNodeId = dossierNode;
         bump("dnaDossierReclaims");
       }
@@ -1378,16 +1348,13 @@ export class SessionManager {
     if (dnaTreeNodeId && custom?.dna?.behaviorTree?.nodes) {
       const node = custom.dna.behaviorTree.nodes.find((n) => n.id === dnaTreeNodeId);
       if (node) {
-        const label =
-          durable?.kinkProfile?.dnaTreeLabel?.trim() || uiForTreeNode(node).label;
+        const label = durable?.kinkProfile?.dnaTreeLabel?.trim() || uiForTreeNode(node).label;
         const beat = `DNA tree · ${label}`;
         const notesNow = memory.getSessionNotes() || "";
         if (!/DNA tree ·/i.test(notesNow)) {
           memory.setSessionNotes(`${notesNow} ${beat}.`.trim().slice(0, 1200));
         } else if (!notesNow.includes(label)) {
-          memory.setSessionNotes(
-            notesNow.replace(/DNA tree ·[^.]*/i, beat).slice(0, 1200),
-          );
+          memory.setSessionNotes(notesNow.replace(/DNA tree ·[^.]*/i, beat).slice(0, 1200));
         }
       }
     }

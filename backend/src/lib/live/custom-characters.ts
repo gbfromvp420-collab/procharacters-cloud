@@ -1,19 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import {
-  accountHasActivePremium,
-  getAccount,
-} from "../accounts/account-store.js";
+import { accountHasActivePremium, getAccount } from "../accounts/account-store.js";
 import { repoPath } from "../paths.js";
-import {
-  LIVE_CHARACTER_CATALOG,
-  type LiveCharacterProfile,
-} from "./character-catalog.js";
-import {
-  assembleDnaCharacterPrompt,
-  type NaughtySyntaxDna,
-} from "./forge-dna.js";
+import { LIVE_CHARACTER_CATALOG, type LiveCharacterProfile } from "./character-catalog.js";
+import { assembleDnaCharacterPrompt, type NaughtySyntaxDna } from "./forge-dna.js";
 
 /** Clip pack roots (engine media). Phase 4 models resolve here via avatarBase. */
 export type CustomAvatarBase = "twink-default" | "female-default";
@@ -95,9 +86,7 @@ let loaded = false;
 let persistPath: string | null = null;
 
 const CUSTOMS_PER_ACCOUNT_FREE = Number(process.env.CUSTOM_CHARS_PER_ACCOUNT ?? 10);
-const CUSTOMS_PER_ACCOUNT_PREMIUM = Number(
-  process.env.CUSTOM_CHARS_PER_ACCOUNT_PREMIUM ?? 40,
-);
+const CUSTOMS_PER_ACCOUNT_PREMIUM = Number(process.env.CUSTOM_CHARS_PER_ACCOUNT_PREMIUM ?? 40);
 /** Slim Studio v2 — quality over field sprawl. */
 const MAX_SCENES = 2;
 const MAX_PHRASES = 4;
@@ -144,8 +133,12 @@ function sanitizeScenes(raw?: CustomScene[]): CustomScene[] | undefined {
   if (!raw || !Array.isArray(raw)) return undefined;
   const out: CustomScene[] = [];
   for (const s of raw.slice(0, MAX_SCENES)) {
-    const title = String(s?.title ?? "").trim().slice(0, 80);
-    const body = String(s?.body ?? "").trim().slice(0, 600);
+    const title = String(s?.title ?? "")
+      .trim()
+      .slice(0, 80);
+    const body = String(s?.body ?? "")
+      .trim()
+      .slice(0, 600);
     if (title.length < 2 || body.length < 12) continue;
     out.push({ title, body });
   }
@@ -155,7 +148,11 @@ function sanitizeScenes(raw?: CustomScene[]): CustomScene[] | undefined {
 function sanitizePhrases(raw?: string[]): string[] | undefined {
   if (!raw || !Array.isArray(raw)) return undefined;
   const out = raw
-    .map((p) => String(p ?? "").trim().slice(0, 120))
+    .map((p) =>
+      String(p ?? "")
+        .trim()
+        .slice(0, 120),
+    )
     .filter((p) => p.length >= 2)
     .slice(0, MAX_PHRASES);
   return out.length ? out : undefined;
@@ -190,24 +187,18 @@ async function buildPromptV2(input: {
       ? [
           ``,
           `## Scene anchors (optional pace cues — follow user if they lead)`,
-          ...input.scenes.map(
-            (s, i) => `${i + 1}. **${s.title}** — ${s.body}`,
-          ),
+          ...input.scenes.map((s, i) => `${i + 1}. **${s.title}** — ${s.body}`),
         ]
       : [];
 
-  const clothingLine = input.clothing?.trim()
-    ? `- Clothing note: ${input.clothing.trim()}`
-    : null;
+  const clothingLine = input.clothing?.trim() ? `- Clothing note: ${input.clothing.trim()}` : null;
 
   const audienceLine =
     input.audience && input.audience !== "any"
       ? [`## Audience`, `Primary framing: ${input.audience}`, ``]
       : [];
 
-  const energy =
-    input.energy?.trim() ||
-    "Match the user's pace; tease and escalate on invitation.";
+  const energy = input.energy?.trim() || "Match the user's pace; tease and escalate on invitation.";
 
   return [
     `# Naughty Syntax — My Character: ${input.name}`,
@@ -397,10 +388,7 @@ export function isPublicCustom(c: CustomCharacterRecord): boolean {
   return c.visibility === "featured" || c.visibility === "unlisted";
 }
 
-export function canAccessCustom(
-  characterId: string,
-  accountId?: string | null,
-): boolean {
+export function canAccessCustom(characterId: string, accountId?: string | null): boolean {
   const c = store.get(characterId);
   if (!c) return false;
   if (isPublicCustom(c)) return true;
@@ -438,15 +426,12 @@ export async function createCustomCharacter(
     throw new Error(`Unknown base model '${baseModelId}'`);
   }
   if (!baseModelId) {
-    baseModelId =
-      raw.avatarBase === "female-default" ? "female-default" : "twink-default";
+    baseModelId = raw.avatarBase === "female-default" ? "female-default" : "twink-default";
   }
   const avatarBase = resolveAvatarBaseFromModel(baseModelId);
 
   // Slim studio: no typecast defaults from base catalog energy/clothing.
-  const energy =
-    raw.energy?.trim() ||
-    "Playful heat · follow the user's pace · stay in character.";
+  const energy = raw.energy?.trim() || "Playful heat · follow the user's pace · stay in character.";
   const clothing = raw.clothing?.trim() || "";
   const audience = raw.audience ?? "any";
 
@@ -513,7 +498,10 @@ export async function createCustomCharacter(
     defaultVersion: dna ? "custom-v3" : "custom-v2",
     consistencyTraits: buildTraits({ appearance, clothing, energy, baseModelId }),
     signatureClothing:
-      clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit",
+      clothing
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .slice(0, 48) || "custom_outfit",
     energyLabel: energy.slice(0, 80),
     avatarBase,
     baseModelId,
@@ -620,7 +608,10 @@ export async function updateCustomCharacter(
   if (patch.clothing?.trim()) {
     next.clothing = patch.clothing.trim();
     next.signatureClothing =
-      next.clothing.toLowerCase().replace(/[^a-z0-9]+/g, "_").slice(0, 48) || "custom_outfit";
+      next.clothing
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .slice(0, 48) || "custom_outfit";
   }
   if (patch.keyPhrases !== undefined) {
     if (patch.keyPhrases === null) delete next.keyPhrases;

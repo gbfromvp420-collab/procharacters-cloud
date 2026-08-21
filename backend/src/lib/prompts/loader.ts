@@ -15,11 +15,7 @@ function normalizeVersion(version: string): string {
   return version.startsWith("v") ? version : `v${version}`;
 }
 
-function resolvePromptPath(
-  manifestPath: string,
-  characterId: string,
-  version: string,
-): string {
+function resolvePromptPath(manifestPath: string, characterId: string, version: string): string {
   const absolute = repoPath(manifestPath);
   if (existsSync(absolute)) {
     return manifestPath;

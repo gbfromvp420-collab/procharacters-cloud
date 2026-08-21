@@ -72,7 +72,11 @@ function parseArgs(argv: string[]) {
 }
 
 function normalizeHandle(handle: string): string {
-  return handle.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0, 32);
+  return handle
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, "")
+    .slice(0, 32);
 }
 
 function normalizeEmail(email: string): string {
@@ -207,9 +211,7 @@ async function main() {
         magicsSkipped += 1;
         continue;
       }
-      const linkAccountId = magic.linkAccountId
-        ? idMap.get(magic.linkAccountId) ?? null
-        : null;
+      const linkAccountId = magic.linkAccountId ? (idMap.get(magic.linkAccountId) ?? null) : null;
       await prisma.magicLink.create({
         data: {
           tokenHash: magic.tokenHash,
