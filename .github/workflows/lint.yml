@@ -55,6 +55,14 @@ jobs:
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci
         run: npm run typecheck
 
+      - name: Heat-trail derivation checks
+        working-directory: backend
+        run: npm run test:heat-trail
+
+      - name: Multi-device resume-cache merge checks
+        working-directory: frontend
+        run: npm run test:resume-cache
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:

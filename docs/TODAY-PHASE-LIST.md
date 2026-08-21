@@ -1,4 +1,4 @@
-# Today’s phase list — 2026-08-14
+# Today’s phase list — 2026-08-21
 
 **Owner:** King Grok CEO (final say on eng)  
 **Boss Sr.:** Gary (phone smoke, footage, Stripe live money)  
@@ -8,7 +8,7 @@
 
 ## Goal for today
 
-Railway is **live**. **50 named minds** on the floor (8 + 13 + 29). Pack lanes shipped. Gary walked the gallery. Next human: more primes or Stripe. Next eng: return tightness.
+Railway is **live**. **50 named minds** on the floor (8 + 13 + 29). Pack lanes shipped. Gary walked the gallery. Next human: more primes or Stripe. This cook: multi-device heat trail so phone B Continue is not cold.
 
 ---
 
@@ -35,7 +35,8 @@ Railway is **live**. **50 named minds** on the floor (8 + 13 + 29). Pack lanes s
 | 17 | **Pack 03 loops** 29×4 from Gary Drive | ✅ `#61` `#62` · 116/116 live 200 |
 | 18 | **Gallery pack lanes** Pack 01 / 02 / 03 chips | ✅ `#63` |
 | 19 | Gary walked the gallery (counted the wall) | ✅ 2026-08-14 |
-| 20 | **Pack 02/03 distinct minds** + hide Prod* smoke cards | 🔄 this cook |
+| 20 | **Pack 02/03 distinct minds** + hide Prod* smoke cards | ✅ `#64` `#67` `#68` |
+| 21 | **Multi-device heat trail** (recap + DNA on account list / latest) | 🔄 this cook |
 
 ---
 
@@ -46,7 +47,7 @@ Railway is **live**. **50 named minds** on the floor (8 + 13 + 29). Pack lanes s
 | A | More library primes | Content | Same drop: `Name + Drive link` |
 | B | Unique Candy Drive | Content | Aria file already used |
 | C | Optional Stripe Day Pass smoke | Human | Live money — free path always works |
-| D | Return tightness | Eng | Continue / resume / push reclaim |
+| D | Return tightness | Eng | Multi-device trail shipping; then push reclaim phone pass |
 
 ---
 

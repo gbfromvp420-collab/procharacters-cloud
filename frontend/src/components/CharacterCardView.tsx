@@ -109,6 +109,11 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
           updatedAt: latest.updatedAt || new Date().toISOString(),
           source: "account",
           resumeExpiresAt: latest.resumeExpiresAt,
+          recapLine: latest.recapLine,
+          heatDepth: latest.heatDepth,
+          heatChips: latest.heatChips,
+          dnaTreeNodeId: latest.dnaTreeNodeId,
+          dnaTreeLabel: latest.dnaTreeLabel,
         });
       })
       .catch(() => {
@@ -323,6 +328,11 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                   <Link href={card.ctaPath} className="btn-ghost px-6">
                     New chat
                   </Link>
+                  {resumeEntry.recapLine ? (
+                    <p className="basis-full text-[11px] italic text-brand-soft">
+                      “{resumeEntry.recapLine}”
+                    </p>
+                  ) : null}
                 </>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary px-6">

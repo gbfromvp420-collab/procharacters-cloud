@@ -36,6 +36,9 @@ jobs:
       - name: Autostart deep-link checks
         run: npm run test:deeplink
 
+      - name: Multi-device resume-cache merge checks
+        run: npm run test:resume-cache
+
       - name: Build
         run: npm run build
         env:
