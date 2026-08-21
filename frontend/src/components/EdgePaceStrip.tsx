@@ -118,6 +118,22 @@ export function EdgePaceStrip({
     }
   }, [modeState.phase]);
 
+  const [dnaFlash, setDnaFlash] = useState(false);
+  const prevDna = useRef(modeState.dnaTreeNodeId);
+  useEffect(() => {
+    if (
+      modeState.dnaTreeNodeId &&
+      prevDna.current &&
+      prevDna.current !== modeState.dnaTreeNodeId
+    ) {
+      setDnaFlash(true);
+      const t = window.setTimeout(() => setDnaFlash(false), 1100);
+      prevDna.current = modeState.dnaTreeNodeId;
+      return () => window.clearTimeout(t);
+    }
+    prevDna.current = modeState.dnaTreeNodeId;
+  }, [modeState.dnaTreeNodeId]);
+
   if (modeState.mode !== "edge_pace") return null;
 
   const remaining = Math.max(0, modeState.phaseRemainingSec - tickOffset);
@@ -147,21 +163,6 @@ export function EdgePaceStrip({
       : fallbackChips(modeState.phase);
   const dnaLabel = modeState.dnaTreeLabel || modeState.dnaTreeNodeId;
   const dnaIdx = dnaNodeIndex(modeState.dnaTreeNodeId);
-  const [dnaFlash, setDnaFlash] = useState(false);
-  const prevDna = useRef(modeState.dnaTreeNodeId);
-  useEffect(() => {
-    if (
-      modeState.dnaTreeNodeId &&
-      prevDna.current &&
-      prevDna.current !== modeState.dnaTreeNodeId
-    ) {
-      setDnaFlash(true);
-      const t = window.setTimeout(() => setDnaFlash(false), 1100);
-      prevDna.current = modeState.dnaTreeNodeId;
-      return () => window.clearTimeout(t);
-    }
-    prevDna.current = modeState.dnaTreeNodeId;
-  }, [modeState.dnaTreeNodeId]);
 
   return (
     <div
