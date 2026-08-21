@@ -723,6 +723,8 @@ export function AccountSettings() {
     if (!iso) return null;
     const t = Date.parse(iso);
     if (Number.isNaN(t)) return null;
+    // Relative-time display is intentionally "now"-dependent; safe in render.
+    // eslint-disable-next-line react-hooks/purity
     const days = Math.ceil((t - Date.now()) / (24 * 60 * 60 * 1000));
     if (days < 0) return "expired";
     if (days === 0) return "expires today";

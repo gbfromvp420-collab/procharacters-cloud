@@ -28,13 +28,15 @@ export function ForgeAvatarComposer({
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const raf = useRef<number>(0);
-  const t0 = useRef(performance.now());
+  // Animation baseline; set when the effect starts (avoids an impure read in render).
+  const t0 = useRef(0);
 
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas || !active) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    t0.current = performance.now();
 
     const resize = () => {
       const parent = canvas.parentElement;
