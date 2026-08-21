@@ -75,9 +75,7 @@ class StartJobBody(BaseModel):
 
 class DatasetAssetIn(BaseModel):
     filename: str = Field(..., min_length=1)
-    content_b64: str | None = Field(
-        default=None, description="Base64-encoded file bytes"
-    )
+    content_b64: str | None = Field(default=None, description="Base64-encoded file bytes")
     content_text: str | None = Field(
         default=None, description="UTF-8 text (captions / transcripts)"
     )

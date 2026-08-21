@@ -42,9 +42,7 @@ def get_llm_provider(
     provider: LLMProvider
     if provider_name == "runpod":
         if not cfg.runpod_llm_url:
-            logger.warning(
-                "LLM provider=runpod but RUNPOD_LLM_URL empty; using mock LLM"
-            )
+            logger.warning("LLM provider=runpod but RUNPOD_LLM_URL empty; using mock LLM")
             provider = MockLLMProvider()
         else:
             provider = RunPodLLMProvider(cfg)

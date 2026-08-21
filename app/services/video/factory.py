@@ -42,8 +42,7 @@ def get_video_provider(
     if cfg.video_provider == "runpod":
         if not cfg.runpod_musetalk_url:
             logger.warning(
-                "VIDEO_PROVIDER=runpod but RUNPOD_MUSETALK_URL empty; "
-                "using mock video provider"
+                "VIDEO_PROVIDER=runpod but RUNPOD_MUSETALK_URL empty; using mock video provider"
             )
             provider = MockVideoProvider()
         else:

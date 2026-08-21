@@ -135,9 +135,7 @@ class MediaBridge:
                 voice_model_uri=weights.voice_model_uri,
                 extra={"weights": inference},
             )
-            video_result = await self._video_generate_with_fallback(
-                video_provider, video_req
-            )
+            video_result = await self._video_generate_with_fallback(video_provider, video_req)
             if video_result.meta.get("fallback"):
                 fallback_used = True
             if video_result.ok:
@@ -200,9 +198,7 @@ class MediaBridge:
         )
         return await self._video_generate_with_fallback(video_provider, request)
 
-    async def _llm_complete_with_fallback(
-        self, provider: Any, request: LLMRequest
-    ) -> LLMResult:
+    async def _llm_complete_with_fallback(self, provider: Any, request: LLMRequest) -> LLMResult:
         try:
             result = await provider.complete(request)
         except Exception as exc:  # noqa: BLE001 — boundary to fallback
@@ -216,10 +212,7 @@ class MediaBridge:
         if result.ok:
             return result
 
-        if (
-            self.settings.runpod_fallback_to_mock
-            and getattr(provider, "name", "") == "runpod"
-        ):
+        if self.settings.runpod_fallback_to_mock and getattr(provider, "name", "") == "runpod":
             logger.info("Falling back to mock LLM after RunPod failure: %s", result.error)
             mock = MockLLMProvider()
             mock_result = await mock.complete(request)
@@ -233,9 +226,7 @@ class MediaBridge:
         try:
             result = await provider.generate(request)
         except Exception as exc:  # noqa: BLE001
-            logger.warning(
-                "Video provider %s raised: %s", getattr(provider, "name", "?"), exc
-            )
+            logger.warning("Video provider %s raised: %s", getattr(provider, "name", "?"), exc)
             result = VideoGenerateResult(
                 ok=False,
                 provider=getattr(provider, "name", "unknown"),
@@ -245,13 +236,8 @@ class MediaBridge:
         if result.ok:
             return result
 
-        if (
-            self.settings.runpod_fallback_to_mock
-            and getattr(provider, "name", "") == "runpod"
-        ):
-            logger.info(
-                "Falling back to mock video after RunPod failure: %s", result.error
-            )
+        if self.settings.runpod_fallback_to_mock and getattr(provider, "name", "") == "runpod":
+            logger.info("Falling back to mock video after RunPod failure: %s", result.error)
             mock = MockVideoProvider()
             mock_result = await mock.generate(request)
             mock_result.meta = {**mock_result.meta, "fallback": True, "from": "runpod"}

@@ -43,9 +43,7 @@ class VideoProvider(Protocol):
         """Submit a talking-head / clip generation job and wait for a result."""
         ...
 
-    async def stream_events(
-        self, request: VideoGenerateRequest
-    ) -> AsyncIterator[dict[str, Any]]:
+    async def stream_events(self, request: VideoGenerateRequest) -> AsyncIterator[dict[str, Any]]:
         """Stream progress / chunk events for long-running generation."""
         ...
 

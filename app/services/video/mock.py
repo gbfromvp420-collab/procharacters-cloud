@@ -36,9 +36,7 @@ class MockVideoProvider:
             },
         )
 
-    async def stream_events(
-        self, request: VideoGenerateRequest
-    ) -> AsyncIterator[dict[str, Any]]:
+    async def stream_events(self, request: VideoGenerateRequest) -> AsyncIterator[dict[str, Any]]:
         yield {"event": "queued", "provider": self.name, "session_id": request.session_id}
         await asyncio.sleep(self.delay_ms / 1000.0)
         result = await self.generate(request)

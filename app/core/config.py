@@ -73,9 +73,7 @@ class Settings(BaseSettings):
     runpod_training_api_key: str = Field(
         default="",
         validation_alias="RUNPOD_TRAINING_API_KEY",
-        description=(
-            "API key for training endpoint; falls back to RUNPOD_API_KEY when empty"
-        ),
+        description=("API key for training endpoint; falls back to RUNPOD_API_KEY when empty"),
     )
     weights_storage_bucket: str = Field(
         default="",
@@ -172,9 +170,7 @@ class Settings(BaseSettings):
         for url in stun:
             servers.append({"urls": url})
 
-        turn_urls = [
-            u.strip() for u in (self.webrtc_turn_urls or "").split(",") if u.strip()
-        ]
+        turn_urls = [u.strip() for u in (self.webrtc_turn_urls or "").split(",") if u.strip()]
         if turn_urls:
             entry: dict[str, Any] = {"urls": turn_urls if len(turn_urls) > 1 else turn_urls[0]}
             if self.webrtc_turn_username:

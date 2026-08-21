@@ -381,9 +381,7 @@ async def _chat_perform_impl(body: ChatPerformRequest) -> ChatPerformResponse:
     lora_id = body.lora_id if body.lora_id is not None else session.get("lora_id")
     _apply_session_identity(session, character_id=character_id, lora_id=lora_id)
 
-    session.setdefault("chat_history", []).append(
-        {"role": "user", "content": body.message}
-    )
+    session.setdefault("chat_history", []).append({"role": "user", "content": body.message})
 
     bridge = MediaBridge(get_settings())
     history = [
@@ -500,12 +498,16 @@ def _build_stub_answer_sdp(offer_sdp: str) -> str:
             media = parts[0][2:] if parts else "application"
             # Use same payload types when available
             rest = " ".join(parts[3:]) if len(parts) > 3 else "UDP/TLS/RTP/SAVPF 111"
-            out.append(f"m={media} 9 {rest}" if len(parts) > 2 else f"m={media} 9 UDP/TLS/RTP/SAVPF 111")
+            out.append(
+                f"m={media} 9 {rest}" if len(parts) > 2 else f"m={media} 9 UDP/TLS/RTP/SAVPF 111"
+            )
             out.append("c=IN IP4 0.0.0.0")
             out.append("a=rtcp:9 IN IP4 0.0.0.0")
             out.append("a=ice-ufrag:stub")
             out.append("a=ice-pwd:stubpasswordstubpassword")
-            out.append("a=fingerprint:sha-256 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00")
+            out.append(
+                "a=fingerprint:sha-256 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00"
+            )
             out.append("a=setup:active")
             out.append(f"a=mid:{mid_index}")
             out.append("a=recvonly")
