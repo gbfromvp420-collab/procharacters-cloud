@@ -1,7 +1,7 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-14 **50 live named minds** · same-night reclaim · distinct openings  
-**Session:** King Grok CEO · Pack 02/03 first lines stop being clones
+**Updated:** 2026-08-21 **50 live named minds** · Send test reclaim  
+**Session:** King Grok CEO · tap the test ping to pick up heat, not Account
 
 ### Agent fleet (slash / auto)
 
@@ -26,7 +26,7 @@
 | **Pack 03** | 29 unique first-name ids · **116/116 clips 200** · Candy held |
 | **Gallery** | Pack 01 / 02 / 03 chips · `#63` · fingerprints `#64` · public floor = **50** |
 | **Gary move** | Unique Candy Drive · more `Name + Drive` · Stripe when ready |
-| **Eng move** | Distinct Pack 02/03 openings shipping |
+| **Eng move** | Send test push reclaims last chat / DNA |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
 
@@ -38,8 +38,9 @@
 |-------|--------|-----------------|
 | **🟢 Railway / live** | **LIVE** | Optional Stripe Day Pass smoke |
 | **Same-night reclaim** | ✅ `#66` phone-passed | — |
-| **Pack 02 / 03 openings** | 🔄 this cook | tap Jenny / Liam Chat · Start fresh |
-| **Next** | **1) more primes · 2) stripe · 3) phone push** | `Name + Drive` or `stripe` |
+| **Pack 02 / 03 openings** | ✅ `#67` shipped | tap Jenny / Liam Chat · Start fresh |
+| **Send test reclaim** | 🔄 this cook | Enable alerts → Send test → tap shade |
+| **Next** | **1) more primes · 2) stripe · 3) phone B trail** | `Name + Drive` or `stripe` |
 
 ---
 

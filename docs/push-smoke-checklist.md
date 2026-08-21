@@ -58,11 +58,14 @@ Expect exit 0 and `configured: true`.
    - Tap **Enable push** → Allow notifications.
    - Chip should read **This browser on**.
 5. Tap **Send test** (Account, if you skipped chat strip) — system notification within a few seconds.
-6. Tap the test notification → opens **Account**.
+6. Tap the test notification:
+   - After a DNA climb → **DNA power reclaim** (Edge Pace + heat)
+   - After a normal chat → **Continue** that mind
+   - No saved chat yet → Account
 7. Optional: **Check expiry** forces a resume-code expiry scan (`force=true`).  
    Real alerts fire when a code is within 3 days (hourly cron also runs).
 8. Real expiry notification opens **the soonest-expiring chat**
-   (`/chat?resume=CODE&character=…`) when a code exists — otherwise Account.
+   (`/chat?resume=CODE&character=…&rehydrate=1`, plus `mode=edge_pace` when DNA is hot).
 
 ### API test (optional)
 

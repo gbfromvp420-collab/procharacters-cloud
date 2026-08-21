@@ -1,6 +1,6 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-14 **50 live named minds** · same-night reclaim  
+**Updated:** 2026-08-21 **50 live named minds** · Send test reclaim shipping  
 **For:** quick “what’s real right now” — no code required.  
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
 **Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
@@ -16,7 +16,7 @@
 | Accounts / DB | `prisma` · `database.ok` true |
 | LiveKit | configured · badge `ready` |
 | Stripe | `live` + webhook true · **free path still on** |
-| Web Push | true |
+| Web Push | true · **Send test reclaim shipping** (tap opens last chat / DNA, not Account) |
 | Error alerts | ntfy wired |
 | Railway `captivating-vision` | api + web + Postgres-Hw0Y |
 | Pack 01 | **8/8 READY** · Mila Luna Sienna Diego Mateo Rio + defaults · **your clips** |
@@ -83,8 +83,9 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 ## Your move (only if you want)
 
 1. Chat someone, leave, tap their gallery **Chat** again — should pick up, not start over  
-2. **Candy** — unique Drive link (Aria’s file is already used)  
-3. **Stripe smoke** — signed-in → Soft Support → Day Pass
+2. After deploy: **Enable alerts → Send test → tap the shade** — should open that chat, not Account  
+3. **Candy** — unique Drive link (Aria’s file is already used)  
+4. **Stripe smoke** — signed-in → Soft Support → Day Pass
 
 I will **not** invent MP4s or charge your card.
 

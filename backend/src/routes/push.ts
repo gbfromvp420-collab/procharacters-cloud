@@ -6,6 +6,7 @@ import {
   savePushSubscription,
 } from "../lib/push/push-store.js";
 import { notifyAccountResumeExpiry } from "../lib/push/expiry-notify.js";
+import { buildTestPushPayload } from "../lib/push/reclaim-push.js";
 import {
   getVapidPublicKey,
   isWebPushConfigured,
@@ -196,6 +197,8 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
           sent: 0,
         });
       }
+      const sessions = await sessionManager.listAccountSessions(account.id);
+      const payload = buildTestPushPayload(sessions, siteBase);
       let sent = 0;
       let failed = 0;
       let gone = 0;
@@ -203,10 +206,10 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
         const result = await sendWebPush(
           { endpoint: sub.endpoint, keys: sub.keys },
           {
-            title: "Procharacters · test alert",
-            body: "Push works. You'll get similar pings when resume codes expire soon.",
-            url: `${siteBase.replace(/\/$/, "")}/account`,
-            tag: "procharacters-push-test",
+            title: payload.title,
+            body: payload.body,
+            url: payload.url,
+            tag: payload.tag,
           },
         );
         if (result.ok) sent += 1;
@@ -223,6 +226,10 @@ export const createPushRoutes = (sessionManager: SessionManager): FastifyPluginA
         sent,
         failed,
         gone,
+        dnaPower: payload.dnaPower,
+        characterName: payload.characterName ?? null,
+        characterId: payload.characterId ?? null,
+        url: payload.url,
       };
     });
   };
