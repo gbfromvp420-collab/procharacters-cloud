@@ -112,6 +112,27 @@ class SessionUpdatePayload(BaseModel):
     lora_id: str | None = None
 
 
+class VideoOnlyRequest(BaseModel):
+    """Opt-in generative clip — no chat LLM. Product Grok stays on Railway."""
+
+    session_id: str = Field(..., min_length=1)
+    character_id: str = Field(default="default")
+    lora_id: str | None = None
+    message: str = Field(..., min_length=1)
+
+
+class VideoOnlyResponse(BaseModel):
+    ok: bool
+    session_id: str
+    character_id: str
+    provider: str | None = None
+    video_url: str | None = None
+    job_id: str | None = None
+    duration_ms: int | None = None
+    fallback_used: bool = False
+    error: str | None = None
+
+
 class ChatPerformRequest(BaseModel):
     session_id: str = Field(..., min_length=1)
     character_id: str = Field(default="default")
@@ -150,6 +171,8 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:8000",
         "http://127.0.0.1:8000",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -397,6 +420,34 @@ async def _chat_perform_impl(body: ChatPerformRequest) -> ChatPerformResponse:
         provider_video=result.provider_video,
         fallback_used=result.fallback_used,
         weights=result.weights,
+    )
+
+
+@app.post("/api/v1/video/generate", response_model=VideoOnlyResponse)
+async def video_generate_only(body: VideoOnlyRequest) -> VideoOnlyResponse:
+    """Generate a talking-head clip without a second chat completion."""
+    session = _get_or_create_session(body.session_id)
+    character_id = body.character_id or session.get("character_id") or "default"
+    lora_id = body.lora_id if body.lora_id is not None else session.get("lora_id")
+    _apply_session_identity(session, character_id=character_id, lora_id=lora_id)
+
+    bridge = MediaBridge(get_settings())
+    result = await bridge.generate_video_only(
+        session_id=body.session_id,
+        character_id=character_id,
+        message=body.message,
+        lora_id=lora_id,
+    )
+    return VideoOnlyResponse(
+        ok=result.ok,
+        session_id=body.session_id,
+        character_id=character_id,
+        provider=result.provider,
+        video_url=result.video_url,
+        job_id=result.job_id,
+        duration_ms=result.duration_ms,
+        fallback_used=bool(result.meta.get("fallback")),
+        error=result.error,
     )
 
 

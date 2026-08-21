@@ -19,6 +19,7 @@ import {
   sendErrorWebhookTest,
 } from "../lib/observability/error-reporter.js";
 import { getLastExpiryCron, getMetrics } from "../lib/observability/metrics.js";
+import { isGenVideoConfigured } from "../lib/gen-video.js";
 import { pingPrisma } from "../lib/prisma.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
 
@@ -107,6 +108,11 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
           webhook: isStripeWebhookConfigured(),
           mode: stripeMode(),
           freePath: true,
+        },
+        generativeVideo: {
+          configured: isGenVideoConfigured(),
+          default: "loops",
+          optIn: true,
         },
       };
     });

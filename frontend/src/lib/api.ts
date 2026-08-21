@@ -71,6 +71,43 @@ export async function createSession(
   return res.json() as Promise<CreateSessionResponse>;
 }
 
+export async function fetchGenVideoStatus(): Promise<{
+  configured: boolean;
+  default: string;
+  optIn: boolean;
+}> {
+  const res = await fetch(`${API_BASE}/api/v1/gen-video/status`);
+  if (!res.ok) {
+    return { configured: false, default: "loops", optIn: true };
+  }
+  return res.json() as Promise<{
+    configured: boolean;
+    default: string;
+    optIn: boolean;
+  }>;
+}
+
+export async function performGenVideo(input: {
+  sessionId: string;
+  characterId: string;
+  message: string;
+}): Promise<import("./gen-video").GenVideoPerformResponse> {
+  const res = await fetch(`${API_BASE}/api/v1/gen-video/perform`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const body = (await res.json().catch(() => ({}))) as import("./gen-video").GenVideoPerformResponse;
+  if (!res.ok) {
+    return {
+      ok: false,
+      configured: body.configured,
+      error: body.error ?? `gen-video ${res.status}`,
+    };
+  }
+  return body;
+}
+
 export async function setCrossSessionMemoryOptIn(
   accountToken: string,
   characterId: string,

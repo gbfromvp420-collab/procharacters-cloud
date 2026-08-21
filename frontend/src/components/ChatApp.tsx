@@ -15,6 +15,8 @@ import {
   claimSession,
   createCustomCharacter,
   createSession,
+  fetchGenVideoStatus,
+  performGenVideo,
   deleteCustomCharacter,
   exportLiveSession,
   fetchBaseModelPrefill,
@@ -46,6 +48,12 @@ import {
   type AccountSessionSummary,
   type ImportPreview,
 } from "@/lib/api";
+import {
+  GEN_VIDEO_IDLE,
+  isGenVideoOptIn,
+  overlayFromPerform,
+  type GenVideoOverlayState,
+} from "@/lib/gen-video";
 import { SessionAuthBanner } from "@/components/SessionAuthBanner";
 import { InstallAppHint } from "@/components/InstallAppHint";
 import { SessionDropRescue } from "@/components/SessionDropRescue";
@@ -266,6 +274,8 @@ export function ChatApp() {
   const [sending, setSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [avatarState, setAvatarState] = useState<AvatarState | null>(null);
+  const [genOverlay, setGenOverlay] = useState<GenVideoOverlayState>(GEN_VIDEO_IDLE);
+  const lastUserTextRef = useRef("");
   const [livekit, setLivekit] = useState<LiveKitJoinInfo | null>(null);
   const [restarting, setRestarting] = useState(false);
   const [showCreate, setShowCreate] = useState(false);
@@ -699,6 +709,23 @@ export function ChatApp() {
     window.setTimeout(() => setCopyNotice(null), 2200);
   }, [status, messages, characterName, characters, activeCharacterId, character]);
 
+  // Opt-in gen-video (?genVideo=1). Loops stay default when the flag is off.
+  useEffect(() => {
+    if (!isGenVideoOptIn(incomingQueryRef.current)) return;
+    setGenOverlay((prev) => ({ ...prev, optedIn: true, status: "pending" }));
+    fetchGenVideoStatus()
+      .then((s) => {
+        setGenOverlay((prev) => ({
+          ...prev,
+          optedIn: true,
+          status: s.configured ? "idle" : "off",
+        }));
+      })
+      .catch(() => {
+        setGenOverlay((prev) => ({ ...prev, optedIn: true, status: "off" }));
+      });
+  }, []);
+
   // Per-character composer drafts — swap brains without losing unsent heat
   useEffect(() => {
     skipDraftSaveRef.current = true;
@@ -1035,6 +1062,25 @@ export function ChatApp() {
                 { id: messageId, role: "assistant", content, streaming: false },
               ];
             });
+            if (isGenVideoOptIn(incomingQueryRef.current) && lastUserTextRef.current) {
+              const turnText = lastUserTextRef.current;
+              setGenOverlay((prev) => ({ ...prev, optedIn: true, status: "pending" }));
+              void performGenVideo({
+                sessionId: session.sessionId,
+                characterId: session.characterId,
+                message: turnText,
+              })
+                .then((result) => setGenOverlay(overlayFromPerform(result)))
+                .catch(() =>
+                  setGenOverlay({
+                    optedIn: true,
+                    status: "error",
+                    provider: null,
+                    videoUrl: null,
+                    playable: false,
+                  }),
+                );
+            }
             break;
           }
 
@@ -2544,6 +2590,7 @@ export function ChatApp() {
       content: text,
     };
 
+    lastUserTextRef.current = text;
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     clearComposerDraft(character);
@@ -3218,6 +3265,7 @@ export function ChatApp() {
                     characterId={activeCharacterId ?? character}
                     dnaTreeNodeId={modeState?.dnaTreeNodeId}
                     dnaTreeLabel={modeState?.dnaTreeLabel}
+                    genOverlay={genOverlay}
                     compact
                   />
                 </div>

@@ -20,6 +20,8 @@ export interface ShareQuery {
   edit?: boolean;
   /** Skip same-night reclaim — start a cold session even if a resume exists. */
   fresh?: boolean;
+  /** Opt-in generative video overlay. Default chat stays 4-loop clips. */
+  genVideo?: boolean;
 }
 
 export function parseShareQuery(search: string): ShareQuery {
@@ -59,6 +61,9 @@ export function parseShareQuery(search: string): ShareQuery {
   const freshRaw = params.get("fresh")?.trim().toLowerCase();
   const fresh =
     freshRaw === "1" || freshRaw === "true" || freshRaw === "yes" || freshRaw === "new";
+  const genVideoRaw = params.get("genVideo")?.trim().toLowerCase();
+  const genVideo =
+    genVideoRaw === "1" || genVideoRaw === "true" || genVideoRaw === "yes";
 
   return {
     characterId,
@@ -72,6 +77,7 @@ export function parseShareQuery(search: string): ShareQuery {
     create,
     edit,
     fresh,
+    genVideo,
   };
 }
 
@@ -187,6 +193,7 @@ export function replaceCharacterInUrl(characterId: string | null): void {
   url.searchParams.delete("magic");
   url.searchParams.delete("autostart");
   url.searchParams.delete("mode");
+  url.searchParams.delete("genVideo");
   window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 

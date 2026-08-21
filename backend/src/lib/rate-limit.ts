@@ -110,6 +110,11 @@ export const RATE_LIMITS = {
     limit: Number(process.env.RATE_LIMIT_PUSH_TEST_IP ?? 12),
     windowMs: Number(process.env.RATE_LIMIT_PUSH_TEST_IP_WINDOW_MS ?? 15 * 60 * 1000),
   },
+  /** Opt-in gen-video proxy — GPU / mock cost guard */
+  genVideoPerIp: {
+    limit: Number(process.env.RATE_LIMIT_GEN_VIDEO_IP ?? 20),
+    windowMs: Number(process.env.RATE_LIMIT_GEN_VIDEO_IP_WINDOW_MS ?? 15 * 60 * 1000),
+  },
   /** Studio Forge expand — LLM cost guard */
   forgeExpand: {
     limit: Number(process.env.RATE_LIMIT_FORGE_EXPAND ?? 30),

@@ -12,6 +12,11 @@ import {
 } from "../src/lib/chat-deeplink";
 import { rewriteAutostartToResume } from "../src/lib/return-autostart";
 import { parseShareQuery } from "../src/lib/share-links";
+import {
+  isGenVideoOptIn,
+  isPlayableGenVideoUrl,
+  overlayFromPerform,
+} from "../src/lib/gen-video";
 
 const FALLBACK_IDS = [
   "twink-default",
@@ -264,6 +269,28 @@ function checkBootLabelUsesMatchingSavedName() {
   assert.equal(boot.showMind, true);
 }
 
+function checkGenVideoQueryIsOptInNotPending() {
+  const q = parseShareQuery("?character=liam&genVideo=1");
+  assert.equal(q.genVideo, true);
+  assert.equal(q.characterId, "liam");
+  assert.equal(isGenVideoOptIn(q), true);
+  assert.equal(hasPendingShareDeepLink(parseShareQuery("?genVideo=1")), false);
+}
+
+function checkGenVideoOverlayIgnoresMockScheme() {
+  assert.equal(isPlayableGenVideoUrl("mock://video/liam/job.mp4"), false);
+  assert.equal(isPlayableGenVideoUrl("https://cdn.example/clip.mp4"), true);
+  assert.equal(overlayFromPerform({ ok: true, configured: false }).status, "off");
+  assert.equal(
+    overlayFromPerform({
+      ok: true,
+      configured: true,
+      videoUrl: "mock://video/x/y.mp4",
+    }).status,
+    "mock",
+  );
+}
+
 function checkClobberedTwinkDefaultWouldMisselect() {
   // Documents the production bug: idle URL sync rewrote the bar before consume.
   const clobbered = parseShareQuery("?character=twink-default");
@@ -304,6 +331,8 @@ const checks = [
   checkBootLabelDoesNotUseSavedNameForDefaultMind,
   checkBootLabelAfterQueryConsumedAllowsPickerHop,
   checkBootLabelUsesMatchingSavedName,
+  checkGenVideoQueryIsOptInNotPending,
+  checkGenVideoOverlayIgnoresMockScheme,
   checkClobberedTwinkDefaultWouldMisselect,
 ];
 

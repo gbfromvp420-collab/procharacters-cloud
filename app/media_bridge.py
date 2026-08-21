@@ -175,6 +175,31 @@ class MediaBridge:
             weights=inference,
         )
 
+    async def generate_video_only(
+        self,
+        *,
+        session_id: str,
+        character_id: str,
+        message: str,
+        lora_id: str | None = None,
+        avatar_url: str | None = None,
+    ) -> VideoGenerateResult:
+        """Video job only — does not run the product chat LLM."""
+        video_provider = get_video_provider(self.settings)
+        weights = self.resolve_weights(character_id, lora_id=lora_id)
+        resolved_lora = weights.lora_id or lora_id
+        request = VideoGenerateRequest(
+            session_id=session_id,
+            character_id=character_id,
+            text=message,
+            avatar_url=avatar_url,
+            lora_id=resolved_lora,
+            visual_lora_uri=weights.visual_lora_uri,
+            voice_model_uri=weights.voice_model_uri,
+            extra={"weights": weights.to_inference_payload()},
+        )
+        return await self._video_generate_with_fallback(video_provider, request)
+
     async def _llm_complete_with_fallback(
         self, provider: Any, request: LLMRequest
     ) -> LLMResult:

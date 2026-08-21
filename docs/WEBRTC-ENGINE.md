@@ -139,6 +139,7 @@ POST /api/v1/trainer/weights/register
 | `POST` | `/api/v1/webrtc/offer` | SDP offer → answer |
 | `POST` | `/api/v1/webrtc/hangup` | Tear down session |
 | `POST` | `/api/v1/chat/perform` | Chat + performance (versioned) |
+| `POST` | `/api/v1/video/generate` | Video only (no LLM) — product chat opt-in overlay |
 | `POST` | `/chat/perform` | Legacy alias |
 | `POST` | `/api/v1/trainer/dataset` | JSON base64 dataset |
 | `POST` | `/api/v1/trainer/dataset/upload` | Multipart binary upload |

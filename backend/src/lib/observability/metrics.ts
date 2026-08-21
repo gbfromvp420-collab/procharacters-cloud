@@ -38,6 +38,9 @@ export type MetricCounters = {
   pushDnaPowerReclaims: number;
   /** New sessions that rehydrated DNA climb from CharacterSession dossier. */
   dnaDossierReclaims: number;
+  /** Opt-in generative video proxy attempts. */
+  genVideoRequests: number;
+  genVideoErrors: number;
   startedAt: string;
 };
 
@@ -68,6 +71,8 @@ const counters: MetricCounters = {
   pushExpiryCronTicks: 0,
   pushDnaPowerReclaims: 0,
   dnaDossierReclaims: 0,
+  genVideoRequests: 0,
+  genVideoErrors: 0,
   startedAt: new Date().toISOString(),
 };
 

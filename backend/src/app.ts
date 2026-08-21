@@ -16,6 +16,7 @@ import { isWebPushConfigured } from "./lib/push/web-push-service.js";
 import { createAccountRoutes } from "./routes/accounts.js";
 import { createBillingRoutes } from "./routes/billing.js";
 import { createHealthRoutes } from "./routes/health.js";
+import { createGenVideoRoutes } from "./routes/gen-video.js";
 import { createPushRoutes } from "./routes/push.js";
 import { createSessionRoutes } from "./routes/sessions.js";
 import { createUploadRoutes } from "./routes/uploads.js";
@@ -158,6 +159,9 @@ export async function buildApp() {
     prefix: "/api/v1",
   });
   await app.register(createPushRoutes(sessionManager), {
+    prefix: "/api/v1",
+  });
+  await app.register(createGenVideoRoutes(), {
     prefix: "/api/v1",
   });
 

@@ -16,6 +16,10 @@ import {
   presenceVisual,
   resolvePresenceSkin,
 } from "@/lib/presence";
+import {
+  genVideoChipLabel,
+  type GenVideoOverlayState,
+} from "@/lib/gen-video";
 import type { AvatarState } from "@/lib/types";
 
 function formatLabel(value: string): string {
@@ -37,6 +41,8 @@ interface AvatarVideoProps {
   /** Studio Forge DNA node — sexy frame heat */
   dnaTreeNodeId?: string | null;
   dnaTreeLabel?: string | null;
+  /** Opt-in gen-video overlay. Loops stay the base layer. */
+  genOverlay?: GenVideoOverlayState | null;
 }
 
 const CROSSFADE_MS = 620;
@@ -49,6 +55,7 @@ export function AvatarVideo({
   pip = false,
   dnaTreeNodeId = null,
   dnaTreeLabel = null,
+  genOverlay = null,
 }: AvatarVideoProps) {
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
@@ -69,6 +76,8 @@ export function AvatarVideo({
   const dnaLevel = dnaTreeHeatLevel(dnaTreeNodeId, dnaTreeLabel);
   const dnaShort = dnaNodeShortLabel(dnaTreeNodeId, dnaTreeLabel);
   const dnaRing = dnaAvatarRingClass(dnaTreeNodeId, dnaTreeLabel);
+  const genChip = genVideoChipLabel(genOverlay ?? { optedIn: false, status: "idle", provider: null, videoUrl: null, playable: false });
+  const genPlayable = genOverlay?.playable && genOverlay.videoUrl ? genOverlay.videoUrl : null;
 
   // Smooth crossfade on primary URL change (do not hard-reset activeSrc).
   useEffect(() => {
@@ -225,6 +234,16 @@ export function AvatarVideo({
         />
       )}
 
+      {genPlayable && !pip && (
+        <MediaLayer
+          src={genPlayable}
+          isVideo={isVideoSrc(genPlayable) || genPlayable.includes(".mp4")}
+          visible
+          label="Generative overlay"
+          filter={visual.filter}
+        />
+      )}
+
       {/* Presence color wash — distinguishes models that share base footage */}
       {activeSrc && (
         <div
@@ -260,6 +279,11 @@ export function AvatarVideo({
           {!pip && (
             <div className="w-fit rounded-full border border-white/15 bg-black/40 px-2 py-0.5 text-[8px] font-medium uppercase tracking-wide text-white/80 backdrop-blur-sm">
               {visual.label}
+            </div>
+          )}
+          {genChip && !pip && (
+            <div className="w-fit rounded-full border border-emerald-300/50 bg-emerald-500/30 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-emerald-50 backdrop-blur-sm">
+              {genChip}
             </div>
           )}
         </div>
