@@ -111,16 +111,19 @@ class RunPodLLMProvider:
         attempts = [
             (f"{self.base_url}/v1/chat/completions", openai_body),
             (f"{self.base_url}/chat/completions", openai_body),
-            (f"{self.base_url}/runsync", {
-                "input": {
-                    "messages": messages,
-                    "temperature": request.temperature,
-                    "max_tokens": request.max_tokens,
-                    "model": model,
-                    **weight_fields,
-                    **extra,
-                }
-            }),
+            (
+                f"{self.base_url}/runsync",
+                {
+                    "input": {
+                        "messages": messages,
+                        "temperature": request.temperature,
+                        "max_tokens": request.max_tokens,
+                        "model": model,
+                        **weight_fields,
+                        **extra,
+                    }
+                },
+            ),
         ]
 
         last_error: str | None = None

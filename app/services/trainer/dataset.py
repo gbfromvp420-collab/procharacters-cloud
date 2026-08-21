@@ -384,17 +384,11 @@ def validate_image_bytes(
 
     if width is not None and height is not None:
         if width < min_side or height < min_side:
-            errors.append(
-                f"image too small ({width}x{height}); min side {min_side}px"
-            )
+            errors.append(f"image too small ({width}x{height}); min side {min_side}px")
         if width > max_side or height > max_side:
-            warnings.append(
-                f"image very large ({width}x{height}); max recommended {max_side}px"
-            )
+            warnings.append(f"image very large ({width}x{height}); max recommended {max_side}px")
         if abs(width - height) / max(width, height) > 0.5:
-            warnings.append(
-                "highly non-square aspect ratio may hurt avatar LoRA consistency"
-            )
+            warnings.append("highly non-square aspect ratio may hurt avatar LoRA consistency")
     elif mime and not parse_errors:
         warnings.append("could not determine image dimensions")
 
@@ -438,13 +432,9 @@ def validate_audio_bytes(
 
     if duration_ms is not None:
         if duration_ms < min_duration_ms:
-            errors.append(
-                f"audio too short ({duration_ms}ms); min {min_duration_ms}ms"
-            )
+            errors.append(f"audio too short ({duration_ms}ms); min {min_duration_ms}ms")
         if duration_ms > max_duration_ms:
-            warnings.append(
-                f"audio long ({duration_ms}ms); max recommended {max_duration_ms}ms"
-            )
+            warnings.append(f"audio long ({duration_ms}ms); max recommended {max_duration_ms}ms")
     else:
         warnings.append("could not determine audio duration")
 
@@ -541,9 +531,8 @@ def build_caption(
                 if t and t not in tags:
                     tags.append(t)
         if style == "xtts_voice":
-            caption = (
-                f"Voice sample for character {character_id}"
-                + (f" ({trigger})" if trigger else "")
+            caption = f"Voice sample for character {character_id}" + (
+                f" ({trigger})" if trigger else ""
             )
             source = "template"
         else:
@@ -593,8 +582,7 @@ class DatasetService:
             self.root_dir = Path(root_dir)
         else:
             self.root_dir = Path(
-                getattr(self.settings, "trainer_dataset_root", None)
-                or "data/trainer/datasets"
+                getattr(self.settings, "trainer_dataset_root", None) or "data/trainer/datasets"
             )
         self.root_dir.mkdir(parents=True, exist_ok=True)
 
@@ -738,9 +726,7 @@ class DatasetService:
             "assets": [a.to_dict() for a in assets if a.validation.ok],
             "weights_storage_bucket": self.settings.weights_storage_bucket or None,
         }
-        (ds_dir / "manifest.json").write_text(
-            _json_dumps(manifest), encoding="utf-8"
-        )
+        (ds_dir / "manifest.json").write_text(_json_dumps(manifest), encoding="utf-8")
 
         # ok when at least one media asset staged; validation failures stay in errors[]
         ok = (image_count + audio_count) > 0
@@ -794,9 +780,7 @@ def _safe_filename(name: str) -> str:
     return base
 
 
-def _lookup_caption(
-    captions: dict[str, str], original_name: str, safe_name: str
-) -> str | None:
+def _lookup_caption(captions: dict[str, str], original_name: str, safe_name: str) -> str | None:
     if original_name in captions:
         return captions[original_name]
     if safe_name in captions:

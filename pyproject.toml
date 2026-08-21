@@ -3,6 +3,8 @@
 
 [tool.ruff]
 target-version = "py311"
+# Match the JS side (Prettier printWidth 100) for cross-language consistency.
+line-length = 100
 
 [tool.ruff.lint]
 # Mirror the rule families the project already lints against, pinned so results
