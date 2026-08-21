@@ -145,7 +145,7 @@ def _decode_assets(assets: list[DatasetAssetIn]) -> list[tuple[str, bytes]]:
         if asset.content_b64 is not None:
             try:
                 raw = base64.b64decode(asset.content_b64, validate=False)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise HTTPException(
                     status_code=400,
                     detail=f"invalid base64 for {name}: {exc}",

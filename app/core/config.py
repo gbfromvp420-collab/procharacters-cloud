@@ -2,8 +2,8 @@
 Environment-driven settings for provider selection and RunPod endpoints.
 
 Toggles:
-  VIDEO_PROVIDER   – "mock" | "runpod"  (default: mock)
-  LLM_PROVIDER     – "mock" | "runpod"  (default: same as VIDEO_PROVIDER if unset)
+  VIDEO_PROVIDER   - "mock" | "runpod"  (default: mock)
+  LLM_PROVIDER     - "mock" | "runpod"  (default: same as VIDEO_PROVIDER if unset)
   RUNPOD_MUSETALK_URL
   RUNPOD_LLM_URL
   RUNPOD_API_KEY

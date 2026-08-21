@@ -20,11 +20,12 @@ import re
 import threading
 import time
 import uuid
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from app.core.config import Settings, get_settings
 
@@ -75,7 +76,7 @@ class WeightEntry:
     job_id: str | None = None
     active: bool = True
     created_at: str = field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     meta: dict[str, Any] = field(default_factory=dict)
 
@@ -98,7 +99,7 @@ class WeightEntry:
             trigger_word=data.get("trigger_word"),
             job_id=data.get("job_id"),
             active=bool(data.get("active", True)),
-            created_at=str(data.get("created_at") or datetime.now(timezone.utc).isoformat()),
+            created_at=str(data.get("created_at") or datetime.now(UTC).isoformat()),
             meta=dict(data.get("meta") or {}),
         )
 
@@ -268,7 +269,7 @@ class WeightRegistry:
                         active=bool(data.get("active", True)),
                         created_at=str(
                             data.get("created_at")
-                            or datetime.now(timezone.utc).isoformat()
+                            or datetime.now(UTC).isoformat()
                         ),
                         meta=dict(data.get("meta") or {}),
                     )
@@ -292,7 +293,7 @@ class WeightRegistry:
             payload = {
                 "version": 1,
                 "bucket": self.settings.weights_storage_bucket or None,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": datetime.now(UTC).isoformat(),
                 "entries": [e.to_dict() for e in self._entries.values()],
                 "active": self._active,
             }
