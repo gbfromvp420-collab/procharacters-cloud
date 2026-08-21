@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # Backend (Fastify API) — grouped to keep PR noise low.
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+
+  # Frontend (Next.js web) — grouped minor/patch.
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      frontend-minor-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(deps)
+      prefix-development: chore(deps-dev)
+
+  # Python WebRTC / trainer service.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(deps)
+
+  # Keep GitHub Actions pinned versions fresh.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore(ci)
