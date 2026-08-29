@@ -869,7 +869,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
               </p>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2">
             {account ? (
               <span
                 className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${
@@ -893,12 +893,9 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             )}
             <Link
               href="/?filter=owned"
-              className="btn-ghost min-h-0 px-3 py-1.5 text-xs"
+              className="btn-ghost btn-compact min-h-0"
             >
               My models
-            </Link>
-            <Link href="/account#my-models" className="btn-ghost min-h-0 px-3 py-1.5 text-xs">
-              Hub
             </Link>
           </div>
         </div>

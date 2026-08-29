@@ -1620,7 +1620,7 @@ export function AccountSettings() {
                               </p>
                             )}
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex shrink-0 items-center gap-1.5">
                             {session?.resumeCode ? (
                               <Link
                                 href={buildResumeChatPath({
@@ -1638,7 +1638,7 @@ export function AccountSettings() {
                                       : "bg-brand-accent"
                                 }`}
                               >
-                                {dnaLabel ? "DNA power" : "Continue"}
+                                {dnaLabel ? "DNA" : "Continue"}
                               </Link>
                             ) : (
                               <Link
@@ -1654,6 +1654,11 @@ export function AccountSettings() {
                             >
                               Edit
                             </Link>
+                            <details className="more-panel relative">
+                              <summary className="cursor-pointer rounded-lg border border-brand-border px-2 py-1.5 text-[11px] text-brand-muted hover:text-brand-text">
+                                More
+                              </summary>
+                              <div className="absolute right-0 z-20 mt-1 flex min-w-[8.5rem] flex-col gap-1 rounded-xl border border-brand-border bg-brand-panel p-1.5 shadow-card">
                             <button
                               type="button"
                               disabled={busy || myModels.length >= customsLimit}
@@ -1781,6 +1786,8 @@ export function AccountSettings() {
                             >
                               Delete
                             </button>
+                              </div>
+                            </details>
                           </div>
                         </div>
                       </li>

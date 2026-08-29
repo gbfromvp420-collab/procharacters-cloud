@@ -308,8 +308,9 @@ body {
     );
   }
 
+  /* Filter / status chips — compact so rows don't wrap into a wall */
   .chip {
-    @apply inline-flex min-h-touch items-center whitespace-nowrap rounded-full border px-4 py-2 text-xs transition active:scale-[0.98];
+    @apply inline-flex h-8 items-center whitespace-nowrap rounded-full border px-3 text-[11px] font-medium transition active:scale-[0.98];
   }
 
   .chip-active {
@@ -320,6 +321,11 @@ body {
     @apply border-brand-border bg-brand-panel text-brand-muted hover:border-brand-accent/70 hover:text-brand-text;
   }
 
+  /* Poster / metadata labels — never fight for the same corner */
+  .tag {
+    @apply inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide;
+  }
+
   .btn-primary {
     @apply inline-flex min-h-touch items-center justify-center rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:bg-brand-accentDim active:scale-[0.98];
   }
@@ -328,8 +334,24 @@ body {
     @apply inline-flex min-h-touch items-center justify-center rounded-xl border border-brand-border px-4 py-2.5 text-sm text-brand-text transition hover:border-brand-accent active:scale-[0.98];
   }
 
+  /* Dense actions on tiles / docks — still tappable, not 44px walls */
+  .btn-compact {
+    @apply inline-flex h-9 items-center justify-center rounded-lg px-3 text-xs font-semibold transition active:scale-[0.98];
+  }
+
   .field {
     @apply w-full rounded-xl border border-brand-border bg-brand-panel px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent/25;
+  }
+
+  .hint-stack {
+    @apply mb-5 space-y-2;
+  }
+
+  details.more-panel > summary {
+    list-style: none;
+  }
+  details.more-panel > summary::-webkit-details-marker {
+    display: none;
   }
 }
 

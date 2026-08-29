@@ -14,8 +14,7 @@ import {
 export type SiteChromeActive = "gallery" | "chat" | "account" | "card" | "studio";
 
 /**
- * Sticky product chrome — same return path on every surface.
- * Continue when a resume exists; My models when signed in.
+ * Sticky product chrome — one row, no wrap, one primary return CTA.
  */
 export function SiteChrome({
   active,
@@ -40,7 +39,6 @@ export function SiteChrome({
     setResume(getMostRecentResume());
   }, [active]);
 
-  // Re-check resume when tab regains focus (other tab may have chatted)
   useEffect(() => {
     const onFocus = () => setResume(getMostRecentResume());
     window.addEventListener("focus", onFocus);
@@ -60,33 +58,35 @@ export function SiteChrome({
     null;
 
   const linkClass = (key: SiteChromeActive) =>
-    `btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-      active === key ? "border-brand-accent/60 text-brand-accent" : ""
+    `inline-flex h-8 items-center rounded-lg px-2.5 text-xs font-medium text-brand-muted transition hover:text-brand-text sm:px-3 sm:text-sm ${
+      active === key ? "bg-brand-panel text-brand-text" : ""
     }`;
 
   return (
     <div
       className={`sticky top-0 z-40 border-b border-brand-border/70 bg-brand-bg/90 backdrop-blur-xl ${className}`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
-          <p className="truncate text-sm font-semibold text-brand-text sm:text-base">
+      <div className="mx-auto flex min-h-[3.25rem] max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] uppercase tracking-[0.28em] text-brand-accent">Naughty Syntax</p>
+          <p className="truncate text-sm font-semibold leading-tight text-brand-text">
             {title}
             {handle ? (
-              <span className="ml-2 text-xs font-normal text-brand-muted">· @{handle}</span>
+              <span className="ml-1.5 hidden font-normal text-brand-muted sm:inline">
+                · @{handle}
+              </span>
             ) : null}
           </p>
           {subtitle ? (
-            <p className="mt-0.5 hidden truncate text-[10px] text-brand-muted sm:block">
+            <p className="mt-0 hidden truncate text-[10px] text-brand-muted lg:block">
               {subtitle}
             </p>
           ) : null}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          {trailing}
-          <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="Primary">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {trailing ? <div className="hidden items-center gap-1.5 md:flex">{trailing}</div> : null}
+          <nav className="flex items-center gap-0.5 sm:gap-1" aria-label="Primary">
             <Link href="/" className={linkClass("gallery")} aria-current={active === "gallery" ? "page" : undefined}>
               Gallery
             </Link>
@@ -98,25 +98,16 @@ export function SiteChrome({
               Chat
             </Link>
             {handle ? (
-              <>
-                <Link
-                  href="/models/studio"
-                  className={`btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm ${
-                    active === "studio" ? "border-violet-300/70 text-violet-50" : ""
-                  }`}
-                  title="My Models Studio — create & edit"
-                  aria-current={active === "studio" ? "page" : undefined}
-                >
-                  Studio
-                </Link>
-                <Link
-                  href="/account#my-models"
-                  className="btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm"
-                  title="Private My Characters hub"
-                >
-                  Models
-                </Link>
-              </>
+              <Link
+                href="/models/studio"
+                className={`hidden sm:inline-flex ${linkClass("studio")} ${
+                  active === "studio" ? "text-violet-100" : ""
+                }`}
+                title="Studio Forge — create & edit"
+                aria-current={active === "studio" ? "page" : undefined}
+              >
+                Studio
+              </Link>
             ) : null}
             <Link
               href="/account"
@@ -128,9 +119,9 @@ export function SiteChrome({
             {continueHref ? (
               <Link
                 href={continueHref}
-                className={`btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
+                className={`btn-primary ml-0.5 h-8 min-h-0 px-2.5 py-0 text-xs sm:px-3 ${
                   urgent
-                    ? "ring-2 ring-rose-400/55 animate-pulse"
+                    ? "ring-2 ring-rose-400/55"
                     : dnaPower
                       ? "ring-1 ring-violet-400/55"
                       : ""
@@ -143,15 +134,10 @@ export function SiteChrome({
                       : "Continue last chat"
                 }
               >
-                {urgent ? "Reclaim" : dnaPower ? "DNA power" : "Continue"}
-                {nick ? ` · ${nick}` : ""}
-              </Link>
-            ) : active !== "chat" ? (
-              <Link
-                href="/chat"
-                className="btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm"
-              >
-                Live chat
+                {urgent ? "Reclaim" : "Continue"}
+                {nick ? (
+                  <span className="hidden sm:inline">{` · ${nick}`}</span>
+                ) : null}
               </Link>
             ) : null}
           </nav>

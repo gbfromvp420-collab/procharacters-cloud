@@ -3372,7 +3372,11 @@ export function ChatApp() {
               </div>
 
               {!sessionActive && (
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
+                <details className="more-panel text-[11px] text-brand-muted">
+                  <summary className="cursor-pointer hover:text-brand-text">
+                    {sessionMode === "edge_pace" ? "Edge Pace · session options" : "Session options"}
+                  </summary>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
                   <label className="flex items-center gap-1.5">
                     Mode
                     <select
@@ -3390,7 +3394,7 @@ export function ChatApp() {
                     </select>
                   </label>
                   <label className="flex items-center gap-1.5">
-                    Memory window
+                    Memory
                     <select
                       value={messageWindow}
                       onChange={(e) =>
@@ -3446,10 +3450,11 @@ export function ChatApp() {
                       )}
                     </>
                   )}
-                </div>
+                  </div>
+                </details>
               )}
 
-              <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
+              <div className="flex flex-wrap items-center gap-2">
               {!sessionActive ? (
                 <>
                   <button
@@ -3471,8 +3476,13 @@ export function ChatApp() {
                       Resume
                     </button>
                   )}
+                  <details className="more-panel relative">
+                    <summary className="btn-ghost btn-compact min-h-0 cursor-pointer px-3 text-xs sm:text-sm">
+                      More
+                    </summary>
+                    <div className="absolute left-0 z-20 mt-1 flex min-w-[10.5rem] flex-col gap-1 rounded-xl border border-brand-border bg-brand-panel p-1.5 shadow-card">
                   <label
-                    className={`btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
+                    className={`btn-ghost btn-compact min-h-0 cursor-pointer justify-start text-xs ${
                       importBusy ? "opacity-50" : ""
                     }`}
                     title="Preview then restore exported chat JSON"
@@ -3563,10 +3573,12 @@ export function ChatApp() {
                   </button>
                   <a
                     href={`/character/${encodeURIComponent(character)}`}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs text-brand-muted sm:text-sm"
+                    className="btn-ghost btn-compact min-h-0 justify-start text-xs text-brand-muted"
                   >
                     Card
                   </a>
+                    </div>
+                  </details>
                 </>
               ) : (
                 <>
@@ -3586,11 +3598,16 @@ export function ChatApp() {
                   >
                     End
                   </button>
+                  <details className="more-panel relative">
+                    <summary className="btn-ghost btn-compact min-h-0 cursor-pointer px-3 text-xs sm:text-sm">
+                      More
+                    </summary>
+                    <div className="absolute left-0 z-20 mt-1 flex min-w-[10.5rem] flex-col gap-1 rounded-xl border border-brand-border bg-brand-panel p-1.5 shadow-card">
                   <button
                     type="button"
                     onClick={() => void shareCharacterLink(true)}
                     disabled={status === "connecting" || restarting}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    className="btn-ghost btn-compact min-h-0 justify-start text-xs disabled:opacity-50"
                     title={
                       canNativeShare()
                         ? "Share public character link"
@@ -3603,7 +3620,7 @@ export function ChatApp() {
                     type="button"
                     onClick={() => void sharePrivateResumeLink()}
                     disabled={status !== "ready" || !resumeCode}
-                    className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
+                    className="btn-ghost btn-compact min-h-0 justify-start border-amber-500/40 text-xs text-amber-200 disabled:opacity-50"
                     title={
                       canNativeShare()
                         ? "Share resume code link"
@@ -3616,25 +3633,25 @@ export function ChatApp() {
                     type="button"
                     onClick={() => void exportChat("json")}
                     disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    className="btn-ghost btn-compact min-h-0 justify-start text-xs disabled:opacity-50"
                     title="Download chat history as JSON (no secrets)"
                   >
-                    JSON
+                    Export JSON
                   </button>
                   <button
                     type="button"
                     onClick={() => void exportChat("md")}
                     disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    className="btn-ghost btn-compact min-h-0 justify-start text-xs disabled:opacity-50"
                     title="Download chat history as Markdown"
                   >
-                    MD
+                    Export MD
                   </button>
                   <button
                     type="button"
                     onClick={() => void shareChatMarkdown()}
                     disabled={messages.length === 0 && !(sessionId && wsToken)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
+                    className="btn-ghost btn-compact min-h-0 justify-start text-xs disabled:opacity-50"
                     title={
                       canNativeShare()
                         ? "Share Markdown via system share sheet"
@@ -3643,6 +3660,8 @@ export function ChatApp() {
                   >
                     {canNativeShare() ? "Share MD" : "Copy MD"}
                   </button>
+                    </div>
+                  </details>
                 </>
               )}
               </div>
