@@ -88,9 +88,11 @@ function fallbackChips(phase: string): string[] {
   }
 }
 
+const PACE_OPEN_KEY = "pc_edge_pace_open";
+
 /**
- * Phase 10 Edge Pace — visual phase strip + countdown (v3 preview).
- * Phase changes flash coach cue; Seed/Fire + phase chips keep the game in your hands.
+ * Phase 10 Edge Pace — collapsed by default so the transcript stays the room.
+ * One tap opens the board. Almost / last 8s auto-open so “don’t finish” isn’t missed.
  */
 export function EdgePaceStrip({
   modeState,
@@ -107,7 +109,18 @@ export function EdgePaceStrip({
   canFire?: boolean;
 }) {
   const [flash, setFlash] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
+  const [dnaFlash, setDnaFlash] = useState(false);
   const prevPhase = useRef(modeState.phase);
+  const prevDna = useRef(modeState.dnaTreeNodeId);
+
+  useEffect(() => {
+    try {
+      setUserOpen(sessionStorage.getItem(PACE_OPEN_KEY) === "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
   useEffect(() => {
     if (prevPhase.current !== modeState.phase) {
@@ -117,6 +130,20 @@ export function EdgePaceStrip({
       return () => window.clearTimeout(t);
     }
   }, [modeState.phase]);
+
+  useEffect(() => {
+    if (
+      modeState.dnaTreeNodeId &&
+      prevDna.current &&
+      prevDna.current !== modeState.dnaTreeNodeId
+    ) {
+      setDnaFlash(true);
+      const t = window.setTimeout(() => setDnaFlash(false), 1100);
+      prevDna.current = modeState.dnaTreeNodeId;
+      return () => window.clearTimeout(t);
+    }
+    prevDna.current = modeState.dnaTreeNodeId;
+  }, [modeState.dnaTreeNodeId]);
 
   if (modeState.mode !== "edge_pace") return null;
 
@@ -147,60 +174,97 @@ export function EdgePaceStrip({
       : fallbackChips(modeState.phase);
   const dnaLabel = modeState.dnaTreeLabel || modeState.dnaTreeNodeId;
   const dnaIdx = dnaNodeIndex(modeState.dnaTreeNodeId);
-  const [dnaFlash, setDnaFlash] = useState(false);
-  const prevDna = useRef(modeState.dnaTreeNodeId);
-  useEffect(() => {
-    if (
-      modeState.dnaTreeNodeId &&
-      prevDna.current &&
-      prevDna.current !== modeState.dnaTreeNodeId
-    ) {
-      setDnaFlash(true);
-      const t = window.setTimeout(() => setDnaFlash(false), 1100);
-      prevDna.current = modeState.dnaTreeNodeId;
-      return () => window.clearTimeout(t);
+  const forceOpen = isAlmost || (urgent && !isBreathe);
+  const expanded = userOpen || forceOpen;
+
+  const persistOpen = (next: boolean) => {
+    setUserOpen(next);
+    try {
+      sessionStorage.setItem(PACE_OPEN_KEY, next ? "1" : "0");
+    } catch {
+      /* ignore */
     }
-    prevDna.current = modeState.dnaTreeNodeId;
-  }, [modeState.dnaTreeNodeId]);
+  };
+
+  const phaseTone = isAlmost
+    ? "text-rose-100"
+    : isHold
+      ? "text-amber-100"
+      : isBreathe
+        ? "text-sky-100"
+        : "text-rose-200/90";
+
+  const shell = `rounded-xl border text-[11px] leading-relaxed text-rose-50 transition-[border-color,box-shadow,background] duration-500 ${phaseShellClass(modeState.phase)} ${
+    flash ? "ring-2 ring-white/30 scale-[1.01]" : ""
+  } ${urgent && !isBreathe ? "ring-1 ring-amber-200/40" : ""} ${
+    dnaLabel ? "ring-1 ring-violet-400/25" : ""
+  } ${dnaFlash || modeState.dnaTreeAdvanced ? "dna-climb-shell" : ""}`;
+
+  if (!expanded) {
+    return (
+      <button
+        type="button"
+        onClick={() => persistOpen(true)}
+        className={`${shell} flex w-full items-center justify-between gap-2 px-3 py-2 text-left`}
+        aria-expanded={false}
+        aria-label={`Pace · ${modeState.label} · ${remaining}s · tap to open`}
+      >
+        <span className={`truncate text-[10px] font-semibold uppercase tracking-[0.18em] ${phaseTone}`}>
+          Pace · {modeState.label}
+          {dnaLabel ? ` · ${dnaLabel}` : ""}
+        </span>
+        <span className="flex shrink-0 items-center gap-2">
+          <span
+            className={`font-mono text-xs tabular-nums ${
+              urgent ? "font-semibold text-rose-50" : "text-rose-100/90"
+            }`}
+          >
+            {remaining}s
+          </span>
+          <span className="text-[10px] font-medium normal-case tracking-normal text-rose-100/70">
+            Open
+          </span>
+        </span>
+      </button>
+    );
+  }
 
   return (
     <div
-      className={`rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed text-rose-50 transition-[border-color,box-shadow,background] duration-500 ${phaseShellClass(modeState.phase)} ${
-        flash ? "ring-2 ring-white/30 scale-[1.01]" : ""
-      } ${urgent && !isBreathe ? "ring-1 ring-amber-200/40" : ""} ${
-        dnaLabel ? "ring-1 ring-violet-400/25" : ""
-      } ${dnaFlash || modeState.dnaTreeAdvanced ? "dna-climb-shell" : ""}`}
+      className={`${shell} px-3 py-2.5`}
       role="status"
       aria-live="polite"
+      aria-expanded={true}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p
-          className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
-            isAlmost
-              ? "text-rose-100"
-              : isHold
-                ? "text-amber-100"
-                : isBreathe
-                  ? "text-sky-100"
-                  : "text-rose-200/90"
-          }`}
-        >
+        <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${phaseTone}`}>
           {modeState.label}
           {isAlmost ? " · DON’T FINISH" : isBreathe ? " · soft" : ""}
           {flash ? " · phase shift" : ""}
           {dnaLabel ? ` · DNA ${dnaLabel}` : ""}
           {(modeState.dnaTreeAdvanced || dnaFlash) && dnaLabel ? " ↑" : ""}
         </p>
-        <p
-          className={`font-mono text-xs tabular-nums ${
-            isAlmost || urgent
-              ? "scale-105 font-semibold text-rose-50"
-              : "text-rose-100/90"
-          }`}
-        >
-          {remaining}s
-          {urgent ? " · soon" : ""}
-        </p>
+        <div className="flex items-center gap-2">
+          <p
+            className={`font-mono text-xs tabular-nums ${
+              isAlmost || urgent
+                ? "scale-105 font-semibold text-rose-50"
+                : "text-rose-100/90"
+            }`}
+          >
+            {remaining}s
+            {urgent ? " · soon" : ""}
+          </p>
+          {!forceOpen ? (
+            <button
+              type="button"
+              onClick={() => persistOpen(false)}
+              className="rounded-full border border-white/15 px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-rose-50/80 hover:border-white/35"
+            >
+              Hide
+            </button>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-2 grid grid-cols-4 gap-1">
