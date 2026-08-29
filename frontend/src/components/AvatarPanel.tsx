@@ -91,7 +91,7 @@ export function AvatarPanel({ characterName, characterId, avatar, status }: Avat
         </p>
       )}
 
-      {mind && (
+      {mind && status === "ready" && (
         <p className="line-clamp-2 text-[11px] leading-relaxed text-brand-muted">
           {mind.blurb}
           {mind.bilingual ? " · soft ES" : ""}

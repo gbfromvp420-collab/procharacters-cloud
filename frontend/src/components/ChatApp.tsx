@@ -2690,17 +2690,18 @@ export function ChatApp() {
         active="chat"
         title={headerCharacterName ? `Chat · ${headerCharacterName}` : "Live chat"}
         subtitle={
-          [
-            headerMind?.tag,
-            status === "ready" && dnaLevel >= 0
-              ? `DNA · ${dnaLabelLive || dnaNodeLive}`
-              : status === "ready" && liveBand !== "idle"
-                ? liveBand
-                : null,
-            statusLabel,
-          ]
-            .filter(Boolean)
-            .join(" · ") || null
+          status === "ready"
+            ? [
+                headerMind?.tag,
+                dnaLevel >= 0
+                  ? `DNA · ${dnaLabelLive || dnaNodeLive}`
+                  : liveBand !== "idle"
+                    ? liveBand
+                    : null,
+              ]
+                .filter(Boolean)
+                .join(" · ") || statusLabel
+            : null
         }
         className={`pt-[env(safe-area-inset-top,0px)] transition-[box-shadow,border-color] duration-500 ${
           dnaChrome || bandChrome
@@ -2785,8 +2786,9 @@ export function ChatApp() {
             setAccountEmailLinked(null);
           }}
         />
-        <InstallAppHint className="mb-3" />
+        {sessionActive ? <InstallAppHint className="mb-3" /> : null}
         <NetworkOfflineBanner className="mb-3" />
+        {sessionActive ? (
         <SoftSupportHint
           className="mb-3"
           hasEngagement={
@@ -2799,6 +2801,7 @@ export function ChatApp() {
             )
           }
         />
+        ) : null}
         <MyCharacterWinToast
           show={!!justCreated && status === "idle" && !sessionActive}
           characterId={justCreated?.id}
@@ -3174,9 +3177,7 @@ export function ChatApp() {
                 <p className="truncate text-[11px] text-brand-muted">
                   {avatarState
                     ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}% heat`
-                    : headerMind?.blurb
-                      ? headerMind.blurb
-                      : "Video collapsed for more chat space"}
+                    : "Video collapsed for more chat space"}
                   {avatarPip ? " · PiP on" : " · PiP off"}
                 </p>
               </div>
@@ -3322,14 +3323,11 @@ export function ChatApp() {
                     (c) => c.kind === "custom" && c.mine !== true,
                   );
                   const renderOpt = (opt: (typeof characters)[0]) => {
-                    const mind = mindFingerprint(opt.id);
                     return (
                       <option key={opt.id} value={opt.id}>
                         {opt.mine ? "◆ " : opt.kind === "custom" ? "✦ " : ""}
                         {opt.displayName}
                         {opt.mine ? " · mine" : ""}
-                        {mind ? ` · ${mind.tag}` : ""}
-                        {opt.defaultVersion ? ` (${opt.defaultVersion})` : ""}
                       </option>
                     );
                   };
@@ -3353,106 +3351,7 @@ export function ChatApp() {
                 })()}
               </select>
               </div>
-              {characters.find((c) => c.id === character)?.mine && !sessionActive && (
-                <p className="pl-0 text-[10px] leading-snug text-violet-200/90 sm:pl-[4.5rem]">
-                  <span className="font-semibold">My model · private</span>
-                  {" · only on your account · "}
-                  <Link href="/?filter=owned" className="underline-offset-2 hover:underline">
-                    all My models
-                  </Link>
-                </p>
-              )}
-              {headerMind && !sessionActive && !characters.find((c) => c.id === character)?.mine && (
-                <p className="pl-0 text-[10px] leading-snug text-brand-muted sm:pl-[4.5rem]">
-                  <span className="font-semibold text-brand-accent">Mind · {headerMind.tag}</span>
-                  {" · "}
-                  {headerMind.blurb}
-                </p>
-              )}
               </div>
-
-              {!sessionActive && (
-                <details className="more-panel text-[11px] text-brand-muted">
-                  <summary className="cursor-pointer hover:text-brand-text">
-                    {sessionMode === "edge_pace" ? "Edge Pace · session options" : "Session options"}
-                  </summary>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-1.5">
-                    Mode
-                    <select
-                      value={sessionMode}
-                      onChange={(e) => setSessionMode(e.target.value as SessionMode)}
-                      className={`field min-h-0 py-1 text-xs ${
-                        sessionMode === "edge_pace"
-                          ? "border-rose-400/50 text-rose-100"
-                          : ""
-                      }`}
-                      title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="edge_pace">Edge Pace</option>
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-1.5">
-                    Memory
-                    <select
-                      value={messageWindow}
-                      onChange={(e) =>
-                        setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
-                      }
-                      className="field min-h-0 py-1 text-xs"
-                    >
-                      <option value={20}>20 msgs</option>
-                      <option value={30}>30 msgs</option>
-                      <option value={50}>50 msgs</option>
-                      <option value={80}>80 msgs</option>
-                    </select>
-                  </label>
-                  {account && (
-                    <>
-                      <label
-                        className="flex cursor-pointer items-center gap-1.5"
-                        title="Saves vibe + wants for this character when signed in. Uncheck anytime; Forget me clears it."
-                      >
-                        <input
-                          type="checkbox"
-                          checked={crossSessionOptIn}
-                          onChange={(e) => {
-                            const next = e.target.checked;
-                            setCrossSessionOptIn(next);
-                            if (!next) setPriorNotes(null);
-                            void setCrossSessionMemoryOptIn(account.token, character, next).catch(
-                              () => {
-                                /* ignore */
-                              },
-                            );
-                          }}
-                        />
-                        Remember me (sticky heat)
-                      </label>
-                      {(crossSessionOptIn || priorNotes) && (
-                        <button
-                          type="button"
-                          className="text-[11px] text-violet-200/90 underline-offset-2 hover:underline"
-                          title="Clear long-term dossier for this character"
-                          onClick={() => {
-                            void clearCrossSessionMemory(account.token, character)
-                              .then((r) => {
-                                setPriorNotes(null);
-                                if (!r.optIn) setCrossSessionOptIn(false);
-                                flashCopy("Forgot this character’s memory");
-                              })
-                              .catch(() => flashCopy("Could not clear memory"));
-                          }}
-                        >
-                          Forget me
-                        </button>
-                      )}
-                    </>
-                  )}
-                  </div>
-                </details>
-              )}
 
               <div className="flex flex-wrap items-center gap-2">
               {!sessionActive ? (
@@ -3480,7 +3379,60 @@ export function ChatApp() {
                     <summary className="btn-ghost btn-compact min-h-0 cursor-pointer px-3 text-xs sm:text-sm">
                       More
                     </summary>
-                    <div className="absolute left-0 z-20 mt-1 flex min-w-[10.5rem] flex-col gap-1 rounded-xl border border-brand-border bg-brand-panel p-1.5 shadow-card">
+                    <div className="absolute left-0 z-20 mt-1 flex min-w-[12rem] flex-col gap-1.5 rounded-xl border border-brand-border bg-brand-panel p-1.5 shadow-card">
+                  <label className="flex items-center justify-between gap-2 px-1 text-[11px] text-brand-muted">
+                    Mode
+                    <select
+                      value={sessionMode}
+                      onChange={(e) => setSessionMode(e.target.value as SessionMode)}
+                      className={`field min-h-0 w-auto py-1 text-xs ${
+                        sessionMode === "edge_pace"
+                          ? "border-rose-400/50 text-rose-100"
+                          : ""
+                      }`}
+                      title="Edge Pace adds soft timers + denial coaching"
+                    >
+                      <option value="normal">Normal</option>
+                      <option value="edge_pace">Edge Pace</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center justify-between gap-2 px-1 text-[11px] text-brand-muted">
+                    Memory
+                    <select
+                      value={messageWindow}
+                      onChange={(e) =>
+                        setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
+                      }
+                      className="field min-h-0 w-auto py-1 text-xs"
+                    >
+                      <option value={20}>20 msgs</option>
+                      <option value={30}>30 msgs</option>
+                      <option value={50}>50 msgs</option>
+                      <option value={80}>80 msgs</option>
+                    </select>
+                  </label>
+                  {account ? (
+                    <label
+                      className="flex cursor-pointer items-center gap-1.5 px-1 text-[11px] text-brand-muted"
+                      title="Saves vibe + wants for this character when signed in."
+                    >
+                      <input
+                        type="checkbox"
+                        checked={crossSessionOptIn}
+                        onChange={(e) => {
+                          const next = e.target.checked;
+                          setCrossSessionOptIn(next);
+                          if (!next) setPriorNotes(null);
+                          void setCrossSessionMemoryOptIn(account.token, character, next).catch(
+                            () => {
+                              /* ignore */
+                            },
+                          );
+                        }}
+                      />
+                      Remember me
+                    </label>
+                  ) : null}
                   <label
                     className={`btn-ghost btn-compact min-h-0 cursor-pointer justify-start text-xs ${
                       importBusy ? "opacity-50" : ""
@@ -4115,7 +4067,7 @@ export function ChatApp() {
                     ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
                     : "Transcript"}
                   {avatarCollapsed ? " · avatar hidden" : ""}
-                  {headerMind ? ` · ${headerMind.tag}` : ""}
+                  {status === "ready" && headerMind ? ` · ${headerMind.tag}` : ""}
                 </p>
                 {status === "ready" && (
                   <SessionDepthMeter
@@ -4172,6 +4124,7 @@ export function ChatApp() {
               className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
             >
               {(() => {
+                if (status !== "ready") return null;
                 const mind = mindFingerprint(activeCharacterId ?? character);
                 const dnaLive = dnaLevel >= 0;
                 if (!mind && !dnaLive) return null;
@@ -4316,13 +4269,13 @@ export function ChatApp() {
               {messages.length === 0 &&
                 !isTyping &&
                 selectedOpening &&
-                status !== "connecting" &&
+                status === "ready" &&
                 !restarting && (
                   <OpeningLinePreview
                     characterId={activeCharacterId ?? character}
                     characterName={headerCharacterName}
                     openingMessage={selectedOpening}
-                    variant={status === "ready" ? "live" : "idle"}
+                    variant="live"
                     onSeedReply={(text) => {
                       setInput(text);
                       window.setTimeout(() => inputRef.current?.focus(), 50);
@@ -4367,30 +4320,21 @@ export function ChatApp() {
                   <p className="text-sm text-brand-muted">
                     {status === "ready"
                       ? priorNotes
-                        ? "Session live — they still remember you. Heat continues from the strip above."
+                        ? "Live — they still remember you."
                         : headerCharacterName
                           ? isTyping
-                            ? "Live — first line loading. Stay with them."
-                            : `${headerCharacterName} is live — they should greet you first.`
-                          : "Session live — they should greet you first. Memory saves as you go."
+                            ? "Live — first line loading."
+                            : `${headerCharacterName} is live.`
+                          : "Session live."
                       : showSavedResumeChrome
-                          ? `Welcome back — resume “${savedSession?.characterName ?? savedSession?.characterId}” or start a new session.`
-                          : priorNotes && !bootIdentity.pendingRequested
-                            ? "They kept a little of you — Start to pick up the heat."
-                            : headerCharacterName
-                              ? `Ready for ${headerCharacterName}. Choose Normal or Edge Pace, then Start.`
-                              : bootIdentity.pendingRequested ||
-                                  (incomingQuery?.autostart && incomingQuery.characterId)
-                                ? "Connecting…"
-                                : "Pick a character, choose Normal or Edge Pace, then Start."}
+                          ? `Welcome back — resume ${savedSession?.characterName ?? "your chat"} or start new.`
+                          : headerCharacterName
+                            ? `Ready for ${headerCharacterName}.`
+                            : bootIdentity.pendingRequested ||
+                                (incomingQuery?.autostart && incomingQuery.characterId)
+                              ? "Connecting…"
+                              : "Pick a character, then Start."}
                   </p>
-                  )}
-                  {status !== "ready" && status !== "connecting" && !restarting && !selectedOpening && (
-                    <p className="mx-auto mt-3 max-w-sm text-[11px] leading-relaxed text-brand-soft">
-                      {headerMind
-                        ? `${headerMind.tag} · ${headerMind.blurb}`
-                        : "Signature models open with a brand line. Edge Pace adds soft build → hold → almost → breathe cycles. Free path always works."}
-                    </p>
                   )}
                 </div>
               )}
