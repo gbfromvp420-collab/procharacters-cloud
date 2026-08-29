@@ -2583,85 +2583,80 @@ export function AccountSettings() {
                           {dnaPower ? `DNA power · ${nick}` : `Continue · ${nick}`}
                         </Link>
                       )}
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId, "json")}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Download this chat as JSON"
+                      <OverflowMenu
+                        label="More"
+                        triggerClassName="min-h-0 px-2 py-1 text-[11px] text-brand-muted hover:text-brand-text"
                       >
-                        JSON
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId, "md")}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Download this chat as Markdown"
-                      >
-                        MD
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share Markdown via system share sheet"
-                            : "Copy Markdown transcript to clipboard"
-                        }
-                      >
-                        {canNativeShare() ? "Share MD" : "Copy MD"}
-                      </button>
-                      {s.resumeCode && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              void copyResume(s.resumeCode!, s.characterName, s.characterId)
-                            }
-                            className="text-brand-muted hover:text-brand-accent"
-                          >
-                            {canNativeShare() ? "Share code" : "Copy code"}
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setPrintCard(s)}
-                            className="text-amber-200/90 hover:text-amber-100"
-                            title="QR code + print-friendly resume card"
-                          >
-                            QR / Print
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => void onDownloadOneResumeMd(s)}
-                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                            title="Download this resume as a .md snippet"
-                          >
-                            .md
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() =>
-                              void onRefreshOneResume(s.sessionId, s.characterName)
-                            }
-                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                            title="Mint a new resume code (old link stops working)"
-                          >
-                            New code
-                          </button>
-                        </>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => void onDeleteSession(s.sessionId)}
-                        className="text-red-300/80 hover:text-red-200"
-                      >
-                        Delete
-                      </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportSession(s.sessionId, "json")}
+                        >
+                          Export JSON
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportSession(s.sessionId, "md")}
+                        >
+                          Export Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
+                        >
+                          {canNativeShare() ? "Share transcript" : "Copy transcript"}
+                        </button>
+                        {s.resumeCode ? (
+                          <>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              onClick={() =>
+                                void copyResume(s.resumeCode!, s.characterName, s.characterId)
+                              }
+                            >
+                              {canNativeShare() ? "Share resume" : "Copy resume"}
+                            </button>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              onClick={() => setPrintCard(s)}
+                            >
+                              QR / Print
+                            </button>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              disabled={busy}
+                              onClick={() => void onDownloadOneResumeMd(s)}
+                            >
+                              Download resume
+                            </button>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              disabled={busy}
+                              onClick={() =>
+                                void onRefreshOneResume(s.sessionId, s.characterName)
+                              }
+                            >
+                              New code
+                            </button>
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="menu-item text-rose-200"
+                          onClick={() => void onDeleteSession(s.sessionId)}
+                        >
+                          Delete
+                        </button>
+                      </OverflowMenu>
                     </li>
                     );
                   })}
