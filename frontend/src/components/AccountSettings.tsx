@@ -1721,16 +1721,15 @@ export function AccountSettings() {
                               {packFilled > 0 ? ` · clips ${packFilled}/4` : " · base clips"}
                               {localTrail?.heatDepth ? ` · heat ${localTrail.heatDepth}` : ""}
                             </p>
-                            {session?.resumeCode && (
+                            {expiry ? (
                               <p
-                                className={`mt-0.5 font-mono text-[10px] ${
-                                  urgent ? "text-rose-200" : "text-amber-100/90"
+                                className={`mt-0.5 text-[10px] ${
+                                  urgent ? "text-rose-200" : "text-brand-muted"
                                 }`}
                               >
-                                Resume {session.resumeCode}
-                                {expiry ? ` · ${expiry}` : ""}
+                                {expiry}
                               </p>
-                            )}
+                            ) : null}
                           </div>
                           <div className="flex flex-wrap gap-1.5">
                             {session?.resumeCode ? (
@@ -2540,26 +2539,16 @@ export function AccountSettings() {
                         </p>
                         <p className="text-brand-muted">
                           {s.messageCount} msgs · {s.status}
-                          {s.resumeCode ? (
-                            <>
-                              {" · "}
-                              <span className="font-mono text-amber-200/90">{s.resumeCode}</span>
-                              {expiryShort ? (
-                                <span
-                                  className={
-                                    urgent ? "text-rose-200/90" : "text-brand-soft"
-                                  }
-                                >
-                                  {" "}
-                                  · {expiryShort}
-                                </span>
-                              ) : s.resumeExpiresAt ? (
-                                <span className="text-brand-soft">
-                                  {" "}
-                                  ({formatExpiry(s.resumeExpiresAt)})
-                                </span>
-                              ) : null}
-                            </>
+                          {expiryShort ? (
+                            <span className={urgent ? "text-rose-200/90" : "text-brand-soft"}>
+                              {" "}
+                              · {expiryShort}
+                            </span>
+                          ) : s.resumeExpiresAt ? (
+                            <span className="text-brand-soft">
+                              {" "}
+                              ({formatExpiry(s.resumeExpiresAt)})
+                            </span>
                           ) : null}
                         </p>
                       </div>
@@ -2613,6 +2602,10 @@ export function AccountSettings() {
                         </button>
                         {s.resumeCode ? (
                           <>
+                            <p className="px-3 py-1 font-mono text-[10px] text-amber-100/85">
+                              {s.resumeCode}
+                              {expiryShort ? ` · ${expiryShort}` : ""}
+                            </p>
                             <button
                               type="button"
                               className="menu-item"
