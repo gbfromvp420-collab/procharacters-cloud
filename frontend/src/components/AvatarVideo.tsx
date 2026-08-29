@@ -32,6 +32,8 @@ interface AvatarVideoProps {
   characterId?: string | null;
   /** Tighter frame for mobile / side-by-side layouts */
   compact?: boolean;
+  /** Fill the parent box — used for the always-on chat room rail */
+  fill?: boolean;
   /** Floating picture-in-picture mini player */
   pip?: boolean;
   /** Studio Forge DNA node — sexy frame heat */
@@ -46,6 +48,7 @@ export function AvatarVideo({
   characterName,
   characterId = null,
   compact = false,
+  fill = false,
   pip = false,
   dnaTreeNodeId = null,
   dnaTreeLabel = null,
@@ -155,11 +158,13 @@ export function AvatarVideo({
     }
   };
 
-  const frameClass = pip
-    ? "aspect-[3/4] w-full rounded-2xl border-brand-accent/40 shadow-glow-sm"
-    : compact
-      ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4] rounded-xl"
-      : "aspect-[3/4] rounded-xl";
+  const frameClass = fill
+    ? "h-full rounded-2xl border-0"
+    : pip
+      ? "aspect-[3/4] w-full rounded-2xl border-brand-accent/40 shadow-glow-sm"
+      : compact
+        ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4] rounded-xl"
+        : "aspect-[3/4] rounded-xl";
 
   const isVideoSrc = (src: string | null) =>
     !!src && (src.endsWith(".mp4") || src.endsWith(".webm"));

@@ -2,13 +2,10 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AvatarPanel } from "@/components/AvatarPanel";
-import { AvatarPip } from "@/components/AvatarPip";
 import { AvatarVideo } from "@/components/AvatarVideo";
 import { ClipPreview } from "@/components/ClipPreview";
 import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { LiveKitAvatarSync } from "@/components/LiveKitAvatarSync";
-import { LiveKitBadge } from "@/components/LiveKitBadge";
 import { TypingIndicator } from "@/components/TypingIndicator";
 import { mergeAvatarState } from "@/lib/avatar-merge";
 import {
@@ -25,7 +22,6 @@ import {
   listAccountSessions,
   listLiveCharacters,
   setCrossSessionMemoryOptIn,
-  clearCrossSessionMemory,
   fetchAccountMe,
   fetchBillingStatus,
   linkEmailToAccount,
@@ -56,8 +52,6 @@ import {
 import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { OpeningLinePreview } from "@/components/OpeningLinePreview";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
-import { ReturnHeatCard } from "@/components/ReturnHeatCard";
-import { SessionMemoryStrip } from "@/components/SessionMemoryStrip";
 import { ChatResumeHero } from "@/components/ChatResumeHero";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { EdgePaceStartHint } from "@/components/EdgePaceStartHint";
@@ -66,10 +60,7 @@ import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
 import { LastBeatEcho } from "@/components/LastBeatEcho";
 import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
 import { QuickReplyChips } from "@/components/QuickReplyChips";
-import {
-  heatDepthFromMessages,
-  SessionDepthMeter,
-} from "@/components/SessionDepthMeter";
+import { heatDepthFromMessages } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
@@ -319,10 +310,6 @@ export function ChatApp() {
   const [accountSessions, setAccountSessions] = useState<AccountSessionSummary[]>([]);
   const [accountEmailLinked, setAccountEmailLinked] = useState<string | null>(null);
   const [resumeCodeInput, setResumeCodeInput] = useState("");
-  /** Hide avatar video/panel for more transcript space. */
-  const [avatarCollapsed, setAvatarCollapsed] = useState(false);
-  /** Floating mini player while collapsed (picture-in-picture style). */
-  const [avatarPip, setAvatarPip] = useState(true);
   /** Phase 6: compact "what we remember" blurb. */
   const [sessionNotes, setSessionNotes] = useState<string | null>(null);
   /** Soft “pick up the heat” banner after resume / rejoin. */
@@ -358,8 +345,8 @@ export function ChatApp() {
   const liveStartedAtRef = useRef<number | null>(null);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
-  const [messageWindow, setMessageWindow] = useState<20 | 30 | 50 | 80>(30);
-  const [crossSessionOptIn, setCrossSessionOptIn] = useState(false);
+  const [messageWindow] = useState<20 | 30 | 50 | 80>(50);
+  const [crossSessionOptIn, setCrossSessionOptIn] = useState(true);
   const [livekitRoomStatus, setLivekitRoomStatus] = useState<
     "off" | "connecting" | "connected" | "error"
   >("off");
@@ -390,44 +377,6 @@ export function ChatApp() {
 
   const handleAvatarSync = useCallback((avatar: AvatarState) => {
     setAvatarState((prev) => mergeAvatarState(prev, avatar) ?? avatar);
-  }, []);
-
-  const setAvatarCollapsedPersist = useCallback((next: boolean) => {
-    setAvatarCollapsed(next);
-    try {
-      window.localStorage.setItem("pc_avatar_collapsed", next ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
-    // Re-show PiP when collapsing again so user always gets the mini feed
-    if (next) {
-      setAvatarPip(true);
-      try {
-        window.localStorage.setItem("pc_avatar_pip", "1");
-      } catch {
-        /* ignore */
-      }
-    }
-  }, []);
-
-  const setAvatarPipPersist = useCallback((next: boolean) => {
-    setAvatarPip(next);
-    try {
-      window.localStorage.setItem("pc_avatar_pip", next ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem("pc_avatar_collapsed");
-      if (raw === "1") setAvatarCollapsed(true);
-      const pip = window.localStorage.getItem("pc_avatar_pip");
-      if (pip === "0") setAvatarPip(false);
-    } catch {
-      /* ignore */
-    }
   }, []);
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -1258,8 +1207,7 @@ export function ChatApp() {
       if (!crossSessionOptIn) setPriorNotes(null);
       setModeState(null);
 
-      // Sticky by default: persist opt-in before create so dossier actually saves.
-      if (account?.token && crossSessionOptIn) {
+      if (account?.token) {
         try {
           await setCrossSessionMemoryOptIn(account.token, characterId, true);
         } catch {
@@ -1270,7 +1218,7 @@ export function ChatApp() {
       const mode = options?.sessionMode ?? sessionMode;
       const session = await createSession(characterId, account?.token, {
         messageWindow,
-        useCrossSessionMemory: !!account?.token && crossSessionOptIn,
+        useCrossSessionMemory: !!account?.token,
         sessionMode: mode,
       });
       if (session.sessionMode) setSessionMode(session.sessionMode);
@@ -3134,11 +3082,7 @@ export function ChatApp() {
           </div>
         )}
 
-        <div
-          className={`flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:gap-4 ${
-            avatarCollapsed ? "lg:flex-col" : "lg:flex-row"
-          }`}
-        >
+        <div className="flex min-h-0 flex-1 flex-col gap-3 pb-3 lg:flex-row lg:items-stretch lg:gap-4">
           {/* LiveKit stays mounted even when collapsed so avatar state keeps syncing */}
           <div className="sr-only" aria-hidden>
             <LiveKitAvatarSync
@@ -3148,90 +3092,16 @@ export function ChatApp() {
             />
           </div>
 
-          {avatarCollapsed ? (
-            <div className="flex w-full shrink-0 items-center gap-2 rounded-xl border border-brand-border bg-brand-panel/95 px-2.5 py-2 shadow-card backdrop-blur-sm">
-              <div
-                className={`avatar-ring flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-sm font-semibold text-white ${
-                  avatarState
-                    ? "from-brand-accentDim to-brand-accent"
-                    : "from-brand-border to-brand-accentDim"
-                }`}
-              >
-                {(characterName ?? "?").charAt(0)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-brand-text">
-                  {characterName ?? headerCharacterName ?? "Avatar hidden"}
-                  {headerMind ? (
-                    <span className="ml-1.5 text-[10px] font-normal text-brand-accent">
-                      · {headerMind.tag}
-                    </span>
-                  ) : null}
-                </p>
-                <p className="truncate text-[11px] text-brand-muted">
-                  {avatarState
-                    ? `${avatarState.emotion.replace(/_/g, " ")} · ${Math.round((avatarState.arousalLevel ?? 0) * 100)}% heat`
-                    : headerMind?.blurb
-                      ? headerMind.blurb
-                      : "Video collapsed for more chat space"}
-                  {avatarPip ? " · PiP on" : " · PiP off"}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAvatarPipPersist(!avatarPip)}
-                className="btn-ghost min-h-0 shrink-0 px-2.5 py-1.5 text-xs"
-                title={avatarPip ? "Hide floating mini avatar" : "Show floating mini avatar"}
-              >
-                {avatarPip ? "PiP off" : "PiP on"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setAvatarCollapsedPersist(false)}
-                className="btn-ghost min-h-0 shrink-0 px-3 py-1.5 text-xs"
-                title="Show avatar video and status"
-              >
-                Expand
-              </button>
-            </div>
-          ) : (
-            <div className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 lg:max-w-xs">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted">Avatar</p>
-                  <LiveKitBadge roomStatus={livekitRoomStatus} compact />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAvatarCollapsedPersist(true)}
-                  className="text-[11px] text-brand-muted transition hover:text-brand-accent"
-                  title="Hide avatar for more chat space"
-                >
-                  Hide · more chat
-                </button>
-              </div>
-              <div className="flex flex-row gap-2 sm:gap-3 lg:flex-col">
-                <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
-                  <AvatarVideo
-                    avatar={avatarState}
-                    characterName={characterName}
-                    characterId={activeCharacterId ?? character}
-                    dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                    dnaTreeLabel={modeState?.dnaTreeLabel}
-                    compact
-                  />
-                </div>
-                <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
-                  <AvatarPanel
-                    characterName={characterName}
-                    characterId={activeCharacterId}
-                    avatar={avatarState}
-                    status={status}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="h-[28vh] max-h-56 w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-72 lg:max-w-[18.5rem] lg:self-stretch">
+            <AvatarVideo
+              avatar={avatarState}
+              characterName={characterName ?? headerCharacterName}
+              characterId={activeCharacterId ?? character}
+              dnaTreeNodeId={modeState?.dnaTreeNodeId}
+              dnaTreeLabel={modeState?.dnaTreeLabel}
+              fill
+            />
+          </div>
 
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <section className="mb-3 flex flex-col gap-2 rounded-xl border border-brand-border bg-brand-panel/95 p-2.5 shadow-card backdrop-blur-sm sm:mb-4 sm:gap-3 sm:p-4">
@@ -3362,92 +3232,8 @@ export function ChatApp() {
                   </Link>
                 </p>
               )}
-              {headerMind && !sessionActive && !characters.find((c) => c.id === character)?.mine && (
-                <p className="pl-0 text-[10px] leading-snug text-brand-muted sm:pl-[4.5rem]">
-                  <span className="font-semibold text-brand-accent">Mind · {headerMind.tag}</span>
-                  {" · "}
-                  {headerMind.blurb}
-                </p>
-              )}
               </div>
 
-              {!sessionActive && (
-                <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
-                  <label className="flex items-center gap-1.5">
-                    Mode
-                    <select
-                      value={sessionMode}
-                      onChange={(e) => setSessionMode(e.target.value as SessionMode)}
-                      className={`field min-h-0 py-1 text-xs ${
-                        sessionMode === "edge_pace"
-                          ? "border-rose-400/50 text-rose-100"
-                          : ""
-                      }`}
-                      title="Phase 10 preview — Edge Pace adds soft timers + denial coaching"
-                    >
-                      <option value="normal">Normal</option>
-                      <option value="edge_pace">Edge Pace</option>
-                    </select>
-                  </label>
-                  <label className="flex items-center gap-1.5">
-                    Memory window
-                    <select
-                      value={messageWindow}
-                      onChange={(e) =>
-                        setMessageWindow(Number(e.target.value) as 20 | 30 | 50 | 80)
-                      }
-                      className="field min-h-0 py-1 text-xs"
-                    >
-                      <option value={20}>20 msgs</option>
-                      <option value={30}>30 msgs</option>
-                      <option value={50}>50 msgs</option>
-                      <option value={80}>80 msgs</option>
-                    </select>
-                  </label>
-                  {account && (
-                    <>
-                      <label
-                        className="flex cursor-pointer items-center gap-1.5"
-                        title="Saves vibe + wants for this character when signed in. Uncheck anytime; Forget me clears it."
-                      >
-                        <input
-                          type="checkbox"
-                          checked={crossSessionOptIn}
-                          onChange={(e) => {
-                            const next = e.target.checked;
-                            setCrossSessionOptIn(next);
-                            if (!next) setPriorNotes(null);
-                            void setCrossSessionMemoryOptIn(account.token, character, next).catch(
-                              () => {
-                                /* ignore */
-                              },
-                            );
-                          }}
-                        />
-                        Remember me (sticky heat)
-                      </label>
-                      {(crossSessionOptIn || priorNotes) && (
-                        <button
-                          type="button"
-                          className="text-[11px] text-violet-200/90 underline-offset-2 hover:underline"
-                          title="Clear long-term dossier for this character"
-                          onClick={() => {
-                            void clearCrossSessionMemory(account.token, character)
-                              .then((r) => {
-                                setPriorNotes(null);
-                                if (!r.optIn) setCrossSessionOptIn(false);
-                                flashCopy("Forgot this character’s memory");
-                              })
-                              .catch(() => flashCopy("Could not clear memory"));
-                          }}
-                        >
-                          Forget me
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
 
               <div className="flex flex-wrap items-center gap-2">
               {!sessionActive ? (
@@ -3472,6 +3258,15 @@ export function ChatApp() {
                     </button>
                   )}
                   <MoreMenu align="left">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      onClick={() =>
+                        setSessionMode((m) => (m === "edge_pace" ? "normal" : "edge_pace"))
+                      }
+                    >
+                      {sessionMode === "edge_pace" ? "Mode · Edge Pace" : "Mode · Normal"}
+                    </button>
                     <label className="cursor-pointer">
                       {importBusy ? "Importing…" : "Import chat"}
                       <input
@@ -4040,122 +3835,25 @@ export function ChatApp() {
               )}
           </section>
 
-          <section
-            className={`relative flex flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm ${
-              avatarCollapsed
-                ? "min-h-[min(70dvh,560px)] sm:min-h-[480px]"
-                : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
-            }`}
-          >
+          <section className="relative flex min-h-[min(48dvh,380px)] flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm sm:min-h-[360px]">
             <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="text-[11px] text-brand-muted">
-                  {messages.length > 0
-                    ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
-                    : "Transcript"}
-                  {avatarCollapsed ? " · avatar hidden" : ""}
-                  {headerMind ? ` · ${headerMind.tag}` : ""}
-                </p>
-                {status === "ready" && (
-                  <SessionDepthMeter
-                    messageCount={messages.length}
-                    liveSeconds={liveSeconds}
-                  />
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {bandFlash && (
-                  <span
-                    className={`animate-fade-in rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(bandFlash)}`}
-                  >
-                    {energyBandLabel(bandFlash)} heat
-                  </span>
-                )}
-                {status === "ready" && messages.length > 0 && sessionId && wsToken && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => void exportChat("md")}
-                      className="text-[11px] text-brand-muted hover:text-brand-accent"
-                      title="Download this heat as Markdown"
-                    >
-                      Export MD
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void shareChatMarkdown()}
-                      className="text-[11px] text-brand-muted hover:text-brand-accent"
-                      title="Share a heat snippet"
-                    >
-                      Share heat
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
-                  className="text-[11px] text-brand-accent hover:underline"
-                  title={
-                    avatarCollapsed
-                      ? "Show avatar video and status"
-                      : "Hide avatar for more chat space"
-                  }
+              <p className="truncate text-[12px] text-brand-muted">
+                {headerCharacterName || characterName || "Chat"}
+                {headerMind ? ` · ${headerMind.tag}` : ""}
+              </p>
+              {bandFlash ? (
+                <span
+                  className={`animate-fade-in rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(bandFlash)}`}
                 >
-                  {avatarCollapsed ? "Show avatar" : "Hide avatar"}
-                </button>
-              </div>
+                  {energyBandLabel(bandFlash)}
+                </span>
+              ) : null}
             </div>
             <div
               ref={messagesScrollRef}
               onScroll={onMessagesScroll}
               className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
             >
-              {(() => {
-                const mind = mindFingerprint(activeCharacterId ?? character);
-                const dnaLive = dnaLevel >= 0;
-                if (!mind && !dnaLive) return null;
-                return (
-                  <div
-                    className={`rounded-xl border px-3 py-2 text-[11px] leading-relaxed ${
-                      dnaLive
-                        ? "border-violet-400/40 bg-gradient-to-r from-violet-500/15 via-rose-500/10 to-brand-panel/80"
-                        : "border-brand-accent/25 bg-brand-accent/5"
-                    }`}
-                    role="status"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {mind && (
-                        <p
-                          className={`text-[10px] font-semibold uppercase tracking-[0.2em] ${
-                            dnaLive ? "text-violet-200/95" : "text-brand-accent"
-                          }`}
-                        >
-                          Mind · {mind.tag}
-                        </p>
-                      )}
-                      {dnaLive && (
-                        <span className="rounded-full border border-violet-300/50 bg-violet-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50">
-                          DNA · {dnaLabelLive || dnaNodeLive}
-                          {dnaLevel >= 3 ? " · hot" : ""}
-                        </span>
-                      )}
-                      {mind?.bilingual && (
-                        <span className="rounded-full border border-brand-border/80 px-2 py-0.5 text-[9px] text-brand-muted">
-                          Soft ES spice
-                        </span>
-                      )}
-                    </div>
-                    {mind && (
-                      <p className="mt-1 text-brand-muted">{mind.blurb}</p>
-                    )}
-                    {dnaLive && dnaLevel >= 2 && (
-                      <p className="mt-1 text-[10px] text-violet-100/85">
-                        Stay in the climb — Fire chips and afterglow keep you on this node.
-                      </p>
-                    )}
-                  </div>
-                );
-              })()}
               {modeState && modeState.mode === "edge_pace" && status === "ready" && (
                 <EdgePaceStrip
                   modeState={modeState}
@@ -4182,28 +3880,6 @@ export function ChatApp() {
                 dnaTreeNodeId={modeState?.dnaTreeNodeId}
                 onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
               />
-              {/* Return Intelligence — opt-in dossier at session open */}
-              {status === "ready" &&
-                !!priorNotes?.trim() &&
-                messages.length <= 4 && (
-                  <ReturnHeatCard
-                    priorNotes={priorNotes}
-                    characterId={activeCharacterId ?? character}
-                    characterName={characterName ?? headerCharacterName}
-                    dnaTreeLabel={modeState?.dnaTreeLabel}
-                    dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                    canFire={!sending && !isTyping}
-                    onSeed={(text) => {
-                      setInput((prev) => {
-                        const p = prev.trim();
-                        if (!p) return text;
-                        return `${p} ${text}`;
-                      });
-                      window.setTimeout(() => inputRef.current?.focus(), 40);
-                    }}
-                    onFire={(text) => sendMessage(text)}
-                  />
-                )}
               <SessionWinToast
                 show={status === "ready"}
                 characterId={activeCharacterId ?? character}
@@ -4231,26 +3907,6 @@ export function ChatApp() {
                   (activeCharacterId ?? character).startsWith("custom-")
                 }
               />
-              {(status === "ready" ||
-                messages.length > 0 ||
-                (!!priorNotes && status !== "connecting")) && (
-                <SessionMemoryStrip
-                  priorNotes={priorNotes}
-                  sessionNotes={sessionNotes}
-                  onChipPick={
-                    status === "ready"
-                      ? (text) => {
-                          setInput((prev) => {
-                            const p = prev.trim();
-                            if (!p) return text;
-                            return `${p} ${text}`;
-                          });
-                          window.setTimeout(() => inputRef.current?.focus(), 40);
-                        }
-                      : undefined
-                  }
-                />
-              )}
               {/* Opening continuity before first message lands */}
               {messages.length === 0 &&
                 !isTyping &&
@@ -4545,15 +4201,6 @@ export function ChatApp() {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   onFocus={() => {
-                    // Phone: auto-collapse avatar on focus so keyboard + chat fit
-                    if (
-                      typeof window !== "undefined" &&
-                      window.matchMedia("(max-width: 639px)").matches &&
-                      !avatarCollapsed
-                    ) {
-                      setAvatarCollapsedPersist(true);
-                    }
-                    // Keep focused input above soft keyboard
                     window.setTimeout(() => {
                       inputRef.current?.scrollIntoView({
                         behavior: "smooth",
@@ -4581,7 +4228,7 @@ export function ChatApp() {
                           : "Start a session first"
                   }
                   disabled={status !== "ready" || sending}
-                  rows={avatarCollapsed ? 3 : 2}
+                  rows={2}
                   enterKeyHint="send"
                   autoComplete="off"
                   className={`field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm ${
@@ -4687,18 +4334,6 @@ export function ChatApp() {
         </footer>
       </div>
 
-      {/* Picture-in-picture mini avatar — draggable when rail is collapsed */}
-      {avatarCollapsed && avatarPip && (
-        <AvatarPip
-          avatar={avatarState}
-          characterName={characterName}
-          characterId={activeCharacterId ?? character}
-          dnaTreeNodeId={modeState?.dnaTreeNodeId}
-          dnaTreeLabel={modeState?.dnaTreeLabel}
-          onExpand={() => setAvatarCollapsedPersist(false)}
-          onHide={() => setAvatarPipPersist(false)}
-        />
-      )}
     </main>
   );
 }

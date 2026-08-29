@@ -9,7 +9,8 @@
     "start": "next start -H 0.0.0.0",
     "lint": "next lint",
     "test:deeplink": "npx --yes tsx scripts/check-chat-deeplink.ts",
-    "test:chrome": "npx --yes tsx scripts/check-tile-chrome.ts"
+    "test:chrome": "npx --yes tsx scripts/check-tile-chrome.ts",
+    "test:sleek": "npx --yes tsx scripts/check-chat-sleek.ts"
   },
   "dependencies": {
     "livekit-client": "^2.15.4",
