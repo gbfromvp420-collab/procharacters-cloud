@@ -14,15 +14,13 @@ import {
 export type SiteChromeActive = "gallery" | "chat" | "account" | "card" | "studio";
 
 /**
- * Sticky product chrome — same return path on every surface.
- * Continue when a resume exists; My models when signed in.
+ * Single-row product chrome — brand, page title, four destinations, one CTA.
  */
 export function SiteChrome({
   active,
   title,
   subtitle,
   className = "",
-  /** Extra controls on the right (chat copy-notice, etc.) */
   trailing,
 }: {
   active: SiteChromeActive;
@@ -40,7 +38,6 @@ export function SiteChrome({
     setResume(getMostRecentResume());
   }, [active]);
 
-  // Re-check resume when tab regains focus (other tab may have chatted)
   useEffect(() => {
     const onFocus = () => setResume(getMostRecentResume());
     window.addEventListener("focus", onFocus);
@@ -60,103 +57,92 @@ export function SiteChrome({
     null;
 
   const linkClass = (key: SiteChromeActive) =>
-    `btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-      active === key ? "border-brand-accent/60 text-brand-accent" : ""
-    }`;
+    `btn-nav ${active === key ? "btn-nav-active" : ""}`;
 
   return (
-    <div
-      className={`sticky top-0 z-40 border-b border-brand-border/70 bg-brand-bg/90 backdrop-blur-xl ${className}`}
+    <header
+      className={`sticky top-0 z-40 border-b border-brand-border/60 bg-brand-bg/92 backdrop-blur-xl ${className}`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
-          <p className="truncate text-sm font-semibold text-brand-text sm:text-base">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3 sm:px-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] font-medium uppercase tracking-[0.28em] text-brand-accent">
+            Naughty Syntax
+          </p>
+          <p className="truncate text-[13px] font-semibold leading-tight text-brand-text sm:text-sm">
             {title}
             {handle ? (
-              <span className="ml-2 text-xs font-normal text-brand-muted">· @{handle}</span>
+              <span className="ml-1.5 text-[11px] font-normal text-brand-muted">
+                · @{handle}
+              </span>
             ) : null}
           </p>
-          {subtitle ? (
-            <p className="mt-0.5 hidden truncate text-[10px] text-brand-muted sm:block">
-              {subtitle}
-            </p>
-          ) : null}
+          {subtitle ? <span className="sr-only">{subtitle}</span> : null}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          {trailing}
-          <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="Primary">
-            <Link href="/" className={linkClass("gallery")} aria-current={active === "gallery" ? "page" : undefined}>
-              Gallery
-            </Link>
+        {trailing ? (
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">{trailing}</div>
+        ) : null}
+
+        <nav
+          className="flex shrink-0 items-center gap-0.5 sm:gap-1"
+          aria-label="Primary"
+        >
+          <Link
+            href="/"
+            className={linkClass("gallery")}
+            aria-current={active === "gallery" ? "page" : undefined}
+          >
+            Gallery
+          </Link>
+          <Link
+            href="/chat"
+            className={linkClass("chat")}
+            aria-current={active === "chat" ? "page" : undefined}
+          >
+            Chat
+          </Link>
+          {handle ? (
             <Link
-              href="/chat"
-              className={linkClass("chat")}
-              aria-current={active === "chat" ? "page" : undefined}
+              href="/models/studio"
+              className={`btn-nav ${active === "studio" ? "btn-nav-active text-violet-100" : ""}`}
+              title="Studio Forge"
+              aria-current={active === "studio" ? "page" : undefined}
             >
-              Chat
+              Studio
             </Link>
-            {handle ? (
-              <>
-                <Link
-                  href="/models/studio"
-                  className={`btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm ${
-                    active === "studio" ? "border-violet-300/70 text-violet-50" : ""
-                  }`}
-                  title="My Models Studio — create & edit"
-                  aria-current={active === "studio" ? "page" : undefined}
-                >
-                  Studio
-                </Link>
-                <Link
-                  href="/account#my-models"
-                  className="btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm"
-                  title="Private My Characters hub"
-                >
-                  Models
-                </Link>
-              </>
-            ) : null}
-            <Link
-              href="/account"
-              className={linkClass("account")}
-              aria-current={active === "account" ? "page" : undefined}
-            >
-              Account
-            </Link>
-            {continueHref ? (
-              <Link
-                href={continueHref}
-                className={`btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-                  urgent
-                    ? "ring-2 ring-rose-400/55 animate-pulse"
-                    : dnaPower
-                      ? "ring-1 ring-violet-400/55"
-                      : ""
-                }`}
-                title={
-                  urgent
-                    ? "Resume expiring soon — reclaim"
-                    : dnaPower
-                      ? "DNA power reclaim · Edge Pace + heat"
-                      : "Continue last chat"
-                }
-              >
-                {urgent ? "Reclaim" : dnaPower ? "DNA power" : "Continue"}
-                {nick ? ` · ${nick}` : ""}
-              </Link>
-            ) : active !== "chat" ? (
-              <Link
-                href="/chat"
-                className="btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm"
-              >
-                Live chat
-              </Link>
-            ) : null}
-          </nav>
-        </div>
+          ) : null}
+          <Link
+            href="/account"
+            className={linkClass("account")}
+            aria-current={active === "account" ? "page" : undefined}
+          >
+            Account
+          </Link>
+        </nav>
+
+        {continueHref ? (
+          <Link
+            href={continueHref}
+            className={`btn-primary min-h-0 shrink-0 px-3 py-1.5 text-xs ${
+              urgent
+                ? "ring-2 ring-rose-400/55"
+                : dnaPower
+                  ? "ring-1 ring-violet-400/55"
+                  : ""
+            }`}
+            title={
+              urgent
+                ? "Resume expiring soon — reclaim"
+                : dnaPower
+                  ? "DNA power reclaim · Edge Pace + heat"
+                  : "Continue last chat"
+            }
+          >
+            {urgent ? "Reclaim" : dnaPower ? "DNA" : "Continue"}
+            {nick ? ` · ${nick}` : ""}
+          </Link>
+        ) : null}
       </div>
-    </div>
+    </header>
   );
 }

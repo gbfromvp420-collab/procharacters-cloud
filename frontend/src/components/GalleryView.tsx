@@ -32,16 +32,24 @@ import { PushEnableHint } from "./PushEnableHint";
 import { SoftSupportHint } from "./SoftSupportHint";
 import { GalleryLiveStrip } from "./GalleryLiveStrip";
 import { NetworkOfflineBanner } from "./NetworkOfflineBanner";
+import { HintRail } from "./HintRail";
 import { SiteChrome } from "./SiteChrome";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { packLaneFor, packLaneLabel, type PackLane } from "@/lib/pack-lanes";
+import {
+  GALLERY_CHIP_LABEL,
+  GALLERY_SORT_OPTIONS,
+  galleryFilterChips,
+  isPackFilter,
+  type GallerySortMode,
+} from "@/lib/tile-chrome";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
   siteOrigin: string;
 }
 
-type SortMode = "name" | "kind" | "energy" | "featured" | "recent" | "packs";
+type SortMode = GallerySortMode | "kind" | "energy" | "packs";
 type GalleryFilter =
   | "all"
   | "default"
@@ -291,15 +299,6 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     return hay.includes(q);
   };
 
-  const featuredRow = useMemo(() => {
-    if (filter === "mine" || filter === "owned") return [];
-    const q = query.trim().toLowerCase();
-    return catalog.filter((c) => {
-      if (!c.featured) return false;
-      return matchesQuery(c, q);
-    });
-  }, [catalog, query, filter]);
-
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
     let list = catalog.filter((c) => {
@@ -391,10 +390,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     flash(shareUrlResultLabel(result, `Resume ${resume.resumeCode}`));
   };
 
-  const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0 && sort !== "recent";
 
   return (
-    <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    <main className={`relative min-h-dvh overflow-x-hidden ${
+      continueHref
+        ? "pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.25rem))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+    }`}>
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(225,29,143,0.06),transparent_40%)]" />
       <SiteChrome
@@ -411,61 +413,35 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       />
 
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
-        <SessionAuthBanner
-          className="mb-4"
-          onInvalidated={() => setSignedInHandle(null)}
-        />
-        <InstallAppHint className="mb-4" />
-        <NetworkOfflineBanner className="mb-4" />
-        <PushEnableHint className="mb-4" />
-        <SoftSupportHint
-          className="mb-4"
-          hasEngagement={resumeCount > 0}
-          dnaHeat={Object.values(resumes).some(
-            (r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId),
-          )}
-        />
-        <header className="mb-5 animate-fade-in sm:mb-6">
-          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">Live character gallery</h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
-            {sort === "recent" || signedInHandle
-              ? "Your last chats first — then the rest of the catalog."
-              : "Tonight’s cast up top — mind fingerprints on every tile, then the full roster."}
-            {resumeCount > 0 ? " Amber codes are saved chats." : signedInHandle ? " Chat while signed in for multi-device codes." : " Sign in to sync resumes."}
-            {" Search minds too (e.g. post-set, shy heat, brat)."}
+        <HintRail className="mb-5">
+          <NetworkOfflineBanner />
+          <SessionAuthBanner onInvalidated={() => setSignedInHandle(null)} />
+          <PushEnableHint />
+          <InstallAppHint />
+          <SoftSupportHint
+            hasEngagement={resumeCount > 0}
+            dnaHeat={Object.values(resumes).some(
+              (r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId),
+            )}
+          />
+        </HintRail>
+        <header className="mb-6 animate-fade-in">
+          <h1 className="text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
+            Live gallery
+          </h1>
+          <p className="mt-2 max-w-lg text-sm leading-relaxed text-brand-muted">
+            {resumeCount > 0
+              ? "Pick up a saved chat, or meet someone new."
+              : "Tonight’s cast. Tap a mind to start."}
           </p>
-          {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}
+          {notice && (
+            <p className="mt-2 text-xs font-medium text-brand-accent" role="status">
+              {notice}
+            </p>
+          )}
         </header>
 
-        <GalleryLiveStrip
-          characters={catalog}
-          resumeCount={resumeCount}
-          onPacks={() => {
-            setFilter("packs");
-            setSort("featured");
-            setQuery("");
-          }}
-          onPackLane={(lane) => {
-            setFilter(lane === "01" ? "pack01" : lane === "02" ? "pack02" : "pack03");
-            setSort("featured");
-            setQuery("");
-          }}
-          onMine={() => {
-            setFilter("mine");
-            setSort("recent");
-            setQuery("");
-          }}
-          onOwned={() => {
-            setFilter("owned");
-            setSort("recent");
-            setQuery("");
-          }}
-          onFeatured={() => {
-            setFilter("featured");
-            setSort("featured");
-            setQuery("");
-          }}
-        />
+        <GalleryLiveStrip characters={catalog} resumeCount={resumeCount} />
 
         {/* Hero reel only on main browse (not “my chats” / search clutter) */}
         {filter === "all" && !query.trim() && (
@@ -481,118 +457,72 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           />
         )}
 
-        {showFeaturedStrip && (
-          <section className="mb-8 sm:mb-10">
-            <div className="mb-3 flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Spotlight</p>
-                <h2 className="text-base font-semibold text-brand-text sm:text-lg">
-                  Featured
-                  <span className="ml-2 text-xs font-normal text-brand-muted">
-                    · swipe · live packs
-                  </span>
-                </h2>
-              </div>
-              <button type="button" onClick={() => setFilter("featured")} className="min-h-touch text-xs text-brand-muted hover:text-brand-accent">View all →</button>
-            </div>
-            <div className="relative -mx-4 sm:mx-0">
-              <div
-                className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-brand-bg to-transparent sm:w-8"
-                aria-hidden
-              />
-              <div
-                className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-brand-bg to-transparent sm:w-10"
-                aria-hidden
-              />
-              <button
-                type="button"
-                className="absolute left-1 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border/80 bg-brand-bg/90 text-brand-text shadow-card backdrop-blur sm:flex"
-                aria-label="Scroll featured left"
-                onClick={() => {
-                  const el = document.getElementById("gallery-featured-strip");
-                  el?.scrollBy({ left: -280, behavior: "smooth" });
-                }}
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className="absolute right-1 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border/80 bg-brand-bg/90 text-brand-text shadow-card backdrop-blur sm:flex"
-                aria-label="Scroll featured right"
-                onClick={() => {
-                  const el = document.getElementById("gallery-featured-strip");
-                  el?.scrollBy({ left: 280, behavior: "smooth" });
-                }}
-              >
-                ›
-              </button>
-              <div
-                id="gallery-featured-strip"
-                className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0"
-              >
-                {featuredRow.map((card) => (
-                  <CharacterTile key={`feat-${card.id}`} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} compact />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-5 space-y-3 border-b border-brand-border/50 bg-brand-bg/90 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, mind, energy, tags…" enterKeyHint="search" autoComplete="off" className="field min-h-touch flex-1" />
-            <label className="flex min-h-touch items-center gap-2 text-xs text-brand-muted">
-              <span className="shrink-0">Sort</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className="field min-h-touch w-full sm:w-auto">
-                <option value="featured">Featured first</option>
-                <option value="recent">Last chat</option>
-                <option value="packs">4K packs first</option>
-                <option value="kind">Signature first</option>
-                <option value="name">Name A–Z</option>
-                <option value="energy">Energy</option>
-              </select>
+        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.5rem)] z-20 -mx-4 mb-6 space-y-2.5 border-b border-brand-border/40 bg-brand-bg/92 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+          <div className="flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search minds…"
+              enterKeyHint="search"
+              autoComplete="off"
+              className="field min-h-10 flex-1"
+            />
+            <label className="sr-only" htmlFor="gallery-sort">
+              Sort
             </label>
+            <select
+              id="gallery-sort"
+              value={sort === "kind" || sort === "energy" || sort === "packs" ? "featured" : sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              className="field min-h-10 w-[8.5rem] shrink-0"
+            >
+              {GALLERY_SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="scroll-strip flex gap-2 overflow-x-auto pb-0.5">
-            {(
-              [
-                ["all", "All"],
-                ["mine", "My chats"],
-                ["owned", "My models"],
-                ["featured", "Featured"],
-                ["pack01", "Pack 01"],
-                ["pack02", "Pack 02"],
-                ["pack03", "Pack 03"],
-                ["packs", "4K packs"],
-                ["default", "Signature"],
-                ["custom", "Custom"],
-              ] as const
-            ).map(([key, label]) => (
+          <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
+            {galleryFilterChips({
+              signedIn: !!signedInHandle,
+              resumeCount,
+            }).map((key) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setFilter(key)}
                 className={`chip ${filter === key ? "chip-active" : "chip-idle"} ${
-                  key === "mine" && counts.mine > 0
-                    ? urgentMineCount > 0
-                      ? "border-rose-400/50 text-rose-100"
-                      : "border-amber-500/40 text-amber-100/90"
-                    : key === "owned" && counts.owned > 0
-                      ? "border-violet-400/45 text-violet-100/90"
-                    : key === "packs" || key === "pack01" || key === "pack02" || key === "pack03"
-                      ? "border-emerald-400/35 text-emerald-100/90"
-                      : ""
+                  key === "mine" && urgentMineCount > 0 ? "border-rose-400/50 text-rose-100" : ""
                 }`}
               >
-                {label}
-                <span className="ml-1 opacity-70">({counts[key]})</span>
-                {key === "mine" && urgentMineCount > 0 && (
-                  <span className="ml-1 rounded-full bg-rose-500/30 px-1.5 py-0.5 text-[9px] font-semibold text-rose-50">
-                    {urgentMineCount} urgent
-                  </span>
-                )}
+                {GALLERY_CHIP_LABEL[key]}
+                <span className="ml-1 opacity-60">{counts[key]}</span>
               </button>
             ))}
+            <label className="sr-only" htmlFor="gallery-pack">
+              Packs
+            </label>
+            <select
+              id="gallery-pack"
+              value={isPackFilter(filter) ? filter : ""}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (!next) {
+                  if (isPackFilter(filter)) setFilter("all");
+                  return;
+                }
+                setFilter(next as GalleryFilter);
+                setSort("featured");
+              }}
+              className={`chip cursor-pointer ${isPackFilter(filter) ? "chip-active" : "chip-idle"}`}
+            >
+              <option value="">Packs</option>
+              <option value="packs">All 4K · {counts.packs}</option>
+              <option value="pack01">Pack 01 · {counts.pack01}</option>
+              <option value="pack02">Pack 02 · {counts.pack02}</option>
+              <option value="pack03">Pack 03 · {counts.pack03}</option>
+            </select>
           </div>
           {(query.trim() || filter !== "all") && (
             <p className="text-[10px] text-brand-muted">
@@ -785,7 +715,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 </h2>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3">
               {visible.map((card) => (
                 <CharacterTile
                   key={card.id}
@@ -802,32 +732,27 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
         <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 21+ · Procharacters.cloud / KGC Ventures</footer>
       </div>
 
-      <div
-        className={`fixed inset-x-0 bottom-0 z-30 border-t bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden ${
-          continueUrgent
-            ? "border-rose-400/50 shadow-[0_-8px_28px_-12px_rgba(244,63,94,0.45)]"
-            : "border-brand-border/70"
-        }`}
-      >
-        <div className="mx-auto flex max-w-lg gap-2">
-          {continueHref ? (
-            <Link
-              href={continueHref}
-              className={`btn-primary flex-1 ${
-                continueUrgent ? "ring-2 ring-rose-400/55 animate-pulse" : ""
-              }`}
-            >
-              {continueUrgent ? "Reclaim" : "Continue"}
-              {continueCard?.displayName
-                ? ` · ${continueCard.displayName.split(" ")[0]}`
-                : ""}
-            </Link>
-          ) : (
-            <Link href="/chat" className="btn-primary flex-1">Open live chat</Link>
-          )}
-          <Link href="/account" className="btn-ghost flex-1">Account</Link>
+      {continueHref ? (
+        <div
+          className={`fixed inset-x-0 bottom-0 z-30 border-t bg-brand-bg/92 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden ${
+            continueUrgent
+              ? "border-rose-400/50 shadow-[0_-8px_28px_-12px_rgba(244,63,94,0.45)]"
+              : "border-brand-border/70"
+          }`}
+        >
+          <Link
+            href={continueHref}
+            className={`btn-primary mx-auto flex max-w-lg ${
+              continueUrgent ? "ring-2 ring-rose-400/55" : ""
+            }`}
+          >
+            {continueUrgent ? "Reclaim" : "Continue"}
+            {continueCard?.displayName
+              ? ` · ${continueCard.displayName.split(" ")[0]}`
+              : ""}
+          </Link>
         </div>
-      </div>
+      ) : null}
     </main>
   );
 }
