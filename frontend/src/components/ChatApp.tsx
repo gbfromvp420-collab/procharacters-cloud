@@ -3258,8 +3258,8 @@ export function ChatApp() {
                   </button>
                 </div>
               )}
-              <div className={`flex gap-2 sm:gap-3 ${showAvatarStatus ? "flex-row lg:flex-col" : "flex-col"}`}>
-                <div className={showAvatarStatus ? "w-[42%] shrink-0 sm:w-1/3 lg:w-full" : "w-full"}>
+              <div className="flex flex-col gap-2 sm:gap-3">
+                <div className="w-full">
                   <AvatarVideo
                     avatar={avatarState}
                     characterName={characterName ?? headerCharacterName}
@@ -3271,8 +3271,15 @@ export function ChatApp() {
                     previewFallbackSrc={avatarState ? null : idlePreview.fallback}
                   />
                 </div>
+                {showAvatarStatus && status === "connecting" && !avatarState ? (
+                  <p className="text-xs text-brand-muted animate-pulse lg:hidden">
+                    {characterName || headerCharacterName
+                      ? `Opening ${characterName ?? headerCharacterName}…`
+                      : "Connecting to live session…"}
+                  </p>
+                ) : null}
                 {showAvatarStatus ? (
-                <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
+                <div className="hidden min-w-0 space-y-2 lg:block lg:space-y-3">
                   <AvatarPanel
                     characterName={characterName ?? headerCharacterName}
                     characterId={activeCharacterId ?? character}
