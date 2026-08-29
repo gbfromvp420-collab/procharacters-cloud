@@ -63,9 +63,8 @@ export function ComposerVibeChip({
       ? Math.max(0, modeState.phaseRemainingSec - tickOffset)
       : null;
   const hot = typeof arousalPct === "number" && arousalPct >= 55;
-  const showMind = Boolean(mind);
 
-  if (!showMind && !edgeLive && !edgePending && !hot) return null;
+  if (!mind && !edgeLive && !edgePending && !hot) return null;
 
   const nick = characterName?.trim().split(/\s+/)[0] || null;
 
@@ -75,7 +74,7 @@ export function ComposerVibeChip({
       role="status"
       aria-live="polite"
     >
-      {showMind && (
+      {mind && (
         <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-brand-accent/35 bg-brand-accent/10 px-2.5 py-1 text-[10px] font-medium text-brand-accent">
           <span className="uppercase tracking-[0.14em] opacity-90">
             {nick ? nick : "Mind"} · {mind.tag}
