@@ -1348,9 +1348,11 @@ export function AccountSettings() {
       />
       <div className="relative mx-auto max-w-2xl px-4 py-8 sm:py-12">
         <header className="mb-8">
-          <h1 className="text-3xl font-semibold text-brand-text">Account settings</h1>
-          <p className="mt-1 text-sm text-brand-muted">
-            Profile, My models, email magic link, passphrase, push, and saved chats.
+          <h1 className="text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
+            Account
+          </h1>
+          <p className="mt-1.5 text-sm text-brand-muted">
+            Profile, models, alerts, and saved chats.
           </p>
         </header>
 

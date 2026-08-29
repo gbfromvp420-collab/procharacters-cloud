@@ -74,6 +74,8 @@ import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
+import { PushEnableHint } from "@/components/PushEnableHint";
+import { HintRail } from "@/components/HintRail";
 import { SiteChrome } from "@/components/SiteChrome";
 import {
   collectExportCharacters,
@@ -2707,11 +2709,7 @@ export function ChatApp() {
         }`}
         trailing={
           <>
-            <span className="hidden items-center gap-1.5 rounded-full border border-brand-border bg-brand-panel/80 px-2.5 py-1 text-[11px] text-brand-muted sm:inline-flex">
-              <StatusDot status={status} />
-              {statusLabel}
-            </span>
-            {status === "ready" && resumeCode && (
+            {status === "ready" && resumeCode ? (
               <button
                 type="button"
                 onClick={() => {
@@ -2720,28 +2718,22 @@ export function ChatApp() {
                     () => flashCopy(resumeCode),
                   );
                 }}
-                className="max-w-[5.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] text-amber-100 sm:max-w-[7.5rem] sm:px-2.5"
+                className="max-w-[7.5rem] truncate rounded-full border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 font-mono text-[10px] text-amber-100"
                 title="Copy resume code"
               >
                 {resumeCode}
               </button>
-            )}
-            <span className="hidden sm:inline-flex">
-              <LiveKitBadge roomStatus={livekitRoomStatus} compact />
-            </span>
-            {copyNotice && (
-              <span
-                className="hidden max-w-[8rem] truncate text-[11px] text-brand-accent sm:inline"
-                role="status"
-              >
-                {copyNotice}
+            ) : (
+              <span className="inline-flex items-center gap-1.5 text-[11px] text-brand-muted">
+                <StatusDot status={status} />
+                {statusLabel}
               </span>
             )}
             <button
               type="button"
               onClick={() => setShowAccount((v) => !v)}
-              className={`btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-                showAccount ? "border-brand-accent text-brand-accent" : ""
+              className={`text-[11px] ${
+                showAccount ? "text-brand-accent" : "text-brand-muted hover:text-brand-text"
               }`}
             >
               {account ? `@${account.handle}` : "Sign in"}
@@ -2777,28 +2769,32 @@ export function ChatApp() {
       )}
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
-        <SessionAuthBanner
-          className="mb-3"
-          onInvalidated={() => {
-            setAccount(null);
-            setAccountSessions([]);
-            setAccountEmailLinked(null);
-          }}
-        />
-        <InstallAppHint className="mb-3" />
-        <NetworkOfflineBanner className="mb-3" />
-        <SoftSupportHint
-          className="mb-3"
-          hasEngagement={
-            messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
-          }
-          dnaHeat={
-            !!modeState?.dnaTreeNodeId &&
-            /edge|deny|release|gate|tease/i.test(
-              modeState.dnaTreeLabel || modeState.dnaTreeNodeId || "",
-            )
-          }
-        />
+        <HintRail className="mb-3">
+          <NetworkOfflineBanner />
+          <SessionAuthBanner
+            onInvalidated={() => {
+              setAccount(null);
+              setAccountSessions([]);
+              setAccountEmailLinked(null);
+            }}
+          />
+          <PushEnableHint
+            accountToken={account?.token}
+            hasResumeCode={!!resumeCode || !!savedSession?.resumeCode}
+          />
+          <InstallAppHint />
+          <SoftSupportHint
+            hasEngagement={
+              messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
+            }
+            dnaHeat={
+              !!modeState?.dnaTreeNodeId &&
+              /edge|deny|release|gate|tease/i.test(
+                modeState.dnaTreeLabel || modeState.dnaTreeNodeId || "",
+              )
+            }
+          />
+        </HintRail>
         <MyCharacterWinToast
           show={!!justCreated && status === "idle" && !sessionActive}
           characterId={justCreated?.id}
@@ -3200,7 +3196,10 @@ export function ChatApp() {
           ) : (
             <div className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 lg:max-w-xs">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted">Avatar</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted">Avatar</p>
+                  <LiveKitBadge roomStatus={livekitRoomStatus} compact />
+                </div>
                 <button
                   type="button"
                   onClick={() => setAvatarCollapsedPersist(true)}

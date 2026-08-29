@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
-import { packLaneFor, packLaneLabel } from "@/lib/pack-lanes";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { fetchLatestAccountSessionForCharacter } from "@/lib/api";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
@@ -42,18 +41,6 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   const autostartUrl = useMemo(
     () => buildCharacterShareUrl(card.id, { origin: siteOrigin, autostart: true, card: false }),
     [card.id, siteOrigin],
-  );
-  const edgePaceUrl = useMemo(
-    () =>
-      card.edgePacePath
-        ? `${siteOrigin}${card.edgePacePath.startsWith("/") ? "" : "/"}${card.edgePacePath}`
-        : buildCharacterShareUrl(card.id, {
-            origin: siteOrigin,
-            autostart: true,
-            card: false,
-            sessionMode: "edge_pace",
-          }),
-    [card.edgePacePath, card.id, siteOrigin],
   );
   const resumeUrl = useMemo(
     () =>
@@ -205,30 +192,8 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 />
               </div>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 pt-16">
-                <div className="mb-2 flex flex-wrap gap-1.5">
-                  {card.featured && (
-                    <span className="rounded-full bg-brand-accent/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-                      Featured
-                    </span>
-                  )}
-                  {card.dedicatedPack && (
-                    <span className="rounded-full border border-emerald-400/45 bg-emerald-500/25 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50">
-                      4K pack
-                    </span>
-                  )}
-                  {packLaneLabel(card.packLane ?? packLaneFor(card.id)) && (
-                    <span className="rounded-full border border-emerald-300/30 bg-black/45 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50/90">
-                      {packLaneLabel(card.packLane ?? packLaneFor(card.id))}
-                    </span>
-                  )}
-                  {resumeCode && (
-                    <span className="rounded-full border border-amber-400/50 bg-amber-500/20 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-50">
-                      Your chat
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs uppercase tracking-[0.25em] text-brand-accent">
-                  Live model · {presence.label}
+                <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
+                  {resumeCode ? "Your chat" : card.dedicatedPack ? "4K live" : "Live model"}
                 </p>
                 <h1 className="mt-1 text-3xl font-semibold text-white sm:text-4xl">
                   {card.displayName}
@@ -246,22 +211,11 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
           <div className="flex flex-col gap-5 sm:gap-6">
             <div>
-              <p className="text-sm text-brand-accent">
-                {card.kind === "custom" ? "Custom character" : "Signature model"} ·{" "}
-                {card.energyLabel}
-                {card.kind === "default" && (
-                  <span
-                    className={`ml-2 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                      card.dedicatedPack
-                        ? "border-emerald-400/40 text-emerald-200"
-                        : "border-brand-border text-brand-muted"
-                    }`}
-                  >
-                    {card.dedicatedPack ? "Dedicated pack" : `Interim · ${card.avatarBase}`}
-                  </span>
-                )}
+              <p className="text-sm text-brand-muted">
+                {card.kind === "custom" ? "Custom" : "Signature"}
+                {card.energyLabel ? ` · ${card.energyLabel.split(",")[0]?.trim()}` : ""}
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
                 Meet {card.displayName}
               </h2>
               {mind && (
@@ -294,7 +248,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
             {card.tags?.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {card.tags.map((tag) => (
+                {card.tags.slice(0, 4).map((tag) => (
                   <span
                     key={tag}
                     className="rounded-full border border-brand-border bg-brand-panel px-3 py-1 text-xs text-brand-muted"
@@ -305,80 +259,35 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </div>
             )}
 
-            <div className="hidden flex-wrap gap-3 sm:flex">
+            <div className="hidden items-center gap-3 sm:flex">
               {resumeEntry?.resumeCode ? (
-                <>
-                  <Link
-                    href={buildResumeChatPath(resumeEntry)}
-                    className={`btn-primary px-6 ring-1 ${
-                      resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
-                        ? "ring-violet-400/50"
-                        : "ring-amber-400/45"
-                    }`}
-                  >
-                    {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
-                      ? `DNA power · ${nick}`
-                      : `Continue with ${nick}`}
-                  </Link>
-                  <Link href={card.ctaPath} className="btn-ghost px-6">
-                    New chat
-                  </Link>
-                </>
+                <Link
+                  href={buildResumeChatPath(resumeEntry)}
+                  className={`btn-primary px-6 ring-1 ${
+                    resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
+                      ? "ring-violet-400/50"
+                      : "ring-amber-400/45"
+                  }`}
+                >
+                  Continue with {nick}
+                </Link>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary px-6">
                   Chat with {nick}
                 </Link>
               )}
-              <Link
-                href={card.edgePacePath || `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`}
-                className="btn-ghost border-rose-400/40 px-6 text-rose-100"
-              >
-                Edge Pace
-              </Link>
               <button
                 type="button"
                 onClick={() => void onShareCard()}
-                className="btn-ghost px-6"
-                title={
-                  canNativeShare()
-                    ? "Share card via system share sheet"
-                    : "Copy card link to clipboard"
-                }
+                className="btn-ghost px-5"
               >
-                {shareLabel} card
+                {shareLabel}
               </button>
-              <button
-                type="button"
-                onClick={() => void onShareAutostart()}
-                className="btn-ghost px-6"
-                title={
-                  canNativeShare()
-                    ? "Share autostart chat link"
-                    : "Copy autostart chat link"
-                }
-              >
-                {shareLabel} start
-              </button>
-              {resumeCode && (
-                <button
-                  type="button"
-                  onClick={() => void onShareResume()}
-                  className="btn-ghost border-amber-500/40 px-6 text-amber-200"
-                  title={
-                    resumeSource === "account"
-                      ? "Share resume from your account (works on any device when signed in)"
-                      : "Share resume from this device"
-                  }
-                >
-                  {shareLabel} resume
-                </button>
-              )}
-              <Link
-                href="/chat"
-                className="btn-ghost px-6 text-brand-muted hover:text-brand-text"
-              >
-                Open chat
-              </Link>
+              {resumeEntry?.resumeCode ? (
+                <Link href={card.ctaPath} className="text-xs text-brand-muted hover:text-brand-text">
+                  New chat
+                </Link>
+              ) : null}
             </div>
 
             {notice && (
@@ -387,35 +296,50 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </p>
             )}
 
-            <div className="space-y-3 rounded-xl border border-brand-border/70 bg-brand-panel/60 p-4 text-xs text-brand-muted">
-              <div>
-                <p className="font-medium text-brand-text">Card link</p>
-                <p className="mt-1 break-all font-mono text-[11px]">{shareUrl}</p>
-              </div>
-              <div>
-                <p className="font-medium text-brand-text">Start chat (autostart)</p>
-                <p className="mt-1 break-all font-mono text-[11px]">{autostartUrl}</p>
-              </div>
-              <div>
-                <p className="font-medium text-rose-100">Edge Pace (autostart)</p>
-                <p className="mt-1 break-all font-mono text-[11px]">{edgePaceUrl}</p>
-              </div>
-              {resumeUrl && resumeCode ? (
+            <details className="rounded-xl border border-brand-border/70 bg-brand-panel/50 p-3 text-xs text-brand-muted">
+              <summary className="cursor-pointer text-[11px] font-medium text-brand-text">
+                Share links
+              </summary>
+              <div className="mt-3 space-y-3">
                 <div>
-                  <p className="font-medium text-amber-200">
-                    Resume ({resumeCode})
-                    <span className="ml-1 font-normal text-brand-muted">
-                      · {resumeSource === "account" ? "account / multi-device" : "this device"}
-                    </span>
-                  </p>
-                  <p className="mt-1 break-all font-mono text-[11px]">{resumeUrl}</p>
+                  <p className="font-medium text-brand-text">Card</p>
+                  <p className="mt-1 break-all font-mono text-[11px]">{shareUrl}</p>
+                  <button
+                    type="button"
+                    className="mt-1 text-[11px] text-brand-accent"
+                    onClick={() => void onShareCard()}
+                  >
+                    {shareLabel} card
+                  </button>
                 </div>
-              ) : (
-                <p className="text-[11px] text-brand-muted">
-                  Resume share appears after you chat while signed in (synced via account sessions).
-                </p>
-              )}
-            </div>
+                <div>
+                  <p className="font-medium text-brand-text">Start chat</p>
+                  <p className="mt-1 break-all font-mono text-[11px]">{autostartUrl}</p>
+                  <button
+                    type="button"
+                    className="mt-1 text-[11px] text-brand-accent"
+                    onClick={() => void onShareAutostart()}
+                  >
+                    {shareLabel} start
+                  </button>
+                </div>
+                {resumeUrl && resumeCode ? (
+                  <div>
+                    <p className="font-medium text-amber-200">
+                      Resume ({resumeCode})
+                    </p>
+                    <p className="mt-1 break-all font-mono text-[11px]">{resumeUrl}</p>
+                    <button
+                      type="button"
+                      className="mt-1 text-[11px] text-amber-200"
+                      onClick={() => void onShareResume()}
+                    >
+                      {shareLabel} resume
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </details>
           </div>
         </section>
 
@@ -424,63 +348,27 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
         </footer>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
-        <div className="mx-auto flex max-w-lg flex-wrap gap-2">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/92 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
+        <div className="mx-auto flex max-w-lg gap-2">
           {resumeEntry?.resumeCode ? (
-            <>
-              <Link
-                href={buildResumeChatPath(resumeEntry)}
-                className={`btn-primary min-w-[5rem] flex-1 ring-1 ${
-                  resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
-                    ? "ring-violet-400/50"
-                    : "ring-amber-400/45"
-                }`}
-              >
-                {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
-                  ? "DNA power"
-                  : "Continue"}
-              </Link>
-              <Link href={card.ctaPath} className="btn-ghost min-w-[4.5rem] flex-1">
-                New
-              </Link>
-            </>
+            <Link
+              href={buildResumeChatPath(resumeEntry)}
+              className="btn-primary flex-1"
+            >
+              Continue
+            </Link>
           ) : (
-            <Link href={card.ctaPath} className="btn-primary min-w-[5rem] flex-1">
-              Start
+            <Link href={card.ctaPath} className="btn-primary flex-1">
+              Chat
             </Link>
           )}
-          <Link
-            href={
-              card.edgePacePath ||
-              `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`
-            }
-            className="btn-ghost min-w-[5rem] flex-1 border-rose-400/40 text-rose-100"
-          >
-            Edge Pace
-          </Link>
           <button
             type="button"
             onClick={() => void onShareCard()}
-            className="btn-ghost min-w-[4.5rem] flex-1"
+            className="btn-ghost flex-1"
           >
-            {shareLabel} card
+            {shareLabel}
           </button>
-          <button
-            type="button"
-            onClick={() => void onShareAutostart()}
-            className="btn-ghost min-w-[4.5rem] flex-1"
-          >
-            {shareLabel} start
-          </button>
-          {resumeCode && (
-            <button
-              type="button"
-              onClick={() => void onShareResume()}
-              className="btn-ghost min-w-[4.5rem] flex-1 border-amber-500/40 text-amber-200"
-            >
-              {shareLabel} resume
-            </button>
-          )}
         </div>
       </div>
     </main>
