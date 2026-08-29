@@ -232,6 +232,37 @@ const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   },
 ];
 
+function clipUrl(path: string | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http") || path.startsWith("/")) return path;
+  return `/${path}`;
+}
+
+/** Poster clip for the idle picker — dedicated pack first, then base footage. */
+function resolveIdlePreviewClip(opt: LiveCharacterOption | null | undefined): {
+  src: string | null;
+  fallback: string | null;
+} {
+  if (!opt) return { src: null, fallback: null };
+  const clips = opt.clips;
+  const primary =
+    clipUrl(clips?.teasing) ||
+    clipUrl(clips?.idle) ||
+    clipUrl(clips?.playful) ||
+    clipUrl(clips?.aroused);
+  const folder = opt.id.startsWith("custom-")
+    ? opt.avatarBase || opt.baseModelId || null
+    : opt.id;
+  const folderTease = folder ? `/avatar/${folder}/teasing.mp4` : null;
+  const folderIdle = folder ? `/avatar/${folder}/idle.mp4` : null;
+  const base = opt.avatarBase && opt.avatarBase !== opt.id ? opt.avatarBase : null;
+  const baseTease = base ? `/avatar/${base}/teasing.mp4` : null;
+  return {
+    src: primary || folderTease || baseTease,
+    fallback: folderIdle || baseTease || folderTease,
+  };
+}
+
 function makeId(): string {
   return crypto.randomUUID();
 }
@@ -2600,6 +2631,9 @@ export function ChatApp() {
         bootIdentity.intendedCharacterId ?? activeCharacterId ?? character,
       )
     : null;
+  const idlePreview = resolveIdlePreviewClip(selectedLive);
+  const showAvatarStatus =
+    status === "ready" || status === "connecting" || !!avatarState;
   const selectedOpening = bootIdentity.showMind
     ? selectedLive?.openingMessage?.trim() ||
       FALLBACK_CHARACTERS.find(
@@ -3200,6 +3234,7 @@ export function ChatApp() {
             </div>
           ) : (
             <div className="flex w-full shrink-0 flex-col gap-2 sm:gap-3 lg:max-w-xs">
+              {showAvatarStatus ? (
               <div className="flex items-center justify-between gap-2">
                 <p className="text-[10px] uppercase tracking-[0.2em] text-brand-muted">Avatar</p>
                 <button
@@ -3211,25 +3246,41 @@ export function ChatApp() {
                   Hide · more chat
                 </button>
               </div>
-              <div className="flex flex-row gap-2 sm:gap-3 lg:flex-col">
-                <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
+              ) : (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setAvatarCollapsedPersist(true)}
+                    className="text-[11px] text-brand-muted transition hover:text-brand-accent"
+                    title="Hide avatar for more chat space"
+                  >
+                    Hide
+                  </button>
+                </div>
+              )}
+              <div className={`flex gap-2 sm:gap-3 ${showAvatarStatus ? "flex-row lg:flex-col" : "flex-col"}`}>
+                <div className={showAvatarStatus ? "w-[42%] shrink-0 sm:w-1/3 lg:w-full" : "w-full"}>
                   <AvatarVideo
                     avatar={avatarState}
-                    characterName={characterName}
+                    characterName={characterName ?? headerCharacterName}
                     characterId={activeCharacterId ?? character}
                     dnaTreeNodeId={modeState?.dnaTreeNodeId}
                     dnaTreeLabel={modeState?.dnaTreeLabel}
-                    compact
+                    compact={showAvatarStatus}
+                    previewSrc={avatarState ? null : idlePreview.src}
+                    previewFallbackSrc={avatarState ? null : idlePreview.fallback}
                   />
                 </div>
+                {showAvatarStatus ? (
                 <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
                   <AvatarPanel
-                    characterName={characterName}
-                    characterId={activeCharacterId}
+                    characterName={characterName ?? headerCharacterName}
+                    characterId={activeCharacterId ?? character}
                     avatar={avatarState}
                     status={status}
                   />
                 </div>
+                ) : null}
               </div>
             </div>
           )}

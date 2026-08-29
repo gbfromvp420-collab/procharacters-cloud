@@ -37,6 +37,9 @@ interface AvatarVideoProps {
   /** Studio Forge DNA node — sexy frame heat */
   dnaTreeNodeId?: string | null;
   dnaTreeLabel?: string | null;
+  /** Idle picker — play the selected mind’s clip before a session opens */
+  previewSrc?: string | null;
+  previewFallbackSrc?: string | null;
 }
 
 const CROSSFADE_MS = 620;
@@ -49,6 +52,8 @@ export function AvatarVideo({
   pip = false,
   dnaTreeNodeId = null,
   dnaTreeLabel = null,
+  previewSrc = null,
+  previewFallbackSrc = null,
 }: AvatarVideoProps) {
   const [activeSrc, setActiveSrc] = useState<string | null>(null);
   const [incomingSrc, setIncomingSrc] = useState<string | null>(null);
@@ -60,8 +65,8 @@ export function AvatarVideo({
   const prevDnaRef = useRef<string | null>(null);
   const crossfadeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const mediaUrl = avatar?.mediaUrl ?? null;
-  const fallbackUrl = avatar?.mediaFallbackUrl ?? null;
+  const mediaUrl = avatar?.mediaUrl ?? previewSrc ?? null;
+  const fallbackUrl = avatar?.mediaFallbackUrl ?? previewFallbackSrc ?? null;
   const band = energyBandFromAvatar(avatar);
   const arousalPct = Math.round((avatar?.arousalLevel ?? 0) * 100);
   const skin = resolvePresenceSkin(avatar?.presenceSkin, characterId);
@@ -193,9 +198,10 @@ export function AvatarVideo({
               pip ? "h-8 w-8" : "h-12 w-12 sm:h-16 sm:w-16"
             }`}
           />
-          {!pip && <p className="text-sm text-brand-muted">Video layer idle</p>}
-          {!compact && !pip && (
-            <p className="text-xs text-brand-muted">Start a session to load avatar clips</p>
+          {!pip && (
+            <p className="text-sm text-brand-muted">
+              {characterName ? characterName : "Video"}
+            </p>
           )}
           {pip && <p className="text-[10px] text-brand-muted">Idle</p>}
         </div>
@@ -262,6 +268,12 @@ export function AvatarVideo({
               {visual.label}
             </div>
           )}
+        </div>
+      )}
+
+      {!avatar && activeSrc && !pip && characterName && (
+        <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/80 to-transparent p-3">
+          <p className="text-sm font-medium text-white">{characterName}</p>
         </div>
       )}
 
