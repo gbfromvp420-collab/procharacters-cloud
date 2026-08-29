@@ -423,7 +423,7 @@ export function WelcomeQuest() {
             type="button"
             onClick={() => {
               skipPersona();
-              router.push("/");
+              router.push("/account#chats");
             }}
             className="w-full py-2 text-center text-sm text-brand-muted hover:text-brand-text"
           >
