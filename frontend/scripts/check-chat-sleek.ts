@@ -28,6 +28,10 @@ function main() {
   assert.equal(chat.includes("My Character (v2)"), false, "Inline create form must stay off chat");
   assert.equal(chat.includes("Batch upload clips"), false, "Clip editor must stay off chat");
   assert.match(chat, /fill\s*\n/, "Character video should fill the room rail");
+  assert.equal(chat.includes("HeatWhisperStrip"), false, "Heat whisper card must stay off live composer");
+  assert.equal(chat.includes("LastBeatEcho"), false, "Last beat card must stay off live composer");
+  assert.equal(chat.includes("tap to copy"), false, "Resume-code sticky bar must stay off-screen");
+  assert.match(chat, /hideContinue/, "Continue CTA should hide on live chat");
   console.log("check-chat-sleek: ok");
 }
 

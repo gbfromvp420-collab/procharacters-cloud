@@ -117,6 +117,16 @@ export function SessionWinToast({
       /* show anyway */
     }
     setVisible(true);
+    try {
+      const raw = window.localStorage.getItem(SEEN_KEY);
+      const seen = raw ? (JSON.parse(raw) as Record<string, number>) : {};
+      seen[characterId || resumeCode] = Date.now();
+      window.localStorage.setItem(SEEN_KEY, JSON.stringify(seen));
+    } catch {
+      /* ignore */
+    }
+    const t = window.setTimeout(() => setVisible(false), 4500);
+    return () => window.clearTimeout(t);
   }, [show, resumeCode, messageCount, characterId, deepDna]);
 
   useEffect(() => {
@@ -221,7 +231,7 @@ export function SessionWinToast({
 
   return (
     <div
-      className={`mb-3 animate-rise-in rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed shadow-glow-sm ${
+      className={`animate-rise-in rounded-xl border px-3 py-2 text-[11px] leading-relaxed shadow-glow-sm ${
         deepDna
           ? "border-violet-400/45 bg-gradient-to-r from-violet-500/15 via-emerald-500/10 to-brand-panel"
           : "border-emerald-400/40 bg-gradient-to-r from-emerald-500/15 via-brand-panel to-brand-panel"

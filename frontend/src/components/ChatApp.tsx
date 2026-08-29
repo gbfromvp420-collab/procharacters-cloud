@@ -52,10 +52,7 @@ import { EdgePaceStrip } from "@/components/EdgePaceStrip";
 import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { AfterglowChips } from "@/components/AfterglowChips";
-import { HeatWhisperStrip } from "@/components/HeatWhisperStrip";
-import { LastBeatEcho } from "@/components/LastBeatEcho";
 import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
-import { QuickReplyChips } from "@/components/QuickReplyChips";
 import { heatDepthFromMessages } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
@@ -2514,16 +2511,6 @@ export function ChatApp() {
     }
   };
 
-  const lastAssistantBeat = (() => {
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const m = messages[i];
-      if (m?.role === "assistant" && m.content?.trim() && !m.streaming) {
-        return m.content;
-      }
-    }
-    return null;
-  })();
-
   const sessionActive = status === "ready" || status === "connecting" || restarting;
   const canSend = status === "ready" && !sending && input.trim().length > 0;
   const selectedLive =
@@ -2634,6 +2621,7 @@ export function ChatApp() {
 
       <SiteChrome
         active="chat"
+        hideContinue={status === "ready" || status === "connecting"}
         title={headerCharacterName ? `Chat · ${headerCharacterName}` : "Live chat"}
         subtitle={
           [
@@ -2685,24 +2673,6 @@ export function ChatApp() {
           </>
         }
       />
-      {status === "ready" && resumeCode && (
-        <p className="border-b border-amber-500/20 bg-brand-bg/80 px-3 py-1 text-center text-[10px] text-amber-100/85 sm:hidden">
-          Resume{" "}
-          <button
-            type="button"
-            className="font-mono font-semibold text-amber-50 underline-offset-2 hover:underline"
-            onClick={() => {
-              void navigator.clipboard?.writeText(resumeCode).then(
-                () => flashCopy(`Code ${resumeCode}`),
-                () => flashCopy(resumeCode),
-              );
-            }}
-          >
-            {resumeCode}
-          </button>
-          {" · tap to copy"}
-        </p>
-      )}
       {copyNotice && (
         <p
           className="border-b border-brand-border/50 bg-brand-bg/80 px-3 py-1 text-center text-[11px] text-brand-accent sm:hidden"
@@ -3087,7 +3057,9 @@ export function ChatApp() {
             />
           </div>
 
-          <div className="h-[22vh] max-h-44 w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-72 lg:max-w-[18.5rem] lg:self-stretch">
+          <div className={`w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-72 lg:max-w-[18.5rem] lg:self-stretch ${
+            sessionActive ? "h-[18vh] max-h-36" : "h-[22vh] max-h-44"
+          }`}>
             <AvatarVideo
               avatar={avatarState}
               characterName={characterName ?? headerCharacterName}
@@ -3117,6 +3089,17 @@ export function ChatApp() {
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
               <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex min-w-0 items-center gap-2">
+              {sessionActive ? (
+                <p className="min-w-0 truncate text-sm font-medium text-brand-text">
+                  {headerCharacterName || characterName || "Live"}
+                  {headerMind ? (
+                    <span className="ml-1.5 text-[11px] font-normal text-brand-muted">
+                      · {headerMind.tag}
+                    </span>
+                  ) : null}
+                </p>
+              ) : (
+              <>
               <label className="shrink-0 text-xs text-brand-muted sm:text-sm" htmlFor="character">
                 Character
               </label>
@@ -3128,7 +3111,7 @@ export function ChatApp() {
                   setCharacter(next);
                   replaceCharacterInUrl(next);
                 }}
-                disabled={status === "connecting" || restarting}
+                disabled={restarting}
                 className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
               >
                 {(() => {
@@ -3168,6 +3151,8 @@ export function ChatApp() {
                   );
                 })()}
               </select>
+              </>
+              )}
               </div>
               </div>
 
@@ -3343,22 +3328,6 @@ export function ChatApp() {
               onScroll={onMessagesScroll}
               className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
             >
-              {modeState && modeState.mode === "edge_pace" && status === "ready" && (
-                <EdgePaceStrip
-                  modeState={modeState}
-                  tickOffset={modeTick}
-                  canFire={!sending && !isTyping}
-                  onSeed={(text) => {
-                    setInput((prev) => {
-                      const p = prev.trim();
-                      if (!p) return text;
-                      return `${p} ${text}`;
-                    });
-                    window.setTimeout(() => inputRef.current?.focus(), 40);
-                  }}
-                  onFire={(text) => sendMessage(text)}
-                />
-              )}
               <RejoinRecapToast
                 show={rejoinRecap.show && status === "ready"}
                 characterId={activeCharacterId ?? character}
@@ -3369,6 +3338,8 @@ export function ChatApp() {
                 dnaTreeNodeId={modeState?.dnaTreeNodeId}
                 onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
               />
+              <div className="pointer-events-none absolute inset-x-3 top-2 z-10 sm:inset-x-4">
+                <div className="pointer-events-auto">
               <SessionWinToast
                 show={status === "ready"}
                 characterId={activeCharacterId ?? character}
@@ -3396,6 +3367,8 @@ export function ChatApp() {
                   (activeCharacterId ?? character).startsWith("custom-")
                 }
               />
+                </div>
+              </div>
               {messages.length === 0 && !isTyping && (
                 <div className="px-2 py-6 text-center sm:py-8">
                   {(status === "connecting" || restarting) && (
@@ -3468,7 +3441,8 @@ export function ChatApp() {
                   status === "ready" &&
                   !sending &&
                   !isTyping &&
-                  !input.trim();
+                  !input.trim() &&
+                  modeState?.mode !== "edge_pace";
                 const showUseAgain =
                   isLast &&
                   msg.role === "user" &&
@@ -3584,26 +3558,12 @@ export function ChatApp() {
 
             {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
             <div
-              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-4 sm:pb-4 ${edgePaceComposerClass(modeState, status)} ${
+              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-3 sm:pb-3 ${edgePaceComposerClass(modeState, status)} ${
                 sendPulse ? "ring-1 ring-inset ring-brand-accent/40" : ""
               } ${arrivalId ? "ring-1 ring-inset ring-brand-accent/25" : ""}`}
             >
-              <ComposerVibeChip
-                characterId={activeCharacterId ?? character}
-                characterName={headerCharacterName}
-                sessionMode={sessionMode}
-                modeState={modeState}
-                tickOffset={modeTick}
-                status={status}
-                arousalPct={
-                  avatarState
-                    ? Math.round((avatarState.arousalLevel ?? 0) * 100)
-                    : null
-                }
-              />
-              {status === "ready" && (
-                <HeatWhisperStrip
-                  characterId={activeCharacterId ?? character}
+              {modeState?.mode === "edge_pace" && status === "ready" && (
+                <EdgePaceStrip
                   modeState={modeState}
                   tickOffset={modeTick}
                   canFire={!sending && !isTyping}
@@ -3618,45 +3578,20 @@ export function ChatApp() {
                   onFire={(text) => sendMessage(text)}
                 />
               )}
-              {status === "ready" &&
-                lastAssistantBeat &&
-                messages.length >= 2 &&
-                !isTyping && (
-                  <LastBeatEcho
-                    text={lastAssistantBeat}
-                    name={characterName ?? headerCharacterName}
-                    onQuote={() => {
-                      const q =
-                        lastAssistantBeat.length > 120
-                          ? `${lastAssistantBeat.slice(0, 117).trim()}…`
-                          : lastAssistantBeat;
-                      setInput((prev) => {
-                        const base = prev.trim();
-                        const quote = `> ${q}\n\n`;
-                        return base ? `${quote}${base}` : quote;
-                      });
-                      window.setTimeout(() => inputRef.current?.focus(), 40);
-                    }}
-                  />
-                )}
-              {/* Always offer vibe chips when composer is empty — mid-session used to go blank */}
-              {status === "ready" && !sending && !isTyping && !input.trim() && (
-                <QuickReplyChips
-                  characterId={activeCharacterId ?? character}
-                  characterName={characterName ?? headerCharacterName}
-                  heatDepth={heatDepth.label}
-                  disabled={status !== "ready"}
-                  onFire={(text) => sendMessage(text)}
-                  onPick={(text) => {
-                    setInput((prev) => {
-                      const p = prev.trim();
-                      if (!p) return text;
-                      if (p.endsWith(text)) return prev;
-                      return `${p} ${text}`;
-                    });
-                    window.setTimeout(() => inputRef.current?.focus(), 40);
-                  }}
-                />
+              {status !== "ready" && (
+              <ComposerVibeChip
+                characterId={activeCharacterId ?? character}
+                characterName={headerCharacterName}
+                sessionMode={sessionMode}
+                modeState={modeState}
+                tickOffset={modeTick}
+                status={status}
+                arousalPct={
+                  avatarState
+                    ? Math.round((avatarState.arousalLevel ?? 0) * 100)
+                    : null
+                }
+              />
               )}
               <div className="flex items-end gap-2">
                 <textarea
@@ -3745,7 +3680,7 @@ export function ChatApp() {
                 </button>
               </div>
               {status === "ready" && (
-                <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[9px] text-brand-soft">
+                <div className="mt-1.5 hidden flex-wrap items-center justify-between gap-2 text-[9px] text-brand-soft sm:flex">
                   <p>
                     Enter send · Shift+Enter line · Esc clear draft
                     {input.trim() ? " · draft auto-saves" : ""}
@@ -3775,7 +3710,7 @@ export function ChatApp() {
           </div>
         </div>
 
-        <footer className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-brand-border/40 py-3 text-[11px] text-brand-muted sm:text-xs">
+        <footer className="mt-auto hidden flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-brand-border/40 py-3 text-[11px] text-brand-muted sm:flex sm:text-xs">
           <span className="inline-flex items-center gap-1.5 sm:hidden">
             <StatusDot status={status} />
             {statusLabel}
