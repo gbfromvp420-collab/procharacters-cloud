@@ -223,7 +223,7 @@ export function CharacterTile({
 
   const posterTag = card.mine
     ? { label: "My model", className: "border-violet-300/40 bg-violet-500/70 text-white" }
-    : card.featured
+    : !compact && card.featured
       ? { label: "Featured", className: "border-transparent bg-brand-accent/90 text-white" }
       : card.dedicatedPack
         ? { label: "4K", className: "border-emerald-400/45 bg-emerald-500/25 text-emerald-50" }
@@ -329,7 +329,7 @@ export function CharacterTile({
       </div>
       <div className={`space-y-2 ${compact ? "p-3" : "p-3 sm:p-3.5"}`}>
         {!compact && (
-          <p className="line-clamp-2 text-xs leading-relaxed text-brand-muted">
+          <p className="hidden line-clamp-2 text-xs leading-relaxed text-brand-muted sm:block">
             {mind ? (
               <>
                 <span className="font-semibold text-brand-accent">

@@ -461,7 +461,7 @@ export function GalleryView({ characters }: GalleryViewProps) {
               </button>
               <div
                 id="gallery-featured-strip"
-                className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0"
+                className="scroll-strip flex gap-4 overflow-x-auto px-4 pb-2 sm:gap-5 sm:px-0"
               >
                 {featuredRow.map((card) => (
                   <CharacterTile key={`feat-${card.id}`} card={card} resume={resumes[card.id] ?? null} compact />
@@ -736,7 +736,7 @@ export function GalleryView({ characters }: GalleryViewProps) {
                 </h2>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3">
               {visible.map((card) => (
                 <CharacterTile
                   key={card.id}

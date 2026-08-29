@@ -255,7 +255,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Meet {card.displayName}
               </h2>
-              {mind && (
+              {mind ? (
                 <div className="mt-3 rounded-xl border border-brand-accent/25 bg-brand-accent/5 px-3 py-2.5">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-accent">
                     Mind · {mind.tag}
@@ -263,13 +263,9 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                   </p>
                   <p className="mt-1 text-sm leading-relaxed text-brand-muted">{mind.blurb}</p>
                 </div>
-              )}
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:mt-4 sm:text-base">
-                {card.teaser}
-              </p>
-              {(card.vibeTag || card.energyLabel) && (
-                <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-brand-accent">
-                  {(card.vibeTag || card.energyLabel).split(",")[0]?.trim()}
+              ) : (
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:mt-4 sm:text-base">
+                  {card.teaser}
                 </p>
               )}
             </div>

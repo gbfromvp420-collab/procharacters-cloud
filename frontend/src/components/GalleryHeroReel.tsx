@@ -312,7 +312,7 @@ export function GalleryHeroReel({
           aria-hidden
         />
 
-        <div className="absolute inset-0 flex flex-col justify-end p-4 sm:justify-center sm:p-8 lg:p-10">
+        <div className="absolute inset-0 flex flex-col justify-end p-4 pb-11 sm:justify-center sm:p-8 sm:pb-8 lg:p-10">
           <div className="max-w-xl">
             <p className="text-[10px] uppercase tracking-[0.35em] text-brand-accent">
               Naughty Syntax · Tonight&apos;s cast
