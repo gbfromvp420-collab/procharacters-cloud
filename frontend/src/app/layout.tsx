@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { Outfit } from "next/font/google";
 import { AgeFloor } from "@/components/AgeFloor";
 import { PwaBootstrap } from "@/components/PwaBootstrap";
 import "./globals.css";
 import "./age-floor.css";
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  variable: "--font-outfit",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -48,8 +55,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-dvh">
+    <html lang="en" className={outfit.variable}>
+      <body className="min-h-dvh font-sans">
         <PwaBootstrap />
         <AgeFloor />
         {children}

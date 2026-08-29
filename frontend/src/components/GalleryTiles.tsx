@@ -16,6 +16,7 @@ import {
   isResumeExpiryUrgent,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
+import { pickPosterMark } from "@/lib/tile-chrome";
 import { canNativeShare } from "@/lib/share-links";
 import type { MediaClipKey } from "@/lib/types";
 import { OverflowMenu } from "./OverflowMenu";
@@ -254,27 +255,39 @@ export function CharacterTile({
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${visual.wash}`}
           aria-hidden
         />
-        <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1.5">
-          {card.mine ? (
-            <span className="rounded-full border border-violet-300/50 bg-violet-600/85 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur">
-              Mine
-            </span>
-          ) : card.featured ? (
-            <span className="rounded-full bg-brand-accent/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-              Featured
-            </span>
-          ) : card.dedicatedPack ? (
-            <span className="rounded-full border border-emerald-400/45 bg-emerald-500/30 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50 backdrop-blur">
-              4K
-            </span>
-          ) : bandLabel ? (
-            <span className="tag uppercase tracking-wide">Live</span>
-          ) : null}
-        </div>
+        {(() => {
+          const mark = pickPosterMark({
+            mine: card.mine,
+            dedicatedPack: card.dedicatedPack,
+            featured: card.featured,
+          });
+          if (!mark && !bandLabel) return null;
+          const markClass =
+            mark?.kind === "mine"
+              ? "border-violet-300/50 bg-violet-600/85 text-white"
+              : mark?.kind === "pack"
+                ? "border-emerald-400/40 bg-emerald-500/25 text-emerald-50"
+                : mark
+                  ? "border-brand-accent/40 bg-brand-accent/90 text-white"
+                  : "";
+          return (
+            <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1.5">
+              {mark ? (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${markClass}`}
+                >
+                  {mark.label}
+                </span>
+              ) : (
+                <span className="tag uppercase tracking-wide">Live</span>
+              )}
+            </div>
+          );
+        })()}
         {resume?.resumeCode ? (
           <div className="pointer-events-none absolute right-2 top-2 z-10">
             <span
-              className={`rounded-full border bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
+              className={`rounded-full border bg-black/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
                 urgent
                   ? "border-rose-400/60 text-rose-100"
                   : "border-amber-400/50 text-amber-200"
@@ -287,7 +300,7 @@ export function CharacterTile({
                     : "Saved chat on this device"
               }
             >
-              {urgent && expiryLabel ? expiryLabel : resume.resumeCode}
+              {urgent && expiryLabel ? expiryLabel : "Saved"}
             </span>
           </div>
         ) : null}
@@ -318,9 +331,8 @@ export function CharacterTile({
             </p>
           )}
         </div>
-        {/* Sexy hover veil */}
         <div
-          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-brand-accent/25 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-t from-brand-accent/20 via-transparent to-transparent opacity-0 transition duration-500 group-hover:opacity-100"
           aria-hidden
         />
       </div>
@@ -335,7 +347,7 @@ export function CharacterTile({
                 : "Continue saved chat"
             }
           >
-            Continue
+            {urgent ? "Reclaim" : "Continue"}
           </Link>
         ) : (
           <Link href={card.ctaPath} className="btn-primary min-h-0 flex-1 px-3 py-2 text-xs">

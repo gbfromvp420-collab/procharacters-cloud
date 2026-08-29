@@ -8,6 +8,7 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-left: env(safe-area-inset-left, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
+  --chrome-h: 3.5rem;
 }
 
 html {
@@ -309,7 +310,7 @@ body {
   }
 
   .chip {
-    @apply inline-flex h-9 items-center whitespace-nowrap rounded-full border px-3.5 text-xs font-medium transition active:scale-[0.98];
+    @apply inline-flex h-8 items-center whitespace-nowrap rounded-full border px-3 text-[11px] font-medium transition active:scale-[0.98];
   }
 
   .chip-active {
@@ -329,11 +330,11 @@ body {
   }
 
   .btn-primary {
-    @apply inline-flex min-h-touch items-center justify-center rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:bg-brand-accentDim active:scale-[0.98];
+    @apply inline-flex min-h-10 items-center justify-center rounded-xl bg-brand-accent px-4 py-2 text-sm font-semibold text-white shadow-glow-sm transition hover:bg-brand-accentDim active:scale-[0.98];
   }
 
   .btn-ghost {
-    @apply inline-flex min-h-touch items-center justify-center rounded-xl border border-brand-border px-4 py-2.5 text-sm text-brand-text transition hover:border-brand-accent active:scale-[0.98];
+    @apply inline-flex min-h-10 items-center justify-center rounded-xl border border-brand-border px-4 py-2 text-sm text-brand-text transition hover:border-brand-accent active:scale-[0.98];
   }
 
   .btn-nav {
@@ -362,6 +363,20 @@ body {
 
   .quest-continue {
     @apply flex h-14 w-full items-center justify-center rounded-full bg-brand-accent text-base font-semibold text-white shadow-glow-sm disabled:opacity-40;
+  }
+
+  .hint-rail {
+    @apply flex flex-col;
+  }
+
+  .hint-rail > * + * {
+    display: none !important;
+  }
+
+  .more-menu-items > a,
+  .more-menu-items > button,
+  .more-menu-items > label {
+    @apply flex w-full items-center px-3 py-2 text-left text-xs text-brand-text no-underline transition hover:bg-brand-accent/10;
   }
 }
 

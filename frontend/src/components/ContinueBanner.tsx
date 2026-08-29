@@ -199,7 +199,9 @@ export function ContinueBanner({
           >
             {urgent && expiryLabel === "expired"
               ? "Reclaim"
-              : `Continue · ${nick}`}
+              : dnaLabel
+                ? `DNA · ${nick}`
+                : `Continue · ${nick}`}
           </Link>
           <OverflowMenu label="More">
             {forgeHref ? (

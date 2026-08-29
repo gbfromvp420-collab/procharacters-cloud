@@ -11,17 +11,14 @@ export function GalleryLiveStrip({
 }: {
   characters: CharacterCard[];
   resumeCount: number;
-  onPacks?: () => void;
-  onPackLane?: (lane: "01" | "02" | "03") => void;
-  onMine?: () => void;
-  onOwned?: () => void;
-  onFeatured?: () => void;
 }) {
   const minds = characters.length;
   if (minds === 0) return null;
+  const packs = characters.filter((c) => c.dedicatedPack).length;
 
   const parts = [
     `${minds} mind${minds === 1 ? "" : "s"}`,
+    packs > 0 ? `${packs} in 4K` : null,
     resumeCount > 0 ? `${resumeCount} saved` : null,
   ].filter(Boolean);
 

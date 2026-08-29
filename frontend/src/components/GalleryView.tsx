@@ -31,16 +31,21 @@ import { PushEnableHint } from "./PushEnableHint";
 import { SoftSupportHint } from "./SoftSupportHint";
 import { GalleryLiveStrip } from "./GalleryLiveStrip";
 import { NetworkOfflineBanner } from "./NetworkOfflineBanner";
+import { HintRail } from "./HintRail";
 import { SiteChrome } from "./SiteChrome";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { packLaneFor, packLaneLabel, type PackLane } from "@/lib/pack-lanes";
+import {
+  GALLERY_SORT_OPTIONS,
+  type GallerySortMode,
+} from "@/lib/tile-chrome";
 
 interface GalleryViewProps {
   characters: CharacterCard[];
   siteOrigin: string;
 }
 
-type SortMode = "name" | "kind" | "energy" | "featured" | "recent" | "packs";
+type SortMode = GallerySortMode | "kind" | "energy" | "packs";
 type GalleryFilter =
   | "all"
   | "default"
@@ -406,20 +411,18 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       />
 
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
-        <SessionAuthBanner
-          className="mb-4"
-          onInvalidated={() => setSignedInHandle(null)}
-        />
-        <InstallAppHint className="mb-4" />
-        <NetworkOfflineBanner className="mb-4" />
-        <PushEnableHint className="mb-4" />
-        <SoftSupportHint
-          className="mb-4"
-          hasEngagement={resumeCount > 0}
-          dnaHeat={Object.values(resumes).some(
-            (r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId),
-          )}
-        />
+        <HintRail className="mb-5">
+          <NetworkOfflineBanner />
+          <SessionAuthBanner onInvalidated={() => setSignedInHandle(null)} />
+          <PushEnableHint />
+          <InstallAppHint />
+          <SoftSupportHint
+            hasEngagement={resumeCount > 0}
+            dnaHeat={Object.values(resumes).some(
+              (r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId),
+            )}
+          />
+        </HintRail>
         <header className="mb-6 animate-fade-in sm:mb-8">
           <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">
             Live gallery
@@ -516,18 +519,21 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               autoComplete="off"
               className="field h-10 min-h-0 flex-1 py-0"
             />
-            <label className="hidden items-center gap-2 text-xs text-brand-muted sm:flex">
-              <span className="shrink-0">Sort</span>
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortMode)}
-                className="field h-10 min-h-0 w-auto py-0"
-              >
-                <option value="featured">Featured</option>
-                <option value="recent">Last chat</option>
-                <option value="name">A–Z</option>
-              </select>
+            <label className="sr-only" htmlFor="gallery-sort">
+              Sort
             </label>
+            <select
+              id="gallery-sort"
+              value={sort === "kind" || sort === "energy" || sort === "packs" ? "featured" : sort}
+              onChange={(e) => setSort(e.target.value as SortMode)}
+              className="field h-10 min-h-0 w-[8.5rem] shrink-0 py-0"
+            >
+              {GALLERY_SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="scroll-strip flex gap-1.5 overflow-x-auto pb-0.5">
             {(

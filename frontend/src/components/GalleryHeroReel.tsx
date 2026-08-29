@@ -284,15 +284,32 @@ export function GalleryHeroReel({
             <p className="text-[10px] uppercase tracking-[0.35em] text-brand-accent">
               Naughty Syntax · Tonight&apos;s cast
             </p>
-            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/70">
-              {resume?.resumeCode
-                ? resume.dnaTreeLabel || resume.dnaTreeNodeId
-                  ? `Your chat · ${resume.dnaTreeLabel || resume.dnaTreeNodeId}`
-                  : "Your chat"
-                : mind?.tag || vibe || (card.featured ? "Featured" : "Tonight")}
-            </p>
+            <div className="mt-2">
+              {resume?.resumeCode ? (
+                <span className="rounded-full border border-amber-400/45 bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-50">
+                  {resume.dnaTreeLabel || resume.dnaTreeNodeId
+                    ? `DNA · ${resume.dnaTreeLabel || resume.dnaTreeNodeId}`
+                    : resume.heatDepth
+                      ? `Your chat · ${resume.heatDepth}`
+                      : "Your chat"}
+                </span>
+              ) : card.dedicatedPack ? (
+                <span className="rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-50">
+                  4K · {mind?.tag || vibe || "live"}
+                </span>
+              ) : (
+                <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-0.5 text-[10px] font-medium text-white/90">
+                  {mind?.tag || vibe || "Featured"}
+                </span>
+              )}
+            </div>
+            {resume?.heatChips && resume.heatChips.length > 0 ? (
+              <p className="mt-2 line-clamp-1 text-[11px] text-amber-100/85">
+                Left at · {resume.heatChips.slice(0, 3).join(" · ")}
+              </p>
+            ) : null}
             {resume?.recapLine ? (
-              <p className="mt-2 line-clamp-2 text-[13px] italic leading-snug text-white/75">
+              <p className="mt-1 line-clamp-2 text-[12px] italic leading-snug text-white/75">
                 “{resume.recapLine}”
               </p>
             ) : null}
@@ -312,7 +329,9 @@ export function GalleryHeroReel({
                       : "ring-amber-400/50"
                   }`}
                 >
-                  Continue with {nick}
+                  {resume?.dnaTreeLabel || resume?.dnaTreeNodeId
+                    ? `Continue · ${nick}`
+                    : `Continue with ${nick}`}
                 </Link>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary min-h-0 px-5 py-2.5 text-sm">
