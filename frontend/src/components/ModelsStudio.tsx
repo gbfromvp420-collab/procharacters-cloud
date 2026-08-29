@@ -897,9 +897,6 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
             >
               My models
             </Link>
-            <Link href="/account#my-models" className="btn-ghost min-h-0 px-3 py-1.5 text-xs">
-              Hub
-            </Link>
           </div>
         </div>
 

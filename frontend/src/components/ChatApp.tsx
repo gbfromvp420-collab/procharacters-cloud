@@ -2740,7 +2740,7 @@ export function ChatApp() {
             <button
               type="button"
               onClick={() => setShowAccount((v) => !v)}
-              className={`btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
+              className={`btn-ghost min-h-0 hidden px-2.5 py-1.5 text-xs sm:inline-flex sm:px-3 sm:text-sm ${
                 showAccount ? "border-brand-accent text-brand-accent" : ""
               }`}
             >

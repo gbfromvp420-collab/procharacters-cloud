@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
-import { packLaneFor, packLaneLabel } from "@/lib/pack-lanes";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import {
@@ -19,6 +18,7 @@ import {
 } from "@/lib/resume-cache";
 import { canNativeShare } from "@/lib/share-links";
 import type { MediaClipKey } from "@/lib/types";
+import { OverflowMenu } from "./OverflowMenu";
 
 export function posterUrl(card: CharacterCard): string {
   const poster = card.posterClip;
@@ -254,28 +254,25 @@ export function CharacterTile({
           className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${visual.wash}`}
           aria-hidden
         />
-        {card.dedicatedPack && (
-          <span
-            className="pointer-events-none absolute left-2 top-2 z-10 h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)] animate-pulse"
-            title="Dedicated 4K pack live"
-            aria-hidden
-          />
-        )}
-        {card.mine && (
-          <span
-            className="pointer-events-none absolute right-2 top-2 z-10 rounded-full border border-violet-300/50 bg-violet-600/85 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur"
-            title="Private My Character — only you"
-          >
-            Mine
-          </span>
-        )}
-        {bandLabel && (
-          <span className="pointer-events-none absolute left-2 bottom-[4.5rem] z-10 rounded-full border border-white/20 bg-black/55 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/90 backdrop-blur sm:bottom-20">
-            Live · {bandLabel}
-          </span>
-        )}
-        {resume?.resumeCode && (
-          <div className="pointer-events-none absolute right-2 top-2 z-10 flex flex-col items-end gap-1">
+        <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1.5">
+          {card.mine ? (
+            <span className="rounded-full border border-violet-300/50 bg-violet-600/85 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white shadow-sm backdrop-blur">
+              Mine
+            </span>
+          ) : card.featured ? (
+            <span className="rounded-full bg-brand-accent/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
+              Featured
+            </span>
+          ) : card.dedicatedPack ? (
+            <span className="rounded-full border border-emerald-400/45 bg-emerald-500/30 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50 backdrop-blur">
+              4K
+            </span>
+          ) : bandLabel ? (
+            <span className="tag uppercase tracking-wide">Live</span>
+          ) : null}
+        </div>
+        {resume?.resumeCode ? (
+          <div className="pointer-events-none absolute right-2 top-2 z-10">
             <span
               className={`rounded-full border bg-black/70 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
                 urgent
@@ -283,131 +280,41 @@ export function CharacterTile({
                   : "border-amber-400/50 text-amber-200"
               }`}
               title={
-                resume.source === "account"
-                  ? "Saved chat (account)"
-                  : "Saved chat on this device"
+                expiryLabel
+                  ? `${resume.source === "account" ? "Saved chat" : "This device"} · ${expiryLabel}`
+                  : resume.source === "account"
+                    ? "Saved chat (account)"
+                    : "Saved chat on this device"
               }
             >
-              {resume.resumeCode}
+              {urgent && expiryLabel ? expiryLabel : resume.resumeCode}
             </span>
-            {expiryLabel && (
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
-                  urgent
-                    ? "border-rose-400/50 bg-rose-950/80 text-rose-100"
-                    : "border-amber-400/35 bg-black/70 text-amber-100/90"
-                }`}
-              >
-                {expiryLabel}
-              </span>
-            )}
           </div>
-        )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-14 sm:p-4 sm:pt-16">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
-              {card.mine
-                ? "My model"
-                : card.kind === "custom"
-                  ? "Custom"
-                  : "Signature"}
-            </p>
-            {card.mine && (
-              <span className="rounded-full border border-violet-300/50 bg-violet-500/80 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-                Private
-              </span>
-            )}
-            {card.featured && (
-              <span className="rounded-full bg-brand-accent/90 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white">
-                Featured
-              </span>
-            )}
-            {card.kind === "default" && (
-              <span
-                className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
-                  card.dedicatedPack
-                    ? "border-emerald-400/45 bg-emerald-500/25 text-emerald-50"
-                    : "border-white/20 bg-black/45 text-white/70"
-                }`}
-                title={
-                  card.dedicatedPack
-                    ? "Dedicated 4-clip pack active"
-                    : `Interim footage via ${card.avatarBase}`
-                }
-              >
-                {card.dedicatedPack ? "4K pack" : "Interim"}
-              </span>
-            )}
-            {packLaneLabel(card.packLane ?? packLaneFor(card.id)) && (
-              <span className="rounded-full border border-emerald-300/30 bg-black/45 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-50/90 backdrop-blur">
-                {packLaneLabel(card.packLane ?? packLaneFor(card.id))}
-              </span>
-            )}
-            <span className="rounded-full border border-white/20 bg-black/45 px-2 py-0.5 text-[9px] font-medium text-white/85 backdrop-blur">
-              {visual.label}
-            </span>
-            {(card.vibeTag || card.energyLabel) && (
-              <span className="rounded-full border border-white/25 bg-black/50 px-2 py-0.5 text-[9px] font-medium text-white/90 backdrop-blur">
-                {(card.vibeTag || card.energyLabel).split(",")[0]?.trim()}
-              </span>
-            )}
-          </div>
-          <h2 className="mt-1 text-lg font-semibold leading-tight text-white sm:text-xl">
+        ) : null}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/92 via-black/35 to-transparent px-3 pb-3 pt-16 sm:px-4 sm:pb-4">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-brand-accent">
+            {card.mine
+              ? "My model"
+              : mind?.tag ||
+                (card.vibeTag || card.energyLabel || "").split(",")[0]?.trim() ||
+                visual.label}
+          </p>
+          <h2 className="mt-0.5 truncate text-lg font-semibold leading-tight text-white sm:text-xl">
             {card.displayName}
           </h2>
-          {resume?.resumeCode &&
-          (resume.heatDepth ||
-            resume.heatChips?.length ||
-            resume.dnaTreeLabel ||
-            resume.dnaTreeNodeId) ? (
-            <div className="mt-1 space-y-1">
-              <div className="flex flex-wrap items-center gap-1.5">
-                {(resume.dnaTreeLabel || resume.dnaTreeNodeId) && (
-                  <span className="rounded-full border border-violet-300/55 bg-violet-500/35 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-violet-50 shadow-[0_0_12px_-2px_rgba(167,139,250,0.7)]">
-                    DNA · {resume.dnaTreeLabel || resume.dnaTreeNodeId}
-                  </span>
-                )}
-                {resume.heatDepth && (
-                  <span className="rounded-full border border-rose-400/40 bg-rose-500/25 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-50">
-                    {resume.heatDepth}
-                  </span>
-                )}
-                {resume.mindTag && (
-                  <span className="rounded-full border border-white/20 bg-black/45 px-1.5 py-0.5 text-[9px] text-white/85">
-                    {resume.mindTag}
-                  </span>
-                )}
-                {typeof resume.messageCount === "number" && resume.messageCount > 0 && (
-                  <span className="font-mono text-[9px] text-white/70">
-                    {resume.messageCount}m
-                  </span>
-                )}
-              </div>
-              {resume.heatChips && resume.heatChips.length > 0 && (
-                <p className="line-clamp-1 text-[10px] text-amber-100/85">
-                  {resume.heatChips.slice(0, 3).join(" · ")}
-                </p>
-              )}
-              {resume.recapLine && (
-                <p className="line-clamp-1 text-[10px] italic text-white/75">
-                  “{resume.recapLine}”
-                </p>
-              )}
-              <p className="text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
-                {urgent
-                  ? "Tap to reclaim →"
-                  : resume.dnaTreeLabel || resume.dnaTreeNodeId
-                    ? "DNA power · Edge reclaim →"
-                    : "Heat trail · continue →"}
-              </p>
-            </div>
-          ) : resume?.resumeCode ? (
-            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-100/90">
-              {urgent ? "Tap to reclaim →" : "Tap to continue →"}
+          {resume?.resumeCode ? (
+            <p className="mt-0.5 line-clamp-1 text-[11px] text-amber-100/90">
+              {urgent
+                ? "Reclaim this heat"
+                : resume.dnaTreeLabel || resume.dnaTreeNodeId
+                  ? `DNA · ${resume.dnaTreeLabel || resume.dnaTreeNodeId}`
+                  : resume.recapLine
+                    ? `“${resume.recapLine}”`
+                    : "Continue where you left off"}
             </p>
           ) : (
-            <p className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-white/0 transition group-hover:text-white/80">
-              Tap to heat →
+            <p className="mt-0.5 line-clamp-1 text-[11px] text-white/70">
+              {mind?.blurb || card.teaser}
             </p>
           )}
         </div>
@@ -417,110 +324,69 @@ export function CharacterTile({
           aria-hidden
         />
       </div>
-      <div className={`space-y-2.5 ${compact ? "p-3" : "space-y-3 p-3 sm:p-4"}`}>
-        {mind && (
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-brand-accent">
-            Mind · {mind.tag}
-            {mind.bilingual ? " · ES" : ""}
-          </p>
+      <div className={`flex items-center gap-2 ${compact ? "p-2.5" : "p-3"}`}>
+        {resume?.resumeCode ? (
+          <Link
+            href={buildResumeChatPath(resume)}
+            className={`btn-primary min-h-0 flex-1 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
+            title={
+              expiryLabel
+                ? `Continue saved chat · ${expiryLabel}`
+                : "Continue saved chat"
+            }
+          >
+            Continue
+          </Link>
+        ) : (
+          <Link href={card.ctaPath} className="btn-primary min-h-0 flex-1 px-3 py-2 text-xs">
+            Chat{!compact ? ` · ${first}` : ""}
+          </Link>
         )}
-        <p className={`text-xs text-brand-muted sm:text-sm ${compact ? "line-clamp-1" : "line-clamp-2"}`}>
-          {mind?.blurb || card.teaser}
-        </p>
-        {!compact && card.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {card.tags.slice(0, 3).map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-brand-border px-2 py-0.5 text-[10px] text-brand-muted"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className={`flex flex-wrap gap-2 ${compact ? "gap-1.5" : ""}`}>
+        <OverflowMenu label="More">
           {resume?.resumeCode ? (
-            <>
-              <Link
-                href={buildResumeChatPath(resume)}
-                className={`btn-primary min-h-0 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
-                title={
-                  expiryLabel
-                    ? `Continue saved chat · ${expiryLabel}`
-                    : "Continue saved chat"
-                }
-              >
-                Continue
-              </Link>
-              <Link
-                href={card.ctaPath}
-                className="btn-ghost min-h-0 px-3 py-2 text-xs"
-                title="Start a new session"
-              >
-                New chat
-              </Link>
-            </>
-          ) : (
-            <Link href={card.ctaPath} className="btn-primary min-h-0 px-3 py-2 text-xs">
-              Chat{!compact ? ` · ${first}` : ""}
+            <Link href={card.ctaPath} className="menu-item" title="Start a new session">
+              New chat
             </Link>
-          )}
-          {forgeHref && forgeHeatCtx && (
+          ) : null}
+          {forgeHref && forgeHeatCtx ? (
             <Link
               href={forgeHref}
-              className="btn-ghost min-h-0 border-violet-400/55 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-50 ring-1 ring-violet-300/30"
+              className="menu-item"
               title="Mint private DNA from this climb"
               onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
             >
-              {compact
-                ? "Forge"
-                : dnaLabel
-                  ? `Forge this DNA · ${dnaLabel}`
-                  : "Forge this heat"}
+              {dnaLabel ? `Forge · ${dnaLabel}` : "Forge this heat"}
             </Link>
-          )}
-          {card.edgePacePath && !resume?.resumeCode && (
-            <Link
-              href={card.edgePacePath}
-              className="btn-ghost min-h-0 border-rose-400/40 px-3 py-2 text-xs text-rose-100"
-              title="Start Edge Pace with this model"
-            >
-              Edge
+          ) : null}
+          {card.edgePacePath && !resume?.resumeCode ? (
+            <Link href={card.edgePacePath} className="menu-item">
+              Edge Pace
             </Link>
-          )}
-          {card.mine && (
+          ) : null}
+          {card.mine ? (
             <Link
               href={`/models/studio/edit/${encodeURIComponent(card.id)}`}
-              className="btn-ghost min-h-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100"
-              title="Edit My Character identity, vibe, clips"
+              className="menu-item"
             >
-              Edit
+              Edit model
             </Link>
-          )}
-          <Link href={card.cardPath} className="btn-ghost min-h-0 px-3 py-2 text-xs">
-            Card
+          ) : null}
+          <Link href={card.cardPath} className="menu-item">
+            Open card
           </Link>
-          {!compact && (
+          <button type="button" className="menu-item" onClick={() => onShareCard(card)}>
+            {canNativeShare() ? "Share card" : "Copy card link"}
+          </button>
+          {resume?.resumeCode ? (
             <button
               type="button"
-              onClick={() => onShareCard(card)}
-              className="btn-ghost min-h-0 px-3 py-2 text-xs text-brand-muted hover:text-brand-text"
-              title={canNativeShare() ? "Share card" : "Copy card link"}
-            >
-              {canNativeShare() ? "Share" : "Copy link"}
-            </button>
-          )}
-          {resume?.resumeCode && !compact && (
-            <button
-              type="button"
+              className="menu-item"
               onClick={() => onShareResume(card, resume)}
-              className="btn-ghost min-h-0 border-amber-500/30 px-3 py-2 text-xs text-amber-200/90"
             >
               {canNativeShare() ? "Share resume" : "Copy resume"}
             </button>
-          )}
-        </div>
+          ) : null}
+        </OverflowMenu>
       </div>
     </article>
   );

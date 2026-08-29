@@ -5,11 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { calendarDaySeed, mindFingerprint, seededShuffle } from "@/lib/mind-fingerprint";
 import {
-  buildForgeFromHeatPath,
-  shouldOfferForgeFromHeat,
-  stashForgeHeatSeed,
-} from "@/lib/forge-from-heat";
-import {
   buildResumeChatPath,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
@@ -209,34 +204,6 @@ export function GalleryHeroReel({
   const resume = resumes[card.id];
   const continueHref = resume?.resumeCode ? buildResumeChatPath(resume) : null;
   const nick = firstName(card.displayName);
-  const dnaLabel =
-    resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
-  const offerForge =
-    !!resume &&
-    shouldOfferForgeFromHeat({
-      messageCount: resume.messageCount,
-      dnaTreeLabel: resume.dnaTreeLabel,
-      dnaTreeNodeId: resume.dnaTreeNodeId,
-      heatDepth: resume.heatDepth,
-    });
-  const forgeHeatCtx = offerForge && resume
-    ? {
-        characterId: card.id,
-        characterName: card.displayName,
-        baseModelId:
-          card.avatarBase ||
-          (card.id.startsWith("custom-") ? undefined : card.id),
-        dnaTreeLabel: resume.dnaTreeLabel,
-        dnaTreeNodeId: resume.dnaTreeNodeId,
-        heatDepth: resume.heatDepth,
-        heatChips: resume.heatChips,
-        recapLine: resume.recapLine,
-        messageCount: resume.messageCount,
-        isMine: card.mine === true,
-      }
-    : null;
-  const forgeHref =
-    forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -317,55 +284,25 @@ export function GalleryHeroReel({
             <p className="text-[10px] uppercase tracking-[0.35em] text-brand-accent">
               Naughty Syntax · Tonight&apos;s cast
             </p>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              {card.featured && (
-                <span className="rounded-full bg-brand-accent/90 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white">
-                  Featured
-                </span>
-              )}
-              {card.dedicatedPack && (
-                <span className="rounded-full border border-emerald-400/45 bg-emerald-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-50">
-                  4K pack
-                </span>
-              )}
-              {resume?.resumeCode && (
-                <span className="rounded-full border border-amber-400/50 bg-amber-500/20 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-50">
-                  {resume.heatDepth ? `Heat trail · ${resume.heatDepth}` : "Your chat"}
-                </span>
-              )}
-              {(resume?.dnaTreeLabel || resume?.dnaTreeNodeId) && (
-                <span className="rounded-full border border-violet-300/55 bg-violet-500/35 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-50 shadow-[0_0_14px_-2px_rgba(167,139,250,0.65)]">
-                  DNA · {resume.dnaTreeLabel || resume.dnaTreeNodeId}
-                </span>
-              )}
-              {mind && (
-                <span className="rounded-full border border-white/25 bg-brand-accent/25 px-2.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
-                  {resume?.mindTag || mind.tag}
-                </span>
-              )}
-              {vibe && (
-                <span className="rounded-full border border-white/20 bg-black/40 px-2.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur">
-                  {vibe}
-                </span>
-              )}
-            </div>
-            {resume?.heatChips && resume.heatChips.length > 0 && (
-              <p className="mt-2 line-clamp-1 text-[11px] text-amber-100/85">
-                Left at · {resume.heatChips.slice(0, 3).join(" · ")}
-              </p>
-            )}
-            {resume?.recapLine && (
-              <p className="mt-1 line-clamp-2 text-[12px] italic leading-snug text-white/75">
+            <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-white/70">
+              {resume?.resumeCode
+                ? resume.dnaTreeLabel || resume.dnaTreeNodeId
+                  ? `Your chat · ${resume.dnaTreeLabel || resume.dnaTreeNodeId}`
+                  : "Your chat"
+                : mind?.tag || vibe || (card.featured ? "Featured" : "Tonight")}
+            </p>
+            {resume?.recapLine ? (
+              <p className="mt-2 line-clamp-2 text-[13px] italic leading-snug text-white/75">
                 “{resume.recapLine}”
               </p>
-            )}
+            ) : null}
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {card.displayName}
             </h2>
             <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/80 sm:mt-3 sm:line-clamp-3 sm:text-base">
               {mind?.blurb || card.teaser}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2 sm:mt-5 sm:gap-3">
+            <div className="mt-4 flex items-center gap-2 sm:mt-5 sm:gap-3">
               {continueHref ? (
                 <Link
                   href={continueHref}
@@ -375,49 +312,19 @@ export function GalleryHeroReel({
                       : "ring-amber-400/50"
                   }`}
                 >
-                  {resume?.dnaTreeLabel || resume?.dnaTreeNodeId
-                    ? `DNA power · ${nick}`
-                    : `Continue with ${nick}`}
+                  Continue with {nick}
                 </Link>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary min-h-0 px-5 py-2.5 text-sm">
                   Chat with {nick}
                 </Link>
               )}
-              {forgeHref && forgeHeatCtx && (
-                <Link
-                  href={forgeHref}
-                  className="btn-ghost min-h-0 border-violet-400/55 bg-violet-500/20 px-4 py-2.5 text-sm font-semibold text-violet-50 ring-1 ring-violet-300/35"
-                  title="Mint private DNA from this climb"
-                  onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
-                >
-                  {dnaLabel
-                    ? `Forge this DNA · ${dnaLabel}`
-                    : "Forge this heat"}
-                </Link>
-              )}
               <Link
                 href={card.cardPath}
-                className="btn-ghost min-h-0 border-white/20 bg-black/30 px-5 py-2.5 text-sm text-white hover:bg-black/50"
+                className="btn-ghost min-h-0 border-white/20 bg-black/30 px-4 py-2.5 text-sm text-white hover:bg-black/50"
               >
-                Full card
+                Card
               </Link>
-              {card.edgePacePath && (
-                <Link
-                  href={card.edgePacePath}
-                  className="btn-ghost min-h-0 border-rose-400/35 bg-black/30 px-5 py-2.5 text-sm text-rose-100 hover:bg-black/50"
-                >
-                  Edge Pace
-                </Link>
-              )}
-              {continueHref && (
-                <Link
-                  href={card.ctaPath}
-                  className="btn-ghost min-h-0 border-white/15 bg-black/25 px-4 py-2.5 text-xs text-white/80 hover:bg-black/45"
-                >
-                  New chat
-                </Link>
-              )}
             </div>
           </div>
         </div>

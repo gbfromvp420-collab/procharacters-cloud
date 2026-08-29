@@ -10,19 +10,26 @@ import {
   isResumeExpiryUrgent,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
+import { OverflowMenu } from "./OverflowMenu";
 
 export type SiteChromeActive = "gallery" | "chat" | "account" | "card" | "studio";
 
+const NAV: Array<{ key: SiteChromeActive | "home"; href: string; label: string; signedIn?: boolean }> = [
+  { key: "gallery", href: "/", label: "Gallery" },
+  { key: "chat", href: "/chat", label: "Chat" },
+  { key: "studio", href: "/models/studio", label: "Studio", signedIn: true },
+  { key: "account", href: "/account", label: "Account" },
+];
+
 /**
- * Sticky product chrome — same return path on every surface.
- * Continue when a resume exists; My models when signed in.
+ * Slim product chrome — title + one continue CTA + a short nav.
+ * Secondary extras stay in More so the bar never wraps over the page.
  */
 export function SiteChrome({
   active,
   title,
   subtitle,
   className = "",
-  /** Extra controls on the right (chat copy-notice, etc.) */
   trailing,
 }: {
   active: SiteChromeActive;
@@ -40,7 +47,6 @@ export function SiteChrome({
     setResume(getMostRecentResume());
   }, [active]);
 
-  // Re-check resume when tab regains focus (other tab may have chatted)
   useEffect(() => {
     const onFocus = () => setResume(getMostRecentResume());
     window.addEventListener("focus", onFocus);
@@ -59,104 +65,97 @@ export function SiteChrome({
     resume?.characterId?.split("-")[0] ||
     null;
 
-  const linkClass = (key: SiteChromeActive) =>
-    `btn-ghost min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-      active === key ? "border-brand-accent/60 text-brand-accent" : ""
-    }`;
+  const links = NAV.filter((item) => !item.signedIn || !!handle);
+
+  const navLink = (item: (typeof NAV)[number], compact = false) => {
+    const isActive = active === item.key;
+    return (
+      <Link
+        key={item.key}
+        href={item.href}
+        className={`btn-nav ${isActive ? "btn-nav-active" : ""} ${compact ? "px-2" : ""}`}
+        aria-current={isActive ? "page" : undefined}
+      >
+        {item.label}
+      </Link>
+    );
+  };
 
   return (
-    <div
-      className={`sticky top-0 z-40 border-b border-brand-border/70 bg-brand-bg/90 backdrop-blur-xl ${className}`}
+    <header
+      className={`sticky top-0 z-40 border-b border-brand-border/70 bg-brand-bg/92 backdrop-blur-xl ${className}`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
-        <div className="min-w-0">
-          <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Naughty Syntax</p>
-          <p className="truncate text-sm font-semibold text-brand-text sm:text-base">
+      <div className="mx-auto flex h-[3.25rem] max-w-6xl items-center gap-3 px-3 sm:h-[3.5rem] sm:px-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] uppercase tracking-[0.28em] text-brand-accent">Naughty Syntax</p>
+          <p className="truncate text-sm font-semibold leading-tight text-brand-text">
             {title}
             {handle ? (
-              <span className="ml-2 text-xs font-normal text-brand-muted">· @{handle}</span>
+              <span className="ml-1.5 hidden font-normal text-brand-muted sm:inline">
+                · @{handle}
+              </span>
             ) : null}
           </p>
-          {subtitle ? (
-            <p className="mt-0.5 hidden truncate text-[10px] text-brand-muted sm:block">
-              {subtitle}
-            </p>
-          ) : null}
+          {subtitle ? <span className="sr-only">{subtitle}</span> : null}
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
-          {trailing}
-          <nav className="flex flex-wrap items-center gap-1.5 sm:gap-2" aria-label="Primary">
-            <Link href="/" className={linkClass("gallery")} aria-current={active === "gallery" ? "page" : undefined}>
-              Gallery
-            </Link>
-            <Link
-              href="/chat"
-              className={linkClass("chat")}
-              aria-current={active === "chat" ? "page" : undefined}
-            >
-              Chat
-            </Link>
-            {handle ? (
-              <>
-                <Link
-                  href="/models/studio"
-                  className={`btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm ${
-                    active === "studio" ? "border-violet-300/70 text-violet-50" : ""
-                  }`}
-                  title="My Models Studio — create & edit"
-                  aria-current={active === "studio" ? "page" : undefined}
-                >
-                  Studio
-                </Link>
-                <Link
-                  href="/account#my-models"
-                  className="btn-ghost min-h-0 border-violet-400/35 px-2.5 py-1.5 text-xs text-violet-100 sm:px-3 sm:text-sm"
-                  title="Private My Characters hub"
-                >
-                  Models
-                </Link>
-              </>
-            ) : null}
-            <Link
-              href="/account"
-              className={linkClass("account")}
-              aria-current={active === "account" ? "page" : undefined}
-            >
-              Account
-            </Link>
-            {continueHref ? (
+        <div className="hidden min-w-0 items-center gap-1.5 sm:flex">{trailing}</div>
+
+        <nav className="hidden items-center gap-0.5 md:flex" aria-label="Primary">
+          {links.map((item) => navLink(item))}
+        </nav>
+
+        {continueHref ? (
+          <Link
+            href={continueHref}
+            className={`btn-primary min-h-0 shrink-0 px-3 py-1.5 text-xs sm:px-3.5 sm:text-sm ${
+              urgent
+                ? "ring-2 ring-rose-400/55"
+                : dnaPower
+                  ? "ring-1 ring-violet-400/55"
+                  : ""
+            }`}
+            title={
+              urgent
+                ? "Resume expiring soon — reclaim"
+                : dnaPower
+                  ? "DNA power reclaim · Edge Pace + heat"
+                  : "Continue last chat"
+            }
+          >
+            {urgent ? "Reclaim" : dnaPower ? "DNA" : "Continue"}
+            {nick ? ` · ${nick}` : ""}
+          </Link>
+        ) : null}
+
+        <div className="md:hidden">
+          <OverflowMenu
+            label="Menu"
+            triggerClassName="btn-ghost min-h-0 px-2.5 py-1.5 text-xs"
+          >
+            {links.map((item) => (
               <Link
-                href={continueHref}
-                className={`btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm ${
-                  urgent
-                    ? "ring-2 ring-rose-400/55 animate-pulse"
-                    : dnaPower
-                      ? "ring-1 ring-violet-400/55"
-                      : ""
-                }`}
-                title={
-                  urgent
-                    ? "Resume expiring soon — reclaim"
-                    : dnaPower
-                      ? "DNA power reclaim · Edge Pace + heat"
-                      : "Continue last chat"
-                }
+                key={item.key}
+                href={item.href}
+                className={`menu-item ${active === item.key ? "text-brand-accent" : ""}`}
+                aria-current={active === item.key ? "page" : undefined}
               >
-                {urgent ? "Reclaim" : dnaPower ? "DNA power" : "Continue"}
+                {item.label}
+              </Link>
+            ))}
+            {continueHref ? (
+              <Link href={continueHref} className="menu-item text-brand-accent">
+                {urgent ? "Reclaim" : "Continue"}
                 {nick ? ` · ${nick}` : ""}
               </Link>
-            ) : active !== "chat" ? (
-              <Link
-                href="/chat"
-                className="btn-primary min-h-0 px-2.5 py-1.5 text-xs sm:px-3 sm:text-sm"
-              >
+            ) : (
+              <Link href="/chat" className="menu-item">
                 Live chat
               </Link>
-            ) : null}
-          </nav>
+            )}
+          </OverflowMenu>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

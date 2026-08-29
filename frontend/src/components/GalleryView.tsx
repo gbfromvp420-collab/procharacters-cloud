@@ -18,7 +18,6 @@ import {
 } from "@/lib/resume-cache";
 import {
   buildResumeCodeShareUrl,
-  canNativeShare,
   shareOrCopyUrl,
   shareUrlResultLabel,
 } from "@/lib/share-links";
@@ -243,10 +242,6 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     if (!continueTarget?.resumeCode) return null;
     return buildResumeChatPath(continueTarget);
   }, [continueTarget]);
-  const continueUrgent = useMemo(
-    () => isResumeExpiryUrgent(continueTarget?.resumeExpiresAt),
-    [continueTarget?.resumeExpiresAt],
-  );
 
   const counts = useMemo(
     () => ({
@@ -425,47 +420,23 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             (r) => !!(r?.dnaTreeLabel || r?.dnaTreeNodeId),
           )}
         />
-        <header className="mb-5 animate-fade-in sm:mb-6">
-          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">Live character gallery</h1>
-          <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted">
-            {sort === "recent" || signedInHandle
-              ? "Your last chats first — then the rest of the catalog."
-              : "Tonight’s cast up top — mind fingerprints on every tile, then the full roster."}
-            {resumeCount > 0 ? " Amber codes are saved chats." : signedInHandle ? " Chat while signed in for multi-device codes." : " Sign in to sync resumes."}
-            {" Search minds too (e.g. post-set, shy heat, brat)."}
+        <header className="mb-6 animate-fade-in sm:mb-8">
+          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">
+            Live gallery
+          </h1>
+          <p className="mt-3 max-w-lg text-sm leading-relaxed text-brand-muted">
+            {resumeCount > 0
+              ? "Pick up a saved chat, or meet someone new."
+              : "Tonight’s cast. Tap a face to start."}
           </p>
-          {notice && <p className="mt-2 text-xs font-medium text-brand-accent" role="status">{notice}</p>}
+          {notice && (
+            <p className="mt-2 text-xs font-medium text-brand-accent" role="status">
+              {notice}
+            </p>
+          )}
         </header>
 
-        <GalleryLiveStrip
-          characters={catalog}
-          resumeCount={resumeCount}
-          onPacks={() => {
-            setFilter("packs");
-            setSort("featured");
-            setQuery("");
-          }}
-          onPackLane={(lane) => {
-            setFilter(lane === "01" ? "pack01" : lane === "02" ? "pack02" : "pack03");
-            setSort("featured");
-            setQuery("");
-          }}
-          onMine={() => {
-            setFilter("mine");
-            setSort("recent");
-            setQuery("");
-          }}
-          onOwned={() => {
-            setFilter("owned");
-            setSort("recent");
-            setQuery("");
-          }}
-          onFeatured={() => {
-            setFilter("featured");
-            setSort("featured");
-            setQuery("");
-          }}
-        />
+        <GalleryLiveStrip characters={catalog} resumeCount={resumeCount} />
 
         {/* Hero reel only on main browse (not “my chats” / search clutter) */}
         {filter === "all" && !query.trim() && (
@@ -481,16 +452,13 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           />
         )}
 
-        {showFeaturedStrip && (
+        {showFeaturedStrip && !continueTarget && (
           <section className="mb-8 sm:mb-10">
             <div className="mb-3 flex items-end justify-between gap-3">
               <div>
                 <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Spotlight</p>
                 <h2 className="text-base font-semibold text-brand-text sm:text-lg">
                   Featured
-                  <span className="ml-2 text-xs font-normal text-brand-muted">
-                    · swipe · live packs
-                  </span>
                 </h2>
               </div>
               <button type="button" onClick={() => setFilter("featured")} className="min-h-touch text-xs text-brand-muted hover:text-brand-accent">View all →</button>
@@ -538,85 +506,87 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           </section>
         )}
 
-        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-5 space-y-3 border-b border-brand-border/50 bg-brand-bg/90 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name, mind, energy, tags…" enterKeyHint="search" autoComplete="off" className="field min-h-touch flex-1" />
-            <label className="flex min-h-touch items-center gap-2 text-xs text-brand-muted">
+        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-6 space-y-2.5 border-b border-brand-border/40 bg-brand-bg/92 px-4 py-2.5 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+          <div className="flex items-center gap-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search minds…"
+              enterKeyHint="search"
+              autoComplete="off"
+              className="field h-10 min-h-0 flex-1 py-0"
+            />
+            <label className="hidden items-center gap-2 text-xs text-brand-muted sm:flex">
               <span className="shrink-0">Sort</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value as SortMode)} className="field min-h-touch w-full sm:w-auto">
-                <option value="featured">Featured first</option>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as SortMode)}
+                className="field h-10 min-h-0 w-auto py-0"
+              >
+                <option value="featured">Featured</option>
                 <option value="recent">Last chat</option>
-                <option value="packs">4K packs first</option>
-                <option value="kind">Signature first</option>
-                <option value="name">Name A–Z</option>
-                <option value="energy">Energy</option>
+                <option value="name">A–Z</option>
               </select>
             </label>
           </div>
-          <div className="scroll-strip flex gap-2 overflow-x-auto pb-0.5">
+          <div className="scroll-strip flex gap-1.5 overflow-x-auto pb-0.5">
             {(
               [
                 ["all", "All"],
-                ["mine", "My chats"],
-                ["owned", "My models"],
+                ...(resumeCount > 0 ? ([["mine", "My chats"]] as const) : []),
+                ...(signedInHandle || counts.owned > 0
+                  ? ([["owned", "My models"]] as const)
+                  : []),
                 ["featured", "Featured"],
-                ["pack01", "Pack 01"],
-                ["pack02", "Pack 02"],
-                ["pack03", "Pack 03"],
-                ["packs", "4K packs"],
-                ["default", "Signature"],
-                ["custom", "Custom"],
+                ["packs", "Packs"],
               ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key)}
-                className={`chip ${filter === key ? "chip-active" : "chip-idle"} ${
-                  key === "mine" && counts.mine > 0
-                    ? urgentMineCount > 0
-                      ? "border-rose-400/50 text-rose-100"
-                      : "border-amber-500/40 text-amber-100/90"
-                    : key === "owned" && counts.owned > 0
-                      ? "border-violet-400/45 text-violet-100/90"
-                    : key === "packs" || key === "pack01" || key === "pack02" || key === "pack03"
-                      ? "border-emerald-400/35 text-emerald-100/90"
-                      : ""
-                }`}
-              >
-                {label}
-                <span className="ml-1 opacity-70">({counts[key]})</span>
-                {key === "mine" && urgentMineCount > 0 && (
-                  <span className="ml-1 rounded-full bg-rose-500/30 px-1.5 py-0.5 text-[9px] font-semibold text-rose-50">
-                    {urgentMineCount} urgent
+            ).map(([key, label]) => {
+              const packOn = key === "packs" && (filter === "packs" || filter === "pack01" || filter === "pack02" || filter === "pack03");
+              const on = filter === key || packOn;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  className={`chip ${on ? "chip-active" : "chip-idle"}`}
+                >
+                  {label}
+                  <span className="ml-1 opacity-60">
+                    {key === "packs" ? counts.packs : counts[key]}
                   </span>
-                )}
-              </button>
-            ))}
+                  {key === "mine" && urgentMineCount > 0 ? (
+                    <span className="ml-1 text-rose-200">· {urgentMineCount}</span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
+          {(filter === "packs" || filter === "pack01" || filter === "pack02" || filter === "pack03") && (
+            <div className="scroll-strip flex gap-1.5 overflow-x-auto">
+              {(
+                [
+                  ["packs", "All packs"],
+                  ["pack01", "Pack 01"],
+                  ["pack02", "Pack 02"],
+                  ["pack03", "Pack 03"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  className={`chip ${filter === key ? "chip-active" : "chip-idle"}`}
+                >
+                  {label}
+                  <span className="ml-1 opacity-60">{counts[key]}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {(query.trim() || filter !== "all") && (
-            <p className="text-[10px] text-brand-muted">
-              Showing{" "}
-              <span className="font-semibold text-brand-text">{visible.length}</span>{" "}
-              mind{visible.length === 1 ? "" : "s"}
+            <p className="text-[11px] text-brand-muted">
+              {visible.length} mind{visible.length === 1 ? "" : "s"}
               {query.trim() ? ` for “${query.trim()}”` : ""}
-              {filter !== "all"
-                ? ` · ${
-                    filter === "pack01"
-                      ? "Pack 01"
-                      : filter === "pack02"
-                        ? "Pack 02"
-                        : filter === "pack03"
-                          ? "Pack 03"
-                          : filter
-                  }`
-                : ""}
-              {filter === "mine" && urgentMineCount > 0 ? (
-                <span className="text-rose-200/90">
-                  {" "}
-                  · {urgentMineCount} need reclaim
-                </span>
-              ) : null}
             </p>
           )}
         </div>
@@ -785,7 +755,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 </h2>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 lg:gap-6">
               {visible.map((card) => (
                 <CharacterTile
                   key={card.id}
@@ -799,34 +769,9 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </div>
           </>
         )}
-        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 21+ · Procharacters.cloud / KGC Ventures</footer>
-      </div>
-
-      <div
-        className={`fixed inset-x-0 bottom-0 z-30 border-t bg-brand-bg/90 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden ${
-          continueUrgent
-            ? "border-rose-400/50 shadow-[0_-8px_28px_-12px_rgba(244,63,94,0.45)]"
-            : "border-brand-border/70"
-        }`}
-      >
-        <div className="mx-auto flex max-w-lg gap-2">
-          {continueHref ? (
-            <Link
-              href={continueHref}
-              className={`btn-primary flex-1 ${
-                continueUrgent ? "ring-2 ring-rose-400/55 animate-pulse" : ""
-              }`}
-            >
-              {continueUrgent ? "Reclaim" : "Continue"}
-              {continueCard?.displayName
-                ? ` · ${continueCard.displayName.split(" ")[0]}`
-                : ""}
-            </Link>
-          ) : (
-            <Link href="/chat" className="btn-primary flex-1">Open live chat</Link>
-          )}
-          <Link href="/account" className="btn-ghost flex-1">Account</Link>
-        </div>
+        <footer className="mt-14 pb-6 text-center text-xs text-brand-muted">
+          Uncensored 21+ · Procharacters.cloud / KGC Ventures
+        </footer>
       </div>
     </main>
   );

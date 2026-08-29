@@ -309,7 +309,7 @@ body {
   }
 
   .chip {
-    @apply inline-flex min-h-touch items-center whitespace-nowrap rounded-full border px-4 py-2 text-xs transition active:scale-[0.98];
+    @apply inline-flex h-8 items-center whitespace-nowrap rounded-full border px-3 text-[11px] font-medium transition active:scale-[0.98];
   }
 
   .chip-active {
@@ -320,12 +320,28 @@ body {
     @apply border-brand-border bg-brand-panel text-brand-muted hover:border-brand-accent/70 hover:text-brand-text;
   }
 
+  .tag {
+    @apply inline-flex items-center rounded-full border border-white/20 bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur;
+  }
+
+  .menu-item {
+    @apply flex w-full items-center px-3 py-2 text-left text-sm text-brand-text transition hover:bg-white/5;
+  }
+
   .btn-primary {
     @apply inline-flex min-h-touch items-center justify-center rounded-xl bg-brand-accent px-4 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:bg-brand-accentDim active:scale-[0.98];
   }
 
   .btn-ghost {
     @apply inline-flex min-h-touch items-center justify-center rounded-xl border border-brand-border px-4 py-2.5 text-sm text-brand-text transition hover:border-brand-accent active:scale-[0.98];
+  }
+
+  .btn-nav {
+    @apply inline-flex h-8 items-center justify-center rounded-lg px-2.5 text-xs text-brand-muted transition hover:bg-white/5 hover:text-brand-text sm:text-sm;
+  }
+
+  .btn-nav-active {
+    @apply bg-white/10 text-brand-text;
   }
 
   .field {
