@@ -217,6 +217,7 @@ export function AccountSettings() {
   const [jobPinned, setJobPinned] = useState(false);
   const [listReady, setListReady] = useState(false);
   const [signedOutMore, setSignedOutMore] = useState(false);
+  const [showOpenCode, setShowOpenCode] = useState(false);
 
   const EXPIRY_WARN_DAYS = 3;
 
@@ -2324,7 +2325,6 @@ export function AccountSettings() {
             ) : null}
 
             {accountJob === "chats" ? (
-            <>
             <section id="chats" className="scroll-mt-20 rounded-2xl border border-brand-border bg-brand-panel p-5">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
@@ -2333,6 +2333,13 @@ export function AccountSettings() {
                     Your taste
                   </Link>
                   <OverflowMenu label="More">
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={() => setShowOpenCode(true)}
+                    >
+                      Open resume code
+                    </button>
                     <label className={`menu-item cursor-pointer ${busy ? "opacity-50" : ""}`}>
                       Import JSON
                       <input
@@ -2433,6 +2440,36 @@ export function AccountSettings() {
                   </OverflowMenu>
                 </div>
               </div>
+
+              {showOpenCode ? (
+                <div className="mb-4 rounded-xl border border-brand-border/80 bg-brand-bg/40 px-3 py-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-brand-text">Open resume code</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowOpenCode(false)}
+                      className="text-[11px] text-brand-muted hover:text-brand-text"
+                    >
+                      Hide
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={resumeCode}
+                      onChange={(e) => setResumeCode(e.target.value.toUpperCase())}
+                      placeholder="AB3K9MPQ"
+                      className="flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void onOpenCode()}
+                      className="rounded-lg border border-brand-accent/50 px-4 py-2 text-sm"
+                    >
+                      Open
+                    </button>
+                  </div>
+                </div>
+              ) : null}
 
               {expiryWarning && (
                 <div
@@ -2656,26 +2693,6 @@ export function AccountSettings() {
                 </ul>
               )}
             </section>
-
-            <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
-              <h2 className="text-sm font-semibold text-brand-text">Open resume code</h2>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={resumeCode}
-                  onChange={(e) => setResumeCode(e.target.value.toUpperCase())}
-                  placeholder="AB3K9MPQ"
-                  className="flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
-                />
-                <button
-                  type="button"
-                  onClick={() => void onOpenCode()}
-                  className="rounded-lg border border-brand-accent/50 px-4 py-2 text-sm"
-                >
-                  Open
-                </button>
-              </div>
-            </section>
-            </>
             ) : null}
 
             {accountJob === "profile" ? (
