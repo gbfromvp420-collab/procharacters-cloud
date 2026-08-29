@@ -307,11 +307,11 @@ export function CharacterTile({
           aria-hidden
         />
       </div>
-      <div className={`flex items-start justify-between gap-2 ${compact ? "p-2.5" : "p-3"}`}>
-        <p className={`min-w-0 flex-1 text-xs leading-snug text-brand-muted ${compact ? "line-clamp-1" : "line-clamp-2"}`}>
+      <div className={`space-y-2.5 ${compact ? "p-2.5" : "p-3"}`}>
+        <p className={`text-xs leading-relaxed text-brand-muted ${compact ? "line-clamp-1" : "line-clamp-2"}`}>
           {mind?.blurb || card.teaser}
         </p>
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex items-center gap-2">
           {resume?.resumeCode ? (
             <Link
               href={buildResumeChatPath(resume)}

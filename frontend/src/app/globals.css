@@ -334,7 +334,7 @@ body {
   }
 
   .btn-nav-active {
-    @apply bg-white/8 text-brand-text;
+    @apply bg-white/10 text-brand-text;
   }
 
   .field {
@@ -350,7 +350,8 @@ body {
   }
 
   .more-menu-items > a,
-  .more-menu-items > button {
+  .more-menu-items > button,
+  .more-menu-items > label {
     @apply flex w-full items-center px-3 py-2 text-left text-xs text-brand-text no-underline transition hover:bg-brand-accent/10;
   }
 }
