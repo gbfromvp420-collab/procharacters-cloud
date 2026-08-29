@@ -4173,26 +4173,6 @@ export function ChatApp() {
                   (activeCharacterId ?? character).startsWith("custom-")
                 }
               />
-              {(status === "ready" ||
-                messages.length > 0 ||
-                (!!priorNotes && status !== "connecting")) && (
-                <SessionMemoryStrip
-                  priorNotes={priorNotes}
-                  sessionNotes={sessionNotes}
-                  onChipPick={
-                    status === "ready"
-                      ? (text) => {
-                          setInput((prev) => {
-                            const p = prev.trim();
-                            if (!p) return text;
-                            return `${p} ${text}`;
-                          });
-                          window.setTimeout(() => inputRef.current?.focus(), 40);
-                        }
-                      : undefined
-                  }
-                />
-              )}
               {/* Opening continuity before first message lands */}
               {messages.length === 0 &&
                 !isTyping &&
