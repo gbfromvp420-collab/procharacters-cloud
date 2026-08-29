@@ -2336,7 +2336,10 @@ export function AccountSettings() {
                     <button
                       type="button"
                       className="menu-item"
-                      onClick={() => setShowOpenCode(true)}
+                      onClick={() => {
+                        setResumeCode("");
+                        setShowOpenCode(true);
+                      }}
                     >
                       Open resume code
                     </button>
