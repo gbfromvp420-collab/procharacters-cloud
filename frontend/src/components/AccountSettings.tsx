@@ -56,6 +56,7 @@ import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import { SystemPulse } from "@/components/SystemPulse";
 import { SiteChrome } from "@/components/SiteChrome";
+import { MoreMenu } from "@/components/MoreMenu";
 import { PremiumUnlockCeremony } from "@/components/PremiumUnlockCeremony";
 import {
   collectExportCharacters,
@@ -157,6 +158,12 @@ export function AccountSettings() {
   } | null>(null);
 
   const EXPIRY_WARN_DAYS = 3;
+  const [pane, setPane] = useState<"you" | "chats" | "plan">("chats");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.location.hash === "#my-models") setPane("plan");
+  }, []);
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -1368,9 +1375,14 @@ export function AccountSettings() {
 
         <InstallAppHint className="mb-4" />
 
-        <div className="mb-4">
-          <SystemPulse />
-        </div>
+        <details className="mb-4 rounded-xl border border-brand-border/70 bg-brand-panel/80 px-3 py-2">
+          <summary className="cursor-pointer text-[11px] font-medium text-brand-muted">
+            System pulse
+          </summary>
+          <div className="mt-2">
+            <SystemPulse />
+          </div>
+        </details>
 
         {(error || notice) && (
           <div
@@ -1524,6 +1536,34 @@ export function AccountSettings() {
               </div>
             </section>
 
+            <nav
+              className="flex gap-1 rounded-xl border border-brand-border/80 bg-brand-panel/80 p-1"
+              aria-label="Account"
+            >
+              {(
+                [
+                  ["chats", "Chats"],
+                  ["plan", "Plan"],
+                  ["you", "You"],
+                ] as const
+              ).map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setPane(id)}
+                  className={`min-h-0 flex-1 rounded-lg px-3 py-2 text-xs font-medium ${
+                    pane === id
+                      ? "bg-brand-accent text-white"
+                      : "text-brand-muted hover:text-brand-text"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+
+            {pane === "plan" && (
+            <>
             <section
               id="my-models"
               className="scroll-mt-20 rounded-2xl border border-violet-400/35 bg-violet-500/5 p-5"
@@ -1981,7 +2021,11 @@ export function AccountSettings() {
                 </p>
               )}
             </section>
+            </>
+            )}
 
+            {pane === "you" && (
+            <>
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
               <h2 className="text-sm font-semibold text-brand-text">
                 {email ? "Change linked email" : "Link email"}
@@ -2054,7 +2098,11 @@ export function AccountSettings() {
                 </button>
               </div>
             </section>
+            </>
+            )}
 
+            {pane === "chats" && (
+            <>
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
@@ -2433,73 +2481,64 @@ export function AccountSettings() {
                           {dnaPower ? `DNA power · ${nick}` : `Continue · ${nick}`}
                         </Link>
                       )}
+                      <MoreMenu align="right">
                       <button
                         type="button"
+                        role="menuitem"
                         disabled={busy}
                         onClick={() => void onExportSession(s.sessionId, "json")}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Download this chat as JSON"
                       >
-                        JSON
+                        Export JSON
                       </button>
                       <button
                         type="button"
+                        role="menuitem"
                         disabled={busy}
                         onClick={() => void onExportSession(s.sessionId, "md")}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title="Download this chat as Markdown"
                       >
-                        MD
+                        Export Markdown
                       </button>
                       <button
                         type="button"
+                        role="menuitem"
                         disabled={busy}
                         onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
-                        className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share Markdown via system share sheet"
-                            : "Copy Markdown transcript to clipboard"
-                        }
                       >
-                        {canNativeShare() ? "Share MD" : "Copy MD"}
+                        {canNativeShare() ? "Share Markdown" : "Copy Markdown"}
                       </button>
                       {s.resumeCode && (
                         <>
                           <button
                             type="button"
+                            role="menuitem"
                             onClick={() =>
                               void copyResume(s.resumeCode!, s.characterName, s.characterId)
                             }
-                            className="text-brand-muted hover:text-brand-accent"
                           >
                             {canNativeShare() ? "Share code" : "Copy code"}
                           </button>
                           <button
                             type="button"
+                            role="menuitem"
                             onClick={() => setPrintCard(s)}
-                            className="text-amber-200/90 hover:text-amber-100"
-                            title="QR code + print-friendly resume card"
                           >
                             QR / Print
                           </button>
                           <button
                             type="button"
+                            role="menuitem"
                             disabled={busy}
                             onClick={() => void onDownloadOneResumeMd(s)}
-                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                            title="Download this resume as a .md snippet"
                           >
-                            .md
+                            Resume .md
                           </button>
                           <button
                             type="button"
+                            role="menuitem"
                             disabled={busy}
                             onClick={() =>
                               void onRefreshOneResume(s.sessionId, s.characterName)
                             }
-                            className="text-brand-muted hover:text-brand-accent disabled:opacity-50"
-                            title="Mint a new resume code (old link stops working)"
                           >
                             New code
                           </button>
@@ -2507,18 +2546,23 @@ export function AccountSettings() {
                       )}
                       <button
                         type="button"
+                        role="menuitem"
                         onClick={() => void onDeleteSession(s.sessionId)}
-                        className="text-red-300/80 hover:text-red-200"
                       >
-                        Delete
+                        Delete chat
                       </button>
+                      </MoreMenu>
                     </li>
                     );
                   })}
                 </ul>
               )}
             </section>
+            </>
+            )}
 
+            {pane === "you" && (
+            <>
             <section className="rounded-2xl border border-red-500/30 bg-red-500/5 p-5">
               <h2 className="text-sm font-semibold text-red-200">Danger zone</h2>
               <p className="mt-1 text-xs text-brand-muted">
@@ -2561,6 +2605,8 @@ export function AccountSettings() {
                 </button>
               </div>
             </section>
+            </>
+            )}
           </div>
         )}
       </div>
