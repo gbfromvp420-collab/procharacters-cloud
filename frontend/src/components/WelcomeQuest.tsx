@@ -59,11 +59,16 @@ const PRESET_STEPS: Step[] = [
   "scene",
 ];
 
+const SITE =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+  "https://procharacters-web-production-7288.up.railway.app";
+
 function poster(card: CharacterCard): string {
   const p = card.posterClip;
   if (!p) return "";
-  if (p.startsWith("http") || p.startsWith("/")) return p;
-  return `/${p}`;
+  if (p.startsWith("http")) return p;
+  const path = p.startsWith("/") ? p : `/${p}`;
+  return `${SITE}${path}`;
 }
 
 export function WelcomeQuest() {
@@ -325,11 +330,13 @@ export function WelcomeQuest() {
                     >
                       <div className="aspect-[3/4] bg-black">
                         {poster(card) ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
+                          <video
                             src={poster(card)}
-                            alt=""
                             className="h-full w-full object-cover"
+                            muted
+                            loop
+                            playsInline
+                            autoPlay
                           />
                         ) : null}
                       </div>
