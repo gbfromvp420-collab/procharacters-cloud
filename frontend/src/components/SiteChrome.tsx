@@ -143,6 +143,11 @@ export function SiteChrome({
                 {item.label}
               </Link>
             ))}
+            {handle ? (
+              <Link href="/welcome" className="menu-item">
+                Your taste
+              </Link>
+            ) : null}
             {continueHref ? (
               <Link href={continueHref} className="menu-item text-brand-accent">
                 {urgent ? "Reclaim" : "Continue"}

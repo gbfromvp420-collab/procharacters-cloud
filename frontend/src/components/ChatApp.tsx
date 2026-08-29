@@ -3211,25 +3211,15 @@ export function ChatApp() {
                   Hide · more chat
                 </button>
               </div>
-              <div className="flex flex-row gap-2 sm:gap-3 lg:flex-col">
-                <div className="w-[42%] shrink-0 sm:w-1/3 lg:w-full">
-                  <AvatarVideo
-                    avatar={avatarState}
-                    characterName={characterName}
-                    characterId={activeCharacterId ?? character}
-                    dnaTreeNodeId={modeState?.dnaTreeNodeId}
-                    dnaTreeLabel={modeState?.dnaTreeLabel}
-                    compact
-                  />
-                </div>
-                <div className="min-w-0 flex-1 space-y-2 lg:space-y-3">
-                  <AvatarPanel
-                    characterName={characterName}
-                    characterId={activeCharacterId}
-                    avatar={avatarState}
-                    status={status}
-                  />
-                </div>
+              <div className="w-full">
+                <AvatarVideo
+                  avatar={avatarState}
+                  characterName={characterName}
+                  characterId={activeCharacterId ?? character}
+                  dnaTreeNodeId={modeState?.dnaTreeNodeId}
+                  dnaTreeLabel={modeState?.dnaTreeLabel}
+                  compact
+                />
               </div>
             </div>
           )}
@@ -3300,6 +3290,8 @@ export function ChatApp() {
               />
             )}
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+              {!sessionActive ? (
+              <>
               <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex min-w-0 items-center gap-2">
               <label className="shrink-0 text-xs text-brand-muted sm:text-sm" htmlFor="character">
@@ -3313,7 +3305,7 @@ export function ChatApp() {
                   setCharacter(next);
                   replaceCharacterInUrl(next);
                 }}
-                disabled={status === "connecting" || restarting}
+                disabled={restarting}
                 className="field min-h-touch min-w-0 flex-1 text-sm disabled:opacity-50"
               >
                 {(() => {
@@ -3372,7 +3364,6 @@ export function ChatApp() {
               )}
               </div>
 
-              {!sessionActive && (
                 <div className="flex flex-wrap items-center gap-2 text-[11px] text-brand-muted">
                   <label className="flex items-center gap-1.5">
                     Mode
@@ -3448,7 +3439,8 @@ export function ChatApp() {
                     </>
                   )}
                 </div>
-              )}
+              </>
+              ) : null}
 
               <div className="flex items-center gap-2">
               {!sessionActive ? (
@@ -4051,63 +4043,17 @@ export function ChatApp() {
                 : "min-h-[min(52dvh,420px)] sm:min-h-[380px]"
             }`}
           >
-            <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-1.5 sm:px-4">
-              <div className="flex min-w-0 flex-wrap items-center gap-2">
-                <p className="text-[11px] text-brand-muted">
-                  {messages.length > 0
-                    ? `${messages.length} message${messages.length === 1 ? "" : "s"}`
-                    : "Transcript"}
-                  {avatarCollapsed ? " · avatar hidden" : ""}
-                  {headerMind ? ` · ${headerMind.tag}` : ""}
-                </p>
-                {status === "ready" && (
-                  <SessionDepthMeter
-                    messageCount={messages.length}
-                    liveSeconds={liveSeconds}
-                  />
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {bandFlash && (
-                  <span
-                    className={`animate-fade-in rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${energyBandBadgeClass(bandFlash)}`}
-                  >
-                    {energyBandLabel(bandFlash)} heat
-                  </span>
-                )}
-                {status === "ready" && messages.length > 0 && sessionId && wsToken && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => void exportChat("md")}
-                      className="text-[11px] text-brand-muted hover:text-brand-accent"
-                      title="Download this heat as Markdown"
-                    >
-                      Export MD
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void shareChatMarkdown()}
-                      className="text-[11px] text-brand-muted hover:text-brand-accent"
-                      title="Share a heat snippet"
-                    >
-                      Share heat
-                    </button>
-                  </>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
-                  className="text-[11px] text-brand-accent hover:underline"
-                  title={
-                    avatarCollapsed
-                      ? "Show avatar video and status"
-                      : "Hide avatar for more chat space"
-                  }
-                >
-                  {avatarCollapsed ? "Show avatar" : "Hide avatar"}
-                </button>
-              </div>
+            <div className="flex items-center justify-between gap-2 border-b border-brand-border/60 px-3 py-2 sm:px-4">
+              <p className="truncate text-sm font-medium text-brand-text">
+                {characterName ?? headerCharacterName ?? "Chat"}
+              </p>
+              <button
+                type="button"
+                onClick={() => setAvatarCollapsedPersist(!avatarCollapsed)}
+                className="shrink-0 text-[11px] text-brand-muted hover:text-brand-text"
+              >
+                {avatarCollapsed ? "Show face" : "Hide face"}
+              </button>
             </div>
             <div
               ref={messagesScrollRef}
@@ -4149,14 +4095,6 @@ export function ChatApp() {
                         </span>
                       )}
                     </div>
-                    {mind && (
-                      <p className="mt-1 text-brand-muted">{mind.blurb}</p>
-                    )}
-                    {dnaLive && dnaLevel >= 2 && (
-                      <p className="mt-1 text-[10px] text-violet-100/85">
-                        Stay in the climb — Fire chips and afterglow keep you on this node.
-                      </p>
-                    )}
                   </div>
                 );
               })()}
@@ -4485,23 +4423,6 @@ export function ChatApp() {
                     : null
                 }
               />
-              {status === "ready" && (
-                <HeatWhisperStrip
-                  characterId={activeCharacterId ?? character}
-                  modeState={modeState}
-                  tickOffset={modeTick}
-                  canFire={!sending && !isTyping}
-                  onSeed={(text) => {
-                    setInput((prev) => {
-                      const p = prev.trim();
-                      if (!p) return text;
-                      return `${p} ${text}`;
-                    });
-                    window.setTimeout(() => inputRef.current?.focus(), 40);
-                  }}
-                  onFire={(text) => sendMessage(text)}
-                />
-              )}
               {status === "ready" &&
                 lastAssistantBeat &&
                 messages.length >= 2 &&

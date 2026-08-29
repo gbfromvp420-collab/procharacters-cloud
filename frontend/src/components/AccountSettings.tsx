@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   deleteAccount,
@@ -56,6 +57,8 @@ import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import { SystemPulse } from "@/components/SystemPulse";
 import { SiteChrome } from "@/components/SiteChrome";
+import { OverflowMenu } from "@/components/OverflowMenu";
+import { needsPersona } from "@/lib/user-persona";
 import { PremiumUnlockCeremony } from "@/components/PremiumUnlockCeremony";
 import {
   collectExportCharacters,
@@ -93,6 +96,7 @@ import {
 } from "@/lib/web-push-client";
 
 export function AccountSettings() {
+  const router = useRouter();
   const [account, setAccount] = useState<StoredAccount | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [hasPassphrase, setHasPassphrase] = useState(false);
@@ -477,6 +481,9 @@ export function AccountSettings() {
     setMagicDevLink(null);
     await refresh(next.token);
     flash(label);
+    if (needsPersona()) {
+      router.push("/welcome");
+    }
   };
 
   const onRegister = async () => {
@@ -2054,133 +2061,113 @@ export function AccountSettings() {
             </section>
 
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div className="mb-4 flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="cursor-pointer text-xs text-brand-text hover:text-brand-accent">
-                    <span className={busy ? "opacity-50" : ""}>Import JSON</span>
-                    <input
-                      type="file"
-                      accept="application/json,.json"
-                      className="hidden"
-                      disabled={busy}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0] ?? null;
-                        e.target.value = "";
-                        void onImportFile(f);
-                      }}
-                    />
-                  </label>
-                  {sessions.length > 0 && (
-                    <>
-                      <button
-                        type="button"
+                <div className="flex items-center gap-2">
+                  <Link href="/welcome" className="text-xs text-brand-accent hover:underline">
+                    Your taste
+                  </Link>
+                  <OverflowMenu label="More">
+                    <label className={`menu-item cursor-pointer ${busy ? "opacity-50" : ""}`}>
+                      Import JSON
+                      <input
+                        type="file"
+                        accept="application/json,.json"
+                        className="hidden"
                         disabled={busy}
-                        onClick={() => void onExportAllSessions("json")}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Download all chats as one JSON file"
-                      >
-                        Export all JSON
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportAllSessions("md")}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Download all chats as one Markdown file"
-                      >
-                        Export all MD
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onShareAllMd()}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share all chats as Markdown via system sheet"
-                            : "Copy all chats as Markdown to clipboard"
-                        }
-                      >
-                        {canNativeShare() ? "Share all MD" : "Copy all MD"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || !sessions.some((s) => s.resumeCode)}
-                        onClick={() => void onShareAllResumeLinks()}
-                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share all resume links as Markdown"
-                            : "Copy all resume links as Markdown"
-                        }
-                      >
-                        {canNativeShare() ? "Share all resumes" : "Copy all resumes"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || !sessions.some((s) => s.resumeCode)}
-                        onClick={() => void onDownloadResumeLinksMd()}
-                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
-                        title="Download all resume links as a .md file"
-                      >
-                        Download resumes.md
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || !sessions.some((s) => s.resumeCode) || !email}
-                        onClick={() => void onEmailResumeLinks()}
-                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
-                        title={
-                          email
-                            ? `Email resume links to ${email}`
-                            : "Link an email first to use this"
-                        }
-                      >
-                        Email resumes
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || sessions.length === 0}
-                        onClick={() => void onRefreshExpiringResumes()}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Mint new codes only for expired / soon-to-expire chats"
-                      >
-                        Refresh expiring
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || sessions.length === 0}
-                        onClick={() => void onRefreshAllResumes()}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Mint new resume codes for every chat (invalidates old links)"
-                      >
-                        Refresh all codes
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onWipeSessions()}
-                        className="text-xs text-red-300 hover:underline disabled:opacity-50"
-                      >
-                        Wipe all
-                      </button>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => account && void refresh(account.token)}
-                    className="text-xs text-brand-accent hover:underline"
-                  >
-                    Refresh
-                  </button>
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          e.target.value = "";
+                          void onImportFile(f);
+                        }}
+                      />
+                    </label>
+                    {sessions.length > 0 ? (
+                      <>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportAllSessions("json")}
+                        >
+                          Export all JSON
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportAllSessions("md")}
+                        >
+                          Export all Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onShareAllMd()}
+                        >
+                          {canNativeShare() ? "Share all chats" : "Copy all chats"}
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy || !sessions.some((s) => s.resumeCode)}
+                          onClick={() => void onShareAllResumeLinks()}
+                        >
+                          Share resume links
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy || !sessions.some((s) => s.resumeCode)}
+                          onClick={() => void onDownloadResumeLinksMd()}
+                        >
+                          Download resumes
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy || !sessions.some((s) => s.resumeCode) || !email}
+                          onClick={() => void onEmailResumeLinks()}
+                        >
+                          Email resumes
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onRefreshExpiringResumes()}
+                        >
+                          Refresh expiring
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onRefreshAllResumes()}
+                        >
+                          Refresh all codes
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item text-rose-200"
+                          disabled={busy}
+                          onClick={() => void onWipeSessions()}
+                        >
+                          Wipe all
+                        </button>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={() => account && void refresh(account.token)}
+                    >
+                      Refresh list
+                    </button>
+                  </OverflowMenu>
                 </div>
               </div>
-              <p className="mb-3 text-[11px] text-brand-muted">
-                Import JSON runs a <strong>dry-run preview</strong> first (counts + remaps, no
-                writes). Confirm to restore chats as new sessions (up to 25). Missing customs can
-                be remapped to a live model.
-              </p>
 
               {expiryWarning && (
                 <div
