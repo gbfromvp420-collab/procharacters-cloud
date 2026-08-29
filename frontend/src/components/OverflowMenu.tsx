@@ -14,11 +14,13 @@ import {
 export function OverflowMenu({
   label = "More",
   align = "right",
+  drop = "down",
   triggerClassName,
   children,
 }: {
   label?: string;
   align?: "left" | "right";
+  drop?: "down" | "up";
   triggerClassName?: string;
   children: ReactNode;
 }) {
@@ -61,9 +63,9 @@ export function OverflowMenu({
         <div
           id={menuId}
           role="menu"
-          className={`absolute z-40 mt-1.5 min-w-[11.5rem] overflow-hidden rounded-xl border border-brand-border bg-brand-panel py-1 shadow-card ${
+          className={`absolute z-50 min-w-[11.5rem] overflow-hidden rounded-xl border border-brand-border bg-brand-panel py-1 shadow-card ${
             align === "left" ? "left-0" : "right-0"
-          }`}
+          } ${drop === "up" ? "bottom-full mb-1.5" : "mt-1.5 top-full"}`}
           onClick={() => setOpen(false)}
         >
           {children}

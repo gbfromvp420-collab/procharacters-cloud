@@ -75,6 +75,7 @@ import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
 import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
 import { SiteChrome } from "@/components/SiteChrome";
+import { OverflowMenu } from "@/components/OverflowMenu";
 import {
   collectExportCharacters,
   partitionCharacters,
@@ -3449,7 +3450,7 @@ export function ChatApp() {
                 </div>
               )}
 
-              <div className="scroll-strip -mx-0.5 flex gap-2 overflow-x-auto px-0.5 pb-0.5">
+              <div className="flex items-center gap-2">
               {!sessionActive ? (
                 <>
                   <button
@@ -3471,102 +3472,78 @@ export function ChatApp() {
                       Resume
                     </button>
                   )}
-                  <label
-                    className={`btn-ghost min-h-0 shrink-0 cursor-pointer px-3 py-2 text-xs sm:text-sm ${
-                      importBusy ? "opacity-50" : ""
-                    }`}
-                    title="Preview then restore exported chat JSON"
-                  >
-                    {importBusy ? "…" : "Import"}
-                    <input
-                      type="file"
-                      accept="application/json,.json"
-                      className="hidden"
-                      disabled={importBusy}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0] ?? null;
-                        e.target.value = "";
-                        void importChatFromFile(f);
-                      }}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (showCreate) {
-                        setShowCreate(false);
-                        resetCustomForm();
-                      } else {
-                        openCreateForm();
-                      }
-                    }}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                  >
-                    {showCreate ? "Close" : "Create"}
-                  </button>
-                  {characters.some(
-                    (c) => c.id === character && c.kind === "custom" && c.mine !== false,
-                  ) &&
-                    !sessionActive && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => openEditCustom()}
-                        className="btn-ghost min-h-0 shrink-0 border-violet-400/40 px-3 py-2 text-xs text-violet-100 sm:text-sm"
-                        title="Edit identity, vibe, phrases, scenes"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void handleDuplicateCustom()}
-                        disabled={creating}
-                        className="btn-ghost min-h-0 shrink-0 border-violet-400/30 px-3 py-2 text-xs text-violet-100/90 sm:text-sm disabled:opacity-50"
-                        title="Clone this private model (uses one cap slot)"
-                      >
-                        {creating ? "…" : "Duplicate"}
-                      </button>
-                    </>
-                  )}
-                  {characters.some((c) => c.id === character && c.kind === "custom") && (
+                  <OverflowMenu label="More">
+                    <label
+                      className={`menu-item cursor-pointer ${importBusy ? "opacity-50" : ""}`}
+                      title="Preview then restore exported chat JSON"
+                    >
+                      {importBusy ? "…" : "Import JSON"}
+                      <input
+                        type="file"
+                        accept="application/json,.json"
+                        className="hidden"
+                        disabled={importBusy}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          e.target.value = "";
+                          void importChatFromFile(f);
+                        }}
+                      />
+                    </label>
                     <button
                       type="button"
-                      onClick={handleDeleteCustom}
-                      className="btn-ghost min-h-0 shrink-0 border-red-500/40 px-3 py-2 text-xs text-red-300 sm:text-sm"
+                      className="menu-item"
+                      onClick={() => {
+                        if (showCreate) {
+                          setShowCreate(false);
+                          resetCustomForm();
+                        } else {
+                          openCreateForm();
+                        }
+                      }}
                     >
-                      Delete
+                      {showCreate ? "Close create" : "Create model"}
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => void shareCharacterLink(false)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share character card via system sheet"
-                        : "Copy character card link"
-                    }
-                  >
-                    {canNativeShare() ? "Share card" : "Copy card"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareCharacterLink(true)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share autostart chat link"
-                        : "Copy autostart chat link"
-                    }
-                  >
-                    {canNativeShare() ? "Share chat" : "Copy ▶"}
-                  </button>
-                  <a
-                    href={`/character/${encodeURIComponent(character)}`}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs text-brand-muted sm:text-sm"
-                  >
-                    Card
-                  </a>
+                    {characters.some(
+                      (c) => c.id === character && c.kind === "custom" && c.mine !== false,
+                    ) ? (
+                      <>
+                        <button type="button" className="menu-item" onClick={() => openEditCustom()}>
+                          Edit model
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={creating}
+                          onClick={() => void handleDuplicateCustom()}
+                        >
+                          Duplicate
+                        </button>
+                      </>
+                    ) : null}
+                    {characters.some((c) => c.id === character && c.kind === "custom") ? (
+                      <button type="button" className="menu-item text-rose-200" onClick={handleDeleteCustom}>
+                        Delete
+                      </button>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={() => void shareCharacterLink(false)}
+                    >
+                      {canNativeShare() ? "Share card" : "Copy card"}
+                    </button>
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={() => void shareCharacterLink(true)}
+                    >
+                      {canNativeShare() ? "Share chat" : "Copy start link"}
+                    </button>
+                    <a href={`/character/${encodeURIComponent(character)}`} className="menu-item">
+                      Open card
+                    </a>
+                  </OverflowMenu>
                 </>
               ) : (
                 <>
@@ -3586,63 +3563,48 @@ export function ChatApp() {
                   >
                     End
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareCharacterLink(true)}
-                    disabled={status === "connecting" || restarting}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share public character link"
-                        : "Copy public character link"
-                    }
-                  >
-                    {canNativeShare() ? "Share" : "Copy link"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void sharePrivateResumeLink()}
-                    disabled={status !== "ready" || !resumeCode}
-                    className="btn-ghost min-h-0 shrink-0 border-amber-500/40 px-3 py-2 text-xs text-amber-200 disabled:opacity-50 sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share resume code link"
-                        : "Copy resume code link"
-                    }
-                  >
-                    {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void exportChat("json")}
-                    disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title="Download chat history as JSON (no secrets)"
-                  >
-                    JSON
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void exportChat("md")}
-                    disabled={!sessionId || !wsToken || messages.length === 0}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title="Download chat history as Markdown"
-                  >
-                    MD
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void shareChatMarkdown()}
-                    disabled={messages.length === 0 && !(sessionId && wsToken)}
-                    className="btn-ghost min-h-0 shrink-0 px-3 py-2 text-xs disabled:opacity-50 sm:text-sm"
-                    title={
-                      canNativeShare()
-                        ? "Share Markdown via system share sheet"
-                        : "Copy Markdown transcript to clipboard"
-                    }
-                  >
-                    {canNativeShare() ? "Share MD" : "Copy MD"}
-                  </button>
+                  <OverflowMenu label="More">
+                    <button
+                      type="button"
+                      className="menu-item"
+                      disabled={status === "connecting" || restarting}
+                      onClick={() => void shareCharacterLink(true)}
+                    >
+                      {canNativeShare() ? "Share link" : "Copy link"}
+                    </button>
+                    <button
+                      type="button"
+                      className="menu-item"
+                      disabled={status !== "ready" || !resumeCode}
+                      onClick={() => void sharePrivateResumeLink()}
+                    >
+                      {resumeCode ? `Resume ${resumeCode}` : "Resume code"}
+                    </button>
+                    <button
+                      type="button"
+                      className="menu-item"
+                      disabled={!sessionId || !wsToken || messages.length === 0}
+                      onClick={() => void exportChat("json")}
+                    >
+                      Export JSON
+                    </button>
+                    <button
+                      type="button"
+                      className="menu-item"
+                      disabled={!sessionId || !wsToken || messages.length === 0}
+                      onClick={() => void exportChat("md")}
+                    >
+                      Export Markdown
+                    </button>
+                    <button
+                      type="button"
+                      className="menu-item"
+                      disabled={messages.length === 0 && !(sessionId && wsToken)}
+                      onClick={() => void shareChatMarkdown()}
+                    >
+                      {canNativeShare() ? "Share Markdown" : "Copy Markdown"}
+                    </button>
+                  </OverflowMenu>
                 </>
               )}
               </div>

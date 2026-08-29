@@ -213,7 +213,7 @@ export function CharacterTile({
 
   return (
     <article
-      className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
+      className={`group relative overflow-visible rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm ${
         compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
       } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""} ${
         card.mine ? "ring-1 ring-violet-400/25" : ""
@@ -221,7 +221,7 @@ export function CharacterTile({
     >
       <div
         ref={containerRef}
-        className={`relative aspect-[3/4] overflow-hidden bg-black ${visual.glow}`}
+        className={`relative aspect-[3/4] overflow-hidden rounded-t-2xl bg-black ${visual.glow}`}
       >
         {/* Poster is the primary path: continue when resume exists, else chat */}
         <Link
@@ -342,7 +342,7 @@ export function CharacterTile({
             Chat{!compact ? ` · ${first}` : ""}
           </Link>
         )}
-        <OverflowMenu label="More">
+        <OverflowMenu label="More" drop="up">
           {resume?.resumeCode ? (
             <Link href={card.ctaPath} className="menu-item" title="Start a new session">
               New chat

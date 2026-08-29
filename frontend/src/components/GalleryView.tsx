@@ -755,7 +755,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 </h2>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 lg:gap-6">
+            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 lg:gap-7">
               {visible.map((card) => (
                 <CharacterTile
                   key={card.id}
