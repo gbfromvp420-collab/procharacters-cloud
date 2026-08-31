@@ -6,11 +6,6 @@ import QRCode from "qrcode";
 import type { CharacterCard } from "@/lib/character-card";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
-  buildForgeFromHeatPath,
-  shouldOfferForgeFromHeat,
-  stashForgeHeatSeed,
-} from "@/lib/forge-from-heat";
-import {
   buildResumeChatPath,
   formatResumeExpiryShort,
   isResumeExpiryUrgent,
@@ -57,29 +52,6 @@ export function ContinueBanner({
     rehydrate: true,
     sessionMode: dnaLabel ? "edge_pace" : undefined,
   });
-
-  const forgeHeatCtx = {
-    characterId: continueTarget.characterId,
-    characterName: displayName,
-    baseModelId:
-      continueCard?.avatarBase ||
-      (continueTarget.characterId.startsWith("custom-")
-        ? undefined
-        : continueTarget.characterId),
-    dnaTreeLabel: continueTarget.dnaTreeLabel,
-    dnaTreeNodeId: continueTarget.dnaTreeNodeId,
-    heatDepth: continueTarget.heatDepth,
-    heatChips: continueTarget.heatChips,
-    recapLine: continueTarget.recapLine,
-    messageCount: continueTarget.messageCount,
-  };
-  const offerForge = shouldOfferForgeFromHeat({
-    messageCount: continueTarget.messageCount,
-    dnaTreeLabel: continueTarget.dnaTreeLabel,
-    dnaTreeNodeId: continueTarget.dnaTreeNodeId,
-    heatDepth: continueTarget.heatDepth,
-  });
-  const forgeHref = offerForge ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   useEffect(() => {
     if (!showQr) return;
@@ -204,15 +176,6 @@ export function ContinueBanner({
                 : `Continue · ${nick}`}
           </Link>
           <OverflowMenu label="More">
-            {forgeHref ? (
-              <Link
-                href={forgeHref}
-                onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
-                className="menu-item"
-              >
-                {dnaLabel ? `Forge · ${dnaLabel.split(/\s+/)[0]}` : "Forge this heat"}
-              </Link>
-            ) : null}
             <button
               type="button"
               className="menu-item"

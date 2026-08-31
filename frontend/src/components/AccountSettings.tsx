@@ -95,57 +95,14 @@ import {
   registerPushServiceWorker,
 } from "@/lib/web-push-client";
 
-type AccountJob = "chats" | "models" | "alerts" | "support" | "profile";
-
-const ACCOUNT_JOBS: Array<{
-  id: AccountJob;
-  label: string;
-  hashes: string[];
-}> = [
-  { id: "chats", label: "Chats", hashes: ["chats", "saved"] },
-  { id: "models", label: "My models", hashes: ["my-models", "models"] },
-  { id: "alerts", label: "Alerts", hashes: ["alerts", "push"] },
-  {
-    id: "support",
-    label: "Support",
-    hashes: ["support", "billing", "day-pass", "premium-unlocked"],
-  },
-  { id: "profile", label: "Profile", hashes: ["profile"] },
-];
-
-const ACCOUNT_JOB_COPY: Record<AccountJob, { title: string; blurb: string }> = {
-  chats: { title: "Your chats", blurb: "Continue a saved heat. Tools stay in More." },
-  models: { title: "My models", blurb: "Private faces only you see." },
-  alerts: { title: "Alerts", blurb: "Push when resume codes are about to expire." },
-  support: {
-    title: "Support",
-    blurb: "Chat stays free. Optional Day Pass for more models.",
-  },
-  profile: { title: "Profile", blurb: "Email, passphrase, and account." },
-};
-
-function jobFromHash(hash: string): AccountJob | null {
+function hashTargetId(hash: string): string | null {
   const id = hash.replace(/^#/, "").toLowerCase();
   if (!id) return null;
-  for (const job of ACCOUNT_JOBS) {
-    if (job.hashes.includes(id)) return job.id;
-  }
-  return null;
-}
-
-function hashForJob(job: AccountJob): string {
-  switch (job) {
-    case "models":
-      return "#my-models";
-    case "alerts":
-      return "#alerts";
-    case "support":
-      return "#support";
-    case "profile":
-      return "#profile";
-    default:
-      return "#chats";
-  }
+  if (id === "saved") return "chats";
+  if (id === "models") return "my-models";
+  if (id === "push") return "alerts";
+  if (id === "billing" || id === "day-pass" || id === "premium-unlocked") return "support";
+  return id;
 }
 
 export function AccountSettings() {
@@ -212,9 +169,6 @@ export function AccountSettings() {
     customsLimit: number;
     planExpiresAt?: string | null;
   } | null>(null);
-  /** One job per screen — hash or tap pins; otherwise chats if any, else models. */
-  const [accountJob, setAccountJob] = useState<AccountJob>("chats");
-  const [jobPinned, setJobPinned] = useState(false);
   const [listReady, setListReady] = useState(false);
   const [signedOutMore, setSignedOutMore] = useState(false);
   const [showOpenCode, setShowOpenCode] = useState(false);
@@ -334,39 +288,13 @@ export function AccountSettings() {
     [checkResumeExpiryWarnings],
   );
 
-  const goAccountJob = useCallback((job: AccountJob) => {
-    setAccountJob(job);
-    setJobPinned(true);
-    if (typeof window === "undefined") return;
-    const next = `/account${hashForJob(job)}`;
-    const here = `${window.location.pathname}${window.location.hash}`;
-    if (here !== next) {
-      window.history.replaceState({}, "", next);
-    }
-  }, []);
-
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const fromHash = jobFromHash(window.location.hash);
-    if (fromHash) {
-      setAccountJob(fromHash);
-      setJobPinned(true);
-    }
-    const onHash = () => {
-      const next = jobFromHash(window.location.hash);
-      if (next) {
-        setAccountJob(next);
-        setJobPinned(true);
-      }
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-
-  useEffect(() => {
-    if (jobPinned || !account || !listReady) return;
-    setAccountJob(sessions.length > 0 ? "chats" : "models");
-  }, [account, sessions.length, jobPinned, listReady]);
+    if (typeof window === "undefined" || !account || !listReady) return;
+    const id = hashTargetId(window.location.hash);
+    if (!id) return;
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [account, listReady]);
 
   useEffect(() => {
     void fetchBillingCatalog()
@@ -432,8 +360,6 @@ export function AccountSettings() {
         if (poll != null) window.clearInterval(poll);
         setNotice(msg);
         if (ceremony) openCeremony(ceremony);
-        setAccountJob("support");
-        setJobPinned(true);
         window.history.replaceState({}, "", "/account#premium-unlocked");
       };
       const applyStatus = (b: {
@@ -1442,21 +1368,15 @@ export function AccountSettings() {
       <SiteChrome
         active="account"
         title="Account"
-        subtitle={
-          account
-            ? ACCOUNT_JOB_COPY[accountJob].title
-            : "Sign in · then one job at a time"
-        }
+        subtitle={account ? `@${account.handle}` : "Sign in to continue a chat"}
         className="pt-[env(safe-area-inset-top,0px)]"
       />
       <div className="relative mx-auto max-w-2xl px-4 py-8 sm:py-12">
         <header className="mb-6">
-          <h1 className="text-3xl font-semibold text-brand-text">
-            {account ? ACCOUNT_JOB_COPY[accountJob].title : "Account"}
-          </h1>
+          <h1 className="text-3xl font-semibold text-brand-text">Account</h1>
           <p className="mt-1 text-sm text-brand-muted">
             {account
-              ? ACCOUNT_JOB_COPY[accountJob].blurb
+              ? "Saved chats first. Tools stay in More."
               : "Email link first. Handle and resume stay tucked."}
           </p>
         </header>
@@ -1611,30 +1531,8 @@ export function AccountSettings() {
                   Sign out
                 </button>
               </div>
-              <div className="mt-3 flex flex-wrap gap-1.5" role="tablist" aria-label="Account jobs">
-                {ACCOUNT_JOBS.map((job) => {
-                  const active = accountJob === job.id;
-                  return (
-                    <button
-                      key={job.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={active}
-                      onClick={() => goAccountJob(job.id)}
-                      className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
-                        active
-                          ? "border-brand-accent/60 bg-brand-accent/20 text-brand-text"
-                          : "border-brand-border/80 bg-brand-bg/40 text-brand-muted hover:border-brand-accent/40 hover:text-brand-text"
-                      }`}
-                    >
-                      {job.label}
-                    </button>
-                  );
-                })}
-              </div>
             </section>
 
-            {accountJob === "models" ? (
             <section
               id="my-models"
               className="scroll-mt-20 rounded-2xl border border-violet-400/35 bg-violet-500/5 p-5"
@@ -1652,10 +1550,10 @@ export function AccountSettings() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href="/models/studio"
+                    href="/?filter=owned"
                     className="rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
                   >
-                    Create
+                    Gallery
                   </Link>
                   <Link
                     href="/?filter=owned"
@@ -1670,14 +1568,13 @@ export function AccountSettings() {
                 <div className="mt-4 rounded-xl border border-dashed border-violet-400/30 bg-brand-bg/40 px-3 py-4 text-center">
                   <p className="text-sm text-brand-text">No private models yet</p>
                   <p className="mt-1 text-[11px] text-brand-muted">
-                    Build one from a signature base — identity, vibe, phrases, scenes, optional
-                    clips.
+                    New creates are frozen. Chat a live face from Gallery.
                   </p>
                   <Link
-                    href="/models/studio"
+                    href="/"
                     className="mt-3 inline-flex rounded-lg bg-brand-accent px-4 py-2 text-xs font-semibold text-white"
                   >
-                    Create My Character
+                    Open Gallery
                   </Link>
                 </div>
               ) : (
@@ -1908,9 +1805,7 @@ export function AccountSettings() {
                 </p>
               )}
             </section>
-            ) : null}
 
-            {accountJob === "support" ? (
             <section id="support" className="scroll-mt-20 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -1973,10 +1868,10 @@ export function AccountSettings() {
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     <Link
-                      href="/models/studio"
+                      href="/"
                       className="rounded-lg bg-brand-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
                     >
-                      Create My Character
+                      Open Gallery
                     </Link>
                     <Link
                       href="/?filter=owned"
@@ -2093,10 +1988,7 @@ export function AccountSettings() {
                 </p>
               )}
             </section>
-            ) : null}
 
-            {accountJob === "profile" ? (
-            <>
             <div className="mb-1">
               <SystemPulse />
             </div>
@@ -2197,16 +2089,13 @@ export function AccountSettings() {
                 </button>
               </div>
             </section>
-            </>
-            ) : null}
 
-            {accountJob === "alerts" ? (
             <section id="alerts" className="scroll-mt-20 space-y-4 rounded-2xl border border-sky-500/25 bg-sky-500/5 p-5">
               <InstallAppHint />
               <div>
                 <h2 className="text-sm font-semibold text-brand-text">Web Push · resume expiry</h2>
                 <p className="mt-1 text-xs text-brand-muted">
-                  One job: get pinged when a resume code is about to die.
+                  Get pinged when a resume code is about to die.
                 </p>
               </div>
               {(pushSupported || pushServerCount > 0 || pushConfigured !== false) ? (
@@ -2315,16 +2204,19 @@ export function AccountSettings() {
                   <button
                     type="button"
                     className="underline"
-                    onClick={() => goAccountJob("chats")}
+                    onClick={() =>
+                      document.getElementById("chats")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      })
+                    }
                   >
                     Open chats
                   </button>
                 </p>
               ) : null}
             </section>
-            ) : null}
 
-            {accountJob === "chats" ? (
             <section id="chats" className="scroll-mt-20 rounded-2xl border border-brand-border bg-brand-panel p-5">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
@@ -2502,7 +2394,12 @@ export function AccountSettings() {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => goAccountJob("alerts")}
+                        onClick={() =>
+                          document.getElementById("alerts")?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          })
+                        }
                         className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
                       >
                         Enable push alerts
@@ -2696,9 +2593,7 @@ export function AccountSettings() {
                 </ul>
               )}
             </section>
-            ) : null}
 
-            {accountJob === "profile" ? (
             <section className="rounded-2xl border border-red-500/30 bg-red-500/5 p-5">
               <h2 className="text-sm font-semibold text-red-200">Danger zone</h2>
               <p className="mt-1 text-xs text-brand-muted">
@@ -2722,7 +2617,6 @@ export function AccountSettings() {
                 </button>
               </div>
             </section>
-            ) : null}
           </div>
         )}
       </div>

@@ -3,11 +3,6 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { loadStoredAccount } from "@/lib/account-storage";
-import {
-  buildForgeFromHeatPath,
-  shouldOfferForgeFromHeat,
-  stashForgeHeatSeed,
-} from "@/lib/forge-from-heat";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import {
   buildResumeChatPath,
@@ -88,27 +83,6 @@ export function SessionPausedBanner({
               : null;
   const chips = heatChips?.slice(0, 4) ?? [];
   const dnaLabel = dnaTreeLabel?.trim() || dnaTreeNodeId?.trim() || null;
-  const offerForge = shouldOfferForgeFromHeat({
-    messageCount,
-    dnaTreeLabel,
-    dnaTreeNodeId,
-    heatDepth,
-  });
-  const forgeHeatCtx = {
-    characterId,
-    characterName,
-    baseModelId:
-      baseModelId ||
-      (characterId.startsWith("custom-") ? undefined : characterId),
-    dnaTreeLabel,
-    dnaTreeNodeId,
-    heatDepth,
-    heatChips,
-    recapLine,
-    messageCount,
-    isMine,
-  };
-  const forgeHref = offerForge ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   useEffect(() => {
     let cancelled = false;
@@ -302,19 +276,6 @@ export function SessionPausedBanner({
               My models
             </Link>
           </>
-        )}
-        {forgeHref && (
-          <Link
-            href={forgeHref}
-            className="btn-ghost min-h-0 border-violet-400/50 bg-violet-500/15 px-3 py-2 text-xs font-semibold text-violet-50 ring-1 ring-violet-300/30"
-            onClick={() => {
-              stashForgeHeatSeed(forgeHeatCtx);
-              onDismiss();
-            }}
-            title="Mint private DNA from this climb"
-          >
-            {dnaLabel ? `Forge this DNA · ${dnaLabel}` : "Forge this heat"}
-          </Link>
         )}
         <Link href="/" className="btn-ghost min-h-0 px-4 py-2 text-xs">
           Gallery trail
