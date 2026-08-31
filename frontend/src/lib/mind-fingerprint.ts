@@ -14,14 +14,14 @@ export interface MindFingerprint {
 
 const FINGERPRINTS: Record<string, MindFingerprint> = {
   "twink-default": {
-    tag: "Flagship edge",
+    tag: "Gooner guide",
     blurb:
-      "Sheer-pouch cam boy · slow fabric handjob denial · soft Spanish when it hits",
+      "Cruz · sheer-pouch cam boy · slow fabric handjob denial · soft Spanish when it hits",
     bilingual: true,
   },
   "female-default": {
-    tag: "Open panel",
-    blurb: "Crotchless soft-dom · hover then deny · intimate, not giggly",
+    tag: "Gooner guide",
+    blurb: "Vesper · crotchless soft-dom · hover then deny · intimate, not giggly",
   },
   "twink-shy-boy": {
     tag: "Shy heat",

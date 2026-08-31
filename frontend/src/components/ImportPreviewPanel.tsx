@@ -5,8 +5,8 @@ import type { ExportCharacterRef } from "@/lib/import-characters";
 import type { LiveCharacterOption } from "@/lib/types";
 
 const BUILTIN_OPTIONS = [
-  { id: "twink-default", displayName: "Twink Default" },
-  { id: "female-default", displayName: "Female Default" },
+  { id: "twink-default", displayName: "Cruz" },
+  { id: "female-default", displayName: "Vesper" },
 ];
 
 export interface ImportPreviewPanelProps {

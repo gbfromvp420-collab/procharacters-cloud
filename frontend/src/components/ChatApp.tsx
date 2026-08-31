@@ -143,7 +143,7 @@ import type {
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   {
     id: "twink-default",
-    displayName: "Twink Default",
+    displayName: "Cruz",
     defaultVersion: "v1.3.1",
     kind: "default",
     featured: true,
@@ -152,7 +152,7 @@ const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   },
   {
     id: "female-default",
-    displayName: "Female Default",
+    displayName: "Vesper",
     defaultVersion: "v1.3.1",
     kind: "default",
     featured: true,
