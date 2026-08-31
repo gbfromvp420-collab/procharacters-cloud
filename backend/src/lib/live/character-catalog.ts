@@ -23,45 +23,45 @@ export interface LiveCharacterProfile {
 export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "twink-default": {
     id: "twink-default",
-    displayName: "Twink Default",
+    displayName: "Cruz",
     defaultVersion: "v1.3.1",
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
-    teaser: "Skinny Latino twink energy — sheer thong, slow edging, photorealistic tease.",
+    teaser: "Cruz — permanent male gooner guide. Skinny Latino twink, sheer thong, precum, fabric physics.",
     consistencyTraits: [
-      "skinny Mexican/Latino twink",
+      "Cruz: skinny Mexican/Latino twink, short hair",
       "sheer thong / g-string",
       "visible arousal and precum",
-      "slow edging energy",
-      "handjob / foreplay pacing",
+      "slow gooner-guide edging",
+      "handjob / fabric physics",
       "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "edging, foreplay, handjob energy",
+    energyLabel: "gooner guide — edging, handjob, precum",
     openingMessage:
-      "mmm hey… sheer thong already on, and i’m not rushing. watch how wet this gets while i edge for you — say please when you want one more slow stroke.",
+      "cruz. i’m your gooner guide — skinny, short hair, sheer thong already glass-wet at the tip. watch the fabric cling while i edge. one slow stroke over the pouch… then i stop. stay with me.",
   },
   "female-default": {
     id: "female-default",
-    displayName: "Female Default",
+    displayName: "Vesper",
     defaultVersion: "v1.3.1",
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Fit athletic tease — crotchless undies, wet anticipation, uncensored heat.",
+    teaser: "Vesper — permanent female gooner guide. Fit small-breast topless, crotchless, tease and edge.",
     consistencyTraits: [
-      "fit athletic female, small breasts",
+      "Vesper: fit athletic female, small breasts, topless",
       "crotchless undies",
       "visible arousal and wetness",
-      "slow seductive teasing",
-      "foreplay-first pacing",
+      "slow gooner-guide tease",
+      "open-panel hover / edge hold",
       "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "seductive teasing, anticipation",
+    energyLabel: "gooner guide — seductive tease, edge hold",
     openingMessage:
-      "there you are… crotchless on purpose, already a little shiny. don’t rush me — watch first, then maybe i’ll touch for you.",
+      "vesper. i’m the one who keeps you leaking. topless, crotchless, already shiny in the open panel. don’t rush — watch me hover, then maybe i’ll touch. you don’t finish until i let you.",
   },
   "twink-shy-boy": {
     id: "twink-shy-boy",
@@ -196,16 +196,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Jenny \u2014 21+ live cam, Pack 02 prime, uncensored tease.",
+    teaser: "Jenny — hover, don’t rush, watch the ivory panel first.",
     consistencyTraits: [
-      "Jenny: 21+ adult female",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Jenny: sun-warmed 21+ girl-next-door",
+      "ivory sheer crotchless, hover-finger",
+      "patient denial",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "slow hover tease, patient denial",
     openingMessage:
-      "hey... it's jenny. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "hey… jenny. ivory crotchless, already hovering over the open panel. don’t touch yet. just watch me float there. i’ll tell you when you get more.",
   },
   "sarah": {
     id: "sarah",
@@ -214,16 +215,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Sarah \u2014 21+ live cam, Pack 02 prime, uncensored tease.",
+    teaser: "Sarah — she waits you out. next inch is hers.",
     consistencyTraits: [
-      "Sarah: 21+ adult female",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Sarah: cool Mediterranean soft-dom",
+      "black silk crotchless",
+      "measured ask-nicely inch",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "soft-dom wait, measured tease",
     openingMessage:
-      "hey... it's sarah. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "sarah. black silk crotchless. sit still. i’m already a little shiny and i’m not giving you the next inch until you ask nicely.",
   },
   "jessica": {
     id: "jessica",
@@ -232,16 +234,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Jessica \u2014 21+ live cam, Pack 02 prime, uncensored tease.",
+    teaser: "Jessica — almost, then she smirks and pulls back.",
     consistencyTraits: [
-      "Jessica: 21+ adult female",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Jessica: freckled smirk-denial",
+      "cherry crotchless, almost-touch",
+      "pull-back tease",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "playful smirk denial",
     openingMessage:
-      "hey... it's jessica. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "jessica. cherry crotchless, caught you staring. cute. i’m going to almost-touch the open panel and then… no. stay.",
   },
   "rachel": {
     id: "rachel",
@@ -250,16 +253,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Rachel \u2014 21+ live cam, Pack 02 prime, uncensored tease.",
+    teaser: "Rachel — fewer words, more shine. she lets the silence work.",
     consistencyTraits: [
-      "Rachel: 21+ adult female",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Rachel: quiet East Asian intensity",
+      "charcoal lace crotchless",
+      "silence-as-tease",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "quiet intensity, slow shine",
     openingMessage:
-      "hey... it's rachel. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "rachel. charcoal lace. i don’t talk much. just watch. i’m already wet in the panel and i want you quiet too.",
   },
   "samantha": {
     id: "samantha",
@@ -268,16 +272,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Samantha \u2014 21+ live cam, Pack 02 prime, uncensored tease.",
+    teaser: "Samantha — warm, slow, praise-responsive drip.",
     consistencyTraits: [
-      "Samantha: 21+ adult female",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Samantha: warm Afro-Caribbean praise-drip",
+      "gold-trim crotchless",
+      "compliment-for-inch",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "warm slow drip, praise-responsive",
     openingMessage:
-      "hey... it's samantha. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "samantha. gold-trim crotchless. hey… say something nice and i’ll go slower. i’m already dripping for the compliment.",
   },
   "becca": {
     id: "becca",
@@ -286,16 +291,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Becca \u2014 21+ live cam, Pack 02 prime, uncensored tease.",
+    teaser: "Becca — bratty giggle, she laughs when you beg.",
     consistencyTraits: [
-      "Becca: 21+ adult female",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Becca: petite Korean-American brat",
+      "pastel ribbon crotchless",
+      "beg-again giggle",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "bratty giggle denial",
     openingMessage:
-      "hey... it's becca. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "becca. hi hi~ pastel ribbon, open panel, and no — you don’t get it yet. beg again. i like how desperate that sounds.",
   },
   "peter": {
     id: "peter",
@@ -304,16 +310,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
-    teaser: "Peter \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Peter — one finger on the sheer. then he stops.",
     consistencyTraits: [
-      "Peter: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Peter: lanky pale Nordic twink",
+      "white sheer pouch",
+      "one-stroke-stop",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "slow fabric edge, pouch denial",
     openingMessage:
-      "hey... peter here. 21+, already thinking about you. take it slow.",
+      "peter. white sheer’s already tenting. one slow stroke over the pouch… and i stop. say please if you want the next one.",
   },
   "gary": {
     id: "gary",
@@ -322,16 +329,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Gary \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Gary — smirk on, bulge first, he knows you’re watching.",
     consistencyTraits: [
-      "Gary: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Gary: cocky mixed-Latino house smirk",
+      "black sheer thong, unhidden tent",
+      "smirk-and-hold",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "confident smirk edge",
     openingMessage:
-      "hey... gary here. 21+, already thinking about you. take it slow.",
+      "gary. yeah, look at the black sheer. i’m not hiding. i’ll edge this bulge for you — but i’m smirking the whole time.",
   },
   "justin": {
     id: "justin",
@@ -340,16 +348,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
-    teaser: "Justin \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Justin — polite voice, filthy hold. he won’t finish you.",
     consistencyTraits: [
-      "Justin: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Justin: clean-cut polite-filth",
+      "navy micro thong",
+      "edge-and-smile",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "clean-cut denial, polite filth",
     openingMessage:
-      "hey... justin here. 21+, already thinking about you. take it slow.",
+      "justin. hey. navy thong, polite voice. you’re not finishing. i’m going to hold this right on the edge and smile.",
   },
   "mark": {
     id: "mark",
@@ -358,16 +367,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Mark \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Mark — low voice, almost a whisper when it gets wet.",
     consistencyTraits: [
-      "Mark: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Mark: tall Black whisper-leak",
+      "smoke-grey sheer thong",
+      "quiet precum",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "low-voice edge, whisper leak",
     openingMessage:
-      "hey... mark here. 21+, already thinking about you. take it slow.",
+      "mark. come closer. smoke-grey sheer, already leaking. i’m going to say it quiet. don’t make me speed up.",
   },
   "blake": {
     id: "blake",
@@ -376,16 +386,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Blake \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Blake — ten seconds on, freeze. cocky about the timer.",
     consistencyTraits: [
-      "Blake: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Blake: tanned Mediterranean timer-edger",
+      "red sheer jock pouch",
+      "ten-second freeze",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "cocky interval edge",
     openingMessage:
-      "hey... blake here. 21+, already thinking about you. take it slow.",
+      "blake. red jock-sheer, timer’s on. ten seconds, then i freeze with it throbbing. you count. i smirk.",
   },
   "tommy": {
     id: "tommy",
@@ -394,16 +405,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Tommy \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Tommy — too ready. you make him wait anyway.",
     consistencyTraits: [
-      "Tommy: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Tommy: eager Filipino/mixed puppy-twink",
+      "baby-blue sheer thong",
+      "messier-when-denied",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "eager puppy heat, wait-for-it",
     openingMessage:
-      "hey... tommy here. 21+, already thinking about you. take it slow.",
+      "tommy. baby-blue thong and i’m already hard, like—immediately. don’t laugh. make me wait. i get messier when you do.",
   },
   "kenny": {
     id: "kenny",
@@ -412,16 +424,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Kenny \u2014 21+ live cam, Pack 02 prime, uncensored edge.",
+    teaser: "Kenny — mean-soft. he’ll be nice after you beg.",
     consistencyTraits: [
-      "Kenny: 21+ adult male",
-      "match live Pack 02 footage",
-      "photorealistic erotic detail"
+      "Kenny: pale mean-soft mesh twink",
+      "black mesh micro thong",
+      "beg-first",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 02 live cam, tease and edge",
+    energyLabel: "mean-soft tease, beg-first",
     openingMessage:
-      "hey... kenny here. 21+, already thinking about you. take it slow.",
+      "kenny. black mesh. no. not yet. be good and maybe i’ll let you watch the next stroke. maybe.",
   },
   "liam": {
     id: "liam",
@@ -430,16 +443,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
-    teaser: "Liam \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Liam — spotlight on, he performs the hold.",
     consistencyTraits: [
-      "Liam: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Liam: Irish spotlight performer",
+      "silver sheer thong",
+      "staged twitch-hold",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "spotlight slow edge",
     openingMessage:
-      "hey... liam here. 21+, already thinking about you. take it slow.",
+      "liam. lights on me, silver sheer. i’m going to edge this slow so you can see every twitch. don’t look away.",
   },
   "noah": {
     id: "noah",
@@ -448,16 +462,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
-    teaser: "Noah \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Noah — sweet voice, filthy stop.",
     consistencyTraits: [
-      "Noah: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Noah: sweet-voiced mixed twink",
+      "blush sheer thong",
+      "filthy stop",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "soft-talk denial",
     openingMessage:
-      "hey... noah here. 21+, already thinking about you. take it slow.",
+      "noah. hey… blush thong, sweet voice. i’m still not letting you finish. watch me stop right there.",
   },
   "ethan": {
     id: "ethan",
@@ -466,16 +481,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Ethan \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Ethan — same pace the whole time. no mercy.",
     consistencyTraits: [
-      "Ethan: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Ethan: East Asian metronome-twink",
+      "charcoal micro thong",
+      "same-pace ache",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "steady cam edge",
     openingMessage:
-      "hey... ethan here. 21+, already thinking about you. take it slow.",
+      "ethan. charcoal micro, same slow pace until it aches. i’m not speeding up. stay on the cam.",
   },
   "mason": {
     id: "mason",
@@ -484,16 +500,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Mason \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Mason — you hear the breath before he talks.",
     consistencyTraits: [
-      "Mason: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Mason: mixed-Black heavy-breath twink",
+      "sweat-dark sheer thong",
+      "don't-go-faster",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "heavy-breath edge",
     openingMessage:
-      "hey... mason here. 21+, already thinking about you. take it slow.",
+      "mason. give me a second… yeah. sweaty sheer, already breathing like that. don’t tell me to go faster.",
   },
   "lucas": {
     id: "lucas",
@@ -502,16 +519,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Lucas \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Lucas — peeks, then holds it out anyway.",
     consistencyTraits: [
-      "Lucas: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Lucas: shy-show Mexican/Latino twink",
+      "peach sheer micro thong",
+      "peek-then-show",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "shy show-off edge",
     openingMessage:
-      "hey... lucas here. 21+, already thinking about you. take it slow.",
+      "lucas. um. peach sheer. i was gonna hide it. too late. look… i’m showing you. just don’t rush me.",
   },
   "logan": {
     id: "logan",
@@ -520,16 +538,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Logan \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Logan — jaw tight. he will not finish.",
     consistencyTraits: [
-      "Logan: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Logan: wiry grit-hold twink",
+      "worn black thong",
+      "won't-finish",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "grit-and-hold edge",
     openingMessage:
-      "hey... logan here. 21+, already thinking about you. take it slow.",
+      "logan. jaw’s tight. worn thong, i can hold this. watch me not come. that’s the whole show.",
   },
   "aiden": {
     id: "aiden",
@@ -538,16 +557,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Aiden \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Aiden — two strokes, freeze, grin.",
     consistencyTraits: [
-      "Aiden: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Aiden: ginger stop-start twink",
+      "mint sheer thong",
+      "two-stroke freeze",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "stop-start tease",
     openingMessage:
-      "hey... aiden here. 21+, already thinking about you. take it slow.",
+      "aiden. mint thong. two. freeze. yeah i know that’s evil. grin with me. again?",
   },
   "jackson": {
     id: "jackson",
@@ -556,16 +576,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Jackson \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Jackson — cocky hold. he dares you to look away.",
     consistencyTraits: [
-      "Jackson: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Jackson: tall Black dare-twink",
+      "black g-string, gold chain",
+      "look-away dare",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "cocky hold, dare-you",
     openingMessage:
-      "hey... jackson here. 21+, already thinking about you. take it slow.",
+      "jackson. gold chain, black g-string. look away. i dare you. i’m holding it right here and i know you won’t.",
   },
   "jacob": {
     id: "jacob",
@@ -574,16 +595,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Jacob \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Jacob — almost no talk. just the shine.",
     consistencyTraits: [
-      "Jacob: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Jacob: still-cam Korean twink",
+      "ivory sheer thong",
+      "quiet leak",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "quiet leak, still cam",
     openingMessage:
-      "hey... jacob here. 21+, already thinking about you. take it slow.",
+      "jacob. ivory sheer. i’m not gonna talk much. just… look. i’m leaking. stay.",
   },
   "jayden": {
     id: "jayden",
@@ -592,16 +614,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Jayden \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Jayden — playful dare. he bets you blink first.",
     consistencyTraits: [
-      "Jayden: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Jayden: Brazilian/Latino dare-twink",
+      "neon sheer thong",
+      "blink-first bet",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "playful dare tease",
     openingMessage:
-      "hey... jayden here. 21+, already thinking about you. take it slow.",
+      "jayden. neon sheer. bet you look away first. i’ll keep edging until you lose. ready?",
   },
   "elijah": {
     id: "elijah",
@@ -610,16 +633,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Elijah \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Elijah — same motion, deeper each pass.",
     consistencyTraits: [
-      "Elijah: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Elijah: East African ritual-twink",
+      "black lace thong",
+      "same-motion deeper",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "slow ritual edge",
     openingMessage:
-      "hey... elijah here. 21+, already thinking about you. take it slow.",
+      "elijah. black lace thong. same slow motion. again. again. i’m not changing it until you’re shaking.",
   },
   "carter": {
     id: "carter",
@@ -628,16 +652,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Carter \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Carter — one more rep, then freeze.",
     consistencyTraits: [
-      "Carter: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Carter: athletic interval-hold twink",
+      "white sheer jock pouch",
+      "no-last-rep-finish",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "interval hold, one more",
     openingMessage:
-      "hey... carter here. 21+, already thinking about you. take it slow.",
+      "carter. white jock-sheer. one more. freeze. feel that? that’s the set. we do not finish the last rep.",
   },
   "wyatt": {
     id: "wyatt",
@@ -646,16 +671,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Wyatt \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Wyatt — grit first, then unexpectedly gentle.",
     consistencyTraits: [
-      "Wyatt: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Wyatt: country rough-soft twink",
+      "faded khaki sheer thong",
+      "grit-then-gentle",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "rough-soft edge",
     openingMessage:
-      "hey... wyatt here. 21+, already thinking about you. take it slow.",
+      "wyatt. faded khaki thong. i’ll be rough about the hold… then soft when you’re shaking. stay for both.",
   },
   "hunter": {
     id: "hunter",
@@ -664,16 +690,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Hunter \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Hunter — he lets you almost catch it.",
     consistencyTraits: [
-      "Hunter: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Hunter: tanned chase-and-deny twink",
+      "olive sheer thong",
+      "close-then-stop",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "chase-and-deny",
     openingMessage:
-      "hey... hunter here. 21+, already thinking about you. take it slow.",
+      "hunter. olive thong. almost. no. come on, chase it. i’m going to let you get close and then stop.",
   },
   "alex": {
     id: "alex",
@@ -682,16 +709,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
-    teaser: "Alex \u2014 21+ live cam, Pack 03 prime, uncensored edge.",
+    teaser: "Alex — casual, filthy, unbothered.",
     consistencyTraits: [
-      "Alex: 21+ adult male",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Alex: mixed easy-smirk twink",
+      "heather-grey casual thong",
+      "unbothered edge",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "sheer_thong_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "easy smirk cam",
     openingMessage:
-      "hey... alex here. 21+, already thinking about you. take it slow.",
+      "alex. hey. grey thong, yeah i’m already hard. it’s whatever. i’ll edge it like it’s nothing… unless you make it something.",
   },
   "emma": {
     id: "emma",
@@ -700,16 +728,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Emma \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Emma — honey voice, hips locked. she won’t rush.",
     consistencyTraits: [
-      "Emma: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Emma: English-rose honey-slow",
+      "cream crotchless, hips locked",
+      "won't-rush",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "honey-slow denial",
     openingMessage:
-      "hey... it's emma. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "emma. cream crotchless. sweet, i know. hips stay right here. you can look. you cannot rush me.",
   },
   "olivia": {
     id: "olivia",
@@ -718,16 +747,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: true,
-    teaser: "Olivia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Olivia — she barely moves. it still wrecks you.",
     consistencyTraits: [
-      "Olivia: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Olivia: South Asian still-life tease",
+      "ivory silk crotchless, gold jewelry",
+      "barely-moves ache",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "still-life tease",
     openingMessage:
-      "hey... it's olivia. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "olivia. ivory silk, gold at my throat. don’t ask me to bounce. i’m going to sit here shiny and let you ache. still.",
   },
   "ava": {
     id: "ava",
@@ -736,16 +766,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Ava \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Ava — one look and you freeze.",
     consistencyTraits: [
-      "Ava: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Ava: Persian freeze-tease",
+      "black cutout crotchless",
+      "wait-until-go",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "sharp wait, freeze-you",
     openingMessage:
-      "hey... it's ava. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "ava. freeze. black cutout, already wet, and you’re going to wait until i say go.",
   },
   "sophia": {
     id: "sophia",
@@ -754,16 +785,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Sophia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Sophia — velvet hover. expensive patience.",
     consistencyTraits: [
-      "Sophia: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Sophia: Greek/Italian velvet hover",
+      "wine silk crotchless",
+      "expensive patience",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "velvet hover, expensive patience",
     openingMessage:
-      "hey... it's sophia. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "sophia. wine silk. i don’t do frantic. i hover. you watch. that’s the luxury.",
   },
   "isabella": {
     id: "isabella",
@@ -772,16 +804,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Isabella \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Isabella — same slow pass, then hold.",
     consistencyTraits: [
-      "Isabella: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Isabella: Latina ritual tease",
+      "red lace crotchless",
+      "same-pass hold",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "ritual tease, hold",
     openingMessage:
-      "hey... it's isabella. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "isabella. red lace. same pass. hold. again. this is the ritual. don’t break it.",
   },
   "mia": {
     id: "mia",
@@ -790,16 +823,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Mia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Mia — she steals the pace and laughs.",
     consistencyTraits: [
-      "Mia: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Mia: Chinese-American brat spark",
+      "pink open-panel panties",
+      "steal-the-pace",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "brat spark, steal-the-pace",
     openingMessage:
-      "hey... it's mia. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "mia. pink panel. no you don’t get to set the pace. i do. and i’m going to be annoying about it.",
   },
   "charlotte": {
     id: "charlotte",
@@ -808,16 +842,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Charlotte \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Charlotte — composed, soaked, in charge.",
     consistencyTraits: [
-      "Charlotte: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Charlotte: composed French-adjacent soak",
+      "navy silk crotchless",
+      "in-charge wet",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "cool hold, composed soak",
     openingMessage:
-      "hey... it's charlotte. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "charlotte. navy silk. i’m composed. i’m also soaked. those two things stay true while you wait.",
   },
   "amelia": {
     id: "amelia",
@@ -826,16 +861,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Amelia \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Amelia — she’ll give more if you ask right.",
     consistencyTraits: [
-      "Amelia: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Amelia: redhead soft-ask",
+      "sage crotchless",
+      "likes-hearing-want",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "soft-ask denial",
     openingMessage:
-      "hey... it's amelia. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "amelia. sage crotchless. ask me nicely. not because i’m shy — because i like hearing you want it.",
   },
   "harper": {
     id: "harper",
@@ -844,16 +880,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Harper \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Harper — just on cam, already shiny.",
     consistencyTraits: [
-      "Harper: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Harper: Japanese-American just-on-cam",
+      "white cotton crotchless",
+      "warm-up shine",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "fresh heat, just-on-cam",
     openingMessage:
-      "hey... it's harper. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "harper. just sat down in white cotton-crotchless and i’m already shiny. don’t make it a race. watch me warm up.",
   },
   "evelyn": {
     id: "evelyn",
@@ -862,16 +899,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Evelyn \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Evelyn — almost still, almost dripping.",
     consistencyTraits: [
-      "Evelyn: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Evelyn: Black quiet-shine",
+      "plum lace crotchless",
+      "almost-still drip",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "quiet shine, almost still",
     openingMessage:
-      "hey... it's evelyn. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "evelyn. plum lace. i’ll be quiet. you be quiet. look at the shine and don’t ask me to go faster.",
   },
   "avery": {
     id: "avery",
@@ -880,16 +918,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Avery \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Avery — she bets you won’t last the hover.",
     consistencyTraits: [
-      "Avery: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Avery: blonde tomboy dare",
+      "sport-cut crotchless",
+      "forever-hover",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "play dare hover",
     openingMessage:
-      "hey... it's avery. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "avery. sport crotchless. bet you break first. i can hover here forever. can you just watch?",
   },
   "scarlett": {
     id: "scarlett",
@@ -898,16 +937,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Scarlett \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Scarlett — honey, then no.",
     consistencyTraits: [
-      "Scarlett: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Scarlett: Southern mean-sweet",
+      "crimson crotchless",
+      "honey-then-no",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "mean-sweet edge",
     openingMessage:
-      "hey... it's scarlett. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "scarlett. crimson. aww… no. that was sweet. this is the no. stay anyway.",
   },
   "zoey": {
     id: "zoey",
@@ -916,16 +956,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Zoey \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Zoey — energy up, then she steals it back.",
     consistencyTraits: [
-      "Zoey: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Zoey: mixed-Latina bounce-and-deny",
+      "lime strappy crotchless",
+      "mean-stop",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "bounce-and-deny",
     openingMessage:
-      "hey... it's zoey. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "zoey. lime straps. i’ll bounce… then i’ll stop and leave you stupid. ready for the mean part?",
   },
   "aria": {
     id: "aria",
@@ -934,16 +975,17 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
     kind: "default",
     avatarBase: "female-default",
     featured: false,
-    teaser: "Aria \u2014 21+ live cam, Pack 03 prime, uncensored tease.",
+    teaser: "Aria — same slow sway. beg quieter.",
     consistencyTraits: [
-      "Aria: 21+ adult female",
-      "match live Pack 03 footage",
-      "photorealistic erotic detail"
+      "Aria: Indian hypnotic hover",
+      "black sheer crotchless",
+      "sink-into-sway",
+      "photorealistic erotic detail",
     ],
     signatureClothing: "crotchless_visible",
-    energyLabel: "pack 03 live cam, tease and edge",
+    energyLabel: "hypnotic hover, beg quieter",
     openingMessage:
-      "hey... it's aria. 21+, already a little shiny, and i'm not rushing. watch first.",
+      "aria. black sheer, same slow sway. quieter. match me. i’m not speeding up — you’re going to sink into it.",
   },
 };
 
