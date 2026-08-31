@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   deleteAccount,
@@ -56,7 +57,8 @@ import { ImportPreviewPanel } from "@/components/ImportPreviewPanel";
 import { ResumePrintCard } from "@/components/ResumePrintCard";
 import { SystemPulse } from "@/components/SystemPulse";
 import { SiteChrome } from "@/components/SiteChrome";
-import { MoreMenu } from "@/components/MoreMenu";
+import { OverflowMenu } from "@/components/OverflowMenu";
+import { needsPersona } from "@/lib/user-persona";
 import { PremiumUnlockCeremony } from "@/components/PremiumUnlockCeremony";
 import {
   collectExportCharacters,
@@ -93,7 +95,18 @@ import {
   registerPushServiceWorker,
 } from "@/lib/web-push-client";
 
+function hashTargetId(hash: string): string | null {
+  const id = hash.replace(/^#/, "").toLowerCase();
+  if (!id) return null;
+  if (id === "saved") return "chats";
+  if (id === "models") return "my-models";
+  if (id === "push") return "alerts";
+  if (id === "billing" || id === "day-pass" || id === "premium-unlocked") return "support";
+  return id;
+}
+
 export function AccountSettings() {
+  const router = useRouter();
   const [account, setAccount] = useState<StoredAccount | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [hasPassphrase, setHasPassphrase] = useState(false);
@@ -156,14 +169,11 @@ export function AccountSettings() {
     customsLimit: number;
     planExpiresAt?: string | null;
   } | null>(null);
+  const [listReady, setListReady] = useState(false);
+  const [signedOutMore, setSignedOutMore] = useState(false);
+  const [showOpenCode, setShowOpenCode] = useState(false);
 
   const EXPIRY_WARN_DAYS = 3;
-  const [pane, setPane] = useState<"you" | "chats" | "plan">("chats");
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.location.hash === "#my-models") setPane("plan");
-  }, []);
 
   const flash = (msg: string) => {
     setNotice(msg);
@@ -273,9 +283,18 @@ export function AccountSettings() {
         setCustomsLimit(me.customsLimit ?? 10);
       }
       checkResumeExpiryWarnings(list, { notify: true });
+      setListReady(true);
     },
     [checkResumeExpiryWarnings],
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !account || !listReady) return;
+    const id = hashTargetId(window.location.hash);
+    if (!id) return;
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [account, listReady]);
 
   useEffect(() => {
     void fetchBillingCatalog()
@@ -484,6 +503,9 @@ export function AccountSettings() {
     setMagicDevLink(null);
     await refresh(next.token);
     flash(label);
+    if (needsPersona()) {
+      router.push("/welcome");
+    }
   };
 
   const onRegister = async () => {
@@ -1346,20 +1368,16 @@ export function AccountSettings() {
       <SiteChrome
         active="account"
         title="Account"
-        subtitle={
-          account
-            ? `My models ${myModels.length}/${customsLimit} · saved chats ${sessions.length}`
-            : "Sign in · profile · push · Day Pass"
-        }
+        subtitle={account ? `@${account.handle}` : "Sign in to continue a chat"}
         className="pt-[env(safe-area-inset-top,0px)]"
       />
       <div className="relative mx-auto max-w-2xl px-4 py-8 sm:py-12">
-        <header className="mb-8">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
-            Account
-          </h1>
-          <p className="mt-1.5 text-sm text-brand-muted">
-            Profile, models, alerts, and saved chats.
+        <header className="mb-6">
+          <h1 className="text-3xl font-semibold text-brand-text">Account</h1>
+          <p className="mt-1 text-sm text-brand-muted">
+            {account
+              ? "Saved chats first. Tools stay in More."
+              : "Email link first. Handle and resume stay tucked."}
           </p>
         </header>
 
@@ -1373,16 +1391,7 @@ export function AccountSettings() {
           }}
         />
 
-        <InstallAppHint className="mb-4" />
-
-        <details className="mb-4 rounded-xl border border-brand-border/70 bg-brand-panel/80 px-3 py-2">
-          <summary className="cursor-pointer text-[11px] font-medium text-brand-muted">
-            System pulse
-          </summary>
-          <div className="mt-2">
-            <SystemPulse />
-          </div>
-        </details>
+        {!account ? <InstallAppHint className="mb-4" /> : null}
 
         {(error || notice) && (
           <div
@@ -1440,92 +1449,80 @@ export function AccountSettings() {
               )}
             </div>
 
-            <div className="border-t border-brand-border pt-5">
-              <h2 className="text-sm font-semibold text-brand-text">Handle + passphrase</h2>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <input
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                  placeholder="Handle"
-                  className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
-                />
-                <input
-                  type="password"
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  placeholder="Passphrase (6+)"
-                  className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
-                />
-              </div>
-              <div className="mt-2 flex gap-2">
-                <button
-                  type="button"
-                  disabled={busy || handle.trim().length < 3 || pass.length < 6}
-                  onClick={() => void onLogin()}
-                  className="rounded-lg border border-brand-border px-4 py-2 text-sm disabled:opacity-50"
-                >
-                  Sign in
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || handle.trim().length < 3 || pass.length < 6}
-                  onClick={() => void onRegister()}
-                  className="rounded-lg border border-brand-border px-4 py-2 text-sm disabled:opacity-50"
-                >
-                  Register
-                </button>
-              </div>
-            </div>
-
-            <div className="border-t border-brand-border pt-5">
-              <h2 className="text-sm font-semibold text-brand-text">Open resume code</h2>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={resumeCode}
-                  onChange={(e) => setResumeCode(e.target.value.toUpperCase())}
-                  placeholder="AB3K9MPQ"
-                  className="flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
-                />
-                <button
-                  type="button"
-                  onClick={() => void onOpenCode()}
-                  className="rounded-lg border border-brand-accent/50 px-4 py-2 text-sm"
-                >
-                  Open
-                </button>
-              </div>
+            <div className="border-t border-brand-border pt-4">
+              <button
+                type="button"
+                onClick={() => setSignedOutMore((v) => !v)}
+                className="text-xs font-medium text-brand-muted hover:text-brand-text"
+                aria-expanded={signedOutMore}
+              >
+                {signedOutMore ? "Hide handle + resume" : "Handle, passphrase, or resume code"}
+              </button>
+              {signedOutMore ? (
+                <div className="mt-4 space-y-5">
+                  <div>
+                    <h2 className="text-sm font-semibold text-brand-text">Handle + passphrase</h2>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <input
+                        value={handle}
+                        onChange={(e) => setHandle(e.target.value)}
+                        placeholder="Handle"
+                        className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                      />
+                      <input
+                        type="password"
+                        value={pass}
+                        onChange={(e) => setPass(e.target.value)}
+                        placeholder="Passphrase (6+)"
+                        className="rounded-lg border border-brand-border bg-brand-bg px-3 py-2 text-sm text-brand-text"
+                      />
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        disabled={busy || handle.trim().length < 3 || pass.length < 6}
+                        onClick={() => void onLogin()}
+                        className="rounded-lg border border-brand-border px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        Sign in
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy || handle.trim().length < 3 || pass.length < 6}
+                        onClick={() => void onRegister()}
+                        className="rounded-lg border border-brand-border px-4 py-2 text-sm disabled:opacity-50"
+                      >
+                        Register
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-semibold text-brand-text">Open resume code</h2>
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        value={resumeCode}
+                        onChange={(e) => setResumeCode(e.target.value.toUpperCase())}
+                        placeholder="AB3K9MPQ"
+                        className="flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void onOpenCode()}
+                        className="rounded-lg border border-brand-accent/50 px-4 py-2 text-sm"
+                      >
+                        Open
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </section>
         ) : (
           <div className="space-y-5">
-            <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-brand-accent">Profile</p>
-                  <h2 className="mt-1 text-2xl font-semibold text-brand-text">@{account.handle}</h2>
-                  <p className="mt-1 text-sm text-brand-muted">
-                    {email ? (
-                      <>
-                        Email: <span className="text-brand-text">{email}</span>
-                      </>
-                    ) : (
-                      "No email linked yet"
-                    )}
-                  </p>
-                  <p className="mt-1 text-xs text-brand-muted">
-                    Passphrase: {hasPassphrase ? "set" : "not set (magic link only)"}
-                  </p>
-                  <p className="mt-1 text-xs text-brand-muted">
-                    Plan:{" "}
-                    <span className={activePremium ? "text-amber-200" : "text-brand-text"}>
-                      {activePremium ? plan.replace("_", " ") : "free"}
-                    </span>
-                    {activePremium && planExpiresAt
-                      ? ` · until ${new Date(planExpiresAt).toLocaleDateString()}`
-                      : " · forever free chat"}
-                    {` · My Characters cap ${customsLimit}`}
-                  </p>
-                </div>
+            <section className="rounded-2xl border border-brand-border bg-brand-panel px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-semibold text-brand-text">@{account.handle}</p>
                 <button
                   type="button"
                   onClick={() => void onLogout()}
@@ -1536,34 +1533,6 @@ export function AccountSettings() {
               </div>
             </section>
 
-            <nav
-              className="flex gap-1 rounded-xl border border-brand-border/80 bg-brand-panel/80 p-1"
-              aria-label="Account"
-            >
-              {(
-                [
-                  ["chats", "Chats"],
-                  ["plan", "Plan"],
-                  ["you", "You"],
-                ] as const
-              ).map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setPane(id)}
-                  className={`min-h-0 flex-1 rounded-lg px-3 py-2 text-xs font-medium ${
-                    pane === id
-                      ? "bg-brand-accent text-white"
-                      : "text-brand-muted hover:text-brand-text"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-
-            {pane === "plan" && (
-            <>
             <section
               id="my-models"
               className="scroll-mt-20 rounded-2xl border border-violet-400/35 bg-violet-500/5 p-5"
@@ -1581,10 +1550,10 @@ export function AccountSettings() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href="/models/studio"
+                    href="/?filter=owned"
                     className="rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white hover:brightness-110"
                   >
-                    Create
+                    Gallery
                   </Link>
                   <Link
                     href="/?filter=owned"
@@ -1599,14 +1568,13 @@ export function AccountSettings() {
                 <div className="mt-4 rounded-xl border border-dashed border-violet-400/30 bg-brand-bg/40 px-3 py-4 text-center">
                   <p className="text-sm text-brand-text">No private models yet</p>
                   <p className="mt-1 text-[11px] text-brand-muted">
-                    Build one from a signature base — identity, vibe, phrases, scenes, optional
-                    clips.
+                    New creates are frozen. Chat a live face from Gallery.
                   </p>
                   <Link
-                    href="/models/studio"
+                    href="/"
                     className="mt-3 inline-flex rounded-lg bg-brand-accent px-4 py-2 text-xs font-semibold text-white"
                   >
-                    Create My Character
+                    Open Gallery
                   </Link>
                 </div>
               ) : (
@@ -1651,16 +1619,15 @@ export function AccountSettings() {
                               {packFilled > 0 ? ` · clips ${packFilled}/4` : " · base clips"}
                               {localTrail?.heatDepth ? ` · heat ${localTrail.heatDepth}` : ""}
                             </p>
-                            {session?.resumeCode && (
+                            {expiry ? (
                               <p
-                                className={`mt-0.5 font-mono text-[10px] ${
-                                  urgent ? "text-rose-200" : "text-amber-100/90"
+                                className={`mt-0.5 text-[10px] ${
+                                  urgent ? "text-rose-200" : "text-brand-muted"
                                 }`}
                               >
-                                Resume {session.resumeCode}
-                                {expiry ? ` · ${expiry}` : ""}
+                                {expiry}
                               </p>
-                            )}
+                            ) : null}
                           </div>
                           <div className="flex flex-wrap gap-1.5">
                             {session?.resumeCode ? (
@@ -1839,7 +1806,7 @@ export function AccountSettings() {
               )}
             </section>
 
-            <section className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
+            <section id="support" className="scroll-mt-20 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="text-sm font-semibold text-brand-text">Support / Day Pass</h2>
@@ -1901,10 +1868,10 @@ export function AccountSettings() {
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-2">
                     <Link
-                      href="/models/studio"
+                      href="/"
                       className="rounded-lg bg-brand-accent px-3 py-2 text-xs font-semibold text-white hover:brightness-110"
                     >
-                      Create My Character
+                      Open Gallery
                     </Link>
                     <Link
                       href="/?filter=owned"
@@ -2021,11 +1988,35 @@ export function AccountSettings() {
                 </p>
               )}
             </section>
-            </>
-            )}
 
-            {pane === "you" && (
-            <>
+            <div className="mb-1">
+              <SystemPulse />
+            </div>
+            <section id="profile" className="scroll-mt-20 rounded-2xl border border-brand-border bg-brand-panel p-5">
+              <p className="text-xs uppercase tracking-[0.2em] text-brand-accent">You</p>
+              <p className="mt-1 text-sm text-brand-muted">
+                {email ? (
+                  <>
+                    Email: <span className="text-brand-text">{email}</span>
+                  </>
+                ) : (
+                  "No email linked yet"
+                )}
+              </p>
+              <p className="mt-1 text-xs text-brand-muted">
+                Passphrase: {hasPassphrase ? "set" : "not set (magic link only)"}
+              </p>
+              <p className="mt-1 text-xs text-brand-muted">
+                Plan:{" "}
+                <span className={activePremium ? "text-amber-200" : "text-brand-text"}>
+                  {activePremium ? plan.replace("_", " ") : "free"}
+                </span>
+                {activePremium && planExpiresAt
+                  ? ` · until ${new Date(planExpiresAt).toLocaleDateString()}`
+                  : " · forever free chat"}
+                {` · My Characters cap ${customsLimit}`}
+              </p>
+            </section>
             <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
               <h2 className="text-sm font-semibold text-brand-text">
                 {email ? "Change linked email" : "Link email"}
@@ -2098,193 +2089,21 @@ export function AccountSettings() {
                 </button>
               </div>
             </section>
-            </>
-            )}
 
-            {pane === "chats" && (
-            <>
-            <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
-              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
-                <div className="flex flex-wrap items-center gap-3">
-                  <label className="cursor-pointer text-xs text-brand-text hover:text-brand-accent">
-                    <span className={busy ? "opacity-50" : ""}>Import JSON</span>
-                    <input
-                      type="file"
-                      accept="application/json,.json"
-                      className="hidden"
-                      disabled={busy}
-                      onChange={(e) => {
-                        const f = e.target.files?.[0] ?? null;
-                        e.target.value = "";
-                        void onImportFile(f);
-                      }}
-                    />
-                  </label>
-                  {sessions.length > 0 && (
-                    <>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportAllSessions("json")}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Download all chats as one JSON file"
-                      >
-                        Export all JSON
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onExportAllSessions("md")}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Download all chats as one Markdown file"
-                      >
-                        Export all MD
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onShareAllMd()}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share all chats as Markdown via system sheet"
-                            : "Copy all chats as Markdown to clipboard"
-                        }
-                      >
-                        {canNativeShare() ? "Share all MD" : "Copy all MD"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || !sessions.some((s) => s.resumeCode)}
-                        onClick={() => void onShareAllResumeLinks()}
-                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
-                        title={
-                          canNativeShare()
-                            ? "Share all resume links as Markdown"
-                            : "Copy all resume links as Markdown"
-                        }
-                      >
-                        {canNativeShare() ? "Share all resumes" : "Copy all resumes"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || !sessions.some((s) => s.resumeCode)}
-                        onClick={() => void onDownloadResumeLinksMd()}
-                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
-                        title="Download all resume links as a .md file"
-                      >
-                        Download resumes.md
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || !sessions.some((s) => s.resumeCode) || !email}
-                        onClick={() => void onEmailResumeLinks()}
-                        className="text-xs text-amber-200/90 hover:text-amber-100 disabled:opacity-50"
-                        title={
-                          email
-                            ? `Email resume links to ${email}`
-                            : "Link an email first to use this"
-                        }
-                      >
-                        Email resumes
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || sessions.length === 0}
-                        onClick={() => void onRefreshExpiringResumes()}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Mint new codes only for expired / soon-to-expire chats"
-                      >
-                        Refresh expiring
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy || sessions.length === 0}
-                        onClick={() => void onRefreshAllResumes()}
-                        className="text-xs text-brand-text hover:text-brand-accent disabled:opacity-50"
-                        title="Mint new resume codes for every chat (invalidates old links)"
-                      >
-                        Refresh all codes
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onWipeSessions()}
-                        className="text-xs text-red-300 hover:underline disabled:opacity-50"
-                      >
-                        Wipe all
-                      </button>
-                    </>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => account && void refresh(account.token)}
-                    className="text-xs text-brand-accent hover:underline"
-                  >
-                    Refresh
-                  </button>
-                </div>
+            <section id="alerts" className="scroll-mt-20 space-y-4 rounded-2xl border border-sky-500/25 bg-sky-500/5 p-5">
+              <InstallAppHint />
+              <div>
+                <h2 className="text-sm font-semibold text-brand-text">Web Push · resume expiry</h2>
+                <p className="mt-1 text-xs text-brand-muted">
+                  Get pinged when a resume code is about to die.
+                </p>
               </div>
-              <p className="mb-3 text-[11px] text-brand-muted">
-                Import JSON runs a <strong>dry-run preview</strong> first (counts + remaps, no
-                writes). Confirm to restore chats as new sessions (up to 25). Missing customs can
-                be remapped to a live model.
-              </p>
-
-              {expiryWarning && (
-                <div
-                  className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
-                  role="status"
-                >
-                  <p className="font-medium">Resume codes expiring soon</p>
-                  <p className="mt-1 text-xs text-amber-100/80">{expiryWarning}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void onRefreshExpiringResumes()}
-                      className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
-                    >
-                      Refresh expiring codes
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void onRefreshAllResumes()}
-                      className="text-xs text-amber-100/70 underline hover:text-white disabled:opacity-50"
-                    >
-                      Refresh all
-                    </button>
-                    {pushSupported && !pushEnabled && (
-                      <button
-                        type="button"
-                        disabled={busy}
-                        onClick={() => void onEnablePush()}
-                        className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
-                      >
-                        Enable push alerts
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setExpiryWarning(null)}
-                      className="text-xs text-brand-muted hover:text-brand-text"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {(pushSupported || pushServerCount > 0 || pushConfigured !== false) && (
-                <div className="mb-4 rounded-xl border border-sky-500/25 bg-sky-500/5 px-4 py-3">
+              {(pushSupported || pushServerCount > 0 || pushConfigured !== false) ? (
+                <div className="rounded-xl border border-sky-500/25 bg-brand-bg/30 px-4 py-3">
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm font-medium text-brand-text">
-                          Web Push · resume expiry
-                        </p>
+                        <p className="text-sm font-medium text-brand-text">This device</p>
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${
                             pushEnabled
@@ -2376,6 +2195,225 @@ export function AccountSettings() {
                     </div>
                   </div>
                 </div>
+              ) : (
+                <p className="text-xs text-brand-muted">Push isn’t available on this browser.</p>
+              )}
+              {expiryWarning ? (
+                <p className="text-xs text-amber-100/90">
+                  {expiryWarning}{" "}
+                  <button
+                    type="button"
+                    className="underline"
+                    onClick={() =>
+                      document.getElementById("chats")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      })
+                    }
+                  >
+                    Open chats
+                  </button>
+                </p>
+              ) : null}
+            </section>
+
+            <section id="chats" className="scroll-mt-20 rounded-2xl border border-brand-border bg-brand-panel p-5">
+              <div className="mb-4 flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold text-brand-text">Saved chats</h2>
+                <div className="flex items-center gap-2">
+                  <Link href="/welcome" className="text-xs text-brand-accent hover:underline">
+                    Your taste
+                  </Link>
+                  <OverflowMenu label="More">
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={() => {
+                        setResumeCode("");
+                        setShowOpenCode(true);
+                      }}
+                    >
+                      Open resume code
+                    </button>
+                    <label className={`menu-item cursor-pointer ${busy ? "opacity-50" : ""}`}>
+                      Import JSON
+                      <input
+                        type="file"
+                        accept="application/json,.json"
+                        className="hidden"
+                        disabled={busy}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] ?? null;
+                          e.target.value = "";
+                          void onImportFile(f);
+                        }}
+                      />
+                    </label>
+                    {sessions.length > 0 ? (
+                      <>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportAllSessions("json")}
+                        >
+                          Export all JSON
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportAllSessions("md")}
+                        >
+                          Export all Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onShareAllMd()}
+                        >
+                          {canNativeShare() ? "Share all chats" : "Copy all chats"}
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy || !sessions.some((s) => s.resumeCode)}
+                          onClick={() => void onShareAllResumeLinks()}
+                        >
+                          Share resume links
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy || !sessions.some((s) => s.resumeCode)}
+                          onClick={() => void onDownloadResumeLinksMd()}
+                        >
+                          Download resumes
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy || !sessions.some((s) => s.resumeCode) || !email}
+                          onClick={() => void onEmailResumeLinks()}
+                        >
+                          Email resumes
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onRefreshExpiringResumes()}
+                        >
+                          Refresh expiring
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onRefreshAllResumes()}
+                        >
+                          Refresh all codes
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item text-rose-200"
+                          disabled={busy}
+                          onClick={() => void onWipeSessions()}
+                        >
+                          Wipe all
+                        </button>
+                      </>
+                    ) : null}
+                    <button
+                      type="button"
+                      className="menu-item"
+                      onClick={() => account && void refresh(account.token)}
+                    >
+                      Refresh list
+                    </button>
+                  </OverflowMenu>
+                </div>
+              </div>
+
+              {showOpenCode ? (
+                <div className="mb-4 rounded-xl border border-brand-border/80 bg-brand-bg/40 px-3 py-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium text-brand-text">Open resume code</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowOpenCode(false)}
+                      className="text-[11px] text-brand-muted hover:text-brand-text"
+                    >
+                      Hide
+                    </button>
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      value={resumeCode}
+                      onChange={(e) => setResumeCode(e.target.value.toUpperCase())}
+                      placeholder="AB3K9MPQ"
+                      className="flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void onOpenCode()}
+                      className="rounded-lg border border-brand-accent/50 px-4 py-2 text-sm"
+                    >
+                      Open
+                    </button>
+                  </div>
+                </div>
+              ) : null}
+
+              {expiryWarning && (
+                <div
+                  className="mb-4 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-100"
+                  role="status"
+                >
+                  <p className="font-medium">Resume codes expiring soon</p>
+                  <p className="mt-1 text-xs text-amber-100/80">{expiryWarning}</p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onRefreshExpiringResumes()}
+                      className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
+                    >
+                      Refresh expiring codes
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => void onRefreshAllResumes()}
+                      className="text-xs text-amber-100/70 underline hover:text-white disabled:opacity-50"
+                    >
+                      Refresh all
+                    </button>
+                    {pushSupported && !pushEnabled && (
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() =>
+                          document.getElementById("alerts")?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          })
+                        }
+                        className="text-xs font-medium text-amber-200 underline hover:text-white disabled:opacity-50"
+                      >
+                        Enable push alerts
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setExpiryWarning(null)}
+                      className="text-xs text-brand-muted hover:text-brand-text"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
               )}
 
               {importDoc != null && importPreview ? (
@@ -2438,26 +2476,16 @@ export function AccountSettings() {
                         </p>
                         <p className="text-brand-muted">
                           {s.messageCount} msgs · {s.status}
-                          {s.resumeCode ? (
-                            <>
-                              {" · "}
-                              <span className="font-mono text-amber-200/90">{s.resumeCode}</span>
-                              {expiryShort ? (
-                                <span
-                                  className={
-                                    urgent ? "text-rose-200/90" : "text-brand-soft"
-                                  }
-                                >
-                                  {" "}
-                                  · {expiryShort}
-                                </span>
-                              ) : s.resumeExpiresAt ? (
-                                <span className="text-brand-soft">
-                                  {" "}
-                                  ({formatExpiry(s.resumeExpiresAt)})
-                                </span>
-                              ) : null}
-                            </>
+                          {expiryShort ? (
+                            <span className={urgent ? "text-rose-200/90" : "text-brand-soft"}>
+                              {" "}
+                              · {expiryShort}
+                            </span>
+                          ) : s.resumeExpiresAt ? (
+                            <span className="text-brand-soft">
+                              {" "}
+                              ({formatExpiry(s.resumeExpiresAt)})
+                            </span>
                           ) : null}
                         </p>
                       </div>
@@ -2481,88 +2509,91 @@ export function AccountSettings() {
                           {dnaPower ? `DNA power · ${nick}` : `Continue · ${nick}`}
                         </Link>
                       )}
-                      <MoreMenu align="right">
-                      <button
-                        type="button"
-                        role="menuitem"
-                        disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId, "json")}
+                      <OverflowMenu
+                        label="More"
+                        triggerClassName="min-h-0 px-2 py-1 text-[11px] text-brand-muted hover:text-brand-text"
                       >
-                        Export JSON
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        disabled={busy}
-                        onClick={() => void onExportSession(s.sessionId, "md")}
-                      >
-                        Export Markdown
-                      </button>
-                      <button
-                        type="button"
-                        role="menuitem"
-                        disabled={busy}
-                        onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
-                      >
-                        {canNativeShare() ? "Share Markdown" : "Copy Markdown"}
-                      </button>
-                      {s.resumeCode && (
-                        <>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() =>
-                              void copyResume(s.resumeCode!, s.characterName, s.characterId)
-                            }
-                          >
-                            {canNativeShare() ? "Share code" : "Copy code"}
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => setPrintCard(s)}
-                          >
-                            QR / Print
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            disabled={busy}
-                            onClick={() => void onDownloadOneResumeMd(s)}
-                          >
-                            Resume .md
-                          </button>
-                          <button
-                            type="button"
-                            role="menuitem"
-                            disabled={busy}
-                            onClick={() =>
-                              void onRefreshOneResume(s.sessionId, s.characterName)
-                            }
-                          >
-                            New code
-                          </button>
-                        </>
-                      )}
-                      <button
-                        type="button"
-                        role="menuitem"
-                        onClick={() => void onDeleteSession(s.sessionId)}
-                      >
-                        Delete chat
-                      </button>
-                      </MoreMenu>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportSession(s.sessionId, "json")}
+                        >
+                          Export JSON
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onExportSession(s.sessionId, "md")}
+                        >
+                          Export Markdown
+                        </button>
+                        <button
+                          type="button"
+                          className="menu-item"
+                          disabled={busy}
+                          onClick={() => void onShareSessionMd(s.sessionId, s.characterName)}
+                        >
+                          {canNativeShare() ? "Share transcript" : "Copy transcript"}
+                        </button>
+                        {s.resumeCode ? (
+                          <>
+                            <p className="px-3 py-1 font-mono text-[10px] text-amber-100/85">
+                              {s.resumeCode}
+                              {expiryShort ? ` · ${expiryShort}` : ""}
+                            </p>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              onClick={() =>
+                                void copyResume(s.resumeCode!, s.characterName, s.characterId)
+                              }
+                            >
+                              {canNativeShare() ? "Share resume" : "Copy resume"}
+                            </button>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              onClick={() => setPrintCard(s)}
+                            >
+                              QR / Print
+                            </button>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              disabled={busy}
+                              onClick={() => void onDownloadOneResumeMd(s)}
+                            >
+                              Download resume
+                            </button>
+                            <button
+                              type="button"
+                              className="menu-item"
+                              disabled={busy}
+                              onClick={() =>
+                                void onRefreshOneResume(s.sessionId, s.characterName)
+                              }
+                            >
+                              New code
+                            </button>
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          className="menu-item text-rose-200"
+                          onClick={() => void onDeleteSession(s.sessionId)}
+                        >
+                          Delete
+                        </button>
+                      </OverflowMenu>
                     </li>
                     );
                   })}
                 </ul>
               )}
             </section>
-            </>
-            )}
 
-            {pane === "you" && (
-            <>
             <section className="rounded-2xl border border-red-500/30 bg-red-500/5 p-5">
               <h2 className="text-sm font-semibold text-red-200">Danger zone</h2>
               <p className="mt-1 text-xs text-brand-muted">
@@ -2586,27 +2617,6 @@ export function AccountSettings() {
                 </button>
               </div>
             </section>
-
-            <section className="rounded-2xl border border-brand-border bg-brand-panel p-5">
-              <h2 className="text-sm font-semibold text-brand-text">Open resume code</h2>
-              <div className="mt-2 flex gap-2">
-                <input
-                  value={resumeCode}
-                  onChange={(e) => setResumeCode(e.target.value.toUpperCase())}
-                  placeholder="AB3K9MPQ"
-                  className="flex-1 rounded-lg border border-brand-border bg-brand-bg px-3 py-2 font-mono text-sm text-brand-text"
-                />
-                <button
-                  type="button"
-                  onClick={() => void onOpenCode()}
-                  className="rounded-lg border border-brand-accent/50 px-4 py-2 text-sm"
-                >
-                  Open
-                </button>
-              </div>
-            </section>
-            </>
-            )}
           </div>
         )}
       </div>

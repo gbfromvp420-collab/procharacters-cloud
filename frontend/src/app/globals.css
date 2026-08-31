@@ -321,6 +321,14 @@ body {
     @apply border-brand-border bg-brand-panel text-brand-muted hover:border-brand-accent/70 hover:text-brand-text;
   }
 
+  .tag {
+    @apply inline-flex items-center rounded-full border border-white/20 bg-black/50 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur;
+  }
+
+  .menu-item {
+    @apply flex w-full items-center px-3 py-2 text-left text-sm text-brand-text transition hover:bg-white/5;
+  }
+
   .btn-primary {
     @apply inline-flex min-h-10 items-center justify-center rounded-xl bg-brand-accent px-4 py-2 text-sm font-semibold text-white shadow-glow-sm transition hover:bg-brand-accentDim active:scale-[0.98];
   }
@@ -330,7 +338,7 @@ body {
   }
 
   .btn-nav {
-    @apply inline-flex h-8 items-center justify-center rounded-lg px-2.5 text-[12px] text-brand-muted transition hover:bg-white/5 hover:text-brand-text;
+    @apply inline-flex h-8 items-center justify-center rounded-lg px-2.5 text-xs text-brand-muted transition hover:bg-white/5 hover:text-brand-text sm:text-sm;
   }
 
   .btn-nav-active {
@@ -339,6 +347,22 @@ body {
 
   .field {
     @apply w-full rounded-xl border border-brand-border bg-brand-panel px-4 py-2.5 text-sm text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none focus:ring-2 focus:ring-brand-accent/25;
+  }
+
+  .quest-choice {
+    @apply w-full rounded-2xl border border-brand-border bg-brand-panel px-5 py-4 text-base font-medium text-brand-text transition;
+  }
+
+  .quest-choice-on {
+    @apply border-brand-accent bg-brand-accent/10;
+  }
+
+  .quest-field {
+    @apply w-full rounded-2xl border border-brand-border bg-brand-panel px-5 py-4 text-base text-brand-text placeholder:text-brand-muted focus:border-brand-accent focus:outline-none;
+  }
+
+  .quest-continue {
+    @apply flex h-14 w-full items-center justify-center rounded-full bg-brand-accent text-base font-semibold text-white shadow-glow-sm disabled:opacity-40;
   }
 
   .hint-rail {

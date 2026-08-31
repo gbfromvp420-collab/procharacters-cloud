@@ -14,12 +14,6 @@ import {
   setSessionWinActive,
 } from "@/lib/conversion-flags";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
-import {
-  buildForgeFromHeatPath,
-  shouldOfferForgeFromHeat,
-  stashForgeHeatSeed,
-  type ForgeHeatContext,
-} from "@/lib/forge-from-heat";
 import { canNativeShare, shareOrCopyText, shareResultLabel } from "@/lib/share-links";
 
 const SEEN_KEY = "procharacters.sessionWin.seen.v1";
@@ -72,31 +66,6 @@ export function SessionWinToast({
   const deepDna =
     !!dnaLabel &&
     /edge|deny|release|gate|tease/i.test(dnaLabel);
-  const forgeHeatCtx: ForgeHeatContext | null =
-    characterId
-      ? {
-          characterId,
-          characterName,
-          baseModelId: baseModelId || characterId,
-          dnaTreeLabel,
-          dnaTreeNodeId,
-          heatDepth,
-          heatChips,
-          recapLine,
-          messageCount,
-          isMine,
-        }
-      : null;
-  const offerForge =
-    !!forgeHeatCtx &&
-    shouldOfferForgeFromHeat({
-      messageCount,
-      dnaTreeLabel,
-      dnaTreeNodeId,
-      heatDepth,
-    });
-  const forgeHref = offerForge && forgeHeatCtx ? buildForgeFromHeatPath(forgeHeatCtx) : null;
-
   useEffect(() => {
     // DNA climbs count as heat faster — unlock win toast at 2 msgs if tree is deep
     const minMsgs = deepDna ? 2 : 3;
@@ -283,19 +252,6 @@ export function SessionWinToast({
             >
               {copied ? "Copied!" : canNativeShare() ? "Share code" : "Copy code"}
             </button>
-            {forgeHref && forgeHeatCtx && (
-              <Link
-                href={forgeHref}
-                className="btn-ghost min-h-0 border-violet-400/55 bg-violet-500/20 px-3 py-1.5 text-xs font-semibold text-violet-50 ring-1 ring-violet-300/35"
-                title="Mint private DNA from this climb"
-                onClick={() => {
-                  stashForgeHeatSeed(forgeHeatCtx);
-                  dismiss(true);
-                }}
-              >
-                {dnaLabel ? `Forge this DNA · ${dnaLabel}` : "Forge this heat"}
-              </Link>
-            )}
             {offerCheckout && (
               <button
                 type="button"

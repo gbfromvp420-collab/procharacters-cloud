@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
+import { packLaneFor, packLaneLabel } from "@/lib/pack-lanes";
 import { loadStoredAccount } from "@/lib/account-storage";
 import { fetchLatestAccountSessionForCharacter } from "@/lib/api";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
@@ -20,6 +21,7 @@ import {
   shareUrlResultLabel,
 } from "@/lib/share-links";
 import { SiteChrome } from "@/components/SiteChrome";
+import { OverflowMenu } from "@/components/OverflowMenu";
 
 interface CharacterCardViewProps {
   card: CharacterCard;
@@ -41,6 +43,18 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   const autostartUrl = useMemo(
     () => buildCharacterShareUrl(card.id, { origin: siteOrigin, autostart: true, card: false }),
     [card.id, siteOrigin],
+  );
+  const edgePaceUrl = useMemo(
+    () =>
+      card.edgePacePath
+        ? `${siteOrigin}${card.edgePacePath.startsWith("/") ? "" : "/"}${card.edgePacePath}`
+        : buildCharacterShareUrl(card.id, {
+            origin: siteOrigin,
+            autostart: true,
+            card: false,
+            sessionMode: "edge_pace",
+          }),
+    [card.edgePacePath, card.id, siteOrigin],
   );
   const resumeUrl = useMemo(
     () =>
@@ -158,7 +172,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
   const nick = card.displayName.trim().split(/\s+/)[0] || card.displayName;
 
   return (
-    <main className="relative min-h-dvh overflow-x-hidden pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.5rem))] sm:pb-8">
+    <main className="relative min-h-dvh overflow-x-hidden pb-[max(5rem,calc(env(safe-area-inset-bottom)+4rem))] sm:pb-8">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
 
       <SiteChrome
@@ -192,8 +206,14 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                 />
               </div>
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/80 via-black/20 to-transparent p-5 pt-16">
-                <p className="text-[10px] uppercase tracking-[0.25em] text-brand-accent">
-                  {resumeCode ? "Your chat" : card.dedicatedPack ? "4K live" : "Live model"}
+                <p className="text-xs uppercase tracking-[0.25em] text-brand-accent">
+                  {card.featured
+                    ? "Featured"
+                    : card.dedicatedPack
+                      ? packLaneLabel(card.packLane ?? packLaneFor(card.id)) || "4K pack"
+                      : resumeCode
+                        ? "Your chat"
+                        : `Live · ${presence.label}`}
                 </p>
                 <h1 className="mt-1 text-3xl font-semibold text-white sm:text-4xl">
                   {card.displayName}
@@ -211,30 +231,21 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
           <div className="flex flex-col gap-5 sm:gap-6">
             <div>
-              <p className="text-sm text-brand-muted">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-brand-accent">
                 {card.kind === "custom" ? "Custom" : "Signature"}
                 {card.energyLabel ? ` · ${card.energyLabel.split(",")[0]?.trim()}` : ""}
               </p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
+              <h2 className="mt-2 text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
                 Meet {card.displayName}
               </h2>
-              {mind && (
-                <div className="mt-3 rounded-xl border border-brand-accent/25 bg-brand-accent/5 px-3 py-2.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-accent">
-                    Mind · {mind.tag}
-                    {mind.bilingual ? " · Soft ES spice" : ""}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-brand-muted">{mind.blurb}</p>
-                </div>
-              )}
-              <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:mt-4 sm:text-base">
+              {mind ? (
+                <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted sm:text-base">
+                  {mind.blurb}
+                </p>
+              ) : null}
+              <p className="mt-3 max-w-xl text-sm leading-relaxed text-brand-muted/90">
                 {card.teaser}
               </p>
-              {(card.vibeTag || card.energyLabel) && (
-                <p className="mt-2 text-[11px] uppercase tracking-[0.2em] text-brand-accent">
-                  {(card.vibeTag || card.energyLabel).split(",")[0]?.trim()}
-                </p>
-              )}
             </div>
 
             {card.openingMessage && (
@@ -247,11 +258,11 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
             )}
 
             {card.tags?.length > 0 && (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {card.tags.slice(0, 4).map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full border border-brand-border bg-brand-panel px-3 py-1 text-xs text-brand-muted"
+                    className="rounded-full border border-brand-border/80 px-2.5 py-0.5 text-[11px] text-brand-muted"
                   >
                     {tag}
                   </span>
@@ -259,7 +270,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </div>
             )}
 
-            <div className="hidden items-center gap-3 sm:flex">
+            <div className="hidden items-center gap-2 sm:flex">
               {resumeEntry?.resumeCode ? (
                 <Link
                   href={buildResumeChatPath(resumeEntry)}
@@ -269,7 +280,9 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
                       : "ring-amber-400/45"
                   }`}
                 >
-                  Continue with {nick}
+                  {resumeEntry.dnaTreeLabel || resumeEntry.dnaTreeNodeId
+                    ? `Continue · ${nick}`
+                    : `Continue with ${nick}`}
                 </Link>
               ) : (
                 <Link href={card.ctaPath} className="btn-primary px-6">
@@ -283,11 +296,30 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               >
                 {shareLabel}
               </button>
-              {resumeEntry?.resumeCode ? (
-                <Link href={card.ctaPath} className="text-xs text-brand-muted hover:text-brand-text">
-                  New chat
+              <OverflowMenu label="More">
+                {resumeEntry?.resumeCode ? (
+                  <Link href={card.ctaPath} className="menu-item">
+                    New chat
+                  </Link>
+                ) : null}
+                <Link
+                  href={
+                    card.edgePacePath ||
+                    `/chat?character=${encodeURIComponent(card.id)}&autostart=1&mode=edge_pace`
+                  }
+                  className="menu-item"
+                >
+                  Edge Pace
                 </Link>
-              ) : null}
+                <button type="button" className="menu-item" onClick={() => void onShareAutostart()}>
+                  {shareLabel} start link
+                </button>
+                {resumeCode ? (
+                  <button type="button" className="menu-item" onClick={() => void onShareResume()}>
+                    {shareLabel} resume
+                  </button>
+                ) : null}
+              </OverflowMenu>
             </div>
 
             {notice && (
@@ -296,48 +328,36 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
               </p>
             )}
 
-            <details className="rounded-xl border border-brand-border/70 bg-brand-panel/50 p-3 text-xs text-brand-muted">
-              <summary className="cursor-pointer text-[11px] font-medium text-brand-text">
-                Share links
-              </summary>
+            <details className="rounded-xl border border-brand-border/60 bg-brand-panel/40 px-4 py-3 text-xs text-brand-muted">
+              <summary className="cursor-pointer text-sm text-brand-text">Share links</summary>
               <div className="mt-3 space-y-3">
                 <div>
                   <p className="font-medium text-brand-text">Card</p>
                   <p className="mt-1 break-all font-mono text-[11px]">{shareUrl}</p>
-                  <button
-                    type="button"
-                    className="mt-1 text-[11px] text-brand-accent"
-                    onClick={() => void onShareCard()}
-                  >
-                    {shareLabel} card
-                  </button>
                 </div>
                 <div>
                   <p className="font-medium text-brand-text">Start chat</p>
                   <p className="mt-1 break-all font-mono text-[11px]">{autostartUrl}</p>
-                  <button
-                    type="button"
-                    className="mt-1 text-[11px] text-brand-accent"
-                    onClick={() => void onShareAutostart()}
-                  >
-                    {shareLabel} start
-                  </button>
+                </div>
+                <div>
+                  <p className="font-medium text-brand-text">Edge Pace</p>
+                  <p className="mt-1 break-all font-mono text-[11px]">{edgePaceUrl}</p>
                 </div>
                 {resumeUrl && resumeCode ? (
                   <div>
                     <p className="font-medium text-amber-200">
                       Resume ({resumeCode})
+                      <span className="ml-1 font-normal text-brand-muted">
+                        · {resumeSource === "account" ? "account" : "this device"}
+                      </span>
                     </p>
                     <p className="mt-1 break-all font-mono text-[11px]">{resumeUrl}</p>
-                    <button
-                      type="button"
-                      className="mt-1 text-[11px] text-amber-200"
-                      onClick={() => void onShareResume()}
-                    >
-                      {shareLabel} resume
-                    </button>
                   </div>
-                ) : null}
+                ) : (
+                  <p className="text-[11px]">
+                    Resume link appears after you chat while signed in.
+                  </p>
+                )}
               </div>
             </details>
           </div>
@@ -349,7 +369,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-brand-border/70 bg-brand-bg/92 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden">
-        <div className="mx-auto flex max-w-lg gap-2">
+        <div className="mx-auto flex max-w-lg items-center gap-2">
           {resumeEntry?.resumeCode ? (
             <Link
               href={buildResumeChatPath(resumeEntry)}
@@ -359,13 +379,13 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
             </Link>
           ) : (
             <Link href={card.ctaPath} className="btn-primary flex-1">
-              Chat
+              Start
             </Link>
           )}
           <button
             type="button"
             onClick={() => void onShareCard()}
-            className="btn-ghost flex-1"
+            className="btn-ghost px-4"
           >
             {shareLabel}
           </button>

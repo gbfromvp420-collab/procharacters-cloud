@@ -60,7 +60,7 @@ import { SessionWinToast } from "@/components/SessionWinToast";
 import { SoftSupportHint } from "@/components/SoftSupportHint";
 import { PushEnableHint } from "@/components/PushEnableHint";
 import { HintRail } from "@/components/HintRail";
-import { MoreMenu } from "@/components/MoreMenu";
+import { OverflowMenu } from "@/components/OverflowMenu";
 import { SiteChrome } from "@/components/SiteChrome";
 import {
   collectExportCharacters,
@@ -143,7 +143,7 @@ import type {
 const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   {
     id: "twink-default",
-    displayName: "Twink Default",
+    displayName: "Cruz",
     defaultVersion: "v1.3.1",
     kind: "default",
     featured: true,
@@ -152,7 +152,7 @@ const FALLBACK_CHARACTERS: LiveCharacterOption[] = [
   },
   {
     id: "female-default",
-    displayName: "Female Default",
+    displayName: "Vesper",
     defaultVersion: "v1.3.1",
     kind: "default",
     featured: true,
@@ -3179,7 +3179,7 @@ export function ChatApp() {
                       Resume
                     </button>
                   )}
-                  <MoreMenu align="left">
+                  <OverflowMenu align="left">
                     <button
                       type="button"
                       role="menuitem"
@@ -3204,7 +3204,7 @@ export function ChatApp() {
                       />
                     </label>
                     <a href="/models/studio" role="menuitem">
-                      Create model
+                      Character settings
                     </a>
                     {characters.some(
                       (c) => c.id === character && c.kind === "custom" && c.mine !== false,
@@ -3248,7 +3248,7 @@ export function ChatApp() {
                     <a href={`/character/${encodeURIComponent(character)}`} role="menuitem">
                       Full card
                     </a>
-                  </MoreMenu>
+                  </OverflowMenu>
                 </>
               ) : (
                 <>
@@ -3268,7 +3268,7 @@ export function ChatApp() {
                   >
                     End
                   </button>
-                  <MoreMenu align="left">
+                  <OverflowMenu align="left">
                     <button
                       type="button"
                       role="menuitem"
@@ -3309,7 +3309,7 @@ export function ChatApp() {
                     >
                       {canNativeShare() ? "Share Markdown" : "Copy Markdown"}
                     </button>
-                  </MoreMenu>
+                  </OverflowMenu>
                 </>
               )}
               {bandFlash ? (

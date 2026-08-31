@@ -18,7 +18,6 @@ import {
 } from "@/lib/resume-cache";
 import {
   buildResumeCodeShareUrl,
-  canNativeShare,
   shareOrCopyUrl,
   shareUrlResultLabel,
 } from "@/lib/share-links";
@@ -37,10 +36,7 @@ import { SiteChrome } from "./SiteChrome";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { packLaneFor, packLaneLabel, type PackLane } from "@/lib/pack-lanes";
 import {
-  GALLERY_CHIP_LABEL,
   GALLERY_SORT_OPTIONS,
-  galleryFilterChips,
-  isPackFilter,
   type GallerySortMode,
 } from "@/lib/tile-chrome";
 
@@ -251,10 +247,6 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     if (!continueTarget?.resumeCode) return null;
     return buildResumeChatPath(continueTarget);
   }, [continueTarget]);
-  const continueUrgent = useMemo(
-    () => isResumeExpiryUrgent(continueTarget?.resumeExpiresAt),
-    [continueTarget?.resumeExpiresAt],
-  );
 
   const counts = useMemo(
     () => ({
@@ -298,6 +290,15 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       .toLowerCase();
     return hay.includes(q);
   };
+
+  const featuredRow = useMemo(() => {
+    if (filter === "mine" || filter === "owned") return [];
+    const q = query.trim().toLowerCase();
+    return catalog.filter((c) => {
+      if (!c.featured) return false;
+      return matchesQuery(c, q);
+    });
+  }, [catalog, query, filter]);
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -390,13 +391,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
     flash(shareUrlResultLabel(result, `Resume ${resume.resumeCode}`));
   };
 
+  const showFeaturedStrip = filter === "all" && !query.trim() && featuredRow.length > 0 && sort !== "recent";
 
   return (
-    <main className={`relative min-h-dvh overflow-x-hidden ${
-      continueHref
-        ? "pb-[max(5.5rem,calc(env(safe-area-inset-bottom)+4.25rem))] sm:pb-[max(1.5rem,env(safe-area-inset-bottom))]"
-        : "pb-[max(1.5rem,env(safe-area-inset-bottom))]"
-    }`}>
+    <main className="relative min-h-dvh overflow-x-hidden pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(225,29,143,0.06),transparent_40%)]" />
       <SiteChrome
@@ -425,14 +423,14 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             )}
           />
         </HintRail>
-        <header className="mb-6 animate-fade-in">
-          <h1 className="text-2xl font-semibold tracking-tight text-brand-text sm:text-4xl">
+        <header className="mb-6 animate-fade-in sm:mb-8">
+          <h1 className="bg-gradient-to-r from-brand-text via-white to-brand-accent bg-clip-text text-3xl font-semibold tracking-tight text-transparent sm:text-5xl">
             Live gallery
           </h1>
-          <p className="mt-2 max-w-lg text-sm leading-relaxed text-brand-muted">
+          <p className="mt-3 max-w-lg text-sm leading-relaxed text-brand-muted">
             {resumeCount > 0
               ? "Pick up a saved chat, or meet someone new."
-              : "Tonight’s cast. Tap a mind to start."}
+              : "Tonight’s cast. Tap a face to start."}
           </p>
           {notice && (
             <p className="mt-2 text-xs font-medium text-brand-accent" role="status">
@@ -457,7 +455,61 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
           />
         )}
 
-        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.5rem)] z-20 -mx-4 mb-6 space-y-2.5 border-b border-brand-border/40 bg-brand-bg/92 px-4 py-3 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
+        {showFeaturedStrip && !continueTarget && (
+          <section className="mb-8 sm:mb-10">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[10px] uppercase tracking-[0.3em] text-brand-accent">Spotlight</p>
+                <h2 className="text-base font-semibold text-brand-text sm:text-lg">
+                  Featured
+                </h2>
+              </div>
+              <button type="button" onClick={() => setFilter("featured")} className="min-h-touch text-xs text-brand-muted hover:text-brand-accent">View all →</button>
+            </div>
+            <div className="relative -mx-4 sm:mx-0">
+              <div
+                className="pointer-events-none absolute inset-y-0 left-0 z-[1] w-6 bg-gradient-to-r from-brand-bg to-transparent sm:w-8"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute inset-y-0 right-0 z-[1] w-8 bg-gradient-to-l from-brand-bg to-transparent sm:w-10"
+                aria-hidden
+              />
+              <button
+                type="button"
+                className="absolute left-1 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border/80 bg-brand-bg/90 text-brand-text shadow-card backdrop-blur sm:flex"
+                aria-label="Scroll featured left"
+                onClick={() => {
+                  const el = document.getElementById("gallery-featured-strip");
+                  el?.scrollBy({ left: -280, behavior: "smooth" });
+                }}
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                className="absolute right-1 top-1/2 z-[2] hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-brand-border/80 bg-brand-bg/90 text-brand-text shadow-card backdrop-blur sm:flex"
+                aria-label="Scroll featured right"
+                onClick={() => {
+                  const el = document.getElementById("gallery-featured-strip");
+                  el?.scrollBy({ left: 280, behavior: "smooth" });
+                }}
+              >
+                ›
+              </button>
+              <div
+                id="gallery-featured-strip"
+                className="scroll-strip flex gap-3 overflow-x-auto px-4 pb-1 sm:gap-4 sm:px-0"
+              >
+                {featuredRow.map((card) => (
+                  <CharacterTile key={`feat-${card.id}`} card={card} onShareCard={shareCard} onShareResume={shareResume} resume={resumes[card.id] ?? null} compact />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <div className="sticky top-[calc(env(safe-area-inset-top,0px)+3.25rem)] z-20 -mx-4 mb-6 space-y-2.5 border-b border-brand-border/40 bg-brand-bg/92 px-4 py-2.5 backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none">
           <div className="flex items-center gap-2">
             <input
               value={query}
@@ -465,7 +517,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               placeholder="Search minds…"
               enterKeyHint="search"
               autoComplete="off"
-              className="field min-h-10 flex-1"
+              className="field h-10 min-h-0 flex-1 py-0"
             />
             <label className="sr-only" htmlFor="gallery-sort">
               Sort
@@ -474,7 +526,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               id="gallery-sort"
               value={sort === "kind" || sort === "energy" || sort === "packs" ? "featured" : sort}
               onChange={(e) => setSort(e.target.value as SortMode)}
-              className="field min-h-10 w-[8.5rem] shrink-0"
+              className="field h-10 min-h-0 w-[8.5rem] shrink-0 py-0"
             >
               {GALLERY_SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -483,70 +535,64 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2 overflow-x-auto pb-0.5">
-            {galleryFilterChips({
-              signedIn: !!signedInHandle,
-              resumeCount,
-            }).map((key) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setFilter(key)}
-                className={`chip ${filter === key ? "chip-active" : "chip-idle"} ${
-                  key === "mine" && urgentMineCount > 0 ? "border-rose-400/50 text-rose-100" : ""
-                }`}
-              >
-                {GALLERY_CHIP_LABEL[key]}
-                <span className="ml-1 opacity-60">{counts[key]}</span>
-              </button>
-            ))}
-            <label className="sr-only" htmlFor="gallery-pack">
-              Packs
-            </label>
-            <select
-              id="gallery-pack"
-              value={isPackFilter(filter) ? filter : ""}
-              onChange={(e) => {
-                const next = e.target.value;
-                if (!next) {
-                  if (isPackFilter(filter)) setFilter("all");
-                  return;
-                }
-                setFilter(next as GalleryFilter);
-                setSort("featured");
-              }}
-              className={`chip cursor-pointer ${isPackFilter(filter) ? "chip-active" : "chip-idle"}`}
-            >
-              <option value="">Packs</option>
-              <option value="packs">All 4K · {counts.packs}</option>
-              <option value="pack01">Pack 01 · {counts.pack01}</option>
-              <option value="pack02">Pack 02 · {counts.pack02}</option>
-              <option value="pack03">Pack 03 · {counts.pack03}</option>
-            </select>
+          <div className="scroll-strip flex gap-1.5 overflow-x-auto pb-0.5">
+            {(
+              [
+                ["all", "All"],
+                ...(resumeCount > 0 ? ([["mine", "My chats"]] as const) : []),
+                ...(signedInHandle || counts.owned > 0
+                  ? ([["owned", "My models"]] as const)
+                  : []),
+                ["featured", "Featured"],
+                ["packs", "Packs"],
+              ] as const
+            ).map(([key, label]) => {
+              const packOn = key === "packs" && (filter === "packs" || filter === "pack01" || filter === "pack02" || filter === "pack03");
+              const on = filter === key || packOn;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  className={`chip ${on ? "chip-active" : "chip-idle"}`}
+                >
+                  {label}
+                  <span className="ml-1 opacity-60">
+                    {key === "packs" ? counts.packs : counts[key]}
+                  </span>
+                  {key === "mine" && urgentMineCount > 0 ? (
+                    <span className="ml-1 text-rose-200">· {urgentMineCount}</span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
+          {(filter === "packs" || filter === "pack01" || filter === "pack02" || filter === "pack03") && (
+            <div className="scroll-strip flex gap-1.5 overflow-x-auto">
+              {(
+                [
+                  ["packs", "All packs"],
+                  ["pack01", "Pack 01"],
+                  ["pack02", "Pack 02"],
+                  ["pack03", "Pack 03"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setFilter(key)}
+                  className={`chip ${filter === key ? "chip-active" : "chip-idle"}`}
+                >
+                  {label}
+                  <span className="ml-1 opacity-60">{counts[key]}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {(query.trim() || filter !== "all") && (
-            <p className="text-[10px] text-brand-muted">
-              Showing{" "}
-              <span className="font-semibold text-brand-text">{visible.length}</span>{" "}
-              mind{visible.length === 1 ? "" : "s"}
+            <p className="text-[11px] text-brand-muted">
+              {visible.length} mind{visible.length === 1 ? "" : "s"}
               {query.trim() ? ` for “${query.trim()}”` : ""}
-              {filter !== "all"
-                ? ` · ${
-                    filter === "pack01"
-                      ? "Pack 01"
-                      : filter === "pack02"
-                        ? "Pack 02"
-                        : filter === "pack03"
-                          ? "Pack 03"
-                          : filter
-                  }`
-                : ""}
-              {filter === "mine" && urgentMineCount > 0 ? (
-                <span className="text-rose-200/90">
-                  {" "}
-                  · {urgentMineCount} need reclaim
-                </span>
-              ) : null}
             </p>
           )}
         </div>
@@ -715,7 +761,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
                 </h2>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3">
+            <div className="grid grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 lg:gap-7">
               {visible.map((card) => (
                 <CharacterTile
                   key={card.id}
@@ -729,30 +775,10 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
             </div>
           </>
         )}
-        <footer className="mt-12 pb-4 text-center text-xs text-brand-muted">Uncensored 21+ · Procharacters.cloud / KGC Ventures</footer>
+        <footer className="mt-14 pb-6 text-center text-xs text-brand-muted">
+          Uncensored 21+ · Procharacters.cloud / KGC Ventures
+        </footer>
       </div>
-
-      {continueHref ? (
-        <div
-          className={`fixed inset-x-0 bottom-0 z-30 border-t bg-brand-bg/92 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl sm:hidden ${
-            continueUrgent
-              ? "border-rose-400/50 shadow-[0_-8px_28px_-12px_rgba(244,63,94,0.45)]"
-              : "border-brand-border/70"
-          }`}
-        >
-          <Link
-            href={continueHref}
-            className={`btn-primary mx-auto flex max-w-lg ${
-              continueUrgent ? "ring-2 ring-rose-400/55" : ""
-            }`}
-          >
-            {continueUrgent ? "Reclaim" : "Continue"}
-            {continueCard?.displayName
-              ? ` · ${continueCard.displayName.split(" ")[0]}`
-              : ""}
-          </Link>
-        </div>
-      ) : null}
     </main>
   );
 }

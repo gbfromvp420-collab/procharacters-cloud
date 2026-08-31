@@ -5,8 +5,8 @@ import type { ExportCharacterRef } from "@/lib/import-characters";
 import type { LiveCharacterOption } from "@/lib/types";
 
 const BUILTIN_OPTIONS = [
-  { id: "twink-default", displayName: "Twink Default" },
-  { id: "female-default", displayName: "Female Default" },
+  { id: "twink-default", displayName: "Cruz" },
+  { id: "female-default", displayName: "Vesper" },
 ];
 
 export interface ImportPreviewPanelProps {
@@ -163,8 +163,8 @@ export function ImportPreviewPanel({
               onChange={(e) => onFallbackChange(e.target.value)}
               className="field min-h-0 py-1 text-xs"
             >
-              <option value="twink-default">Twink Default</option>
-              <option value="female-default">Female Default</option>
+              <option value="twink-default">Cruz</option>
+              <option value="female-default">Vesper</option>
               {liveCharacters
                 .filter((c) => c.id !== "twink-default" && c.id !== "female-default")
                 .map((c) => (

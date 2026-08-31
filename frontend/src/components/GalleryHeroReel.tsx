@@ -5,11 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CharacterCard } from "@/lib/character-card";
 import { calendarDaySeed, mindFingerprint, seededShuffle } from "@/lib/mind-fingerprint";
 import {
-  buildForgeFromHeatPath,
-  shouldOfferForgeFromHeat,
-  stashForgeHeatSeed,
-} from "@/lib/forge-from-heat";
-import {
   buildResumeChatPath,
   type ResumeCacheEntry,
 } from "@/lib/resume-cache";
@@ -209,34 +204,6 @@ export function GalleryHeroReel({
   const resume = resumes[card.id];
   const continueHref = resume?.resumeCode ? buildResumeChatPath(resume) : null;
   const nick = firstName(card.displayName);
-  const dnaLabel =
-    resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
-  const offerForge =
-    !!resume &&
-    shouldOfferForgeFromHeat({
-      messageCount: resume.messageCount,
-      dnaTreeLabel: resume.dnaTreeLabel,
-      dnaTreeNodeId: resume.dnaTreeNodeId,
-      heatDepth: resume.heatDepth,
-    });
-  const forgeHeatCtx = offerForge && resume
-    ? {
-        characterId: card.id,
-        characterName: card.displayName,
-        baseModelId:
-          card.avatarBase ||
-          (card.id.startsWith("custom-") ? undefined : card.id),
-        dnaTreeLabel: resume.dnaTreeLabel,
-        dnaTreeNodeId: resume.dnaTreeNodeId,
-        heatDepth: resume.heatDepth,
-        heatChips: resume.heatChips,
-        recapLine: resume.recapLine,
-        messageCount: resume.messageCount,
-        isMine: card.mine === true,
-      }
-    : null;
-  const forgeHref =
-    forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
 
   const onTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0]?.clientX ?? null;
@@ -336,23 +303,23 @@ export function GalleryHeroReel({
                 </span>
               )}
             </div>
-            {resume?.heatChips && resume.heatChips.length > 0 && (
+            {resume?.heatChips && resume.heatChips.length > 0 ? (
               <p className="mt-2 line-clamp-1 text-[11px] text-amber-100/85">
                 Left at · {resume.heatChips.slice(0, 3).join(" · ")}
               </p>
-            )}
-            {resume?.recapLine && (
+            ) : null}
+            {resume?.recapLine ? (
               <p className="mt-1 line-clamp-2 text-[12px] italic leading-snug text-white/75">
                 “{resume.recapLine}”
               </p>
-            )}
+            ) : null}
             <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
               {card.displayName}
             </h2>
             <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-white/80 sm:mt-3 sm:line-clamp-3 sm:text-base">
               {mind?.blurb || card.teaser}
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-2 sm:mt-5 sm:gap-3">
+            <div className="mt-4 flex items-center gap-2 sm:mt-5 sm:gap-3">
               {continueHref ? (
                 <Link
                   href={continueHref}
@@ -373,20 +340,10 @@ export function GalleryHeroReel({
               )}
               <Link
                 href={card.cardPath}
-                className="btn-ghost min-h-0 border-white/20 bg-black/30 px-5 py-2.5 text-sm text-white hover:bg-black/50"
+                className="btn-ghost min-h-0 border-white/20 bg-black/30 px-4 py-2.5 text-sm text-white hover:bg-black/50"
               >
                 Card
               </Link>
-              {forgeHref && forgeHeatCtx ? (
-                <Link
-                  href={forgeHref}
-                  className="text-xs text-violet-100/80 underline-offset-4 hover:underline"
-                  title="Mint private DNA from this climb"
-                  onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
-                >
-                  {dnaLabel ? `Forge · ${dnaLabel}` : "Forge this heat"}
-                </Link>
-              ) : null}
             </div>
           </div>
         </div>

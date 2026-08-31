@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { GalleryView } from "@/components/GalleryView";
+import { PersonaGate } from "@/components/PersonaGate";
 import { fetchCharacterGallery } from "@/lib/character-card";
 
 export const metadata: Metadata = {
@@ -17,5 +18,10 @@ function siteOrigin(): string {
 
 export default async function HomePage() {
   const characters = await fetchCharacterGallery();
-  return <GalleryView characters={characters} siteOrigin={siteOrigin()} />;
+  return (
+    <>
+      <PersonaGate />
+      <GalleryView characters={characters} siteOrigin={siteOrigin()} />
+    </>
+  );
 }

@@ -6,11 +6,6 @@ import type { CharacterCard } from "@/lib/character-card";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
 import { presenceVisual, resolvePresenceSkin } from "@/lib/presence";
 import {
-  buildForgeFromHeatPath,
-  shouldOfferForgeFromHeat,
-  stashForgeHeatSeed,
-} from "@/lib/forge-from-heat";
-import {
   buildResumeChatPath,
   formatResumeExpiryShort,
   isResumeExpiryUrgent,
@@ -19,7 +14,7 @@ import {
 import { pickPosterMark } from "@/lib/tile-chrome";
 import { canNativeShare } from "@/lib/share-links";
 import type { MediaClipKey } from "@/lib/types";
-import { MoreMenu } from "./MoreMenu";
+import { OverflowMenu } from "./OverflowMenu";
 
 export function posterUrl(card: CharacterCard): string {
   const poster = card.posterClip;
@@ -169,36 +164,6 @@ export function CharacterTile({
     energyLabel: card.energyLabel || card.vibeTag,
   });
 
-  // Forge this heat — DNA-hot / deep trail → Studio seed (mirrors SessionWinToast)
-  const dnaLabel =
-    resume?.dnaTreeLabel?.trim() || resume?.dnaTreeNodeId?.trim() || null;
-  const offerForge =
-    !!resume &&
-    shouldOfferForgeFromHeat({
-      messageCount: resume.messageCount,
-      dnaTreeLabel: resume.dnaTreeLabel,
-      dnaTreeNodeId: resume.dnaTreeNodeId,
-      heatDepth: resume.heatDepth,
-    });
-  const forgeHeatCtx = offerForge && resume
-    ? {
-        characterId: card.id,
-        characterName: card.displayName,
-        baseModelId:
-          card.avatarBase ||
-          (card.id.startsWith("custom-") ? undefined : card.id),
-        dnaTreeLabel: resume.dnaTreeLabel,
-        dnaTreeNodeId: resume.dnaTreeNodeId,
-        heatDepth: resume.heatDepth,
-        heatChips: resume.heatChips,
-        recapLine: resume.recapLine,
-        messageCount: resume.messageCount,
-        isMine: card.mine === true,
-      }
-    : null;
-  const forgeHref =
-    forgeHeatCtx != null ? buildForgeFromHeatPath(forgeHeatCtx) : null;
-
   // Smooth src swap without blank frame
   useEffect(() => {
     const video = videoRef.current;
@@ -214,7 +179,7 @@ export function CharacterTile({
 
   return (
     <article
-      className={`group overflow-hidden rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm active:scale-[0.99] ${
+      className={`group relative overflow-visible rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm ${
         compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
       } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""} ${
         card.mine ? "ring-1 ring-violet-400/25" : ""
@@ -222,7 +187,7 @@ export function CharacterTile({
     >
       <div
         ref={containerRef}
-        className={`relative aspect-[3/4] overflow-hidden bg-black ${visual.glow}`}
+        className={`relative aspect-[3/4] overflow-hidden rounded-t-2xl bg-black ${visual.glow}`}
       >
         {/* Poster is the primary path: continue when resume exists, else chat */}
         <Link
@@ -261,44 +226,73 @@ export function CharacterTile({
             dedicatedPack: card.dedicatedPack,
             featured: card.featured,
           });
-          if (!mark) return null;
+          if (!mark && !bandLabel) return null;
           const markClass =
-            mark.kind === "mine"
+            mark?.kind === "mine"
               ? "border-violet-300/50 bg-violet-600/85 text-white"
-              : mark.kind === "pack"
+              : mark?.kind === "pack"
                 ? "border-emerald-400/40 bg-emerald-500/25 text-emerald-50"
-                : "border-brand-accent/40 bg-brand-accent/90 text-white";
+                : mark
+                  ? "border-brand-accent/40 bg-brand-accent/90 text-white"
+                  : "";
           return (
-            <span
-              className={`pointer-events-none absolute left-2.5 top-2.5 z-10 rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide backdrop-blur ${markClass}`}
-            >
-              {mark.label}
-            </span>
+            <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1.5">
+              {mark ? (
+                <span
+                  className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${markClass}`}
+                >
+                  {mark.label}
+                </span>
+              ) : (
+                <span className="tag uppercase tracking-wide">Live</span>
+              )}
+            </div>
           );
         })()}
-        {resume?.resumeCode && (
-          <span
-            className={`pointer-events-none absolute right-2.5 top-2.5 z-10 rounded-full border bg-black/70 px-2 py-0.5 font-mono text-[10px] font-semibold backdrop-blur ${
-              urgent ? "border-rose-400/60 text-rose-100" : "border-amber-400/50 text-amber-200"
-            }`}
-            title={expiryLabel ? `Saved chat · ${expiryLabel}` : "Saved chat"}
-          >
-            {urgent ? "Reclaim" : resume.resumeCode}
-          </span>
-        )}
-        {bandLabel && (
-          <span className="pointer-events-none absolute left-2.5 top-10 z-10 text-[9px] font-medium uppercase tracking-[0.16em] text-white/55">
-            Live · {bandLabel}
-          </span>
-        )}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/85 via-black/25 to-transparent px-3 pb-3 pt-16">
-          <h2 className="text-lg font-semibold leading-tight text-white sm:text-xl">
+        {resume?.resumeCode ? (
+          <div className="pointer-events-none absolute right-2 top-2 z-10">
+            <span
+              className={`rounded-full border bg-black/70 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide backdrop-blur ${
+                urgent
+                  ? "border-rose-400/60 text-rose-100"
+                  : "border-amber-400/50 text-amber-200"
+              }`}
+              title={
+                expiryLabel
+                  ? `${resume.source === "account" ? "Saved chat" : "This device"} · ${expiryLabel}`
+                  : resume.source === "account"
+                    ? "Saved chat (account)"
+                    : "Saved chat on this device"
+              }
+            >
+              {urgent && expiryLabel ? expiryLabel : "Saved"}
+            </span>
+          </div>
+        ) : null}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1] bg-gradient-to-t from-black/92 via-black/35 to-transparent px-3 pb-3 pt-16 sm:px-4 sm:pb-4">
+          <p className="text-[10px] uppercase tracking-[0.22em] text-brand-accent">
+            {card.mine
+              ? "My model"
+              : mind?.tag ||
+                (card.vibeTag || card.energyLabel || "").split(",")[0]?.trim() ||
+                visual.label}
+          </p>
+          <h2 className="mt-0.5 truncate text-lg font-semibold leading-tight text-white sm:text-xl">
             {card.displayName}
           </h2>
-          {(mind?.tag || resume?.heatDepth) && (
+          {resume?.resumeCode ? (
+            <p className="mt-0.5 line-clamp-1 text-[11px] text-amber-100/90">
+              {urgent
+                ? "Reclaim this heat"
+                : resume.dnaTreeLabel || resume.dnaTreeNodeId
+                  ? `DNA · ${resume.dnaTreeLabel || resume.dnaTreeNodeId}`
+                  : resume.recapLine
+                    ? `“${resume.recapLine}”`
+                    : "Continue where you left off"}
+            </p>
+          ) : (
             <p className="mt-0.5 line-clamp-1 text-[11px] text-white/70">
-              {resume?.heatDepth ? resume.heatDepth : mind?.tag}
-              {resume?.recapLine ? ` · ${resume.recapLine}` : ""}
+              {mind?.blurb || card.teaser}
             </p>
           )}
         </div>
@@ -307,62 +301,59 @@ export function CharacterTile({
           aria-hidden
         />
       </div>
-      <div className={`space-y-2.5 ${compact ? "p-2.5" : "p-3"}`}>
-        <p className={`text-xs leading-relaxed text-brand-muted ${compact ? "line-clamp-1" : "line-clamp-2"}`}>
-          {mind?.blurb || card.teaser}
-        </p>
-        <div className="flex items-center gap-2">
+      <div className={`flex items-center gap-2 ${compact ? "p-2.5" : "p-3"}`}>
+        {resume?.resumeCode ? (
+          <Link
+            href={buildResumeChatPath(resume)}
+            className={`btn-primary min-h-0 flex-1 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
+            title={
+              expiryLabel
+                ? `Continue saved chat · ${expiryLabel}`
+                : "Continue saved chat"
+            }
+          >
+            {urgent ? "Reclaim" : "Continue"}
+          </Link>
+        ) : (
+          <Link href={card.ctaPath} className="btn-primary min-h-0 flex-1 px-3 py-2 text-xs">
+            Chat{!compact ? ` · ${first}` : ""}
+          </Link>
+        )}
+        <OverflowMenu label="More" drop="up">
           {resume?.resumeCode ? (
+            <Link href={card.ctaPath} className="menu-item" title="Start a new session">
+              New chat
+            </Link>
+          ) : null}
+          {card.edgePacePath && !resume?.resumeCode ? (
+            <Link href={card.edgePacePath} className="menu-item">
+              Edge Pace
+            </Link>
+          ) : null}
+          {card.mine ? (
             <Link
-              href={buildResumeChatPath(resume)}
-              className={`btn-primary min-h-0 px-3 py-2 text-xs ${urgent ? "ring-1 ring-rose-400/70" : ""}`}
-              title={expiryLabel ? `Continue · ${expiryLabel}` : "Continue saved chat"}
+              href={`/models/studio/edit/${encodeURIComponent(card.id)}`}
+              className="menu-item"
             >
-              {urgent ? "Reclaim" : "Continue"}
+              Edit model
             </Link>
-          ) : (
-            <Link href={card.ctaPath} className="btn-primary min-h-0 px-3 py-2 text-xs">
-              Chat{!compact ? ` · ${first}` : ""}
-            </Link>
-          )}
-          <MoreMenu>
-            {resume?.resumeCode ? (
-              <Link href={card.ctaPath} role="menuitem">
-                New chat
-              </Link>
-            ) : null}
-            <Link href={card.cardPath} role="menuitem">
-              Full card
-            </Link>
-            {card.mine ? (
-              <Link href={`/models/studio/edit/${encodeURIComponent(card.id)}`} role="menuitem">
-                Edit model
-              </Link>
-            ) : null}
-            {forgeHref && forgeHeatCtx ? (
-              <Link
-                href={forgeHref}
-                role="menuitem"
-                onClick={() => stashForgeHeatSeed(forgeHeatCtx)}
-              >
-                {dnaLabel ? `Forge · ${dnaLabel}` : "Forge this heat"}
-              </Link>
-            ) : null}
-            {card.edgePacePath && !resume?.resumeCode ? (
-              <Link href={card.edgePacePath} role="menuitem">
-                Edge Pace
-              </Link>
-            ) : null}
-            <button type="button" role="menuitem" onClick={() => onShareCard(card)}>
-              {canNativeShare() ? "Share card" : "Copy card link"}
+          ) : null}
+          <Link href={card.cardPath} className="menu-item">
+            Open card
+          </Link>
+          <button type="button" className="menu-item" onClick={() => onShareCard(card)}>
+            {canNativeShare() ? "Share card" : "Copy card link"}
+          </button>
+          {resume?.resumeCode ? (
+            <button
+              type="button"
+              className="menu-item"
+              onClick={() => onShareResume(card, resume)}
+            >
+              {canNativeShare() ? "Share resume" : "Copy resume"}
             </button>
-            {resume?.resumeCode ? (
-              <button type="button" role="menuitem" onClick={() => onShareResume(card, resume)}>
-                {canNativeShare() ? "Share resume" : "Copy resume"}
-              </button>
-            ) : null}
-          </MoreMenu>
-        </div>
+          ) : null}
+        </OverflowMenu>
       </div>
     </article>
   );

@@ -625,53 +625,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
   };
 
   const handleForge = async () => {
-    const text = fantasy.trim();
-    if (text.length < 8) {
-      setError("Type your fantasy (min 8 chars) — name, vibe, body, kinks…");
-      return;
-    }
-    setForging(true);
-    setError(null);
-    try {
-      // Prefer Server Action; fall back to direct REST if action fails
-      const actionResult = await forgeExpandAction({
-        fantasy: text,
-        baseModelId: editingId ? baseModelId : undefined,
-        displayNameHint: name.trim() || undefined,
-      });
-      if (actionResult.ok) {
-        const data = actionResult.data as {
-          dna: NaughtySyntaxDna;
-          form: {
-            name: string;
-            appearance: string;
-            energy: string;
-            baseModelId: string;
-            keyPhrases: string[];
-            scenes: Array<{ title: string; body: string }>;
-          };
-          expandMs?: number | null;
-          source?: string;
-        };
-        applyForgeResult({
-          dna: data.dna,
-          form: data.form,
-          expandMs: actionResult.expandMs ?? data.expandMs,
-          source: actionResult.source ?? data.source,
-        });
-        return;
-      }
-      const rest = await forgeExpandFantasy({
-        fantasy: text,
-        baseModelId: editingId ? baseModelId : undefined,
-        displayNameHint: name.trim() || undefined,
-      });
-      applyForgeResult(rest);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Forge expand failed");
-    } finally {
-      setForging(false);
-    }
+    setError("Forge is closed. Tune an existing model.");
   };
 
   const canSave =
@@ -682,6 +636,10 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     !saving;
 
   const handleSave = async () => {
+    if (!editingId) {
+      setError("Creation is frozen. Tune an existing model.");
+      return;
+    }
     if (!account?.token) {
       setError("Sign in required to save a private My Character");
       return;
@@ -838,11 +796,9 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
       <SiteChrome
         active="studio"
-        title="Studio Forge"
+        title="Character settings"
         subtitle={
-          editingId
-            ? "Unchained edit · DNA + clips"
-            : "Conversational forge · DNA under 5s"
+          editingId ? "Tune this face" : "Creation frozen · tune existing only"
         }
         className="pt-[env(safe-area-inset-top,0px)]"
       />
@@ -851,13 +807,15 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-200/90">
-              Studio Forge
+              Character settings
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
-              {editingId ? "Tune this model" : "Forge a model"}
+              {editingId ? "Tune this model" : "Creation frozen"}
             </h1>
             <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-brand-muted">
-              Type the fantasy. Forge. Chat Now.
+              {editingId
+                ? "Identity, vibe, and clips for this face."
+                : "No new models. Tune an existing one or open Gallery."}
             </p>
             {heatSeedBanner && (
               <p
@@ -935,7 +893,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
           <div className="mb-4 rounded-2xl border border-amber-400/35 bg-amber-500/10 px-4 py-4">
             <p className="text-sm font-medium text-brand-text">Sign in to open the studio</p>
             <p className="mt-1 text-[12px] text-brand-muted">
-              Private models only. Sign in, then forge in under a minute.
+              Sign in to tune a model you already own.
             </p>
             <Link href="/account" className="btn-primary mt-3 inline-flex min-h-0 px-4 py-2 text-sm">
               Sign in
@@ -948,8 +906,22 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         ) : (
           <div className="grid gap-4 lg:grid-cols-[1fr_minmax(280px,360px)] lg:items-start lg:gap-6">
             <div className="space-y-3">
-              {/* 0 · Conversational Forge */}
-              <section className="relative overflow-hidden rounded-2xl border border-rose-400/30 bg-gradient-to-br from-rose-500/10 via-brand-panel/90 to-violet-500/10 p-3 sm:p-4">
+              {!editingId ? (
+              <section className="rounded-2xl border border-brand-border bg-brand-panel/90 p-4">
+                <h2 className="text-sm font-semibold text-brand-text">Creation frozen</h2>
+                <p className="mt-1 text-[12px] leading-relaxed text-brand-muted">
+                  New models are paused while the live 50 get dialed. Tune a face you already
+                  own, or open Gallery.
+                </p>
+                <Link href="/" className="btn-primary mt-3 inline-flex min-h-0 px-4 py-2 text-sm">
+                  Open Gallery
+                </Link>
+              </section>
+              ) : null}
+
+              {/* Tune-only — conversational Forge stays off the glass */}
+              {editingId ? (
+              <section className="relative overflow-hidden rounded-2xl border border-brand-border bg-brand-panel/90 p-3 sm:p-4">
                 <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-rose-500/15 blur-2xl" />
                 <div className="relative mb-2 flex flex-wrap items-center justify-between gap-2">
                   <h2 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-200">
@@ -1066,6 +1038,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   </div>
                 )}
               </section>
+              ) : null}
 
               {/* Advanced toggle — form fields after forge or manual */}
               <div className="flex items-center justify-between gap-2">
