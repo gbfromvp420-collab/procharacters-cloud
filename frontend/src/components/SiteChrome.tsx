@@ -31,12 +31,15 @@ export function SiteChrome({
   subtitle,
   className = "",
   trailing,
+  hideContinue = false,
 }: {
   active: SiteChromeActive;
   title: string;
   subtitle?: string | null;
   className?: string;
   trailing?: ReactNode;
+  /** Already on the live chat — Continue just doubles Resume. */
+  hideContinue?: boolean;
 }) {
   const [handle, setHandle] = useState<string | null>(null);
   const [resume, setResume] = useState<ResumeCacheEntry | null>(null);
@@ -105,7 +108,7 @@ export function SiteChrome({
           {links.map((item) => navLink(item))}
         </nav>
 
-        {continueHref ? (
+        {continueHref && !hideContinue ? (
           <Link
             href={continueHref}
             className={`btn-primary min-h-0 shrink-0 px-3 py-1.5 text-xs sm:px-3.5 sm:text-sm ${

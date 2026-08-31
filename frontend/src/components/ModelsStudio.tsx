@@ -167,7 +167,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     forged?: boolean;
     forgeSource?: string | null;
   } | null>(null);
-  const [showPromptSim, setShowPromptSim] = useState(true);
+  const [showPromptSim, setShowPromptSim] = useState(false);
 
   // Studio Forge v3 Unchained
   const [fantasy, setFantasy] = useState("");
@@ -851,14 +851,13 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
         <div className="mb-4 flex flex-col gap-3 sm:mb-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.28em] text-violet-200/90">
-              Studio Forge · v3 Unchained · private
+              Studio Forge
             </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-brand-text sm:text-3xl">
-              {editingId ? "Tune the god you made" : "Speak it into heat"}
+              {editingId ? "Tune this model" : "Forge a model"}
             </h1>
             <p className="mt-1 max-w-xl text-[12px] leading-relaxed text-brand-muted">
-              Type the fantasy. Forge expands identity, branches, behavior tree,
-              LiveKit reactivity, and memory seeds — then Chat Now.
+              Type the fantasy. Forge. Chat Now.
             </p>
             {heatSeedBanner && (
               <p
@@ -978,7 +977,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   maxLength={4000}
                   disabled={forging}
                 />
-                <div className="mt-2 flex flex-wrap gap-1.5">
+                <div className={`mt-2 flex flex-wrap gap-1.5 ${dna ? "hidden" : ""}`}>
                   {FORGE_EXAMPLE_PROMPTS.map((ex) => (
                     <button
                       key={ex.slice(0, 24)}
@@ -1021,7 +1020,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                   )}
                   <span className="text-[10px] text-brand-soft">⌘/Ctrl+Enter</span>
                 </div>
-                {dna && (
+                {dna && showAdvanced && (
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     <div className="rounded-xl border border-brand-border/50 bg-brand-bg/40 p-2">
                       <p className="text-[9px] font-semibold uppercase tracking-wide text-brand-muted">
@@ -1088,7 +1087,7 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
                 )}
               </div>
 
-              {(showAdvanced || editingId || !dna) && (
+              {(showAdvanced || editingId) && (
               <>
               {/* 1 · Base */}
               <section className="rounded-2xl border border-brand-border/80 bg-brand-panel/80 p-3 sm:p-4">
