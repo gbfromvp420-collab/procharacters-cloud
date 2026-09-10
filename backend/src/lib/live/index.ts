@@ -71,7 +71,11 @@ export type {
   MemorySeed,
   NaughtySyntaxDna,
 } from "./forge-dna.js";
-export { detectMissingTraits, buildConsistencyReminder } from "./consistency.js";
+export {
+  detectMissingTraits,
+  buildConsistencyReminder,
+  isSubstantialDrift,
+} from "./consistency.js";
 export { LivePromptInjector } from "./injector.js";
 export { formatMemoryBlock, toLlmMessages } from "./memory-context.js";
 export { createPromptSnapshot } from "./prompt-snapshot.js";
