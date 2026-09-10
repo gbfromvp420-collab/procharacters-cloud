@@ -78,10 +78,15 @@ export class SessionMemory {
     return this.maxWindow;
   }
 
-  /** Add one message and trim to the window size. */
-  addMessage(role: MemoryMessageRole, content: string): MemoryMessage {
+  /**
+   * Add one message and trim to the window size.
+   *
+   * `id` lets a streamed turn reuse the id already sent to the client, so the
+   * live bubble and the stored message stay the same message.
+   */
+  addMessage(role: MemoryMessageRole, content: string, id?: string): MemoryMessage {
     const message: MemoryMessage = {
-      id: randomUUID(),
+      id: id ?? randomUUID(),
       role,
       content,
       createdAt: new Date().toISOString(),

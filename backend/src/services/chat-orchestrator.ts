@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   LivePromptInjector,
   blendAvatarFromBrain,
@@ -8,6 +9,7 @@ import {
 } from "../lib/live/index.js";
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
+import { createVisibleTextGate, type VisibleTextGate } from "../lib/llm/stream-gate.js";
 import { XaiApiError, XaiChatClient } from "../lib/llm/xai-client.js";
 import {
   stepDnaBehaviorTree,
@@ -34,6 +36,20 @@ import type { AvatarState } from "../types/session.js";
 import { MemoryManager } from "./memory-manager.js";
 import { SessionManager } from "./session-manager.js";
 
+export interface ChatTurnOptions {
+  /**
+   * Receives visible text as the provider produces it. When supplied (and
+   * streaming is enabled) the caller has already shown this text, so it should
+   * not re-chunk `content` afterwards.
+   */
+  onDelta?: (chunk: string) => void;
+  /**
+   * Id the caller already used for streamed chunks. The stored message reuses
+   * it so the live bubble and the final message are the same message.
+   */
+  messageId?: string;
+}
+
 export interface ChatTurnResult {
   messageId: string;
   content: string;
@@ -41,6 +57,8 @@ export interface ChatTurnResult {
   promptHash: string;
   consistencyDrift?: string[];
   usedLlm: boolean;
+  /** Characters already delivered via `onDelta` this turn. */
+  streamedChars: number;
   /** Compact memory blurb for UI. */
   sessionNotes?: string;
   /** Opt-in long-term dossier snippet for UI. */
@@ -56,6 +74,8 @@ export interface ChatOrchestratorConfig {
   xaiBaseUrl?: string;
   xaiMaxCompletionTokens?: number;
   xaiTemperature?: number;
+  /** Token-by-token delivery. Off falls back to one blob at the end. */
+  xaiStreaming?: boolean;
 }
 
 const injector = new LivePromptInjector();
@@ -82,6 +102,7 @@ function isRealXaiKey(key: string | undefined): key is string {
 
 export class ChatOrchestrator {
   private readonly xai: XaiChatClient | null;
+  private readonly streamingEnabled: boolean;
 
   constructor(
     private readonly sessions: SessionManager,
@@ -98,6 +119,7 @@ export class ChatOrchestrator {
           temperature: config.xaiTemperature,
         })
       : null;
+    this.streamingEnabled = config.xaiStreaming !== false;
     setLlmConfigured(this.xai !== null);
   }
 
@@ -105,7 +127,11 @@ export class ChatOrchestrator {
     return this.xai !== null;
   }
 
-  async handleUserMessage(sessionId: string, content: string): Promise<ChatTurnResult> {
+  async handleUserMessage(
+    sessionId: string,
+    content: string,
+    options: ChatTurnOptions = {},
+  ): Promise<ChatTurnResult> {
     const session = this.sessions.getSession(sessionId);
     const memory = SessionMemory.fromData(session.memory, this.config.maxMessageWindow);
 
@@ -153,6 +179,13 @@ export class ChatOrchestrator {
     let usedLlm = false;
     let llmFailed = false;
 
+    // Minted up front so the live bubble and the stored message share an id.
+    const turnMessageId = options.messageId ?? randomUUID();
+    const gate =
+      this.streamingEnabled && options.onDelta
+        ? createVisibleTextGate(options.onDelta)
+        : null;
+
     if (this.xai) {
       try {
         const raw = await this.callGrokWithConsistencyRetry(
@@ -166,6 +199,7 @@ export class ChatOrchestrator {
               sessionModeBlock,
               rehydrating,
             }).messages,
+          gate,
         );
         const parsed = parseGrokReply(raw);
         assistantContent = parsed.text;
@@ -183,14 +217,14 @@ export class ChatOrchestrator {
     }
 
     bump("chatTurns");
-    if (llmFailed) {
-      // Keep the user's line so nothing they wrote is lost, but never persist a
-      // failure notice as character dialogue: it would resurface in the saved
-      // transcript and replay to the model as if she had said it.
-      memory.addMessage("user", content);
-    } else {
-      memory.addTurn(content, assistantContent);
+    memory.addMessage("user", content);
+    if (!llmFailed) {
+      memory.addMessage("assistant", assistantContent, turnMessageId);
     }
+    // A failed turn keeps the user's line so nothing they wrote is lost, but
+    // never persists the failure notice as character dialogue: it would
+    // resurface in the saved transcript and replay to the model as if she had
+    // said it.
 
     let notes = buildSessionNotes(memory.getRecentContext().messages, {
       characterName: session.promptSnapshot.characterName,
@@ -286,14 +320,9 @@ export class ChatOrchestrator {
       ...(dnaTreeStep ? { dnaTreeNodeId: dnaTreeStep.nodeId } : {}),
     });
 
-    const lastMessage = memory.getRecentContext().messages.at(-1);
-
     return {
-      // A failed turn has no stored assistant message, so give the client a
-      // transient id rather than reusing the user message's id.
-      messageId: llmFailed
-        ? `transient-${Date.now().toString(36)}`
-        : (lastMessage?.id ?? ""),
+      messageId: turnMessageId,
+      streamedChars: gate?.emittedLength() ?? 0,
       content: assistantContent,
       avatarIntent,
       promptHash: injection.hash,
@@ -336,12 +365,15 @@ export class ChatOrchestrator {
     consistencyTraits: string[],
     characterId: string,
     rebuildMessages: () => LlmMessage[],
+    gate: VisibleTextGate | null,
   ): Promise<string> {
     if (!this.xai) {
       throw new XaiApiError("Grok not configured", 503, "not_configured");
     }
 
-    let raw = await this.xai.complete(messages);
+    let raw = gate
+      ? await this.xai.completeStream(messages, (delta) => gate.push(delta))
+      : await this.xai.complete(messages);
     const drift = detectMissingTraits(parseGrokReply(raw).text, consistencyTraits);
     const profile = getLiveCharacterProfile(characterId);
 
@@ -356,6 +388,10 @@ export class ChatOrchestrator {
             content: `${retryMessages[systemIdx].content}\n\n[${reminder}]`,
           };
         }
+        // Never streamed: the first attempt is already on screen and
+        // assistant_complete replaces the bubble wholesale. Streaming the
+        // retry would interleave two different replies in one bubble.
+        if (gate) bump("chatConsistencyRewrites");
         raw = await this.xai.complete(retryMessages);
       }
     }

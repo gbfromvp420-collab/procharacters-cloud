@@ -119,6 +119,7 @@ export async function buildApp() {
     xaiBaseUrl: env.XAI_BASE_URL,
     xaiMaxCompletionTokens: env.XAI_MAX_COMPLETION_TOKENS,
     xaiTemperature: env.XAI_TEMPERATURE,
+    xaiStreaming: env.XAI_STREAMING,
   });
 
   const livekit = new LiveKitService(

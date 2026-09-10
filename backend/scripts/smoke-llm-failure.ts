@@ -33,17 +33,12 @@ const CREDIT_ERROR_BODY = JSON.stringify({
   },
 });
 
+const GOOD_REPLY_TEXT =
+  "mmm… come sit closer. i'm not going anywhere.\n" +
+  '{"avatar_intent":{"emotion":"teasing","arousalLevel":0.4}}';
+
 const GOOD_REPLY_BODY = JSON.stringify({
-  choices: [
-    {
-      message: {
-        content:
-          "mmm… come sit closer. i'm not going anywhere.\n" +
-          '{"avatar_intent":{"emotion":"teasing","arousalLevel":0.4}}',
-      },
-      finish_reason: "stop",
-    },
-  ],
+  choices: [{ message: { content: GOOD_REPLY_TEXT }, finish_reason: "stop" }],
 });
 
 /** Strings that must never reach an end user's chat transcript. */
@@ -65,13 +60,35 @@ let stubCalls = 0;
 
 function startStubXai(): Promise<{ server: Server; baseUrl: string }> {
   return new Promise((resolve) => {
-    const server = createServer((req, res) => {
+    const server = createServer(async (req, res) => {
       stubCalls += 1;
+
+      let body = "";
+      for await (const c of req) body += c;
+      const wantsStream = JSON.parse(body || "{}").stream === true;
+
       if (stubMode === "credit_error") {
+        // Error responses are plain JSON even when SSE was requested.
         res.writeHead(403, { "content-type": "application/json" });
         res.end(CREDIT_ERROR_BODY);
         return;
       }
+
+      if (wantsStream) {
+        res.writeHead(200, {
+          "content-type": "text/event-stream",
+          "cache-control": "no-cache",
+        });
+        for (const piece of GOOD_REPLY_TEXT.match(/\S+\s*/g) ?? []) {
+          res.write(
+            `data: ${JSON.stringify({ choices: [{ delta: { content: piece } }] })}\n\n`,
+          );
+        }
+        res.write("data: [DONE]\n\n");
+        res.end();
+        return;
+      }
+
       res.writeHead(200, { "content-type": "application/json" });
       res.end(GOOD_REPLY_BODY);
     });
