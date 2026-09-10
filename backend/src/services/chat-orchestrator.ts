@@ -25,6 +25,11 @@ import { upsertCharacterSession } from "../lib/memory/character-session-store.js
 import { buildSessionNotes } from "../lib/memory/session-notes.js";
 import { SessionMemory } from "../lib/memory/session-memory.js";
 import { bump } from "../lib/observability/metrics.js";
+import {
+  recordLlmFailure,
+  recordLlmSuccess,
+  setLlmConfigured,
+} from "../lib/observability/llm-health.js";
 import type { AvatarState } from "../types/session.js";
 import { MemoryManager } from "./memory-manager.js";
 import { SessionManager } from "./session-manager.js";
@@ -93,6 +98,7 @@ export class ChatOrchestrator {
           temperature: config.xaiTemperature,
         })
       : null;
+    setLlmConfigured(this.xai !== null);
   }
 
   get llmConfigured(): boolean {
@@ -145,6 +151,7 @@ export class ChatOrchestrator {
     let assistantContent: string;
     let parsedAvatar: Partial<AvatarState> | undefined;
     let usedLlm = false;
+    let llmFailed = false;
 
     if (this.xai) {
       try {
@@ -164,8 +171,11 @@ export class ChatOrchestrator {
         assistantContent = parsed.text;
         parsedAvatar = parsed.avatarIntent;
         usedLlm = true;
+        recordLlmSuccess();
       } catch (error) {
         bump("chatLlmErrors");
+        recordLlmFailure(error instanceof XaiApiError ? error : { message: String(error) });
+        llmFailed = true;
         assistantContent = this.buildErrorReply(error);
       }
     } else {
@@ -173,7 +183,14 @@ export class ChatOrchestrator {
     }
 
     bump("chatTurns");
-    memory.addTurn(content, assistantContent);
+    if (llmFailed) {
+      // Keep the user's line so nothing they wrote is lost, but never persist a
+      // failure notice as character dialogue: it would resurface in the saved
+      // transcript and replay to the model as if she had said it.
+      memory.addMessage("user", content);
+    } else {
+      memory.addTurn(content, assistantContent);
+    }
 
     let notes = buildSessionNotes(memory.getRecentContext().messages, {
       characterName: session.promptSnapshot.characterName,
@@ -272,7 +289,11 @@ export class ChatOrchestrator {
     const lastMessage = memory.getRecentContext().messages.at(-1);
 
     return {
-      messageId: lastMessage?.id ?? "",
+      // A failed turn has no stored assistant message, so give the client a
+      // transient id rather than reusing the user message's id.
+      messageId: llmFailed
+        ? `transient-${Date.now().toString(36)}`
+        : (lastMessage?.id ?? ""),
       content: assistantContent,
       avatarIntent,
       promptHash: injection.hash,
@@ -363,28 +384,26 @@ export class ChatOrchestrator {
     return blendAvatarFromBrain(characterId, signatureClothing, previous, fromGrok, ctx);
   }
 
+  /**
+   * User-facing copy for a failed brain call.
+   *
+   * Provider status, keys, and billing state stay in the logs and /health —
+   * a paying stranger must never be handed vendor console instructions in the
+   * character's voice.
+   */
   private buildErrorReply(error: unknown): string {
     if (error instanceof XaiApiError) {
       console.error(
         `[grok] xAI request failed — status=${error.status} code=${error.code ?? "n/a"} message=${error.message}`,
       );
 
-      const msg = error.message.toLowerCase();
-      if (
-        error.status === 403 &&
-        (msg.includes("credit") || msg.includes("spending limit") || msg.includes("monthly"))
-      ) {
-        return "*[System: xAI credits / spending limit hit — top up or raise limit at console.x.ai]*";
-      }
-      if (error.status === 401 || error.status === 403) {
-        return "*[System: API key issue — check XAI_API_KEY in backend .env]*";
+      if (error.code === "timeout") {
+        return "*Hold on… I got distracted. Say that again for me?*";
       }
       if (error.status === 429) {
         return "*Mmm, give me just a second… things got a little busy. Try again.*";
       }
-      if (error.code === "timeout") {
-        return "*Hold on… I got distracted. Say that again for me?*";
-      }
+      return "*Mmm… hold that thought for me. I'll be right back — try me again in a moment.*";
     }
 
     console.error("[grok] unexpected error", error);
