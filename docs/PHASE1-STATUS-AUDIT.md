@@ -132,10 +132,18 @@ alert; there was no signal that this happened.
 carries an `llm` block (`ok`, `lastFailureReason`, `consecutiveFailures`) so
 this is visible without reading a chat reply.
 
-**3. Session data sits on ephemeral disk.**
+**3. ~~Session data sits on ephemeral disk.~~** *(verified safe — 2026-09-10)*
 Transcripts, resume codes, custom characters, and JSON accounts are files, not
-Postgres. Without a mounted Railway volume at `/data`, **every redeploy wipes
-paying users' chats.** Verify the volume is mounted before charging anyone.
+Postgres, so a missing Railway volume at `/data` would wipe paying users' chats
+on every redeploy. Tested empirically against production instead of trusting the
+dashboard: six resume codes were minted across three different deploys
+(`00bb201`, `7b5b4da`, `bf9c4fe`) and all six were redeemed after the later
+redeploys. Every one returned HTTP 200 with its full 11-message transcript and
+correct character binding, including sessions created two deploys earlier. The
+volume is mounted and persisting.
+
+Migrating sessions to Postgres is still worth doing (files do not survive a
+service move or give us backups), but it is no longer a launch blocker.
 
 ### P1 — will embarrass us with real users
 
@@ -222,6 +230,39 @@ Worth stating plainly, because the failure is loud and the foundation is not:
 - Accounts use scrypt passphrases and hashed bearer tokens
 - Custom characters (Studio Forge) are real and reach the live chat path
 - Edge Pace and the DNA tree genuinely alter the prompt, not just the UI
+
+---
+
+## Verification log
+
+Measured against live production, not staging.
+
+**Deploy `00bb201` (baseline, 22:36 UTC).** Chat worked but every turn was
+rewritten: `chatConsistencyRewrites` 10/10 = 100%. Every reply cost two xAI
+calls. Average full reply 10,710 ms. This is very likely a large share of why
+the credits died.
+
+**Deploy `7b5b4da` (#101 — LLM guardrail + real streaming, 23:09 UTC).** Vendor
+errors no longer leak into dialogue or get written into transcripts, `/health`
+carries an `llm` block, and replies stream token-by-token with the
+`avatar_intent` JSON tail gated out of the visible text.
+
+**Deploy `bf9c4fe` (#102 — drift detector fix, 23:30 UTC).** Two-character
+smoke, 10 turns:
+
+| | Before | After |
+|--|--------|-------|
+| `chatConsistencyRewrites` / `chatTurns` | 10 / 10 (100%) | **0 / 10 (0%)** |
+| `chatLlmErrors` | 0 | 0 |
+| Average full reply | 10,710 ms | **~5,880 ms** |
+| Time to first text | n/a (no streaming) | ~3.5–4.0 s |
+
+Time to first text is now provider time-to-first-token and will not improve
+without a faster model; the win is that the user sees prose at ~3.5 s instead of
+a spinner until ~10.7 s.
+
+**Volume persistence (23:34 UTC).** 6/6 resume codes spanning three deploys
+redeemed successfully with intact transcripts. See P0-3.
 
 ---
 
