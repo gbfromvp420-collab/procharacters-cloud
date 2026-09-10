@@ -17,7 +17,7 @@ room metadata sync for the video layer.
 **v2.2 product surface** — backend (Fastify + WS + xAI) and frontend (Next.js 15) run end-to-end.
 Defaults: 8 signature models (`twink-default` / `female-default` at prompt `v1.3.0`, plus Phase 4 pack at `v1.0.0`) and **runtime custom characters**.
 
-**Hosting:** Railway prod **live** as of 2026-08-13 (API `554c484`) — see [`docs/LIVE-STATUS.md`](docs/LIVE-STATUS.md).
+**Hosting:** Railway prod **live** (API `00bb201` as of 2026-09-10) — see [`docs/PHASE1-STATUS.md`](docs/PHASE1-STATUS.md) and [`docs/LIVE-STATUS.md`](docs/LIVE-STATUS.md). Chat shell works; Grok replies are blocked until xAI credits are topped up.
 
 **Side service (merged #30):** Python FastAPI **WebRTC signaling + trainer studio** at repo root (`app/`). Not the live chat product path; optional local/demo GPU hot-swap. Docs: [`docs/WEBRTC-ENGINE.md`](docs/WEBRTC-ENGINE.md).
 
@@ -40,7 +40,7 @@ What works today:
 - Stub / credit-aware errors when xAI is unavailable
 - Session-scoped memory (cleared on session end)
 
-What's next: optional Stripe Day Pass smoke (live money); content packs; Studio DNA phone pass. Offline proof: `bash scripts/smoke-local-product.sh`.
+What's next: restore xAI replies, then smoke Stripe Day Pass, then gate money on session quality — [`docs/PHASE1-STATUS.md`](docs/PHASE1-STATUS.md). Offline proof: `bash scripts/smoke-local-product.sh`.
 
 Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md), [`docs/v2.2-roadmap.md`](docs/v2.2-roadmap.md)
 

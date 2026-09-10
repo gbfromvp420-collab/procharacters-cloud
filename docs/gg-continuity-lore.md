@@ -47,6 +47,6 @@ IDs stay stable for URLs/resumes/packs. Gallery hero reel spotlights featured/de
 
 ## Phase Reality (honest)
 
-Product is **v2.2 live** on Railway (chat, gallery, Studio, accounts, push, Edge Pace, DNA). Content packs and Stripe Day Pass smoke are human-gated. Full v3 gooning/voice and generative live video are **out of order** until CEO + Gary say otherwise.
+Product is **v2.2 live** on Railway (chat, gallery, Studio, accounts, push, Edge Pace, DNA). **2026-09-10:** 90-day mission is in force — procharacters-cloud only; 2.0 empire frozen. Chat plumbing is up; Grok replies are blocked on xAI spend. See [PHASE1-STATUS.md](./PHASE1-STATUS.md). Content packs and Stripe Day Pass smoke stay human-gated. Full v3 gooning/voice and generative live video are **out of order**.
 
-Related: [LIVE-STATUS.md](./LIVE-STATUS.md) · [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md) · [v2.2-roadmap.md](./v2.2-roadmap.md)
+Related: [PHASE1-STATUS.md](./PHASE1-STATUS.md) · [LIVE-STATUS.md](./LIVE-STATUS.md) · [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md)

@@ -1,7 +1,8 @@
 # King Grok CEO — Operating Model
 
-**Updated:** 2026-07-16  
-**Authority:** Gary (Boss Sr.) granted King Grok CEO **full control and final say** on development.
+**Updated:** 2026-09-10  
+**Authority:** Gary (Boss Sr.) granted King Grok CEO **full control and final say** on development.  
+**90-day mission:** [PHASE1-STATUS.md](./PHASE1-STATUS.md) — ship a tighter, paid, reliable procharacters-cloud session.
 
 ---
 
@@ -18,22 +19,21 @@ When Gary says “full control,” agents **do not wait** for per-feature permis
 
 ---
 
-## Priority stack (current sprint)
+## Priority stack (Phase 1 — Days 1–21)
 
-Ordered by leverage for a sticky, monetizable free-path product:
+Ordered by leverage for a session a stranger will pay for:
 
-1. **Prove push on a real phone** — Gary: Install → Enable → Send test (`push-smoke-checklist.md`). Eng already shipped server + UI.
-2. **Keep return loop airtight** — Continue strip, resume extend, deep-links. No regressions.
-3. **Ops sleep-at-night** — health fingerprint, metrics, optional `ERROR_WEBHOOK_URL`.
-4. **Content packs when ready** — drop MP4s per `frontend/public/avatar/packs/DROP_IN.md` (not a code blocker).
-5. **Stripe when ready to charge** — keys + webhook (`ops-billing-stripe.md`). Free path never breaks.
-6. **No v3 gooning/voice scope creep** until 1–3 are green in prod.
+1. **Restore live Grok replies** — Gary tops up xAI at console.x.ai. Eng re-smokes one Jenny turn.
+2. **Keep the current Railway loop intact** — gallery → session → WS → avatar → resume. No regressions.
+3. **Define and then smoke the paid MVP** — Day Pass already live; headline perk must be session quality, not extra My Characters. See [PHASE1-STATUS.md](./PHASE1-STATUS.md).
+4. **Fix or stop advertising `procharacters.cloud`** — TLS is broken; Railway URLs are the product.
+5. **Freeze 2.0 / workforce / packs / Bluesky / generative video** unless a change directly serves #1–4.
 
 ---
 
 ## How agents work
 
-1. Rehydrate: `docs/gg-continuity-lore.md` → `docs/LIVE-STATUS.md` → `docs/TODAY-PHASE-LIST.md` (if present) → this file.
+1. Rehydrate: `docs/gg-continuity-lore.md` → `docs/PHASE1-STATUS.md` → `docs/LIVE-STATUS.md` → this file.
 2. Prefer small, shippable PRs that land on `main` and Railway.
 3. Typecheck / smoke when possible; don’t leave half-broken Account or Chat.
 4. End work with 1–3 next steps for the company — not a laundry list of 20.
@@ -52,6 +52,8 @@ Ordered by leverage for a sticky, monetizable free-path product:
 
 ## Out of order (later)
 
+- King-N-Gar-Ver2 `procharacters/` 2.0 web/mobile scaffold  
+- Bluesky / tube traffic (Phase 3 only, after paid loop works)  
 - Full social / public profiles  
 - Multi-character party chat  
 - Generative live video  

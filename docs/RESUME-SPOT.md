@@ -1,34 +1,32 @@
 # Resume spot (if disconnected)
 
-**Updated:** 2026-08-21 **50 live named minds** · Send test reclaim  
-**Session:** King Grok CEO · tap the test ping to pick up heat, not Account
+**Updated:** 2026-09-10 **Phase 1 Day 1**  
+**Session:** 90-day mission locked · procharacters-cloud is the only product surface
 
 ### Agent fleet (slash / auto)
 
 | Skill | Lane |
 |-------|------|
 | `/kgc-delegate` | Orchestrator · rehydrate · priority |
-| `/kgc-forge` | Studio DNA · heat→forge |
-| `/kgc-return` | DNA power reclaim · trail · dossier |
+| `/kgc-forge` | **frozen** unless it unblocks a paid session |
+| `/kgc-return` | Resume / reclaim only if it serves reliability |
 | `/kgc-ops` | health · metrics · ntfy · doc truth |
-| `/kgc-smoke` | Gary phone checklists · `docs/smoke-fleet-checklist.md` |
+| `/kgc-smoke` | Gary phone checklists after xAI is topped up |
 
 ---
 
-## 🟢 LIVE — plan unlocked, product serving
+## 🟡 LIVE SHELL — brain waiting on xAI credits
 
 | Fact | Detail |
 |------|--------|
-| **Now** | Both public URLs **200**. API `/health` `status: ok` |
+| **Now** | Web + API **200**. Deploy `00bb201`. Chat turns **fail** (spend limit). |
 | **Project** | `captivating-vision` · `procharacters-api` · `procharacters-web` · `Postgres-Hw0Y` |
-| **Pack 01** | 8/8 READY · Mila Luna Sienna Diego Mateo Rio + defaults · **do not rename live IDs** |
-| **Pack 02** | 13 first-name ids · **phone-passed** · 52/52 clips |
-| **Pack 03** | 29 unique first-name ids · **116/116 clips 200** · Candy held |
-| **Gallery** | Pack 01 / 02 / 03 chips · `#63` · fingerprints `#64` · public floor = **50** |
-| **Gary move** | Unique Candy Drive · more `Name + Drive` · Stripe when ready |
-| **Eng move** | Send test push reclaims last chat / DNA |
+| **Truth doc** | [PHASE1-STATUS.md](./PHASE1-STATUS.md) |
+| **Gary move** | Top up console.x.ai · then one Jenny turn · optional Day Pass smoke |
+| **Eng move** | After credits: re-smoke session. Then smallest session-quality paid offer. |
+| **Frozen** | King-N-Gar-Ver2 2.0 web/mobile scaffold · packs · Bluesky · generative video |
 
-**Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile` (Python WebRTC).
+**Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never root `Dockerfile`.
 
 ---
 
@@ -36,12 +34,12 @@
 
 | Track | Status | Next human move |
 |-------|--------|-----------------|
-| **🟢 Railway / live** | **LIVE** | Optional Stripe Day Pass smoke |
-| **Same-night reclaim** | ✅ `#66` phone-passed | — |
-| **Pack 02 / 03 openings** | ✅ `#67` shipped | tap Jenny / Liam Chat · Start fresh |
-| **Send test reclaim** | 🔄 this cook | Enable alerts → Send test → tap shade |
-| **Next** | **1) more primes · 2) stripe · 3) phone B trail** | `Name + Drive` or `stripe` |
+| **Railway / live** | UP | Use Railway URLs, not procharacters.cloud |
+| **Chat quality** | 🔴 xAI limit | Top up / raise spend |
+| **Stripe** | live keys, unsmoothed | Day Pass smoke after chat talks |
+| **Paid MVP** | defined, not gated | [PHASE1-STATUS.md](./PHASE1-STATUS.md) |
+| **2.0 empire** | frozen | do not open `King-N-Gar-Ver2/procharacters` |
 
 ---
 
-*King Grok · 50/50 · ship it unchained.*
+*King Grok · 50/50 · ship sessions and cash.*

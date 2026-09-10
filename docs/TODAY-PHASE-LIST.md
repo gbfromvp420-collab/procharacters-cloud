@@ -1,5 +1,9 @@
 # Today’s phase list — 2026-08-14
 
+> **Superseded 2026-09-10.** Do not drive from this file.  
+> Current truth: [PHASE1-STATUS.md](./PHASE1-STATUS.md) · [LIVE-STATUS.md](./LIVE-STATUS.md)  
+> 2.0 / pack / workforce theater is **frozen**. This page is a historical log only.
+
 **Owner:** King Grok CEO (final say on eng)  
 **Boss Sr.:** Gary (phone smoke, footage, Stripe live money)  
 **Command:** Say **next** / **cont** to keep shipping. Agents welcome.
