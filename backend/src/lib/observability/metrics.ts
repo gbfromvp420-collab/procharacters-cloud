@@ -14,6 +14,8 @@ export type MetricCounters = {
   sessionsResumed: number;
   chatTurns: number;
   chatLlmErrors: number;
+  /** Streamed replies replaced by a consistency retry (visible rewrite). */
+  chatConsistencyRewrites: number;
   customCharactersCreated: number;
   /** Studio Forge DNA saves (custom-v3). */
   customV3Created: number;
@@ -51,6 +53,7 @@ const counters: MetricCounters = {
   sessionsResumed: 0,
   chatTurns: 0,
   chatLlmErrors: 0,
+  chatConsistencyRewrites: 0,
   customCharactersCreated: 0,
   customV3Created: 0,
   forgeExpands: 0,

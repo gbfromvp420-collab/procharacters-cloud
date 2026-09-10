@@ -17,6 +17,11 @@ const envSchema = z.object({
   XAI_BASE_URL: z.string().default("https://api.x.ai/v1"),
   XAI_MAX_COMPLETION_TOKENS: z.coerce.number().default(1024),
   XAI_TEMPERATURE: z.coerce.number().min(0).max(2).default(0.85),
+  /** Token-by-token replies. Set false to fall back to one blob at the end. */
+  XAI_STREAMING: z
+    .enum(["true", "false"])
+    .default("true")
+    .transform((v) => v === "true"),
   LIVEKIT_URL: z.string().optional(),
   LIVEKIT_API_KEY: z.string().optional(),
   LIVEKIT_API_SECRET: z.string().optional(),

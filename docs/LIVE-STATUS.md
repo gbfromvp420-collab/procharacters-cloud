@@ -1,16 +1,23 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-08-21 **50 live named minds** · Send test reclaim shipping  
+**Updated:** 2026-09-10 · ⛔ **CHAT IS DOWN — xAI account out of credits, 0% of turns succeed**  
 **For:** quick “what’s real right now” — no code required.  
+
+> **Read [PHASE1-STATUS-AUDIT.md](./PHASE1-STATUS-AUDIT.md) first.** It is measured
+> against live production; the table below is a summary. Infrastructure is up —
+> web 200, API 200, Postgres ok, Stripe live, 200 avatar clips serving — but every
+> chat turn fails until the xAI balance is topped up.
+
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
 **Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
 
 ---
 
-## 🟢 Live product is UP
+## 🟡 Infrastructure is UP · chat is DOWN
 
-| Check | Result (2026-08-14) |
+| Check | Result (2026-09-10 unless noted) |
 |-------|---------------------|
+| **Chat replies** | ⛔ **0/12 turns succeeded** — xAI credits exhausted |
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
 | API `/health` | **200** `status: ok` |
 | Accounts / DB | `prisma` · `database.ok` true |
@@ -25,8 +32,8 @@
 | Gallery lanes | **Pack 01 / 02 / 03 chips** · `?filter=pack03` |
 | Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
-| Age floor | **21+** |
-| Resume / Continue | ✅ create 201 · resume-code 200 · bad code 404 · **same-night autostart reclaim** |
+| Age floor | ⛔ **cosmetic text swap only — no gate exists** |
+| Resume / Continue | ✅ create 201 · resume-code 200 · resumed session restored full history |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never the root `Dockerfile` (Python WebRTC).
 
@@ -66,15 +73,15 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat | 🟢 |
+| Live NSFW chat | ⛔ **DOWN** — xAI credits exhausted · 12/12 turns failed 2026-09-10 · Gary: top up at console.x.ai |
 | Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 **50 minds** · pack chips |
 | Pack 03 dedicated loops | 🟢 **116/116 200** · catalog browsed |
 | Pack 01 last-build clips | 🟢 phone-passed |
 | Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site |
 | Pack 02 / 03 mind copy | 🟢 fingerprints `#64` |
 | Same-night reclaim | 🟢 gallery Chat autostart resumes heat |
-| Studio Forge | 🟢 phone-passed |
-| 21+ | 🟢 |
+| Studio Forge | 🟢 phone-passed (blocked by chat outage) |
+| 21+ | ⛔ **cosmetic only** — `AgeFloor.tsx` rewrites the text “18+”→“21+” after hydration. There is **no age gate**; explicit content loads for anyone. |
 | Resume codes | 🟢 |
 | Stripe Day Pass UI | ✅ live keys · **not phone-smoked** (your card) |
 

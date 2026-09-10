@@ -18,6 +18,7 @@ import {
   primaryAlertChannel,
   sendErrorWebhookTest,
 } from "../lib/observability/error-reporter.js";
+import { getLlmHealth } from "../lib/observability/llm-health.js";
 import { getLastExpiryCron, getMetrics } from "../lib/observability/metrics.js";
 import { pingPrisma } from "../lib/prisma.js";
 import { isWebPushConfigured } from "../lib/push/web-push-service.js";
@@ -102,6 +103,8 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
           /** Resume-expiry push cron last tick (null until first run). */
           lastExpiryCron: getLastExpiryCron(),
         },
+        /** Brain status — ok:false means chat is degrading to soft error copy. */
+        llm: getLlmHealth(),
         billing: {
           stripe: isStripeConfigured(),
           webhook: isStripeWebhookConfigured(),

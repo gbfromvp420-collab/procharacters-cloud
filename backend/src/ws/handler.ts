@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { FastifyRequest } from "fastify";
 import type { WebSocket } from "ws";
 import { z } from "zod";
@@ -145,19 +146,34 @@ export function createWebSocketHandler(
             break;
 
           case "user_message": {
-            const result = await chat.handleUserMessage(sessionId, parsed.content);
+            // Minted before the call so live chunks and the final message
+            // share an id; the client keys its bubble on it.
+            const streamId = randomUUID();
+            const result = await chat.handleUserMessage(sessionId, parsed.content, {
+              messageId: streamId,
+              onDelta: (chunk) =>
+                send(socket, {
+                  type: "assistant_stream",
+                  chunk,
+                  messageId: streamId,
+                }),
+            });
             const avatarState = await media.publish(
               sessionId,
               session.characterId,
               result.avatarIntent,
             );
 
-            for (const chunk of result.content.split(" ")) {
-              send(socket, {
-                type: "assistant_stream",
-                chunk: `${chunk} `,
-                messageId: result.messageId,
-              });
+            // Nothing streamed (streaming off, or the turn failed) — fall back
+            // to the previous behaviour so the UI still animates in.
+            if (result.streamedChars === 0) {
+              for (const chunk of result.content.split(" ")) {
+                send(socket, {
+                  type: "assistant_stream",
+                  chunk: `${chunk} `,
+                  messageId: streamId,
+                });
+              }
             }
 
             send(socket, {
