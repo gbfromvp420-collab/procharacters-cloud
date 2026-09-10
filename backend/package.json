@@ -18,6 +18,7 @@
     "test:memory": "tsx scripts/smoke-test-memory.ts",
     "test:llm-failure": "tsx scripts/smoke-llm-failure.ts",
     "test:streaming": "tsx scripts/smoke-streaming.ts",
+    "test:consistency": "tsx scripts/smoke-consistency-drift.ts",
     "test:livekit": "tsx scripts/verify-livekit.ts",
     "smoke:deploy": "tsx scripts/smoke-deploy.ts",
     "test:reclaim-push": "tsx scripts/smoke-reclaim-push.ts",

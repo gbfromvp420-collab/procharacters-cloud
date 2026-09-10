@@ -6,6 +6,7 @@ import {
   detectMissingTraits,
   getCustomCharacter,
   getLiveCharacterProfile,
+  isSubstantialDrift,
 } from "../lib/live/index.js";
 import type { LlmMessage } from "../lib/live/types.js";
 import { parseGrokReply } from "../lib/llm/response-parser.js";
@@ -377,7 +378,7 @@ export class ChatOrchestrator {
     const drift = detectMissingTraits(parseGrokReply(raw).text, consistencyTraits);
     const profile = getLiveCharacterProfile(characterId);
 
-    if (drift.length > 0 && profile) {
+    if (isSubstantialDrift(drift, consistencyTraits) && profile) {
       const reminder = buildConsistencyReminder(profile, drift);
       if (reminder) {
         const retryMessages = rebuildMessages();
