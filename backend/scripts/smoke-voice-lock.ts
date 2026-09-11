@@ -133,7 +133,7 @@ async function post(path: string, body?: unknown) {
 interface Msg { role: string; content: string }
 interface Turn { history: Msg[]; reply: string | null; intent?: Record<string, unknown> }
 
-function turn(wsUrl: string, message: string | null): Promise<Turn> {
+function turnOnce(wsUrl: string, message: string | null): Promise<Turn> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     let history: Msg[] = [];
@@ -156,6 +156,18 @@ function turn(wsUrl: string, message: string | null): Promise<Turn> {
     });
     ws.on("error", (e) => { clearTimeout(guard); reject(e); });
   });
+}
+
+async function turn(wsUrl: string, message: string | null): Promise<Turn> {
+  try {
+    return await turnOnce(wsUrl, message);
+  } catch (error) {
+    const text = error instanceof Error ? error.message : String(error);
+    if (!/502|503|timeout/i.test(text)) throw error;
+    say(`ws ${text} — retrying once`);
+    await new Promise((r) => setTimeout(r, 1500));
+    return turnOnce(wsUrl, message);
+  }
 }
 
 async function main() {
@@ -202,7 +214,10 @@ async function main() {
   check("4 turns → own lexicon present", me.own.length === 0 || own.length >= Math.min(4, me.own.length), `hits: ${own.join(", ") || "none"}`);
   const leaks = hits(all, RIVAL_TELLS);
   check("4 turns → no rival tells", leaks.length === 0, leaks.length ? `leak: ${leaks.join(", ")}` : "clean");
-  const blended = RIVAL_NAMES.filter((n) => new RegExp(`\\b${n}\\b`).test(lower(all)));
+  // Identity phrasing only. A bare \bmark\b fires on "glossy mark" (Olivia, prod 83aa5a8).
+  const blended = RIVAL_NAMES.filter((n) =>
+    new RegExp(`\\b(?:i'?m|it'?s|call me|my name is)\\s+${n}\\b`, "i").test(all),
+  );
   check("4 turns → never uses another character's name", blended.length === 0, blended.length ? `blend: ${blended.join(", ")}` : "clean");
 
   const later = replies.slice(1).join("\n");
