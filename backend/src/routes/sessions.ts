@@ -174,6 +174,28 @@ export const createSessionRoutes = (
   livekit: LiveKitService,
 ): FastifyPluginAsync => {
   return async (app) => {
+    // Chat must never 502 because the video room is slow. Resume in particular
+    // was dying here — LiveKit timeout became a Railway 502 and the user lost
+    // the session they were trying to come back to.
+    async function attachLivekit(
+      sessionId: string,
+      characterId: string,
+      avatarState: Parameters<MediaWorker["enrich"]>[1],
+    ) {
+      if (!livekit.isConfigured) return undefined;
+      try {
+        const identity = `user-${sessionId.slice(0, 8)}`;
+        const join = await livekit.buildJoinInfo(sessionId, identity);
+        await media.publish(sessionId, characterId, avatarState);
+        return join;
+      } catch (error) {
+        console.error(
+          `[livekit] attach failed for ${sessionId}:`,
+          error instanceof Error ? error.message : error,
+        );
+        return undefined;
+      }
+    }
     app.get("/characters/gallery", async () => {
       const defaults = Object.values(LIVE_CHARACTER_CATALOG).map((profile) => {
         // Resolve by character id so dedicated Phase 4 packs win when all 4 clips exist
@@ -643,12 +665,7 @@ export const createSessionRoutes = (
 
         sessionManager.updateSession(session.sessionId, { avatarState });
 
-        let livekitJoin;
-        if (livekit.isConfigured) {
-          const identity = `user-${session.sessionId.slice(0, 8)}`;
-          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
-          await media.publish(session.sessionId, record.characterId, avatarState);
-        }
+        const livekitJoin = await attachLivekit(session.sessionId, record.characterId, avatarState);
 
         bump("sessionsCreated");
         if ((session.sessionMode ?? body.sessionMode) === "edge_pace") {
@@ -778,13 +795,8 @@ export const createSessionRoutes = (
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });
 
-        // Enrich LiveKit for primary (opened) session only
-        let livekitJoin;
-        if (livekit.isConfigured) {
-          const identity = `user-${session.sessionId.slice(0, 8)}`;
-          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
-          await media.publish(session.sessionId, session.characterId, avatarState);
-        }
+        // Enrich LiveKit for primary (opened) session only — never fail the import
+        const livekitJoin = await attachLivekit(session.sessionId, session.characterId, avatarState);
 
         return reply.code(201).send({
           ...session,
@@ -815,12 +827,7 @@ export const createSessionRoutes = (
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });
 
-        let livekitJoin;
-        if (livekit.isConfigured) {
-          const identity = `user-${session.sessionId.slice(0, 8)}`;
-          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
-          await media.publish(session.sessionId, session.characterId, avatarState);
-        }
+        const livekitJoin = await attachLivekit(session.sessionId, session.characterId, avatarState);
 
         bump("sessionsResumed");
         if (body.sessionMode === "edge_pace" && session.sessionMode === "edge_pace") {
@@ -893,12 +900,7 @@ export const createSessionRoutes = (
         const avatarState = media.enrich(session.characterId, session.avatarState);
         sessionManager.updateSession(session.sessionId, { avatarState });
 
-        let livekitJoin;
-        if (livekit.isConfigured) {
-          const identity = `user-${session.sessionId.slice(0, 8)}`;
-          livekitJoin = await livekit.buildJoinInfo(session.sessionId, identity);
-          await media.publish(session.sessionId, session.characterId, avatarState);
-        }
+        const livekitJoin = await attachLivekit(session.sessionId, session.characterId, avatarState);
 
         return {
           ...session,
