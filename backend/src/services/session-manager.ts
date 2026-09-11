@@ -6,7 +6,6 @@ import {
   resolveResumeCode,
   rotateResumeCode,
 } from "../lib/accounts/account-store.js";
-import { DEFAULT_PROMPT_VERSION } from "../config/constants.js";
 import {
   assertLiveCharacter,
   getOpeningMessage,
@@ -253,10 +252,12 @@ export class SessionManager {
     wsBaseUrl: string,
   ): Promise<CreateSessionResult> {
     const characterId = input.characterId ?? this.defaultCharacterId;
-    const promptVersion = input.promptVersion ?? DEFAULT_PROMPT_VERSION;
 
     assertLiveCharacter(characterId, { accountId: input.accountId });
-    const promptSnapshot = await createPromptSnapshot(characterId, promptVersion, {
+    // No pin means "whatever this character ships today", which lives in the
+    // catalog. The old global default pointed every character at one version
+    // number that most of them never had.
+    const promptSnapshot = await createPromptSnapshot(characterId, input.promptVersion, {
       accountId: input.accountId,
     });
 
@@ -1177,8 +1178,9 @@ export class SessionManager {
     }
 
     const characterId = resolved.characterId;
-    const promptVersion = payload.promptVersion || DEFAULT_PROMPT_VERSION;
-    const promptSnapshot = await createPromptSnapshot(characterId, promptVersion);
+    // An imported session keeps the version it was exported on; without one it
+    // falls back to the character's current catalog version.
+    const promptSnapshot = await createPromptSnapshot(characterId, payload.promptVersion || undefined);
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.sessionTtlMinutes * 60_000);

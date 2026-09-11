@@ -157,9 +157,37 @@ plan. `LIVE-STATUS.md` claiming "Age floor 🟢 21+" was cosmetic.
 summarization (`session-memory.ts`: "No summarization or fact extraction"). A
 long session drops early context permanently while we market memory.
 
-**6. Pack 02/03 prompts are templates.** 42 of 50 characters share one of two
-134-word prompts. Consistency and distinctiveness are the claimed edge; right
-now that edge exists for 8 characters.
+**6. Pack 02/03 prompts are templates.** *(pilot started 2026-09-11 — Jenny
+v1.1.0; 41 of 50 still thin)*
+
+42 of 50 characters shared one of two 134-word prompts. Consistency and
+distinctiveness are the claimed edge; that edge existed for 8 characters.
+
+Jenny is the pilot: `jenny/v1.1.0/prompt.md` is 663 words in the Pack 01
+structure (mind lock vs Mila / Luna / Vesper, ivory crotchless as signature,
+hover-finger as the signature action, voice bank, anti-loop and resume
+rehydration). v1.0.0 stays on disk. If she holds voice for four turns plus a
+resume in a live smoke, the remaining featured thin characters follow, then the
+rest in batches. The continuity paywall stays behind this — selling "she
+remembers you and she's distinctly her" while the second half is false is a
+refund pipeline.
+
+Bumping a version exposed two bugs that would have made the bump a no-op or
+worse, both fixed in the same PR:
+
+- `resolvePromptPath` returned the manifest path whenever the file existed, so
+  the requested version was ignored. Pinning `jenny@v1.0.0` returned the v1.1.0
+  text under a v1.0.0 label. Every multi-version character had this — 12 pin
+  misses across 9 characters with the fix reverted.
+- `createSession` and session import substituted the global
+  `DEFAULT_PROMPT_VERSION` (`v1.3.0`) for a missing pin instead of the
+  character's catalog `defaultVersion`. Production sessions for Jenny reported
+  `promptVersion: v1.3.0`, a version she has never had. Fixing only the loader
+  would have silently downgraded Cruz and Vesper to the `v1.3.0` folders they
+  still carry. Sessions now fall through to the catalog.
+
+`npm run check:prompts` (backend) now guards all three: default resolution,
+catalog/manifest agreement, and pin reachability, and prints the thin count.
 
 **7. Chat page UI defects.** *(banner half fixed in #107, verified live
 2026-09-11; toast half still open)*
