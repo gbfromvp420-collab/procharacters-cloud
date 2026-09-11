@@ -6,8 +6,8 @@ import type { AvatarState } from "@/lib/types";
 
 const POS_KEY = "pc_avatar_pip_pos";
 const CORNER_KEY = "pc_avatar_pip_corner";
-const PIP_W_MOBILE = 116;
-const PIP_W_DESKTOP = 144;
+const PIP_W_MOBILE = 168;
+const PIP_W_DESKTOP = 200;
 const EDGE_PAD = 12;
 const SAFE_BOTTOM = 88; // above composer + home indicator
 
@@ -268,7 +268,7 @@ export function AvatarPip({
   return (
     <div
       ref={rootRef}
-      className={`fixed z-40 w-[7.25rem] touch-none select-none sm:w-36 ${
+      className={`fixed z-40 w-[10.5rem] touch-none select-none sm:w-[12.5rem] ${
         dragging ? "cursor-grabbing transition-none" : "transition-[left,top] duration-200 ease-out"
       }`}
       style={{
