@@ -306,7 +306,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "peter": {
     id: "peter",
     displayName: "Peter",
-    defaultVersion: "v1.1.0",
+    defaultVersion: "v1.1.1",
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
@@ -344,7 +344,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "justin": {
     id: "justin",
     displayName: "Justin",
-    defaultVersion: "v1.1.0",
+    defaultVersion: "v1.1.1",
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
@@ -458,7 +458,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "noah": {
     id: "noah",
     displayName: "Noah",
-    defaultVersion: "v1.1.0",
+    defaultVersion: "v1.1.1",
     kind: "default",
     avatarBase: "twink-default",
     featured: true,
