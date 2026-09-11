@@ -43,6 +43,8 @@ export async function buildApp() {
 
   const { registerObservability } = await import("./lib/observability/request-logs.js");
   registerObservability(app);
+  const { installLlmAlerts } = await import("./lib/observability/llm-alerts.js");
+  installLlmAlerts(app.log);
 
   // Preserve raw body for Stripe webhooks (signature verification)
   app.addContentTypeParser(

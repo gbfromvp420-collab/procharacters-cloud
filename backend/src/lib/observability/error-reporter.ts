@@ -20,7 +20,16 @@ export type ReportedError = {
   extra?: Record<string, unknown>;
   /** When true, marks a deliberate smoke ping (not a real 5xx). */
   test?: boolean;
+  /**
+   * "info" renders as a calm notice (recoveries, all-clear) instead of a red
+   * alert, and logs at info level. Default "error".
+   */
+  level?: "error" | "info";
 };
+
+function isCalm(err: ReportedError): boolean {
+  return !!err.test || err.level === "info";
+}
 
 export type AlertChannel = "ntfy" | "discord" | "slack" | "generic" | "email" | "none";
 
@@ -85,7 +94,7 @@ function buildAlertLine(err: ReportedError): string {
   const code = err.statusCode ?? (err.test ? "TEST" : 500);
   const verb = err.method ?? "";
   const path = err.path ?? "";
-  const prefix = err.test ? "TEST PING" : "ALERT";
+  const prefix = err.test ? "TEST PING" : err.level === "info" ? "NOTICE" : "ALERT";
   return `[procharacters-api] ${prefix} ${code} ${verb} ${path} — ${err.message}`
     .replace(/\s+/g, " ")
     .trim();
@@ -117,13 +126,16 @@ async function sendNtfy(
 ): Promise<{ ok: boolean; status: number; hint: string }> {
   const title = err.test
     ? "Procharacters · test OK"
-    : `Procharacters · ${err.statusCode ?? 500}`;
+    : err.level === "info"
+      ? `Procharacters · ${err.name ?? "notice"}`
+      : `Procharacters · ${err.statusCode ?? 500}`;
+  const calm = isCalm(err);
   const res = await fetch(url, {
     method: "POST",
     headers: {
       Title: truncate(title, 120),
-      Priority: err.test ? "default" : "high",
-      Tags: err.test ? "white_check_mark,procharacters" : "rotating_light,procharacters",
+      Priority: calm ? "default" : "high",
+      Tags: calm ? "white_check_mark,procharacters" : "rotating_light,procharacters",
       "Content-Type": "text/plain; charset=utf-8",
     },
     body: truncate(
@@ -160,12 +172,12 @@ async function sendDiscordOrSlack(
             timestamp: payload.ts,
           },
         ]
-      : err.stack || err.requestId
+      : err.stack || err.requestId || err.level === "info"
         ? [
             {
               title: truncate(`${err.name ?? "Error"} · ${err.statusCode ?? 500}`, 200),
               description: truncate(err.stack ?? err.message, 1500),
-              color: 0xf43f5e,
+              color: err.level === "info" ? 0x34d399 : 0xf43f5e,
               fields: [
                 ...(err.requestId
                   ? [{ name: "requestId", value: err.requestId, inline: true }]
@@ -205,7 +217,9 @@ async function sendEmailAlert(
     process.env.MAGIC_LINK_FROM?.trim() || "Procharacters <onboarding@resend.dev>";
   const subject = err.test
     ? "[Procharacters] Error alert test OK"
-    : `[Procharacters] ${err.statusCode ?? 500} ${err.path ?? "error"}`;
+    : err.level === "info"
+      ? `[Procharacters] ${err.name ?? "Notice"} ${err.path ?? ""}`.trim()
+      : `[Procharacters] ${err.statusCode ?? 500} ${err.path ?? "error"}`;
   const text = [
     line,
     "",
@@ -260,6 +274,8 @@ export async function reportError(
 
   if (err.test) {
     log?.info?.(payload, "reported_error_test");
+  } else if (err.level === "info") {
+    log?.info?.(payload, "reported_notice");
   } else {
     log?.error(payload, "reported_error");
   }
