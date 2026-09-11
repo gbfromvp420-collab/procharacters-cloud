@@ -2683,6 +2683,7 @@ export function ChatApp() {
       )}
 
       <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
+        {/* Critical banners only while live — promo hints were stacking on the avatar */}
         <HintRail className="mb-3">
           <NetworkOfflineBanner />
           <SessionAuthBanner
@@ -2692,22 +2693,29 @@ export function ChatApp() {
               setAccountEmailLinked(null);
             }}
           />
-          <PushEnableHint
-            accountToken={account?.token}
-            hasResumeCode={!!resumeCode || !!savedSession?.resumeCode}
-          />
-          <InstallAppHint />
-          <SoftSupportHint
-            hasEngagement={
-              messages.length >= 4 || !!resumeCode || !!savedSession?.resumeCode
-            }
-            dnaHeat={
-              !!modeState?.dnaTreeNodeId &&
-              /edge|deny|release|gate|tease/i.test(
-                modeState.dnaTreeLabel || modeState.dnaTreeNodeId || "",
-              )
-            }
-          />
+          {!sessionActive && (
+            <PushEnableHint
+              accountToken={account?.token}
+              hasResumeCode={!!resumeCode || !!savedSession?.resumeCode}
+            />
+          )}
+          {!sessionActive && <InstallAppHint />}
+          {!sessionActive && (
+            <SoftSupportHint
+              hasEngagement={
+                (messages.length >= 4 ||
+                  !!resumeCode ||
+                  !!savedSession?.resumeCode) &&
+                !(!account && (!!resumeCode || !!savedSession?.resumeCode))
+              }
+              dnaHeat={
+                !!modeState?.dnaTreeNodeId &&
+                /edge|deny|release|gate|tease/i.test(
+                  modeState.dnaTreeLabel || modeState.dnaTreeNodeId || "",
+                )
+              }
+            />
+          )}
         </HintRail>
         <MyCharacterWinToast
           show={!!justCreated && status === "idle" && !sessionActive}
