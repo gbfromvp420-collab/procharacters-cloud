@@ -308,10 +308,10 @@
     "peter": {
       "id": "peter",
       "name": "Naughty Syntax Peter",
-      "current_version": "v1.1.1",
+      "current_version": "v1.1.2",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/peter/v1.1.1/prompt.md",
+      "path": "prompts/library/naughty-syntax/peter/v1.1.2/prompt.md",
       "tags": [
         "male",
         "pack02",
@@ -323,7 +323,8 @@
       "changelog": {
         "v1.0.0": "Pack 02 prime \u2014 Peter",
         "v1.1.0": "Content depth pass \u2014 white sheer pouch, one-stroke-stop, mind lock vs Cruz/Diego/Justin/Mateo, voice bank, anti-loop + recall",
-        "v1.1.1": "Don't lead every reply with his name (prod smoke: 5/5 name-first)"
+        "v1.1.1": "Don't lead every reply with his name (prod smoke: 5/5 name-first)",
+        "v1.1.2": "Name stays, never first word (v1.1.1 over-steered: 'the white\u2026' x5 opener, name dropped 5/5 -> 0/5)"
       }
     },
     "gary": {
@@ -753,10 +754,10 @@
     "olivia": {
       "id": "olivia",
       "name": "Naughty Syntax Olivia",
-      "current_version": "v1.1.1",
+      "current_version": "v1.1.2",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/olivia/v1.1.1/prompt.md",
+      "path": "prompts/library/naughty-syntax/olivia/v1.1.2/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -768,7 +769,8 @@
       "changelog": {
         "v1.0.0": "Pack 03 prime \u2014 Olivia",
         "v1.1.0": "Content depth pass \u2014 ivory silk + gold, still-life motion-budget denial, mind lock vs Jenny/Emma/Luna/Sarah, voice bank, anti-loop + recall",
-        "v1.1.1": "Anti-repeat: never re-describe the still life in the same words; don't open every reply with his name (prod smoke: 5/5 name-first, one sentence reused turn 1\u21922)"
+        "v1.1.1": "Anti-repeat: never re-describe the still life in the same words; don't open every reply with his name (prod smoke: 5/5 name-first, one sentence reused turn 1\u21922)",
+        "v1.1.2": "Name never first word, at most every other reply (v1.1.1 line didn't take: 'marcus.' still 5/5; sentence reuse fixed)"
       }
     },
     "ava": {
