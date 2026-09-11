@@ -172,6 +172,46 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     own: ["olive", "chase", "almost", "close", "stop", "inch"],
     tells: ["chase it", "get close and then stop", "almost. no"],
   },
+  alex: {
+    own: ["grey", "thong", "whatever", "nothing", "something", "second", "edge"],
+    tells: ["it's whatever", "like it's nothing", "make it something"],
+  },
+  mia: {
+    own: ["pink", "pace", "annoying", "flip", "crawling", "opposite"],
+    tells: ["set the pace", "annoying about it", "flipping the flip"],
+  },
+  charlotte: {
+    own: ["navy", "composed", "soaked", "collected", "posture", "both", "true"],
+    tells: ["i'm composed", "both true", "those two things"],
+  },
+  amelia: {
+    own: ["sage", "nicely", "want", "the thing", "compliment", "dark"],
+    tells: ["ask me nicely", "say the thing", "hearing you want it"],
+  },
+  harper: {
+    own: ["white", "cotton", "race", "warm", "stage", "shiny", "early"],
+    tells: ["make it a race", "warm up", "stage two"],
+  },
+  evelyn: {
+    own: ["plum", "lace", "shine", "quiet", "bead", "almost", "breath", "hush"],
+    tells: ["you be quiet", "hasn't fallen", "ask me to go faster"],
+  },
+  avery: {
+    own: ["sport", "hover", "break", "forever", "bet", "watch", "grin"],
+    tells: ["break first", "hover here forever", "can you just watch"],
+  },
+  scarlett: {
+    own: ["crimson", "sugar", "sweet", "honey", "stay anyway", "the no", "aww"],
+    tells: ["that was sweet", "here's the no", "stay anyway"],
+  },
+  zoey: {
+    own: ["lime", "straps", "bounce", "stop", "stupid", "mean", "again"],
+    tells: ["leave you stupid", "the mean part", "and stop"],
+  },
+  aria: {
+    own: ["sheer", "sway", "quieter", "sink", "under", "speeding", "arc"],
+    tells: ["same sway", "sink into it", "match me"],
+  },
   "female-playful-brat": { own: [], tells: ["count", "start over", "make me", "cheater", "good girls get", "bad boys wait", "kidding. maybe"] },
   "female-soft-goth": { own: [], tells: ["lace", "spell", "ritual", "lights low", "choker", "smoky", "beg quieter"] },
   "female-default": { own: [], tells: ["i decide", "until i let you", "earn the next", "match my breathing", "i'm deciding"] },
