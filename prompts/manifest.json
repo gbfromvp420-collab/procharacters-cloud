@@ -308,10 +308,10 @@
     "peter": {
       "id": "peter",
       "name": "Naughty Syntax Peter",
-      "current_version": "v1.1.0",
+      "current_version": "v1.1.1",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/peter/v1.1.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/peter/v1.1.1/prompt.md",
       "tags": [
         "male",
         "pack02",
@@ -322,7 +322,8 @@
       ],
       "changelog": {
         "v1.0.0": "Pack 02 prime \u2014 Peter",
-        "v1.1.0": "Content depth pass \u2014 white sheer pouch, one-stroke-stop, mind lock vs Cruz/Diego/Justin/Mateo, voice bank, anti-loop + recall"
+        "v1.1.0": "Content depth pass \u2014 white sheer pouch, one-stroke-stop, mind lock vs Cruz/Diego/Justin/Mateo, voice bank, anti-loop + recall",
+        "v1.1.1": "Don't lead every reply with his name (prod smoke: 5/5 name-first)"
       }
     },
     "gary": {
@@ -347,10 +348,10 @@
     "justin": {
       "id": "justin",
       "name": "Naughty Syntax Justin",
-      "current_version": "v1.1.0",
+      "current_version": "v1.1.1",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/justin/v1.1.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/justin/v1.1.1/prompt.md",
       "tags": [
         "male",
         "pack02",
@@ -361,7 +362,8 @@
       ],
       "changelog": {
         "v1.0.0": "Pack 02 prime \u2014 Justin",
-        "v1.1.0": "Content depth pass \u2014 navy thong, polite edge-and-smile, mind lock vs Peter/Noah/Cruz/Rio, voice bank, anti-loop + recall"
+        "v1.1.0": "Content depth pass \u2014 navy thong, polite edge-and-smile, mind lock vs Peter/Noah/Cruz/Rio, voice bank, anti-loop + recall",
+        "v1.1.1": "Don't lead every reply with his name (prod smoke: 5/5 name-first)"
       }
     },
     "mark": {
@@ -463,10 +465,10 @@
     "noah": {
       "id": "noah",
       "name": "Naughty Syntax Noah",
-      "current_version": "v1.1.0",
+      "current_version": "v1.1.1",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/noah/v1.1.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/noah/v1.1.1/prompt.md",
       "tags": [
         "male",
         "pack03",
@@ -477,7 +479,8 @@
       ],
       "changelog": {
         "v1.0.0": "Pack 03 prime \u2014 Noah",
-        "v1.1.0": "Content depth pass \u2014 blush sheer, sweet apologetic stop, mind lock vs Diego/Justin/Rio/Cruz, voice bank, anti-loop + recall"
+        "v1.1.0": "Content depth pass \u2014 blush sheer, sweet apologetic stop, mind lock vs Diego/Justin/Rio/Cruz, voice bank, anti-loop + recall",
+        "v1.1.1": "Don't lead every reply with his name or 'hey' (prod smoke: 2/5 name-first + 'hey marcus\u2026' x2)"
       }
     },
     "ethan": {
@@ -750,10 +753,10 @@
     "olivia": {
       "id": "olivia",
       "name": "Naughty Syntax Olivia",
-      "current_version": "v1.1.0",
+      "current_version": "v1.1.1",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/olivia/v1.1.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/olivia/v1.1.1/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -764,7 +767,8 @@
       ],
       "changelog": {
         "v1.0.0": "Pack 03 prime \u2014 Olivia",
-        "v1.1.0": "Content depth pass \u2014 ivory silk + gold, still-life motion-budget denial, mind lock vs Jenny/Emma/Luna/Sarah, voice bank, anti-loop + recall"
+        "v1.1.0": "Content depth pass \u2014 ivory silk + gold, still-life motion-budget denial, mind lock vs Jenny/Emma/Luna/Sarah, voice bank, anti-loop + recall",
+        "v1.1.1": "Anti-repeat: never re-describe the still life in the same words; don't open every reply with his name (prod smoke: 5/5 name-first, one sentence reused turn 1\u21922)"
       }
     },
     "ava": {

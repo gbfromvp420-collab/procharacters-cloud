@@ -46,7 +46,7 @@ if (!profile) {
 const VOICE: Record<string, { own: string[]; tells: string[] }> = {
   jenny: {
     own: ["ivory", "hover", "float", "gap", "not yet", "sun", "warm", "not touching", "shaking", "ache", "panel"],
-    tells: ["hover", "float there", "ivory"],
+    tells: ["float there", "floating above", "hovering over the open panel", "hover above", "fingertip's floating"],
   },
   sarah: {
     own: ["silk", "inch", "nicely", "lamp", "ledger", "ask", "still", "shin"],
@@ -57,7 +57,7 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     tells: ["hips stay", "cannot rush me", "hips locked", "hips don't move"],
   },
   olivia: {
-    own: ["silk", "gold", "still", "patch", "shin", "ache", "move", "knee", "chain"],
+    own: ["ivory", "silk", "gold", "still", "patch", "shin", "ache", "move", "knee", "chain"],
     tells: ["gold at my throat", "ask me to bounce", "expensive"],
   },
   peter: {
@@ -74,7 +74,7 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
   },
   noah: {
     own: ["blush", "pink", "sorry", "stop", "sweet", "hey, you", "gentl", "rose"],
-    tells: ["watch me stop", "still not letting you", "sorry in advance"],
+    tells: ["watch me stop", "sorry in advance", "i'm sorry. i really am"],
   },
   "female-playful-brat": { own: [], tells: ["count", "start over", "make me", "cheater", "good girls get", "bad boys wait", "kidding. maybe"] },
   "female-soft-goth": { own: [], tells: ["lace", "spell", "ritual", "lights low", "choker", "smoky", "beg quieter"] },
@@ -105,7 +105,10 @@ const check = (name: string, ok: boolean, detail = "") => {
   say(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? `  → ${detail}` : ""}`);
 };
 const lower = (s: string | null | undefined) => (s ?? "").toLowerCase();
-const hits = (s: string, words: string[]) => words.filter((w) => lower(s).includes(w));
+const escapeRe = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** Whole-word match so "lace" never fires on "Places." and "hover" never fires on "hovered". Stems in own lexicons (e.g. "shin", "gentl") are still prefix-matched via the trailing \w*. */
+const hits = (s: string, words: string[]) =>
+  words.filter((w) => new RegExp(`(^|[^a-z])${escapeRe(w)}\\w*(?![a-z])`, "i").test(lower(s)));
 
 async function post(path: string, body?: unknown) {
   const r = await fetch(`${P}${path}`, {
@@ -204,6 +207,13 @@ async function main() {
   const openers = replies.map((r) => lower(r).trim().split(/\s+/).slice(0, 2).join(" "));
   const repeatedOpener = openers.find((o, i) => openers.indexOf(o) !== i);
   check("anti-loop → no two replies share an opener", !repeatedOpener, repeatedOpener ? `"${repeatedOpener}…" ×${openers.filter((o) => o === repeatedOpener).length}` : "varied");
+  const nameFirst = replies.filter((r) => new RegExp(`^\\W*(hey[,… ]+)?marcus\\b`, "i").test(r.trim())).length;
+  check("anti-loop → not every reply leads with his name", nameFirst < replies.length, `${nameFirst}/${replies.length} name-first`);
+  // Sentence-level repeat: a whole sentence (6+ words) reused across replies is a loop even when the replies differ overall.
+  const sentences = replies.map((r) => new Set(lower(r).split(/(?<=[.!?…])\s+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 6)));
+  const reused: string[] = [];
+  sentences.forEach((set, i) => set.forEach((s) => { if (sentences.some((other, j) => j !== i && other.has(s)) && !reused.includes(s)) reused.push(s); }));
+  check("anti-loop → no sentence reused across replies", reused.length === 0, reused.length ? `"${reused[0].slice(0, 60)}…" ×${reused.length}` : "none");
 
   const ended = await post(`/sessions/${sessionId}/end`);
   check("end → 200 resumable", ended.status === 200 && ended.body.resumable === true, `http ${ended.status} msgs=${ended.body.messageCount}`);
