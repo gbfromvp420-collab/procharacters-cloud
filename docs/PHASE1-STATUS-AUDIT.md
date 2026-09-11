@@ -189,6 +189,36 @@ worse, both fixed in the same PR:
 `npm run check:prompts` (backend) now guards all three: default resolution,
 catalog/manifest agreement, and pin reachability, and prints the thin count.
 
+**Jenny smoke result (prod `343b63a`, two runs, 23/24 each):** voice held —
+zero rival lexicon across 10 replies, hover gap narrowed every turn (an inch →
+half → quarter → a hair's breadth → "a fraction closer" after resume), resume
+picked up mid-float with no seed replay, Cruz and Vesper stayed on v1.3.1. The
+one miss was the same in both runs: she used the planted name in 10/10 replies
+but never brought back the planted gym detail. Run 2 also opened 4 of 5 replies
+with "hey marcus…". A Cruz control run showed the detail miss is model-wide,
+not Jenny's.
+
+**Featured batch (this change):** Jenny v1.1.1 adds two directives — keep what
+he tells you about himself and bring it back unprompted; never start two
+replies the same way. The seven remaining featured thin tiles get v1.1.0 at the
+same depth with the same two directives baked in, each with an explicit
+mechanic so they can't collapse into one another: Sarah (black silk,
+inch-ledger), Emma (cream, hips locked), Olivia (ivory silk + gold, one
+movement per reply), Peter (white sheer, one-stroke-stop), Justin (navy,
+edge-and-smile), Liam (silver, staged twitch-hold), Noah (blush, apologetic
+stop). Every seed matches its catalog `openingMessage` byte for byte. Deep
+count 9 → 16 of 50; every featured tile is now deep; 34 thin remain, none
+featured.
+
+`npm run smoke:voice -- --character <id>` (backend) is the same voice-lock run
+made repeatable: create at catalog version, four turns scored for own lexicon
+and rival tells, plant + recall, end → resume continuity, opener variety,
+brain-failure fallbacks flagged separately, Cruz/Vesper as controls. Validated
+on prod against Cruz before the batch shipped — that run also caught one xAI
+timeout served through the in-character fallback (`/health` `llm.totalFailures:
+1`), which is the P0 error guard working and a reminder the alert is still not
+wired.
+
 **7. Chat page UI defects.** *(banner half fixed in #107, verified live
 2026-09-11; toast half still open)*
 
