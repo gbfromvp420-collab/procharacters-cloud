@@ -3346,8 +3346,7 @@ export function ChatApp() {
                 dnaTreeNodeId={modeState?.dnaTreeNodeId}
                 onDismiss={() => setRejoinRecap((r) => ({ ...r, show: false }))}
               />
-              <div className="pointer-events-none absolute inset-x-3 top-2 z-10 sm:inset-x-4">
-                <div className="pointer-events-auto">
+              {/* In-flow, not absolute — absolute top-2 was covering the opening message */}
               <SessionWinToast
                 show={status === "ready"}
                 characterId={activeCharacterId ?? character}
@@ -3375,8 +3374,6 @@ export function ChatApp() {
                   (activeCharacterId ?? character).startsWith("custom-")
                 }
               />
-                </div>
-              </div>
               {messages.length === 0 && !isTyping && (
                 <div className="px-2 py-6 text-center sm:py-8">
                   {(status === "connecting" || restarting) && (
