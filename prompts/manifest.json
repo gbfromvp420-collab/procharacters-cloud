@@ -736,10 +736,10 @@
     "alex": {
       "id": "alex",
       "name": "Naughty Syntax Alex",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/alex/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/alex/v1.1.0/prompt.md",
       "tags": [
         "male",
         "pack03",
@@ -749,7 +749,8 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Alex"
+        "v1.0.0": "Pack 03 prime \u2014 Alex",
+        "v1.1.0": "Content depth pass \u2014 unbothered-until-flipped, mind lock vs Gary/Justin/Blake/Mark, voice bank, anti-loop + recall"
       }
     },
     "emma": {
@@ -857,10 +858,10 @@
     "mia": {
       "id": "mia",
       "name": "Naughty Syntax Mia",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/mia/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/mia/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -870,16 +871,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Mia"
+        "v1.0.0": "Pack 03 prime \u2014 Mia",
+        "v1.1.0": "Content depth pass \u2014 pace theft mirror-and-slow, mind lock vs Mila/Becca/Zoey/Jessica, voice bank, anti-loop + recall"
       }
     },
     "charlotte": {
       "id": "charlotte",
       "name": "Naughty Syntax Charlotte",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/charlotte/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/charlotte/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -889,16 +891,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Charlotte"
+        "v1.0.0": "Pack 03 prime \u2014 Charlotte",
+        "v1.1.0": "Content depth pass \u2014 held contradiction, mind lock vs Sarah/Ava/Sophia/Olivia, voice bank, anti-loop + recall"
       }
     },
     "amelia": {
       "id": "amelia",
       "name": "Naughty Syntax Amelia",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/amelia/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/amelia/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -908,16 +911,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Amelia"
+        "v1.0.0": "Pack 03 prime \u2014 Amelia",
+        "v1.1.0": "Content depth pass \u2014 his stated want as the gate, mind lock vs Samantha/Sarah/Kenny/Emma, voice bank, anti-loop + recall"
       }
     },
     "harper": {
       "id": "harper",
       "name": "Naughty Syntax Harper",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/harper/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/harper/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -927,16 +931,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Harper"
+        "v1.0.0": "Pack 03 prime \u2014 Harper",
+        "v1.1.0": "Content depth pass \u2014 white cotton live warm-up ramp, mind lock vs Jenny/Samantha/Emma/Tommy, voice bank, anti-loop + recall"
       }
     },
     "evelyn": {
       "id": "evelyn",
       "name": "Naughty Syntax Evelyn",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/evelyn/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/evelyn/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -946,16 +951,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Evelyn"
+        "v1.0.0": "Pack 03 prime \u2014 Evelyn",
+        "v1.1.0": "Content depth pass \u2014 plum lace almost-still threshold, shared hush, mind lock vs Rachel/Olivia/Luna/Aria, voice bank, anti-loop + recall"
       }
     },
     "avery": {
       "id": "avery",
       "name": "Naughty Syntax Avery",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/avery/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/avery/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -965,16 +971,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Avery"
+        "v1.0.0": "Pack 03 prime \u2014 Avery",
+        "v1.1.0": "Content depth pass \u2014 sport-cut endurance hover dare (no rounds/timer), mind lock vs Jayden/Jenny/Sienna/Jessica, voice bank, anti-loop + recall"
       }
     },
     "scarlett": {
       "id": "scarlett",
       "name": "Naughty Syntax Scarlett",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/scarlett/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/scarlett/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -984,16 +991,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Scarlett"
+        "v1.0.0": "Pack 03 prime \u2014 Scarlett",
+        "v1.1.0": "Content depth pass \u2014 crimson Southern honey-then-no pivot, mind lock vs Emma/Wyatt/Kenny/Becca, voice bank, anti-loop + recall"
       }
     },
     "zoey": {
       "id": "zoey",
       "name": "Naughty Syntax Zoey",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/zoey/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/zoey/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -1003,16 +1011,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Zoey"
+        "v1.0.0": "Pack 03 prime \u2014 Zoey",
+        "v1.1.0": "Content depth pass \u2014 lime straps burst then dead stop, mind lock vs Mia/Jessica/Mila/Becca, voice bank, anti-loop + recall"
       }
     },
     "aria": {
       "id": "aria",
       "name": "Naughty Syntax Aria",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/aria/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/aria/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -1022,7 +1031,8 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Aria"
+        "v1.0.0": "Pack 03 prime \u2014 Aria",
+        "v1.1.0": "Content depth pass \u2014 black sheer continuous sway sink, quieter as direction, mind lock vs Luna/Vesper/Elijah/Isabella/Evelyn, voice bank, anti-loop + recall"
       }
     }
   }
