@@ -20,20 +20,18 @@ function resolvePromptPath(
   characterId: string,
   version: string,
 ): string {
-  const absolute = repoPath(manifestPath);
-  if (existsSync(absolute)) {
-    return manifestPath;
-  }
-
+  // The requested version wins over the manifest path. Characters can carry
+  // several versions on disk, and a session that pinned an older one must keep
+  // getting that one instead of whatever the manifest currently points at.
   const normalized = normalizeVersion(version);
-  const folderFallback = `prompts/library/naughty-syntax/${characterId}/${normalized}/prompt.md`;
-  if (existsSync(repoPath(folderFallback))) {
-    return folderFallback;
+  const versioned = `prompts/library/naughty-syntax/${characterId}/${normalized}/prompt.md`;
+  if (existsSync(repoPath(versioned))) {
+    return versioned;
   }
 
-  const flatFallback = `prompts/library/naughty-syntax/${characterId}/${normalized}.md`;
-  if (existsSync(repoPath(flatFallback))) {
-    return flatFallback;
+  const flat = `prompts/library/naughty-syntax/${characterId}/${normalized}.md`;
+  if (existsSync(repoPath(flat))) {
+    return flat;
   }
 
   return manifestPath;
