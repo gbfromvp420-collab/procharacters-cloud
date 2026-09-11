@@ -98,7 +98,15 @@ const RIVAL_TELLS = Object.entries(VOICE)
   .filter((t) => !me.own.some((o) => t.includes(o) || o.includes(t)) && !me.tells.includes(t));
 
 const log: string[] = [];
-const say = (s = "") => { console.log(s); log.push(s); };
+const flush = () => {
+  mkdirSync(dirname(OUT), { recursive: true });
+  writeFileSync(OUT, log.join("\n") + "\n");
+};
+const say = (s = "") => {
+  console.log(s);
+  log.push(s);
+  flush();
+};
 const results: { name: string; ok: boolean }[] = [];
 const check = (name: string, ok: boolean, detail = "") => {
   results.push({ name, ok });
@@ -217,7 +225,12 @@ async function main() {
 
   const ended = await post(`/sessions/${sessionId}/end`);
   check("end → 200 resumable", ended.status === 200 && ended.body.resumable === true, `http ${ended.status} msgs=${ended.body.messageCount}`);
-  const resumed = await post("/sessions/resume-code", { code: resumeCode });
+  let resumed = await post("/sessions/resume-code", { code: resumeCode });
+  if (resumed.status >= 500) {
+    say(`resume first attempt http ${resumed.status} — retrying once`);
+    await new Promise((r) => setTimeout(r, 1500));
+    resumed = await post("/sessions/resume-code", { code: resumeCode });
+  }
   check("resume → 200", resumed.status === 200, `http ${resumed.status}`);
   check(`resume → still ${profile.defaultVersion}`, resumed.body.promptVersion === profile.defaultVersion, resumed.body.promptVersion);
   const r = await turn(resumed.body.wsUrl, null);
@@ -250,10 +263,14 @@ async function main() {
   say("");
   const passed = results.filter((x) => x.ok).length;
   say(`=== ${passed}/${results.length} checks passed ===`);
-  mkdirSync(dirname(OUT), { recursive: true });
-  writeFileSync(OUT, log.join("\n") + "\n");
+  flush();
   console.log(`\nlog: ${OUT}`);
   process.exit(passed === results.length ? 0 : 1);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  log.push(`FATAL ${e instanceof Error ? e.stack ?? e.message : String(e)}`);
+  flush();
+  process.exit(1);
+});
