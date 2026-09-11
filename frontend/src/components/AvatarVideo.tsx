@@ -163,7 +163,7 @@ export function AvatarVideo({
     : pip
       ? "aspect-[3/4] w-full rounded-2xl border-brand-accent/40 shadow-glow-sm"
       : compact
-        ? "aspect-[4/5] max-h-48 sm:max-h-none sm:aspect-[3/4] rounded-xl"
+        ? "aspect-[4/5] max-h-72 sm:max-h-none sm:aspect-[3/4] rounded-xl"
         : "aspect-[3/4] rounded-xl";
 
   const isVideoSrc = (src: string | null) =>

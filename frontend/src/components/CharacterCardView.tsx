@@ -184,7 +184,7 @@ export function CharacterCardView({ card, siteOrigin }: CharacterCardViewProps) 
 
       <div className="relative mx-auto flex min-h-[calc(100dvh-4rem)] max-w-5xl flex-col px-4 py-6 sm:py-12">
         <section className="grid flex-1 items-center gap-6 sm:gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-          <div className="relative mx-auto w-full max-w-md">
+          <div className="relative mx-auto w-full max-w-lg sm:max-w-xl">
             <div
               className={`avatar-ring relative overflow-hidden rounded-[1.75rem] border border-brand-border bg-brand-panel shadow-card shadow-glow-sm ${presence.glow}`}
             >

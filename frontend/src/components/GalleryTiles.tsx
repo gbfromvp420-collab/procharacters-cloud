@@ -180,7 +180,7 @@ export function CharacterTile({
   return (
     <article
       className={`group relative overflow-visible rounded-2xl border border-brand-border bg-brand-panel shadow-card transition hover:border-brand-accent/60 hover:shadow-glow-sm ${
-        compact ? "w-[min(72vw,16.5rem)] shrink-0 snap-start sm:w-[15rem]" : "animate-rise-in"
+        compact ? "w-[min(82vw,20rem)] shrink-0 snap-start sm:w-[18.5rem]" : "animate-rise-in"
       } ${card.dedicatedPack ? "ring-1 ring-emerald-500/15" : ""} ${
         card.mine ? "ring-1 ring-violet-400/25" : ""
       } ${searchHighlight ? "ring-2 ring-brand-accent/50 shadow-glow-sm" : ""}`}

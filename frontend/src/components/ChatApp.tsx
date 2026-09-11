@@ -3057,8 +3057,8 @@ export function ChatApp() {
             />
           </div>
 
-          <div className={`w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-72 lg:max-w-[18.5rem] lg:self-stretch ${
-            sessionActive ? "h-[18vh] max-h-36" : "h-[22vh] max-h-44"
+          <div className={`w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-96 lg:max-w-[24rem] lg:self-stretch ${
+            sessionActive ? "h-[36vh] max-h-72 sm:max-h-80" : "h-[40vh] max-h-80 sm:max-h-96"
           }`}>
             <AvatarVideo
               avatar={avatarState}
