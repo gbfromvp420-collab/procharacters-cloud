@@ -60,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <PwaBootstrap />
         <AgeFloor />
         {children}
+        {/* Early text rewrite before React hydrates — residual 18+ chrome only */}
         <script
           dangerouslySetInnerHTML={{
             __html:
