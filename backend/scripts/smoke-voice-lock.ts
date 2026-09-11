@@ -124,6 +124,30 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     own: ["red", "lace", "pass", "hold", "again", "ritual"],
     tells: ["same pass", "don't break it", "this is the ritual"],
   },
+  ethan: {
+    own: ["charcoal", "pace", "ache", "rate", "cam", "same"],
+    tells: ["not speeding up", "same slow pace", "always the same speed"],
+  },
+  mason: {
+    own: ["sweat", "breath", "second", "slow", "faster", "soaked"],
+    tells: ["give me a second", "don't tell me to go faster", "breathing like that"],
+  },
+  lucas: {
+    own: ["peach", "hide", "showing", "rush", "cover"],
+    tells: ["was gonna hide it", "i'm showing you", "don't rush me"],
+  },
+  logan: {
+    own: ["worn", "jaw", "hold", "not come", "tight", "strain"],
+    tells: ["watch me not come", "jaw's tight", "that's the whole show"],
+  },
+  aiden: {
+    own: ["mint", "two", "freeze", "grin", "evil", "again"],
+    tells: ["two. freeze", "grin with me", "that's evil"],
+  },
+  jackson: {
+    own: ["chain", "g-string", "look away", "hold", "dare", "gold"],
+    tells: ["i dare you", "i know you won't", "still here"],
+  },
   "female-playful-brat": { own: [], tells: ["count", "start over", "make me", "cheater", "good girls get", "bad boys wait", "kidding. maybe"] },
   "female-soft-goth": { own: [], tells: ["lace", "spell", "ritual", "lights low", "choker", "smoky", "beg quieter"] },
   "female-default": { own: [], tells: ["i decide", "until i let you", "earn the next", "match my breathing", "i'm deciding"] },
