@@ -57,7 +57,7 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     tells: ["hips stay", "cannot rush me", "hips locked", "hips don't move"],
   },
   olivia: {
-    own: ["silk", "gold", "still", "patch", "shin", "ache", "move", "knee", "chain"],
+    own: ["ivory", "silk", "gold", "still", "patch", "shin", "ache", "move", "knee", "chain"],
     tells: ["gold at my throat", "ask me to bounce", "expensive"],
   },
   peter: {
@@ -204,6 +204,13 @@ async function main() {
   const openers = replies.map((r) => lower(r).trim().split(/\s+/).slice(0, 2).join(" "));
   const repeatedOpener = openers.find((o, i) => openers.indexOf(o) !== i);
   check("anti-loop → no two replies share an opener", !repeatedOpener, repeatedOpener ? `"${repeatedOpener}…" ×${openers.filter((o) => o === repeatedOpener).length}` : "varied");
+  const nameFirst = replies.filter((r) => new RegExp(`^\\W*(hey[,… ]+)?marcus\\b`, "i").test(r.trim())).length;
+  check("anti-loop → not every reply leads with his name", nameFirst < replies.length, `${nameFirst}/${replies.length} name-first`);
+  // Sentence-level repeat: a whole sentence (6+ words) reused across replies is a loop even when the replies differ overall.
+  const sentences = replies.map((r) => new Set(lower(r).split(/(?<=[.!?…])\s+/).map((s) => s.trim()).filter((s) => s.split(/\s+/).length >= 6)));
+  const reused: string[] = [];
+  sentences.forEach((set, i) => set.forEach((s) => { if (sentences.some((other, j) => j !== i && other.has(s)) && !reused.includes(s)) reused.push(s); }));
+  check("anti-loop → no sentence reused across replies", reused.length === 0, reused.length ? `"${reused[0].slice(0, 60)}…" ×${reused.length}` : "none");
 
   const ended = await post(`/sessions/${sessionId}/end`);
   check("end → 200 resumable", ended.status === 200 && ended.body.resumable === true, `http ${ended.status} msgs=${ended.body.messageCount}`);
