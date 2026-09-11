@@ -32,7 +32,7 @@
 | Gallery lanes | **Pack 01 / 02 / 03 chips** · `?filter=pack03` |
 | Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
-| Age floor | ⛔ **cosmetic text swap only — no gate exists** |
+| Age floor | 🟢 **21+ — hard blocking gate, verified live** |
 | Resume / Continue | ✅ create 201 · resume-code 200 · resumed session restored full history |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never the root `Dockerfile` (Python WebRTC).
@@ -81,7 +81,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 | Pack 02 / 03 mind copy | 🟢 fingerprints `#64` |
 | Same-night reclaim | 🟢 gallery Chat autostart resumes heat |
 | Studio Forge | 🟢 phone-passed (blocked by chat outage) |
-| 21+ | ⛔ **cosmetic only** — `AgeFloor.tsx` rewrites the text “18+”→“21+” after hydration. There is **no age gate**; explicit content loads for anyone. |
+| 21+ | 🟢 `AgeFloor.tsx` renders a full-viewport blocking interstitial before any content. Enter records `pc_age_verified_21` for 30 days; Leave navigates off-site. Verified live in incognito on deploy `10303d1`. Self-attestation, not ID verification. |
 | Resume codes | 🟢 |
 | Stripe Day Pass UI | ✅ live keys · **not phone-smoked** (your card) |
 

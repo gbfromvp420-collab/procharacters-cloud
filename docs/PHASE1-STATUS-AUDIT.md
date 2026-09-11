@@ -147,11 +147,27 @@ service move or give us backups), but it is no longer a launch blocker.
 
 ### P1 — will embarrass us with real users
 
-**4. No age gate.** `AgeFloor.tsx` is not a gate — it is a client-side text
-rewriter that swaps the string "18+" to "21+" after hydration. Explicit content
-is served to anyone who loads the URL, with no interstitial. This is a
-compliance problem for adult processors and for the Phase 3 tube placement
-plan. `LIVE-STATUS.md` claiming "Age floor 🟢 21+" was cosmetic.
+**4. ~~No age gate.~~** *(shipped in #103, verified live 2026-09-11)*
+`AgeFloor.tsx` was a client-side text rewriter that swapped "18+" to "21+" after
+hydration — explicit content was served to anyone who loaded the URL, with no
+interstitial, and `LIVE-STATUS.md` claiming "Age floor 🟢 21+" was cosmetic.
+
+It now renders a hard blocking interstitial. Unverified visitors get a full
+viewport dark panel ("This site contains explicit adult content", 21+
+confirmation, Enter / Leave). Leave navigates off-site. Enter writes
+`pc_age_verified_21` to `localStorage` with a millisecond timestamp and a 30-day
+TTL, so the gate does not nag a returning user. During hydration the component
+renders the same opaque panel rather than `null`, which is what stops a
+frame-one flash of the gallery behind it.
+
+**Known limit, stated on purpose.** This is a client-side attestation, not
+identity verification. Disabling JavaScript, fetching the HTML directly, or
+requesting an image URL still returns content, because the page is
+server-rendered and the gate is an overlay. That is how essentially every
+self-attestation gate works and it satisfies the processor and tube-placement
+requirement we actually have. If a jurisdiction or a processor later demands
+real age *verification* (ID or database check), that is a different, larger
+piece of work: it has to move server-side and gate the HTML response itself.
 
 **5. Memory silently forgets.** The window truncates at 20–80 messages with no
 summarization (`session-memory.ts`: "No summarization or fact extraction"). A
@@ -263,6 +279,20 @@ a spinner until ~10.7 s.
 
 **Volume persistence (23:34 UTC).** 6/6 resume codes spanning three deploys
 redeemed successfully with intact transcripts. See P0-3.
+
+**Deploy `10303d1` (#103 — hard 21+ age gate, 00:36 UTC).** Five checks driven
+through a real Chrome incognito window against production, 5/5 pass:
+
+1. Fresh incognito shows the blocking interstitial with no content behind it.
+   Scrolling and zooming out to 25% never exposed the page underneath.
+2. "I am under 21 — Leave" navigated the browser to `google.com`.
+3. "I am 21 or older — Enter" dismissed the gate, rendered the live gallery, and
+   wrote `pc_age_verified_21 = 1789087374337` (2026-09-11T00:42:54Z, expiring
+   2026-10-11T00:42:54Z).
+4. Reload and in-site navigation to `/chat` did not bring the gate back.
+5. Server HTML contains zero occurrences of `18+` and 12 of `21+` on `/`, 10 on
+   `/chat` and 10 on `/gallery`. Footer reads "Uncensored 21+ ·
+   Procharacters.cloud / KGC Ventures".
 
 ---
 
