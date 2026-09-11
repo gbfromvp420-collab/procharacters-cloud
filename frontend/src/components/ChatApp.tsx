@@ -580,13 +580,21 @@ export function ChatApp() {
     wsToken,
   ]);
 
+  const scrollTranscriptToEnd = (smooth = true) => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    // Scroll the transcript pane only. scrollIntoView on the sentinel also
+    // walks ancestor viewports and shoved the avatar off the top of the phone.
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  };
+
   useEffect(() => {
     if (!stickToBottom) {
       setShowJumpLatest(true);
       return;
     }
     setShowJumpLatest(false);
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollTranscriptToEnd();
   }, [messages, isTyping, stickToBottom]);
 
   // Energy band flash in transcript chrome when avatar heat shifts
@@ -2575,7 +2583,7 @@ export function ChatApp() {
   const jumpToLatest = () => {
     setStickToBottom(true);
     setShowJumpLatest(false);
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollTranscriptToEnd();
   };
   const statusLabel =
     status === "ready"
@@ -2613,7 +2621,7 @@ export function ChatApp() {
           : "";
 
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
+    <main className="relative flex h-dvh flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${roomWash}`}
@@ -2682,7 +2690,7 @@ export function ChatApp() {
         </p>
       )}
 
-      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
+      <div className="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 pt-3 sm:px-4 sm:pt-5">
         {/* Critical banners only while live — promo hints were stacking on the avatar */}
         <HintRail className="mb-3">
           <NetworkOfflineBanner />
@@ -3065,8 +3073,16 @@ export function ChatApp() {
             />
           </div>
 
-          <div className={`w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-96 lg:max-w-[24rem] lg:self-stretch ${
-            sessionActive ? "h-[36vh] max-h-72 sm:max-h-80" : "h-[40vh] max-h-80 sm:max-h-96"
+          {/*
+            The body is the product. max-h-72 (288px) after the #106 bump still
+            read as a postage stamp — 36vh wanted to grow and the ceiling
+            slapped it back. svh tracks the visible phone frame (browser chrome
+            included); the rem cap only bites on tall desktop stacks. Composer
+            stays in view: 52svh on a 640px phone leaves ~200px for transcript
+            + input.
+          */}
+          <div className={`w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-[28rem] lg:max-w-[28rem] lg:self-stretch ${
+            sessionActive ? "h-[52svh] max-h-[28rem]" : "h-[56svh] max-h-[32rem]"
           }`}>
             <AvatarVideo
               avatar={avatarState}
