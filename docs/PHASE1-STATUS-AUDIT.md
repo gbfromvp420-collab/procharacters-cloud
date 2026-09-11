@@ -176,8 +176,15 @@ only `NetworkOfflineBanner` and `SessionAuthBanner` can appear during a live
 session. Measured on a 390x844 session: 2 banners and 74px of the 288px avatar
 covered, down to 0 and 0. The banner still returns after the session ends.
 
-**Still open:** the "Heat locked in" `SessionWinToast` overlaying the
-character's opening message. Not touched in #107.
+The "Heat locked in" `SessionWinToast` half was closed separately in #109. It
+was wrapped in an `absolute inset-x-3 top-2 z-10` div inside the scrolling
+transcript, so for the 4.5s it is visible it painted over the character's first
+message — measured at 141px of a 154px bubble, which made the opening line
+unreadable. Both wrappers are gone and the toast sits in normal flow;
+`SessionWinToast` already returns `null` when hidden, so in-flow leaves no gap.
+Overlap is now 0px.
+
+**P1-7 is fully closed.**
 
 ### P2 — blocks the Phase 2 revenue loop
 
@@ -287,6 +294,14 @@ stretched it). Composer stays fully on screen at 360x640 and 375x667.
 banners during a live session went from 2 to 0, and avatar pixels covered from
 74 to 0. 7/7 checks including the banner correctly returning after End. See
 P1-7.
+
+**Deploy `17a1644` (#109 — win toast in flow, 03:48 UTC).** The toast covered
+141px of the 154px opening message; now 0px, and it is no longer lifted out of
+flow. 3/3 checks. Because the toast lives for only ~4.5s once `messageCount`
+reaches 3, this was caught by polling a real production session every 150ms
+rather than by eye. Re-ran the #106 and #107 checks on the same deploy as a
+regression guard: avatar still 366x288 active on mobile and 384 wide on
+desktop, banner lifecycle still 7/7.
 
 ---
 
