@@ -161,10 +161,23 @@ long session drops early context permanently while we market memory.
 134-word prompts. Consistency and distinctiveness are the claimed edge; right
 now that edge exists for 8 characters.
 
-**7. Chat page UI defects.** The "Sign in for alerts" banner renders twice
-stacked, and the "HEAT LOCKED IN" toast overlays the character's opening
-message so her first line is unreadable. Both are on the first screen a new
-user sees.
+**7. Chat page UI defects.** *(banner half fixed in #107, verified live
+2026-09-11; toast half still open)*
+
+The "Sign in for alerts" banner rendered twice because there were two render
+sites, not because `HintRail` was broken. `HintRail` correctly shows one child
+at a time via `.hint-rail > * + * { display: none }`, but `app/chat/page.tsx`
+rendered its own `PushEnableHint` in a `sticky top-0 z-30` strip on top of the
+one `ChatApp` already rendered — two separate React subtrees, which CSS inside
+one rail can never dedupe. The sticky copy was also the one pinned over the
+avatar. #107 removes the page-level duplicate and gates the promo hints
+(`PushEnableHint`, `InstallAppHint`, `SoftSupportHint`) on `!sessionActive`, so
+only `NetworkOfflineBanner` and `SessionAuthBanner` can appear during a live
+session. Measured on a 390x844 session: 2 banners and 74px of the 288px avatar
+covered, down to 0 and 0. The banner still returns after the session ends.
+
+**Still open:** the "Heat locked in" `SessionWinToast` overlaying the
+character's opening message. Not touched in #107.
 
 ### P2 — blocks the Phase 2 revenue loop
 
@@ -263,6 +276,17 @@ a spinner until ~10.7 s.
 
 **Volume persistence (23:34 UTC).** 6/6 resume codes spanning three deploys
 redeemed successfully with intact transcripts. See P0-3.
+
+**Deploy `00b158f` (#106 — bigger character screens, 02:25 UTC).** The chat
+avatar was capped at `max-h-36` while a session was live. Measured on a real
+session at 390x844, the rail went from 366x144 to 366x288; desktop width went
+from 288 to 384 (desktop height was never capped — `lg:self-stretch` already
+stretched it). Composer stays fully on screen at 360x640 and 375x667.
+
+**Deploy `8f69b70` (#107 — promo banner off the avatar, 03:09 UTC).** Push
+banners during a live session went from 2 to 0, and avatar pixels covered from
+74 to 0. 7/7 checks including the banner correctly returning after End. See
+P1-7.
 
 ---
 
