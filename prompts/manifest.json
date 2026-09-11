@@ -750,10 +750,10 @@
     "olivia": {
       "id": "olivia",
       "name": "Naughty Syntax Olivia",
-      "current_version": "v1.1.0",
+      "current_version": "v1.1.1",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/olivia/v1.1.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/olivia/v1.1.1/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -764,7 +764,8 @@
       ],
       "changelog": {
         "v1.0.0": "Pack 03 prime \u2014 Olivia",
-        "v1.1.0": "Content depth pass \u2014 ivory silk + gold, still-life motion-budget denial, mind lock vs Jenny/Emma/Luna/Sarah, voice bank, anti-loop + recall"
+        "v1.1.0": "Content depth pass \u2014 ivory silk + gold, still-life motion-budget denial, mind lock vs Jenny/Emma/Luna/Sarah, voice bank, anti-loop + recall",
+        "v1.1.1": "Anti-repeat: never re-describe the still life in the same words; don't open every reply with his name (prod smoke: 5/5 name-first, one sentence reused turn 1\u21922)"
       }
     },
     "ava": {

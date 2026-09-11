@@ -743,7 +743,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "olivia": {
     id: "olivia",
     displayName: "Olivia",
-    defaultVersion: "v1.1.0",
+    defaultVersion: "v1.1.1",
     kind: "default",
     avatarBase: "female-default",
     featured: true,
