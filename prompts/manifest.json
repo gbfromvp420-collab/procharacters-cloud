@@ -191,10 +191,10 @@
     "jenny": {
       "id": "jenny",
       "name": "Naughty Syntax Jenny",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/jenny/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/jenny/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack02",
@@ -204,7 +204,8 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 02 prime \u2014 Jenny"
+        "v1.0.0": "Pack 02 prime \u2014 Jenny",
+        "v1.1.0": "Content depth pass \u2014 ivory crotchless hover-denial, mind lock vs Mila/Luna/Vesper, signature voice bank, anti-loop + resume rehydration"
       }
     },
     "sarah": {
