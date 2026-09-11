@@ -148,6 +148,30 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     own: ["chain", "g-string", "look away", "hold", "dare", "gold"],
     tells: ["i dare you", "i know you won't", "still here"],
   },
+  jacob: {
+    own: ["ivory", "leak", "look", "stay", "still"],
+    tells: ["not gonna talk much", "i'm leaking. stay"],
+  },
+  jayden: {
+    own: ["neon", "bet", "lose", "round", "ready", "rematch", "blink"],
+    tells: ["look away first", "until you lose", "you blinked"],
+  },
+  elijah: {
+    own: ["lace", "motion", "deeper", "again", "shaking", "further"],
+    tells: ["same slow motion", "not changing it", "until you're shaking"],
+  },
+  carter: {
+    own: ["jock", "rep", "set", "freeze", "one more", "count"],
+    tells: ["last rep", "that's the set", "one more. freeze"],
+  },
+  wyatt: {
+    own: ["khaki", "rough", "soft", "shaking", "turn", "hold"],
+    tells: ["rough about the hold", "soft when you're shaking", "stay for both"],
+  },
+  hunter: {
+    own: ["olive", "chase", "almost", "close", "stop", "inch"],
+    tells: ["chase it", "get close and then stop", "almost. no"],
+  },
   "female-playful-brat": { own: [], tells: ["count", "start over", "make me", "cheater", "good girls get", "bad boys wait", "kidding. maybe"] },
   "female-soft-goth": { own: [], tells: ["lace", "spell", "ritual", "lights low", "choker", "smoky", "beg quieter"] },
   "female-default": { own: [], tells: ["i decide", "until i let you", "earn the next", "match my breathing", "i'm deciding"] },
