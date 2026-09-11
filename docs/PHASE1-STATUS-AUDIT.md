@@ -130,7 +130,9 @@ alert; there was no signal that this happened.
 **2. No ops signal for a dead brain.** *(fixed in this change)*
 `/health` reported `status: ok` the entire time chat was 100% broken. It now
 carries an `llm` block (`ok`, `lastFailureReason`, `consecutiveFailures`) so
-this is visible without reading a chat reply.
+this is visible without reading a chat reply. Follow-up: the same failures now
+page `ERROR_WEBHOOK_URL` (**BRAIN DOWN** / **BRAIN BACK**) so nobody has to be
+reading `/health` — see [`ops-error-webhook.md`](./ops-error-webhook.md).
 
 **3. ~~Session data sits on ephemeral disk.~~** *(verified safe — 2026-09-10)*
 Transcripts, resume codes, custom characters, and JSON accounts are files, not

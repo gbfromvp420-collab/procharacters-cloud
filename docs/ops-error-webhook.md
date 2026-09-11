@@ -91,12 +91,28 @@ Not required.
 
 ---
 
+## What pages you
+
+Same channel, two kinds of page:
+
+| Page | When | Looks like |
+|------|------|------------|
+| **5xx** | The API throws a real server error | `ALERT 500 GET /api/v1/… — <error>` |
+| **BRAIN DOWN** | xAI rejects chat calls — every character has fallen back to soft error copy | `ALERT 403 LLM xai/chat — BRAIN DOWN: credits_or_spending_limit (HTTP 403), first failed turn. … top up / raise the limit in the xAI console.` |
+| **BRAIN BACK** | The first successful chat call after a paged outage | `NOTICE 200 LLM xai/chat — BRAIN BACK: chat is answering again after 47m down …` (quiet priority) |
+
+Brain pages are deliberately coarse — the reason and the action, never xAI's raw error text. Rules: dead key or no credits pages on the **first** failed turn; timeouts / rate limits / 5xx from xAI wait for **3 in a row**. While the outage continues you get one **STILL DOWN** page every 30 minutes, not one per turn. `GET /health` → `llm.pagedReason` shows what is currently paged (`null` when nothing is).
+
+Regression guard: `cd backend && npm run test:llm-failure` boots the app against a fake xAI and a fake webhook and asserts all of the above.
+
+---
+
 ## What this is *not*
 
 | Stripe webhook | Error alerts |
 |----------------|--------------|
 | `STRIPE_WEBHOOK_SECRET` | **`ERROR_WEBHOOK_URL`** or **`ERROR_ALERT_EMAIL`** |
-| Money in | You get paged on 5xx |
+| Money in | You get paged on 5xx and on a dead brain |
 
 Free chat never depends on alerts.
 

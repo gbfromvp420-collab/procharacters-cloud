@@ -12,6 +12,9 @@
  *   3. The user's own message survives the failed turn.
  *   4. /health reports llm.ok=false with a coarse reason for ops.
  *   5. Once the provider recovers, llm.ok flips back and turns persist normally.
+ *   6. The outage pages the ops webhook exactly once (BRAIN DOWN), repeated
+ *      failures do not re-page, recovery pages once more (BRAIN BACK), and no
+ *      alert carries the provider's raw billing text.
  *
  * Usage:
  *   npm run test:llm-failure
@@ -57,6 +60,44 @@ type StubMode = "credit_error" | "ok";
 
 let stubMode: StubMode = "credit_error";
 let stubCalls = 0;
+
+/** Every JSON body posted to the fake ERROR_WEBHOOK_URL, in order. */
+const hookPosts: Array<Record<string, unknown>> = [];
+
+/** Raw provider phrasing that must never leave the process, even to ops. */
+const PROVIDER_RAW_PATTERNS = ["your team has", "purchase more credits", "console.x.ai"];
+
+function startStubWebhook(): Promise<{ server: Server; url: string }> {
+  return new Promise((resolve) => {
+    const server = createServer(async (req, res) => {
+      let body = "";
+      for await (const c of req) body += c;
+      try {
+        hookPosts.push(JSON.parse(body) as Record<string, unknown>);
+      } catch {
+        hookPosts.push({ raw: body });
+      }
+      res.writeHead(204);
+      res.end();
+    });
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address() as AddressInfo;
+      resolve({ server, url: `http://127.0.0.1:${port}/hook` });
+    });
+  });
+}
+
+/** Alerts are fire-and-forget from the chat turn; give the webhook a moment to land. */
+async function waitForHookCount(n: number, timeoutMs = 5_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (hookPosts.length < n && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
+}
+
+function hookText(post: Record<string, unknown>): string {
+  return String(post.content ?? post.text ?? post.message ?? "").toLowerCase();
+}
 
 function startStubXai(): Promise<{ server: Server; baseUrl: string }> {
   return new Promise((resolve) => {
@@ -174,6 +215,7 @@ async function main() {
   console.log("=== LLM failure-path smoke ===\n");
 
   const stub = await startStubXai();
+  const hook = await startStubWebhook();
 
   // Must be set before importing app/env — env.ts parses process.env at import.
   const dataDir = mkdtempSync(join(tmpdir(), "pcc-llm-smoke-"));
@@ -181,6 +223,8 @@ async function main() {
   process.env.ACCOUNTS_PROVIDER = "json";
   process.env.XAI_API_KEY = "test-key-not-a-placeholder-000";
   process.env.XAI_BASE_URL = stub.baseUrl;
+  process.env.ERROR_WEBHOOK_URL = hook.url;
+  delete process.env.ERROR_ALERT_EMAIL;
   process.env.SESSIONS_PATH = join(dataDir, "sessions");
   process.env.ACCOUNTS_PATH = join(dataDir, "accounts.json");
   process.env.CUSTOM_CHARACTERS_PATH = join(dataDir, "custom-characters.json");
@@ -243,6 +287,7 @@ async function main() {
         configured: boolean;
         lastFailureReason: string | null;
         consecutiveFailures: number;
+        pagedReason: string | null;
       };
     };
     console.log(`\n  /health llm: ${JSON.stringify(downHealth.llm)}\n`);
@@ -254,6 +299,31 @@ async function main() {
       `got ${downHealth.llm.lastFailureReason}`,
     );
     check("health counts consecutive failures", downHealth.llm.consecutiveFailures >= 1);
+
+    // --- Outage pages ops exactly once ---
+    console.log("[1b] outage pages the ops webhook\n");
+    await waitForHookCount(1);
+    check("brain-down alert posted to ERROR_WEBHOOK_URL", hookPosts.length === 1, `posts=${hookPosts.length}`);
+    const down = hookPosts[0] ?? {};
+    console.log(`  alert: ${JSON.stringify(down.content ?? down.text)}\n`);
+    check("alert is named LlmBrainDown", down.name === "LlmBrainDown", `name=${String(down.name)}`);
+    check("alert says BRAIN DOWN", hookText(down).includes("brain down"));
+    check(
+      "alert carries the coarse reason",
+      hookText(down).includes("credits_or_spending_limit"),
+    );
+    check("alert carries the provider status", down.statusCode === 403, `statusCode=${String(down.statusCode)}`);
+    const rawLeaks = PROVIDER_RAW_PATTERNS.filter((p) => JSON.stringify(down).toLowerCase().includes(p));
+    check("alert carries no raw provider billing text", rawLeaks.length === 0, `leaked: ${rawLeaks.join(", ")}`);
+    check(
+      "health exposes the paged reason",
+      downHealth.llm.pagedReason === "credits_or_spending_limit",
+      `got ${String(downHealth.llm.pagedReason)}`,
+    );
+
+    await chatOnce(wsUrl, "still nothing?");
+    await new Promise((r) => setTimeout(r, 300));
+    check("second failed turn does not re-page", hookPosts.length === 1, `posts=${hookPosts.length}`);
 
     // --- Provider recovers ---
     console.log("[2] provider recovered (200 OK)\n");
@@ -270,14 +340,26 @@ async function main() {
     );
 
     const upHealth = (await (await fetch(`${base}/health`)).json()) as {
-      llm: { ok: boolean; consecutiveFailures: number };
+      llm: { ok: boolean; consecutiveFailures: number; pagedReason: string | null };
     };
     console.log(`  /health llm: ${JSON.stringify(upHealth.llm)}\n`);
     check("health recovers to llm.ok=true", upHealth.llm.ok === true);
     check("consecutive failures reset to 0", upHealth.llm.consecutiveFailures === 0);
+    check("health clears the paged reason", upHealth.llm.pagedReason === null);
+
+    // --- Recovery pages once ---
+    console.log("[2b] recovery pages the ops webhook\n");
+    await waitForHookCount(2);
+    check("exactly one more alert on recovery", hookPosts.length === 2, `posts=${hookPosts.length}`);
+    const back = hookPosts[1] ?? {};
+    console.log(`  alert: ${JSON.stringify(back.content ?? back.text)}\n`);
+    check("recovery is named LlmBrainRecovered", back.name === "LlmBrainRecovered", `name=${String(back.name)}`);
+    check("recovery says BRAIN BACK", hookText(back).includes("brain back"));
+    check("recovery is a calm notice, not a red alert", back.level === "info", `level=${String(back.level)}`);
   } finally {
     await app.close();
     stub.server.close();
+    hook.server.close();
   }
 
   console.log(`\n=== ${passes.length} passed, ${failures.length} failed ===`);
