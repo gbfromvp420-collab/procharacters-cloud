@@ -395,10 +395,10 @@
     "blake": {
       "id": "blake",
       "name": "Naughty Syntax Blake",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/blake/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/blake/v1.1.0/prompt.md",
       "tags": [
         "male",
         "pack02",
@@ -408,16 +408,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 02 prime \u2014 Blake"
+        "v1.0.0": "Pack 02 prime \u2014 Blake",
+        "v1.1.0": "Content depth pass \u2014 red jock-sheer, ten-then-freeze, mind lock vs Mateo/Carter/Liam/Gary, voice bank, anti-loop + recall"
       }
     },
     "tommy": {
       "id": "tommy",
       "name": "Naughty Syntax Tommy",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/tommy/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/tommy/v1.1.0/prompt.md",
       "tags": [
         "male",
         "pack02",
@@ -427,16 +428,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 02 prime \u2014 Tommy"
+        "v1.0.0": "Pack 02 prime \u2014 Tommy",
+        "v1.1.0": "Content depth pass \u2014 baby-blue sheer, messier-when-denied, mind lock vs Diego/Noah/Lucas/Peter, voice bank, anti-loop + recall"
       }
     },
     "kenny": {
       "id": "kenny",
       "name": "Naughty Syntax Kenny",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/kenny/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/kenny/v1.1.0/prompt.md",
       "tags": [
         "male",
         "pack02",
@@ -446,7 +448,8 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 02 prime \u2014 Kenny"
+        "v1.0.0": "Pack 02 prime \u2014 Kenny",
+        "v1.1.0": "Content depth pass \u2014 black mesh, beg-first mean-soft, mind lock vs Rio/Becca/Gary/Justin, voice bank, anti-loop + recall"
       }
     },
     "liam": {
@@ -782,10 +785,10 @@
     "ava": {
       "id": "ava",
       "name": "Naughty Syntax Ava",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/ava/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/ava/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -795,16 +798,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Ava"
+        "v1.0.0": "Pack 03 prime \u2014 Ava",
+        "v1.1.0": "Content depth pass \u2014 black cutout, wait-until-go freeze, mind lock vs Sarah/Jessica/Vesper/Avery, voice bank, anti-loop + recall"
       }
     },
     "sophia": {
       "id": "sophia",
       "name": "Naughty Syntax Sophia",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/sophia/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/sophia/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -814,16 +818,17 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Sophia"
+        "v1.0.0": "Pack 03 prime \u2014 Sophia",
+        "v1.1.0": "Content depth pass \u2014 wine silk, velvet hover as luxury, mind lock vs Jenny/Olivia/Sarah/Vesper, voice bank, anti-loop + recall"
       }
     },
     "isabella": {
       "id": "isabella",
       "name": "Naughty Syntax Isabella",
-      "current_version": "v1.0.0",
+      "current_version": "v1.1.0",
       "brand": "naughty-syntax",
       "content_rating": "nsfw",
-      "path": "prompts/library/naughty-syntax/isabella/v1.0.0/prompt.md",
+      "path": "prompts/library/naughty-syntax/isabella/v1.1.0/prompt.md",
       "tags": [
         "female",
         "pack03",
@@ -833,7 +838,8 @@
         "bi"
       ],
       "changelog": {
-        "v1.0.0": "Pack 03 prime \u2014 Isabella"
+        "v1.0.0": "Pack 03 prime \u2014 Isabella",
+        "v1.1.0": "Content depth pass \u2014 red lace, same-pass-hold, mind lock vs Luna/Elijah/Sarah/Aria, voice bank, anti-loop + recall"
       }
     },
     "mia": {

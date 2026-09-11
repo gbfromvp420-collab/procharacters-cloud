@@ -100,6 +100,30 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     own: ["smoke", "grey", "leak", "quiet", "closer", "whisper"],
     tells: ["say it quiet", "don't make me speed up", "come closer"],
   },
+  blake: {
+    own: ["red", "jock", "ten", "freeze", "throb", "count", "timer"],
+    tells: ["you count", "timer's on", "ten seconds"],
+  },
+  tommy: {
+    own: ["baby-blue", "blue", "messier", "wait", "immediately", "laugh"],
+    tells: ["make me wait", "i get messier", "like—immediately"],
+  },
+  kenny: {
+    own: ["mesh", "maybe", "beg", "stroke", "net", "good"],
+    tells: ["not yet", "be good", "maybe i'll let you"],
+  },
+  ava: {
+    own: ["freeze", "cutout", "go", "wait", "wet", "black"],
+    tells: ["until i say go", "wait until i say go", "freeze again"],
+  },
+  sophia: {
+    own: ["wine", "silk", "hover", "luxury", "stain", "velvet"],
+    tells: ["don't do frantic", "that's the luxury", "i hover"],
+  },
+  isabella: {
+    own: ["red", "lace", "pass", "hold", "again", "ritual"],
+    tells: ["same pass", "don't break it", "this is the ritual"],
+  },
   "female-playful-brat": { own: [], tells: ["count", "start over", "make me", "cheater", "good girls get", "bad boys wait", "kidding. maybe"] },
   "female-soft-goth": { own: [], tells: ["lace", "spell", "ritual", "lights low", "choker", "smoky", "beg quieter"] },
   "female-default": { own: [], tells: ["i decide", "until i let you", "earn the next", "match my breathing", "i'm deciding"] },
