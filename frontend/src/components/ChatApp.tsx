@@ -580,13 +580,21 @@ export function ChatApp() {
     wsToken,
   ]);
 
+  const scrollTranscriptToEnd = (smooth = true) => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    // Scroll the transcript pane only. scrollIntoView on the sentinel also
+    // walks ancestor viewports and shoved the avatar off the top of the phone.
+    el.scrollTo({ top: el.scrollHeight, behavior: smooth ? "smooth" : "auto" });
+  };
+
   useEffect(() => {
     if (!stickToBottom) {
       setShowJumpLatest(true);
       return;
     }
     setShowJumpLatest(false);
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollTranscriptToEnd();
   }, [messages, isTyping, stickToBottom]);
 
   // Energy band flash in transcript chrome when avatar heat shifts
@@ -2575,7 +2583,7 @@ export function ChatApp() {
   const jumpToLatest = () => {
     setStickToBottom(true);
     setShowJumpLatest(false);
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    scrollTranscriptToEnd();
   };
   const statusLabel =
     status === "ready"
@@ -2613,7 +2621,7 @@ export function ChatApp() {
           : "";
 
   return (
-    <main className="relative flex min-h-dvh flex-col overflow-x-hidden pb-[env(safe-area-inset-bottom)]">
+    <main className="relative flex h-dvh flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]">
       <div className="pointer-events-none absolute inset-0 bg-brand-mesh" />
       <div
         className={`pointer-events-none absolute inset-0 transition-opacity duration-700 ${roomWash}`}
@@ -2682,7 +2690,7 @@ export function ChatApp() {
         </p>
       )}
 
-      <div className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col px-3 pt-3 sm:px-4 sm:pt-5">
+      <div className="relative mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col overflow-hidden px-3 pt-3 sm:px-4 sm:pt-5">
         {/* Critical banners only while live — promo hints were stacking on the avatar */}
         <HintRail className="mb-3">
           <NetworkOfflineBanner />
@@ -3065,9 +3073,12 @@ export function ChatApp() {
             />
           </div>
 
-          <div className={`w-full shrink-0 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-96 lg:max-w-[24rem] lg:self-stretch ${
-            sessionActive ? "h-[36vh] max-h-72 sm:max-h-80" : "h-[40vh] max-h-80 sm:max-h-96"
-          }`}>
+          {/*
+            Body is the product. The rail is flex-1 on the phone so leftover
+            height after a short chat strip goes to her, not to empty
+            transcript. Desktop keeps the side column.
+          */}
+          <div className="min-h-0 w-full flex-1 overflow-hidden rounded-2xl border border-brand-border bg-black shadow-card lg:h-auto lg:max-h-none lg:w-[28rem] lg:max-w-[28rem] lg:flex-none lg:self-stretch">
             <AvatarVideo
               avatar={avatarState}
               characterName={characterName ?? headerCharacterName}
@@ -3078,9 +3089,9 @@ export function ChatApp() {
             />
           </div>
 
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <section className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm">
-            <div className="shrink-0 space-y-2 border-b border-brand-border/60 p-2.5 sm:p-3">
+          <div className="flex min-h-0 min-w-0 shrink-0 flex-col lg:flex-1">
+          <section className="relative flex min-h-0 flex-col overflow-hidden rounded-xl border border-brand-border bg-brand-panel/95 shadow-card backdrop-blur-sm lg:flex-1">
+            <div className="shrink-0 space-y-1 border-b border-brand-border/60 p-1.5 sm:space-y-2 sm:p-3">
             {!sessionActive && input.trim().length >= 8 && (
               <DraftRecoveryHint
                 characterId={character}
@@ -3098,7 +3109,7 @@ export function ChatApp() {
               <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex min-w-0 items-center gap-2">
               {sessionActive ? (
-                <p className="min-w-0 truncate text-sm font-medium text-brand-text">
+                <p className="hidden min-w-0 truncate text-sm font-medium text-brand-text sm:block">
                   {headerCharacterName || characterName || "Live"}
                   {headerMind ? (
                     <span className="ml-1.5 text-[11px] font-normal text-brand-muted">
@@ -3334,7 +3345,7 @@ export function ChatApp() {
             <div
               ref={messagesScrollRef}
               onScroll={onMessagesScroll}
-              className={`relative flex-1 space-y-3 overflow-y-auto overscroll-contain p-3 sm:p-4 ${transcriptAmbient}`}
+              className={`relative max-h-[min(16rem,32svh)] space-y-2 overflow-y-auto overscroll-contain p-2 sm:p-4 lg:max-h-none lg:flex-1 lg:space-y-3 ${transcriptAmbient}`}
             >
               <RejoinRecapToast
                 show={rejoinRecap.show && status === "ready"}
@@ -3563,7 +3574,7 @@ export function ChatApp() {
 
             {/* Composer — sticky + safe-area so home indicator / keyboard stay clear */}
             <div
-              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-3 sm:pb-3 ${edgePaceComposerClass(modeState, status)} ${
+              className={`sticky bottom-0 z-20 border-t border-brand-border/80 bg-brand-panel/95 p-1.5 pb-[max(0.4rem,env(safe-area-inset-bottom))] backdrop-blur-md transition-[box-shadow,border-color] duration-500 sm:p-3 sm:pb-3 ${edgePaceComposerClass(modeState, status)} ${
                 sendPulse ? "ring-1 ring-inset ring-brand-accent/40" : ""
               } ${arrivalId ? "ring-1 ring-inset ring-brand-accent/25" : ""}`}
             >
@@ -3632,7 +3643,7 @@ export function ChatApp() {
                           : "Start a session first"
                   }
                   disabled={status !== "ready" || sending}
-                  rows={2}
+                  rows={sessionActive ? 1 : 2}
                   enterKeyHint="send"
                   autoComplete="off"
                   className={`field min-h-touch flex-1 resize-none py-2.5 text-base disabled:opacity-50 sm:min-h-[2.75rem] sm:text-sm ${
