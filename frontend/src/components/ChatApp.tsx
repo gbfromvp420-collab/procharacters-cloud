@@ -3345,7 +3345,7 @@ export function ChatApp() {
             <div
               ref={messagesScrollRef}
               onScroll={onMessagesScroll}
-              className={`relative max-h-20 space-y-2 overflow-y-auto overscroll-contain p-2 sm:p-4 lg:max-h-none lg:flex-1 lg:space-y-3 ${transcriptAmbient}`}
+              className={`relative max-h-[min(16rem,32svh)] space-y-2 overflow-y-auto overscroll-contain p-2 sm:p-4 lg:max-h-none lg:flex-1 lg:space-y-3 ${transcriptAmbient}`}
             >
               <RejoinRecapToast
                 show={rejoinRecap.show && status === "ready"}
@@ -3560,7 +3560,7 @@ export function ChatApp() {
             </div>
 
             {showJumpLatest && messages.length > 0 && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-10 hidden justify-center sm:bottom-[6.25rem] lg:flex">
+              <div className="pointer-events-none absolute inset-x-0 bottom-[5.5rem] z-10 flex justify-center sm:bottom-[6.25rem]">
                 <button
                   type="button"
                   onClick={jumpToLatest}
