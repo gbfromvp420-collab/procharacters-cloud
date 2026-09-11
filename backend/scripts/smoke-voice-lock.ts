@@ -76,6 +76,78 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
     own: ["blush", "pink", "sorry", "stop", "sweet", "hey, you", "gentl", "rose"],
     tells: ["watch me stop", "sorry in advance", "i'm sorry. i really am"],
   },
+  jessica: {
+    own: ["cherry", "almost", "smirk", "cute", "staring", "panel", "pull"],
+    tells: ["almost-touch", "caught you staring", "then… no", "then... no"],
+  },
+  rachel: {
+    own: ["charcoal", "lace", "quiet", "watch", "wet", "panel", "silence"],
+    tells: ["don't talk much", "want you quiet", "that's enough talking"],
+  },
+  samantha: {
+    own: ["gold", "trim", "compliment", "drip", "slower", "nice", "kind"],
+    tells: ["say something nice", "dripping for the compliment", "dripping for that"],
+  },
+  becca: {
+    own: ["pastel", "ribbon", "beg", "giggle", "desperate", "again"],
+    tells: ["beg again", "hi hi", "how desperate that sounds"],
+  },
+  gary: {
+    own: ["black", "sheer", "smirk", "bulge", "hide", "tent"],
+    tells: ["i'm not hiding", "smirking the whole time", "watching you watch"],
+  },
+  mark: {
+    own: ["smoke", "grey", "leak", "quiet", "closer", "whisper"],
+    tells: ["say it quiet", "don't make me speed up", "come closer"],
+  },
+  blake: {
+    own: ["red", "jock", "ten", "freeze", "throb", "count", "timer"],
+    tells: ["you count", "timer's on", "ten seconds"],
+  },
+  tommy: {
+    own: ["baby-blue", "blue", "messier", "wait", "immediately", "laugh"],
+    tells: ["make me wait", "i get messier", "like—immediately"],
+  },
+  kenny: {
+    own: ["mesh", "maybe", "beg", "stroke", "net", "good"],
+    tells: ["not yet", "be good", "maybe i'll let you"],
+  },
+  ava: {
+    own: ["freeze", "cutout", "go", "wait", "wet", "black"],
+    tells: ["until i say go", "wait until i say go", "freeze again"],
+  },
+  sophia: {
+    own: ["wine", "silk", "hover", "luxury", "stain", "velvet"],
+    tells: ["don't do frantic", "that's the luxury", "i hover"],
+  },
+  isabella: {
+    own: ["red", "lace", "pass", "hold", "again", "ritual"],
+    tells: ["same pass", "don't break it", "this is the ritual"],
+  },
+  ethan: {
+    own: ["charcoal", "pace", "ache", "rate", "cam", "same"],
+    tells: ["not speeding up", "same slow pace", "always the same speed"],
+  },
+  mason: {
+    own: ["sweat", "breath", "second", "slow", "faster", "soaked"],
+    tells: ["give me a second", "don't tell me to go faster", "breathing like that"],
+  },
+  lucas: {
+    own: ["peach", "hide", "showing", "rush", "cover"],
+    tells: ["was gonna hide it", "i'm showing you", "don't rush me"],
+  },
+  logan: {
+    own: ["worn", "jaw", "hold", "not come", "tight", "strain"],
+    tells: ["watch me not come", "jaw's tight", "that's the whole show"],
+  },
+  aiden: {
+    own: ["mint", "two", "freeze", "grin", "evil", "again"],
+    tells: ["two. freeze", "grin with me", "that's evil"],
+  },
+  jackson: {
+    own: ["chain", "g-string", "look away", "hold", "dare", "gold"],
+    tells: ["i dare you", "i know you won't", "still here"],
+  },
   "female-playful-brat": { own: [], tells: ["count", "start over", "make me", "cheater", "good girls get", "bad boys wait", "kidding. maybe"] },
   "female-soft-goth": { own: [], tells: ["lace", "spell", "ritual", "lights low", "choker", "smoky", "beg quieter"] },
   "female-default": { own: [], tells: ["i decide", "until i let you", "earn the next", "match my breathing", "i'm deciding"] },

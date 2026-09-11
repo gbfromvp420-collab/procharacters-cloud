@@ -230,7 +230,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "jessica": {
     id: "jessica",
     displayName: "Jessica",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -249,7 +249,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "rachel": {
     id: "rachel",
     displayName: "Rachel",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -268,7 +268,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "samantha": {
     id: "samantha",
     displayName: "Samantha",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -287,7 +287,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "becca": {
     id: "becca",
     displayName: "Becca",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -325,7 +325,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "gary": {
     id: "gary",
     displayName: "Gary",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -363,7 +363,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "mark": {
     id: "mark",
     displayName: "Mark",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -382,7 +382,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "blake": {
     id: "blake",
     displayName: "Blake",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -401,7 +401,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "tommy": {
     id: "tommy",
     displayName: "Tommy",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -420,7 +420,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "kenny": {
     id: "kenny",
     displayName: "Kenny",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -477,7 +477,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "ethan": {
     id: "ethan",
     displayName: "Ethan",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -496,7 +496,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "mason": {
     id: "mason",
     displayName: "Mason",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -515,7 +515,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "lucas": {
     id: "lucas",
     displayName: "Lucas",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -534,7 +534,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "logan": {
     id: "logan",
     displayName: "Logan",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -553,7 +553,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "aiden": {
     id: "aiden",
     displayName: "Aiden",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -572,7 +572,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "jackson": {
     id: "jackson",
     displayName: "Jackson",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "twink-default",
     featured: false,
@@ -762,7 +762,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "ava": {
     id: "ava",
     displayName: "Ava",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -781,7 +781,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "sophia": {
     id: "sophia",
     displayName: "Sophia",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
@@ -800,7 +800,7 @@ export const LIVE_CHARACTER_CATALOG: Record<string, LiveCharacterProfile> = {
   "isabella": {
     id: "isabella",
     displayName: "Isabella",
-    defaultVersion: "v1.0.0",
+    defaultVersion: "v1.1.0",
     kind: "default",
     avatarBase: "female-default",
     featured: false,
