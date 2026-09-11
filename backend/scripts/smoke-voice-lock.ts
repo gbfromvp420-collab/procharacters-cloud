@@ -214,7 +214,10 @@ async function main() {
   check("4 turns → own lexicon present", me.own.length === 0 || own.length >= Math.min(4, me.own.length), `hits: ${own.join(", ") || "none"}`);
   const leaks = hits(all, RIVAL_TELLS);
   check("4 turns → no rival tells", leaks.length === 0, leaks.length ? `leak: ${leaks.join(", ")}` : "clean");
-  const blended = RIVAL_NAMES.filter((n) => new RegExp(`\\b${n}\\b`).test(lower(all)));
+  // Identity phrasing only. A bare \bmark\b fires on "glossy mark" (Olivia, prod 83aa5a8).
+  const blended = RIVAL_NAMES.filter((n) =>
+    new RegExp(`\\b(?:i'?m|it'?s|call me|my name is)\\s+${n}\\b`, "i").test(all),
+  );
   check("4 turns → never uses another character's name", blended.length === 0, blended.length ? `blend: ${blended.join(", ")}` : "clean");
 
   const later = replies.slice(1).join("\n");
