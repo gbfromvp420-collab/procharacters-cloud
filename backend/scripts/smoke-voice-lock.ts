@@ -133,7 +133,7 @@ async function post(path: string, body?: unknown) {
 interface Msg { role: string; content: string }
 interface Turn { history: Msg[]; reply: string | null; intent?: Record<string, unknown> }
 
-function turn(wsUrl: string, message: string | null): Promise<Turn> {
+function turnOnce(wsUrl: string, message: string | null): Promise<Turn> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     let history: Msg[] = [];
@@ -156,6 +156,18 @@ function turn(wsUrl: string, message: string | null): Promise<Turn> {
     });
     ws.on("error", (e) => { clearTimeout(guard); reject(e); });
   });
+}
+
+async function turn(wsUrl: string, message: string | null): Promise<Turn> {
+  try {
+    return await turnOnce(wsUrl, message);
+  } catch (error) {
+    const text = error instanceof Error ? error.message : String(error);
+    if (!/502|503|timeout/i.test(text)) throw error;
+    say(`ws ${text} — retrying once`);
+    await new Promise((r) => setTimeout(r, 1500));
+    return turnOnce(wsUrl, message);
+  }
 }
 
 async function main() {
