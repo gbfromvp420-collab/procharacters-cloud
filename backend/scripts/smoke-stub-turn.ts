@@ -72,8 +72,12 @@ async function main(): Promise<void> {
   );
   const text = complete.content ?? "";
 
+  // Stub path is allowed to say "set XAI_API_KEY". Fail only on the
+  // production incident class: vendor billing / console URLs / raw tokens.
   const leaked =
-    /console\.x\.ai|xai credits|spending limit|api[_-]?key|bearer /i.test(text);
+    /console\.x\.ai|used all available credits|spending limit|raise (?:its |your )?limit|bearer [a-z0-9_-]{8,}/i.test(
+      text,
+    );
   if (!text.trim()) throw new Error("empty assistant_complete");
   if (leaked) throw new Error(`vendor/billing leak in stub reply: ${text.slice(0, 200)}`);
 

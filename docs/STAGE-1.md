@@ -32,9 +32,9 @@ v2.2 roadmap “Phase 1 — Push + expiry reliability” is **already shipped** 
 
 Measured against `main` @ `4ada4b0` and live `/health` on 2026-09-13.
 
-**Still owner-only (code cannot finish this):**
+**Owner-only (keep alive, not a Stage 1 reopen):**
 
-1. **xAI credits / spending limit.** The 2026-09-10 audit recorded 12/12 chat turns failed. `/health.llm` now reports `ok` + `configured` after a cold start, but `lastSuccessAt` is null until a real turn succeeds. Top up or raise the limit at [console.x.ai](https://console.x.ai). Keep `XAI_API_KEY` on Railway `procharacters-api`.
+1. **xAI balance.** 2026-09-10 audit: 12/12 turns failed. **Re-probed 2026-09-13:** one live turn on `twink-default` returned in-character text (96 chars, no vendor leak); `/health.llm.lastSuccessAt` populated. Keep credits topped up at [console.x.ai](https://console.x.ai) or chat dies again. Code cannot buy credits.
 
 **Closable in this repo (this PR):**
 

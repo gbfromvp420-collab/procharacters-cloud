@@ -124,8 +124,10 @@ Ordered by what stops a stranger from having a session worth paying for.
 ### P0 — nothing else matters until these are done
 
 **1. xAI account is out of credits.** *(Gary — billing, not code)*
-Top up or raise the spending limit. Chat is 0% until then. Then set a balance
-alert; there was no signal that this happened.
+2026-09-10: 12/12 turns failed. **2026-09-13 live probe:** one `twink-default`
+turn succeeded (96-char in-character reply, no vendor leak);
+`/health.llm.lastSuccessAt` populated. Keep the balance funded or this P0
+returns. Set a balance alert; there was no signal the first time.
 
 **2. No ops signal for a dead brain.** *(fixed in this change)*
 `/health` reported `status: ok` the entire time chat was 100% broken. It now

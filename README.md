@@ -40,7 +40,7 @@ What works today:
 - Stub / credit-aware errors when xAI is unavailable
 - Session-scoped memory (cleared on session end)
 
-**Stage 1** (first stranger session) — see [`docs/STAGE-1.md`](docs/STAGE-1.md). Offline proof: `bash scripts/smoke-local-product.sh` (includes a stub WS turn). Remaining owner move: keep xAI credits topped up, then optional Stripe Day Pass smoke.
+**Stage 1** (first stranger session) — see [`docs/STAGE-1.md`](docs/STAGE-1.md). Offline proof: `bash scripts/smoke-local-product.sh` (includes a stub WS turn). Chat was live-probed 2026-09-13; keep xAI funded. Optional next: Stripe Day Pass phone smoke.
 
 Full scope: [`docs/v1-scope.md`](docs/v1-scope.md), [`docs/v2-architecture.md`](docs/v2-architecture.md), [`docs/v2.2-roadmap.md`](docs/v2.2-roadmap.md)
 

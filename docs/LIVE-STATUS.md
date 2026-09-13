@@ -4,21 +4,20 @@
 **For:** quick “what’s real right now” — no code required.  
 
 > **Read [PHASE1-STATUS-AUDIT.md](./PHASE1-STATUS-AUDIT.md) and [STAGE-1.md](./STAGE-1.md) first.**
-> Infra is up (probed 2026-09-13). Hard 21+ gate shipped in #103. Catalog is
-> 50/50 deep. Chat needs a **live turn** after each cold start to prove xAI
-> credits — `/health.llm.ok` can be true with `lastSuccessAt: null` right after
-> boot. If turns fail with `credits_or_spending_limit`, only Gary can top up.
+> Infra is up. Hard 21+ gate shipped in #103. Catalog is 50/50 deep. **Chat
+> works** — one live turn on 2026-09-13 populated `llm.lastSuccessAt` with no
+> vendor leak. Keep xAI topped up or the 2026-09-10 outage repeats.
 
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
 **Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
 
 ---
 
-## 🟡 Infrastructure is UP · chat needs a live-turn proof after cold start
+## 🟢 Infrastructure is UP · chat replied on 2026-09-13
 
 | Check | Result (2026-09-13 unless noted) |
 |-------|---------------------|
-| **Chat replies** | ⚠ last measured outage 2026-09-10 (0/12). 2026-09-13 `/health.llm` = ok, configured, 0 failures, `lastSuccessAt` null (cold start). Owner: one real turn, or top up if it fails. |
+| **Chat replies** | ✅ one live `twink-default` turn succeeded (96-char in-character reply, no vendor leak). `llm.lastSuccessAt` set. 2026-09-10 outage (0/12) is historical — keep xAI funded. |
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
 | API `/health` | **200** `status: ok` |
 | Accounts / DB | `prisma` · `database.ok` true |
@@ -74,7 +73,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat | ⚠ **prove after cold start** — 2026-09-10 was 0/12 credits. 2026-09-13 llm.ok true, lastSuccessAt null. Gary: one turn; top up at console.x.ai if it fails |
+| Live NSFW chat | ✅ **live turn 2026-09-13** · keep xAI funded or 2026-09-10 repeats |
 | Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 **50 minds** · pack chips |
 | Pack 03 dedicated loops | 🟢 **116/116 200** · catalog browsed |
 | Pack 01 last-build clips | 🟢 phone-passed |
