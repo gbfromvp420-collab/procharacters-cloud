@@ -60,6 +60,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
     }));
 
     app.get("/health", async () => {
+      const llm = getLlmHealth();
       const provider = accountsProvider();
       const accounts: {
         provider: "json" | "prisma";
@@ -75,6 +76,8 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
 
       return {
         status: "ok",
+        /** Product chat path — degraded when the brain is off or failing. Railway still sees status=ok. */
+        product: llm.configured && llm.ok ? "ok" : "degraded",
         service: "procharacters-backend",
         version: "0.1.0",
         deploy: deployFingerprint(),
@@ -104,7 +107,7 @@ export const createHealthRoutes = (livekit: LiveKitService): FastifyPluginAsync 
           lastExpiryCron: getLastExpiryCron(),
         },
         /** Brain status — ok:false means chat is degrading to soft error copy. */
-        llm: getLlmHealth(),
+        llm,
         billing: {
           stripe: isStripeConfigured(),
           webhook: isStripeWebhookConfigured(),

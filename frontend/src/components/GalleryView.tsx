@@ -31,6 +31,7 @@ import { PushEnableHint } from "./PushEnableHint";
 import { SoftSupportHint } from "./SoftSupportHint";
 import { GalleryLiveStrip } from "./GalleryLiveStrip";
 import { NetworkOfflineBanner } from "./NetworkOfflineBanner";
+import { ChatOutageBanner } from "./ChatOutageBanner";
 import { HintRail } from "./HintRail";
 import { SiteChrome } from "./SiteChrome";
 import { mindFingerprint } from "@/lib/mind-fingerprint";
@@ -413,6 +414,7 @@ export function GalleryView({ characters, siteOrigin }: GalleryViewProps) {
       <div className="relative mx-auto max-w-6xl px-4 py-6 sm:py-10">
         <HintRail className="mb-5">
           <NetworkOfflineBanner />
+          <ChatOutageBanner />
           <SessionAuthBanner onInvalidated={() => setSignedInHandle(null)} />
           <PushEnableHint />
           <InstallAppHint />

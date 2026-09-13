@@ -181,6 +181,8 @@ export function createWebSocketHandler(
               messageId: result.messageId,
               content: result.content,
               avatarIntent: avatarState,
+              usedLlm: result.usedLlm,
+              degraded: result.degraded,
               ...(result.sessionNotes ? { sessionNotes: result.sessionNotes } : {}),
               ...(result.priorNotes ? { priorNotes: result.priorNotes } : {}),
               ...(result.modeState ? { modeState: result.modeState } : {}),

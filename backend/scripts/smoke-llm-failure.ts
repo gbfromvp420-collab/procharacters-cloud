@@ -155,6 +155,8 @@ function check(label: string, condition: boolean, detail?: string): void {
 
 interface ChatResult {
   reply: string;
+  usedLlm?: boolean;
+  degraded?: boolean;
   history: Array<{ role: string; content: string }>;
 }
 
@@ -179,7 +181,12 @@ function chatOnce(wsUrl: string, message: string): Promise<ChatResult> {
       } else if (msg.type === "assistant_complete") {
         clearTimeout(timer);
         ws.close();
-        resolve({ reply: msg.content ?? "", history });
+        resolve({
+          reply: msg.content ?? "",
+          usedLlm: msg.usedLlm,
+          degraded: msg.degraded,
+          history,
+        });
       } else if (msg.type === "error") {
         clearTimeout(timer);
         ws.close();
@@ -259,6 +266,13 @@ async function main() {
     const leaked = LEAK_PATTERNS.filter((p) => lowerReply.includes(p));
     check("reply leaks no vendor/billing/key detail", leaked.length === 0, `leaked: ${leaked.join(", ")}`);
     check("reply is non-empty", failed.reply.trim().length > 0);
+    check(
+      "failed reply is a system notice, not character voice",
+      /temporarily unavailable|timed out|busy right now|glitched/i.test(failed.reply),
+      `got ${JSON.stringify(failed.reply)}`,
+    );
+    check("failed turn reports usedLlm=false", failed.usedLlm === false, `usedLlm=${String(failed.usedLlm)}`);
+    check("failed turn reports degraded=true", failed.degraded === true, `degraded=${String(failed.degraded)}`);
     check("provider was actually called", stubCalls > 0, `calls=${stubCalls}`);
 
     const afterFail = await readHistory(wsUrl);
@@ -282,6 +296,7 @@ async function main() {
     );
 
     const downHealth = (await (await fetch(`${base}/health`)).json()) as {
+      product?: string;
       llm: {
         ok: boolean;
         configured: boolean;
@@ -292,6 +307,7 @@ async function main() {
     };
     console.log(`\n  /health llm: ${JSON.stringify(downHealth.llm)}\n`);
     check("health reports llm.ok=false", downHealth.llm.ok === false);
+    check("health product is degraded while brain is down", downHealth.product === "degraded", `product=${String(downHealth.product)}`);
     check("health reports llm.configured=true", downHealth.llm.configured === true);
     check(
       "health classifies reason as credits_or_spending_limit",
@@ -332,6 +348,8 @@ async function main() {
     const recovered = await chatOnce(wsUrl, "you still there?");
     console.log(`  reply shown to user: ${JSON.stringify(recovered.reply.slice(0, 80))}\n`);
     check("recovered reply is real character text", recovered.reply.includes("come sit closer"));
+    check("recovered turn reports usedLlm=true", recovered.usedLlm === true, `usedLlm=${String(recovered.usedLlm)}`);
+    check("recovered turn reports degraded=false", recovered.degraded === false, `degraded=${String(recovered.degraded)}`);
 
     const afterOk = await readHistory(wsUrl);
     check(
@@ -340,10 +358,12 @@ async function main() {
     );
 
     const upHealth = (await (await fetch(`${base}/health`)).json()) as {
+      product?: string;
       llm: { ok: boolean; consecutiveFailures: number; pagedReason: string | null };
     };
     console.log(`  /health llm: ${JSON.stringify(upHealth.llm)}\n`);
     check("health recovers to llm.ok=true", upHealth.llm.ok === true);
+    check("health product recovers to ok", upHealth.product === "ok", `product=${String(upHealth.product)}`);
     check("consecutive failures reset to 0", upHealth.llm.consecutiveFailures === 0);
     check("health clears the paged reason", upHealth.llm.pagedReason === null);
 

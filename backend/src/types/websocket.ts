@@ -78,6 +78,10 @@ export interface AssistantCompleteEvent extends ServerEventBase {
   avatarIntent: AvatarState;
   sessionNotes?: string;
   modeState?: SessionModeUiState;
+  /** False when this turn used the stub or a failed brain call. */
+  usedLlm?: boolean;
+  /** True when a live brain was required and this turn failed. */
+  degraded?: boolean;
 }
 
 export interface AvatarUpdateEvent extends ServerEventBase {

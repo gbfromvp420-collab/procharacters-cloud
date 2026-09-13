@@ -59,6 +59,13 @@ jobs:
       - name: Send-test reclaim payload checks
         run: npm run test:reclaim-push
 
+      - name: LLM failure-path smoke (stub xAI, no live credits)
+        run: npm run test:llm-failure
+        env:
+          DATABASE_URL: ""
+          NODE_ENV: test
+          ACCOUNTS_PROVIDER: json
+
       - name: Build
         run: npm run build
         env:

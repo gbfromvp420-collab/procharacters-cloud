@@ -58,6 +58,8 @@ export interface ChatTurnResult {
   promptHash: string;
   consistencyDrift?: string[];
   usedLlm: boolean;
+  /** True when a live brain was required and this turn failed. */
+  degraded: boolean;
   /** Characters already delivered via `onDelta` this turn. */
   streamedChars: number;
   /** Compact memory blurb for UI. */
@@ -328,6 +330,7 @@ export class ChatOrchestrator {
       avatarIntent,
       promptHash: injection.hash,
       usedLlm,
+      degraded: llmFailed,
       sessionNotes: notes,
       ...(priorNotesOut ? { priorNotes: priorNotesOut } : {}),
       modeState: formatModeForUi(
@@ -435,31 +438,26 @@ export class ChatOrchestrator {
       );
 
       if (error.code === "timeout") {
-        return "*Hold on… I got distracted. Say that again for me?*";
+        return "Chat timed out. Your message is saved — send it again in a moment.";
       }
       if (error.status === 429) {
-        return "*Mmm, give me just a second… things got a little busy. Try again.*";
+        return "Chat is busy right now. Your message is saved — try again in a moment.";
       }
-      return "*Mmm… hold that thought for me. I'll be right back — try me again in a moment.*";
+      return "Chat is temporarily unavailable. Your message is saved — try sending it again in a moment.";
     }
 
     console.error("[grok] unexpected error", error);
-    return "*Something glitched on my end. Try sending that again.*";
+    return "Something glitched on our side. Your message is saved — try sending it again.";
   }
 
-  private buildStubReply(characterId: string, userContent: string, promptHash: string): string {
+  private buildStubReply(characterId: string, userContent: string, _promptHash: string): string {
     const profile = getLiveCharacterProfile(characterId);
     const name = profile?.displayName ?? characterId;
     const energy = profile?.energyLabel ?? "slow tease";
     const snippet = userContent.replace(/\s+/g, " ").trim().slice(0, 72);
-    const opening = profile?.openingMessage?.slice(0, 120);
     return [
-      `*[${name} — set XAI_API_KEY in .env for full live brain]*`,
-      opening
-        ? `…still here in that ${energy} headspace. you said “${snippet || "hey"}” —`
-        : `Mmm, I hear you… “${snippet || "hey"}”.`,
-      `Keep watching — ${name} stays in character (${energy}) even offline. Wire the key and the full mind comes online.`,
-      `(prompt hash: ${promptHash})`,
+      `${name} is here in that ${energy} headspace — you said “${snippet || "hey"}”.`,
+      "Live replies are warming up on this server. Try again in a moment.",
     ].join(" ");
   }
 }

@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { brainChipLabel, type ProductHealth } from "@/lib/llm-status";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-type HealthPayload = {
+type HealthPayload = ProductHealth & {
   status?: string;
   deploy?: {
     gitShaShort?: string | null;
@@ -144,6 +145,14 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
   const chips: Chip[] = [];
   if (health) {
     const sha = health.deploy?.gitShaShort || "—";
+    const brain = brainChipLabel(health);
+    chips.push({
+      key: "brain",
+      label: brain.label,
+      ok: brain.ok,
+      title: brain.title,
+    });
+
     chips.push({
       key: "deploy",
       label: `API ${sha}`,
@@ -460,9 +469,13 @@ export function SystemPulse({ compact = false }: { compact?: boolean }) {
               ? "Checking API…"
               : error
                 ? "API unreachable"
-                : health?.status === "ok"
-                  ? "Production healthy"
-                  : "Check status"}
+                : health?.llm?.ok === false
+                  ? "Chat brain down"
+                  : health?.llm?.configured === false || health?.product === "degraded"
+                    ? "Chat degraded"
+                    : health?.status === "ok"
+                      ? "Production healthy"
+                      : "Check status"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">

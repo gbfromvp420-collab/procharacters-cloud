@@ -221,8 +221,13 @@ const VOICE: Record<string, { own: string[]; tells: string[] }> = {
   "twink-default": { own: [], tells: ["gooner", "papi", "glass-wet"] },
 };
 
-/** In-character copy the orchestrator returns when the brain call fails (chat-orchestrator.ts buildErrorReply). */
-const FALLBACKS = ["i got distracted. say that again", "things got a little busy", "hold that thought for me"];
+/** System-notice copy the orchestrator returns when the brain call fails (chat-orchestrator.ts buildErrorReply). */
+const FALLBACKS = [
+  "chat is temporarily unavailable",
+  "chat timed out",
+  "chat is busy right now",
+  "something glitched on our side",
+];
 
 const me = VOICE[characterId] ?? { own: [], tells: [] };
 const RIVAL_NAMES = Object.values(LIVE_CHARACTER_CATALOG)

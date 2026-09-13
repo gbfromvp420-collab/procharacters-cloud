@@ -36,6 +36,11 @@ jobs:
       - name: Autostart deep-link checks
         run: npm run test:deeplink
 
+      - name: Age-gate + chat-outage honesty checks
+        run: |
+          npm run test:age-gate
+          npm run test:outage
+
       - name: Build
         run: npm run build
         env:

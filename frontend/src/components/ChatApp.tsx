@@ -53,6 +53,7 @@ import { RejoinRecapToast } from "@/components/RejoinRecapToast";
 import { DraftRecoveryHint } from "@/components/DraftRecoveryHint";
 import { AfterglowChips } from "@/components/AfterglowChips";
 import { NetworkOfflineBanner } from "@/components/NetworkOfflineBanner";
+import { ChatOutageBanner } from "@/components/ChatOutageBanner";
 import { heatDepthFromMessages } from "@/components/SessionDepthMeter";
 import { SessionPausedBanner } from "@/components/SessionPausedBanner";
 import { MyCharacterWinToast } from "@/components/MyCharacterWinToast";
@@ -638,7 +639,11 @@ export function ChatApp() {
     }
     if (firstOpenFlashedRef.current) return;
     const firstAssistant = messages.find(
-      (m) => m.role === "assistant" && !m.streaming && m.content?.trim(),
+      (m) =>
+        m.role === "assistant" &&
+        m.kind !== "notice" &&
+        !m.streaming &&
+        m.content?.trim(),
     );
     if (!firstAssistant) return;
     firstOpenFlashedRef.current = true;
@@ -975,17 +980,21 @@ export function ChatApp() {
               setArrivalId((cur) => (cur === messageId ? null : cur));
             }, 900);
 
+            const notice = data.degraded === true || data.usedLlm === false;
+
             setMessages((prev) => {
               const exists = prev.some((msg) => msg.id === messageId);
+              const next = {
+                id: messageId,
+                role: "assistant" as const,
+                content,
+                streaming: false,
+                ...(notice ? { kind: "notice" as const } : {}),
+              };
               if (exists) {
-                return prev.map((msg) =>
-                  msg.id === messageId ? { ...msg, content, streaming: false } : msg,
-                );
+                return prev.map((msg) => (msg.id === messageId ? { ...msg, ...next } : msg));
               }
-              return [
-                ...prev,
-                { id: messageId, role: "assistant", content, streaming: false },
-              ];
+              return [...prev, next];
             });
             break;
           }
@@ -1760,7 +1769,7 @@ export function ChatApp() {
           sessionId,
           resumeCode,
           messages: messages
-            .filter((m) => m.role === "user" || m.role === "assistant")
+            .filter((m) => (m.role === "user" || m.role === "assistant") && m.kind !== "notice")
             .map((m) => ({
               role: m.role as "user" | "assistant",
               content: m.content,
@@ -1782,7 +1791,7 @@ export function ChatApp() {
             sessionId,
             resumeCode,
             messages: messages
-              .filter((m) => m.role === "user" || m.role === "assistant")
+              .filter((m) => (m.role === "user" || m.role === "assistant") && m.kind !== "notice")
               .map((m) => ({
                 role: m.role as "user" | "assistant",
                 content: m.content,
@@ -2694,6 +2703,7 @@ export function ChatApp() {
         {/* Critical banners only while live — promo hints were stacking on the avatar */}
         <HintRail className="mb-3">
           <NetworkOfflineBanner />
+          <ChatOutageBanner />
           <SessionAuthBanner
             onInvalidated={() => {
               setAccount(null);
@@ -3446,13 +3456,16 @@ export function ChatApp() {
               {messages.map((msg, i) => {
                 const isLast = i === messages.length - 1;
                 const prev = i > 0 ? messages[i - 1] : null;
+                const isNotice = msg.kind === "notice";
                 const showMindTag =
                   msg.role === "assistant" &&
+                  !isNotice &&
                   !!headerMind &&
                   (!prev || prev.role === "user" || !!msg.streaming);
                 const showAfterglow =
                   isLast &&
                   msg.role === "assistant" &&
+                  !isNotice &&
                   !msg.streaming &&
                   status === "ready" &&
                   !sending &&
@@ -3468,11 +3481,15 @@ export function ChatApp() {
                 return (
                 <div
                   key={msg.id}
-                  className={`flex flex-col animate-rise-in ${msg.role === "user" ? "items-end" : "items-start"}`}
+                  className={`flex flex-col animate-rise-in ${
+                    isNotice ? "items-stretch" : msg.role === "user" ? "items-end" : "items-start"
+                  }`}
                 >
                   <div
                     className={`max-w-[90%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed transition-[box-shadow,ring] duration-500 sm:max-w-[80%] sm:px-4 ${
-                      msg.role === "user"
+                      isNotice
+                        ? "w-full max-w-full border border-amber-400/40 bg-amber-500/10 text-amber-50"
+                        : msg.role === "user"
                         ? `bg-brand-accent text-white shadow-glow-sm ${dnaBubbleUser} ${sendPulse && isLast ? "ring-2 ring-white/30" : ""}`
                         : `border text-brand-text ${assistantBubbleClass} ${
                             msg.streaming
@@ -3486,7 +3503,13 @@ export function ChatApp() {
                                 : ""
                           }`
                     }`}
+                    data-msg-kind={isNotice ? "notice" : msg.role}
                   >
+                    {isNotice && (
+                      <p className="mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] text-amber-200/90">
+                        Chat notice
+                      </p>
+                    )}
                     {showMindTag && (
                       <p
                         className={`mb-1 text-[9px] font-semibold uppercase tracking-[0.18em] ${

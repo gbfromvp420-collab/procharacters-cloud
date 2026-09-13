@@ -165,6 +165,8 @@ export interface ChatMessage {
   role: "user" | "assistant" | "system";
   content: string;
   streaming?: boolean;
+  /** System notice (failed brain call) — not character dialogue. */
+  kind?: "notice";
 }
 
 export type ConnectionStatus = "idle" | "connecting" | "ready" | "error" | "ended";
