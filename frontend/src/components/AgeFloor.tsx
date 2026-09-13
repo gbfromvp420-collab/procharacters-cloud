@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  AGE_GATE_STORAGE_KEY,
+  AGE_GATE_TTL_MS,
+  buildAgeVerifiedCookie,
+  isAgeVerifiedFromSources,
+} from "@/lib/age-gate";
 
 /** Canonical product age floor — rewrite leftover 18+ chrome after hydrate. */
 const SWAPS: [RegExp, string][] = [
@@ -12,9 +18,6 @@ const SWAPS: [RegExp, string][] = [
   [/\b18yo\b/gi, "21+"],
 ];
 
-const STORAGE_KEY = "pc_age_verified_21";
-const TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-
 function rewrite(node: Node) {
   if (node.nodeType === Node.TEXT_NODE && node.nodeValue) {
     let next = node.nodeValue;
@@ -25,27 +28,36 @@ function rewrite(node: Node) {
   node.childNodes.forEach(rewrite);
 }
 
-function isVerified(): boolean {
+function readLocal(): string | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return false;
-    const ts = Number(raw);
-    if (!Number.isFinite(ts)) return false;
-    return Date.now() - ts < TTL_MS;
+    return localStorage.getItem(AGE_GATE_STORAGE_KEY);
   } catch {
-    return false;
+    return null;
   }
+}
+
+function isVerified(): boolean {
+  return isAgeVerifiedFromSources({
+    localStorageValue: readLocal(),
+    cookieHeader: typeof document !== "undefined" ? document.cookie : undefined,
+  });
 }
 
 function setVerified() {
+  const now = Date.now();
   try {
-    localStorage.setItem(STORAGE_KEY, String(Date.now()));
+    localStorage.setItem(AGE_GATE_STORAGE_KEY, String(now));
   } catch {
     // ignore quota / private mode
   }
+  try {
+    document.cookie = buildAgeVerifiedCookie(now);
+  } catch {
+    // ignore
+  }
 }
 
-export function AgeFloor() {
+export function AgeFloor({ children }: { children?: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [allowed, setAllowed] = useState(false);
 
@@ -60,7 +72,6 @@ export function AgeFloor() {
     });
     mo.observe(document.body, { subtree: true, childList: true, characterData: true });
 
-    // Age gate check
     const ok = isVerified();
     setAllowed(ok);
     setReady(true);
@@ -74,32 +85,16 @@ export function AgeFloor() {
   }
 
   function handleLeave() {
-    // Hard exit — send them away from the product
     window.location.href = "https://www.google.com";
   }
 
-  // Still hydrating — render nothing so content never flashes
-  if (!ready) {
-    return (
-      <div
-        className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#0a0a0f]"
-        aria-hidden
-      />
-    );
-  }
-
-  // Verified — gate is gone, only the text rewriter runs in background
-  if (allowed) {
-    return null;
-  }
-
-  // Hard blocking interstitial
-  return (
+  const gate = (
     <div
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#0a0a0f] px-6 text-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="age-gate-title"
+      data-testid="age-gate"
     >
       <div className="max-w-md space-y-6">
         <p className="text-xs font-medium uppercase tracking-[0.2em] text-brand-muted">
@@ -139,4 +134,22 @@ export function AgeFloor() {
       </div>
     </div>
   );
+
+  // Hold the product tree until verified so gallery clips do not mount behind the overlay.
+  if (!ready) {
+    return (
+      <div
+        className="fixed inset-0 z-[9999] bg-[#0a0a0f]"
+        aria-hidden
+        data-age-gate-hold
+        data-ttl-ms={AGE_GATE_TTL_MS}
+      />
+    );
+  }
+
+  if (!allowed) {
+    return gate;
+  }
+
+  return <>{children}</>;
 }

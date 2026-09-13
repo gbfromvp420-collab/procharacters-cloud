@@ -58,8 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={outfit.variable}>
       <body className="min-h-dvh font-sans">
         <PwaBootstrap />
-        <AgeFloor />
-        {children}
+        <AgeFloor>{children}</AgeFloor>
         {/* Early text rewrite before React hydrates — residual 18+ chrome only */}
         <script
           dangerouslySetInnerHTML={{
