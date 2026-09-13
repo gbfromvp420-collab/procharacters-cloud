@@ -150,6 +150,13 @@ else
   bad "session_create" "request failed"
 fi
 
+# 3b) Stub chat turn — Stage 1 offline proof (no xAI key required)
+if (cd "$BACKEND" && API_BASE="$API_BASE" npm run smoke:stub-turn); then
+  check "stub_chat_turn" "assistant_complete + prompt-preview gated"
+else
+  bad "stub_chat_turn" "failed (see above)"
+fi
+
 # 4) Optional full deploy smoke when backend script exists
 if [[ -f "$BACKEND/scripts/smoke-deploy.ts" ]] && command -v npx >/dev/null; then
   echo "→ npm run smoke:deploy (API_BASE=$API_BASE)"

@@ -11,7 +11,9 @@ const DEFAULT_MAX_WINDOW = 30;
 /**
  * Lightweight in-session memory for v2 live chat.
  *
- * Stores recent user/assistant messages only. No summarization or fact extraction.
+ * Stores recent user/assistant messages. When the live window overflows,
+ * dropped turns are folded into `sessionNotes` (heuristic scene lock +
+ * user-beat snippets) so early context is not silently discarded.
  * Cleared when the session ends (or call clear() explicitly).
  */
 export class SessionMemory {
@@ -95,7 +97,11 @@ export class SessionMemory {
     this.messages.push(message);
 
     if (this.messages.length > this.maxWindow) {
-      this.messages = this.messages.slice(-this.maxWindow);
+      const overflow = this.messages.length - this.maxWindow;
+      const dropped = this.messages.slice(0, overflow);
+      const kept = this.messages.slice(overflow);
+      this.sessionNotes = foldDroppedIntoNotes(this.sessionNotes, dropped, kept);
+      this.messages = kept;
     }
 
     return message;
@@ -163,6 +169,37 @@ export class SessionMemory {
   }
 }
 
+
+/**
+ * Fold window overflow into sessionNotes so Phase 1 memory does not
+ * silently forget the opening of a long chat.
+ */
+export function foldDroppedIntoNotes(
+  existing: string | undefined,
+  dropped: MemoryMessage[],
+  remaining: MemoryMessage[] = [],
+): string | undefined {
+  if (dropped.length === 0) {
+    return existing?.trim() ? existing.trim().slice(0, 1200) : undefined;
+  }
+
+  const lock = extractSceneLock([...dropped, ...remaining.slice(0, 4)]);
+  const userBeats = dropped
+    .filter((m) => m.role === "user")
+    .map((m) => m.content.replace(/\s+/g, " ").trim().slice(0, 80))
+    .filter(Boolean)
+    .slice(0, 3);
+  const rolled = [
+    "Earlier (rolled off the live window):",
+    lock ? `Scene lock: ${lock}.` : "",
+    userBeats.length ? `User beats: ${userBeats.join(" · ")}.` : "",
+  ]
+    .filter((part) => part.length > 0)
+    .join(" ");
+
+  const merged = [existing?.trim(), rolled].filter(Boolean).join("\n");
+  return merged.slice(0, 1200) || undefined;
+}
 
 /**
  * Heuristic scene lock for resume + mid-session stickiness.

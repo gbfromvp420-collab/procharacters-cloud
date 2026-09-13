@@ -623,12 +623,18 @@ export function getAccountPlanSummary(account: AccountRecord): {
   };
 }
 
+export type PlanGrantResult = {
+  account: AccountRecord;
+  /** False when this Checkout Session was already granted (webhook + confirm). */
+  newlyGranted: boolean;
+};
+
 /** Grant or extend a paid plan after successful Stripe checkout. */
 export async function grantAccountPlan(
   accountId: string,
   plan: "day_pass" | "supporter",
   options?: { stripeCustomerId?: string; checkoutSessionId?: string; days?: number },
-): Promise<AccountRecord> {
+): Promise<PlanGrantResult> {
   if (accountsProvider() === "prisma") {
     try {
       return await prismaGrantAccountPlan(accountId, plan, options);
@@ -648,7 +654,7 @@ export async function grantAccountPlan(
     options?.checkoutSessionId &&
     account.lastCheckoutSessionId === options.checkoutSessionId
   ) {
-    return account;
+    return { account, newlyGranted: false };
   }
 
   const days =
@@ -679,7 +685,7 @@ export async function grantAccountPlan(
   };
   accounts.set(accountId, next);
   await persist();
-  return next;
+  return { account: next, newlyGranted: true };
 }
 
 /** Set or change passphrase for a signed-in account. */

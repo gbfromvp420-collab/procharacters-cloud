@@ -167,8 +167,8 @@ export async function handleStripeWebhook(
           checkoutSessionId: session.id,
         },
       );
-      // Funnel: webhook path (return confirm also bumps — idempotent grants still count once each path)
-      if (grant) {
+      // Count a conversion once — confirm path must not bump the same session.
+      if (grant.newlyGranted) {
         bump("checkoutConfirms");
       }
     }
@@ -213,7 +213,7 @@ export async function confirmCheckoutSession(options: {
       ? session.customer
       : session.customer?.id;
 
-  await grantAccountPlan(options.accountId, plan, {
+  const grant = await grantAccountPlan(options.accountId, plan, {
     stripeCustomerId: customerId,
     checkoutSessionId: session.id,
   });
@@ -221,6 +221,7 @@ export async function confirmCheckoutSession(options: {
   return {
     ok: true,
     plan,
+    alreadyApplied: !grant.newlyGranted,
     paymentStatus: session.payment_status ?? "paid",
   };
 }

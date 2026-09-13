@@ -198,7 +198,7 @@ async function main(): Promise<void> {
 
   // Optional: preview how memory appears in the system prompt
   const previewRes = await fetch(
-    `${API_BASE}${API_PREFIX}/sessions/${session.sessionId}/prompt-preview`,
+    `${API_BASE}${API_PREFIX}/sessions/${session.sessionId}/prompt-preview?token=${encodeURIComponent(session.wsToken)}`,
   );
   if (previewRes.ok) {
     const preview = (await previewRes.json()) as { memoryPreview: string; turnNumber: number };
