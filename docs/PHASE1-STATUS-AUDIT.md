@@ -1,7 +1,7 @@
 # Phase 1 — Status audit (evidence-based)
 
-**Date:** 2026-09-10
-**Deploy audited:** `00bb201` (matches `main` HEAD)
+**Date:** 2026-09-10 (Stage 1 close-out notes 2026-09-13 — see [STAGE-1.md](./STAGE-1.md))
+**Deploy audited:** `00bb201` (matches `main` HEAD at audit time; later `4ada4b0` + this PR)
 **Method:** live probes against production + source read. No claim in this doc comes from another doc.
 
 > This supersedes the green badges in `LIVE-STATUS.md` where the two disagree.
@@ -149,15 +149,17 @@ service move or give us backups), but it is no longer a launch blocker.
 
 ### P1 — will embarrass us with real users
 
-**4. No age gate.** `AgeFloor.tsx` is not a gate — it is a client-side text
-rewriter that swaps the string "18+" to "21+" after hydration. Explicit content
-is served to anyone who loads the URL, with no interstitial. This is a
-compliance problem for adult processors and for the Phase 3 tube placement
-plan. `LIVE-STATUS.md` claiming "Age floor 🟢 21+" was cosmetic.
+**4. ~~No age gate.~~** *(closed #103 — hard interstitial)*
+`AgeFloor.tsx` is a blocking 21+ dialog (`pc_age_verified_21`, 30-day TTL).
+Leave redirects off-site. Residual 18+ chrome is still rewritten. This is
+**self-attestation**, not identity verification: disabling JS or fetching
+HTML/MP4 URLs still returns content. Real verification would have to gate the
+HTML response server-side — Stage 2 / later, not a Stage 1 reopen.
 
-**5. Memory silently forgets.** The window truncates at 20–80 messages with no
-summarization (`session-memory.ts`: "No summarization or fact extraction"). A
-long session drops early context permanently while we market memory.
+**5. ~~Memory silently forgets.~~** *(closed — window roll-off)*
+Overflow now folds dropped turns into `sessionNotes` (heuristic Scene lock +
+user-beat snippets) before the live window slices. No extra xAI call. Opt-in
+cross-session dossiers were already separate. Guard: `npm run test:memory-window`.
 
 **6. Pack 02/03 prompts are templates.** *(pilot started 2026-09-11 — Jenny
 v1.1.0; 41 of 50 still thin)*
@@ -254,17 +256,19 @@ analytics. **We cannot currently answer "how many sessions last week" or "what
 is our conversion rate."** Phase 2 asks for conversion measurement; it must be
 built, not enabled.
 
-**9. `checkoutConfirms` double-counts.** Both the webhook and the return-page
-confirm bump it, so the one conversion number we do have is inflated.
+**9. ~~`checkoutConfirms` double-counts.~~** *(closed)*
+`grantAccountPlan` now returns `newlyGranted`. Webhook and `/billing/confirm`
+bump the counter only on the first grant of that Checkout Session.
 
 **10. Single-instance only.** Live sessions live in an in-process Map; a second
 replica breaks WebSocket auth. We cannot scale horizontally without a shared
 session store.
 
-**11. Unauthenticated endpoints.** `GET /sessions/:id/prompt-preview` returns
-the full assembled system prompt to anyone with a session id — that is the
-prompt library, our actual IP. `GET /sessions/:id` and the LiveKit token
-endpoint are also unauthenticated.
+**11. Unauthenticated endpoints.** *(prompt-preview closed)*
+`GET /sessions/:id/prompt-preview` now requires `?token=` (401 without). The
+body was already memory + last-4 dialogue only — it does not return the
+assembled system/character prompt. `GET /sessions/:id` metadata and the
+LiveKit token route remain unauthenticated (Stage 2; do not block Stage 1).
 
 ---
 

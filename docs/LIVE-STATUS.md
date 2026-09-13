@@ -1,23 +1,24 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-09-10 · ⛔ **CHAT IS DOWN — xAI account out of credits, 0% of turns succeed**  
+**Updated:** 2026-09-13 · Stage 1 close-out — see [STAGE-1.md](./STAGE-1.md)  
 **For:** quick “what’s real right now” — no code required.  
 
-> **Read [PHASE1-STATUS-AUDIT.md](./PHASE1-STATUS-AUDIT.md) first.** It is measured
-> against live production; the table below is a summary. Infrastructure is up —
-> web 200, API 200, Postgres ok, Stripe live, 200 avatar clips serving — but every
-> chat turn fails until the xAI balance is topped up.
+> **Read [PHASE1-STATUS-AUDIT.md](./PHASE1-STATUS-AUDIT.md) and [STAGE-1.md](./STAGE-1.md) first.**
+> Infra is up (probed 2026-09-13). Hard 21+ gate shipped in #103. Catalog is
+> 50/50 deep. Chat needs a **live turn** after each cold start to prove xAI
+> credits — `/health.llm.ok` can be true with `lastSuccessAt: null` right after
+> boot. If turns fail with `credits_or_spending_limit`, only Gary can top up.
 
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
 **Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
 
 ---
 
-## 🟡 Infrastructure is UP · chat is DOWN
+## 🟡 Infrastructure is UP · chat needs a live-turn proof after cold start
 
-| Check | Result (2026-09-10 unless noted) |
+| Check | Result (2026-09-13 unless noted) |
 |-------|---------------------|
-| **Chat replies** | ⛔ **0/12 turns succeeded** — xAI credits exhausted |
+| **Chat replies** | ⚠ last measured outage 2026-09-10 (0/12). 2026-09-13 `/health.llm` = ok, configured, 0 failures, `lastSuccessAt` null (cold start). Owner: one real turn, or top up if it fails. |
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
 | API `/health` | **200** `status: ok` |
 | Accounts / DB | `prisma` · `database.ok` true |
@@ -32,7 +33,7 @@
 | Gallery lanes | **Pack 01 / 02 / 03 chips** · `?filter=pack03` |
 | Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
 | Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
-| Age floor | ⛔ **cosmetic text swap only — no gate exists** |
+| Age floor | ✅ hard 21+ interstitial (#103) · 30-day `pc_age_verified_21` · client attestation, not ID check |
 | Resume / Continue | ✅ create 201 · resume-code 200 · resumed session restored full history |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never the root `Dockerfile` (Python WebRTC).
@@ -73,7 +74,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 
 | Area | Status |
 |------|--------|
-| Live NSFW chat | ⛔ **DOWN** — xAI credits exhausted · 12/12 turns failed 2026-09-10 · Gary: top up at console.x.ai |
+| Live NSFW chat | ⚠ **prove after cold start** — 2026-09-10 was 0/12 credits. 2026-09-13 llm.ok true, lastSuccessAt null. Gary: one turn; top up at console.x.ai if it fails |
 | Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 **50 minds** · pack chips |
 | Pack 03 dedicated loops | 🟢 **116/116 200** · catalog browsed |
 | Pack 01 last-build clips | 🟢 phone-passed |
@@ -81,7 +82,7 @@ Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive fi
 | Pack 02 / 03 mind copy | 🟢 fingerprints `#64` |
 | Same-night reclaim | 🟢 gallery Chat autostart resumes heat |
 | Studio Forge | 🟢 phone-passed (blocked by chat outage) |
-| 21+ | ⛔ **cosmetic only** — `AgeFloor.tsx` rewrites the text “18+”→“21+” after hydration. There is **no age gate**; explicit content loads for anyone. |
+| 21+ | ✅ hard gate (#103) · leftover 18+ chrome still rewritten · HTML without JS is still visible (attestation, not verification) |
 | Resume codes | 🟢 |
 | Stripe Day Pass UI | ✅ live keys · **not phone-smoked** (your card) |
 

@@ -994,12 +994,24 @@ export const createSessionRoutes = (
 
     app.get("/sessions/:sessionId/prompt-preview", async (request, reply) => {
       const { sessionId } = request.params as { sessionId: string };
+      const token =
+        typeof request.query === "object" && request.query && "token" in request.query
+          ? String((request.query as { token?: string }).token ?? "")
+          : "";
+
+      if (!token) {
+        return reply.code(401).send({ error: "Session token required" });
+      }
 
       try {
-        const session = await sessionManager.getSessionAsync(sessionId);
+        const session = await sessionManager.authenticateAsync(sessionId, token, {
+          requireActive: false,
+        });
         const context = SessionMemory.fromData(session.memory).getRecentContext();
         const injection = injector.injectTurn(session.promptSnapshot, { context });
 
+        // Memory + recent dialogue only — never the assembled system/character
+        // prompt (that is the prompt library).
         return {
           turnNumber: injection.turnNumber,
           messageCount: injection.messages.length,
@@ -1008,7 +1020,10 @@ export const createSessionRoutes = (
             .filter((m) => m.role !== "system")
             .slice(-4),
         };
-      } catch {
+      } catch (error) {
+        if (error instanceof SessionAuthError) {
+          return reply.code(403).send({ error: error.message });
+        }
         return reply.code(404).send({ error: "Session not found" });
       }
     });

@@ -111,7 +111,10 @@ export const createBillingRoutes = (): FastifyPluginAsync => {
             paymentStatus: result.paymentStatus,
           });
         }
-        bump("checkoutConfirms");
+        // Only count if the webhook has not already recorded this Checkout Session.
+        if (!result.alreadyApplied) {
+          bump("checkoutConfirms");
+        }
         // Re-resolve after grant for fresh plan fields
         const refreshed = await resolveAccountToken(bearerToken(request));
         const summary = refreshed

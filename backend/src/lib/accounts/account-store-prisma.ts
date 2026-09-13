@@ -3,6 +3,7 @@ import { prisma } from "../prisma.js";
 import type {
   AccountPlan,
   AccountRecord,
+  PlanGrantResult,
   ResumeCodeRecord,
 } from "./account-store.js";
 
@@ -363,7 +364,7 @@ export async function prismaGrantAccountPlan(
   accountId: string,
   plan: "day_pass" | "supporter",
   options?: { stripeCustomerId?: string; checkoutSessionId?: string; days?: number },
-): Promise<AccountRecord> {
+): Promise<PlanGrantResult> {
   const user = await prisma.userAccount.findUnique({
     where: { id: accountId },
     include: { credentials: true },
@@ -375,7 +376,7 @@ export async function prismaGrantAccountPlan(
     options?.checkoutSessionId &&
     user.lastCheckoutSessionId === options.checkoutSessionId
   ) {
-    return asAccountRecord(user);
+    return { account: asAccountRecord(user), newlyGranted: false };
   }
 
   const days =
@@ -404,7 +405,7 @@ export async function prismaGrantAccountPlan(
     },
     include: { credentials: true },
   });
-  return asAccountRecord(updated);
+  return { account: asAccountRecord(updated), newlyGranted: true };
 }
 
 export async function prismaSetAccountPassphrase(
