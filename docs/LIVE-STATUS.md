@@ -1,39 +1,52 @@
 # Procharacters.cloud — Live status (Gary)
 
-**Updated:** 2026-09-10 · ⛔ **CHAT IS DOWN — xAI account out of credits, 0% of turns succeed**  
-**For:** quick “what’s real right now” — no code required.  
+**Updated:** 2026-09-13 · code-side leave-dev gaps closed in this cook  
+**For:** quick “what’s real right now” — no code required.
 
-> **Read [PHASE1-STATUS-AUDIT.md](./PHASE1-STATUS-AUDIT.md) first.** It is measured
-> against live production; the table below is a summary. Infrastructure is up —
-> web 200, API 200, Postgres ok, Stripe live, 200 avatar clips serving — but every
-> chat turn fails until the xAI balance is topped up.
+> **Read [PHASE1-STATUS-AUDIT.md](./PHASE1-STATUS-AUDIT.md) first** for the 2026-09-10
+> measurement. This page is the current ops snapshot. Infrastructure can be up
+> while chat is down — look at `/health` `llm` and `product`, not just `status`.
 
 **Command:** King Grok CEO has **final say on development** (Gary = Boss Sr., 50/50). See [CEO-OPERATING-MODEL.md](./CEO-OPERATING-MODEL.md).  
-**Live deploy SHA:** see `/health` `deploy.gitSha`. Pack 01 / 02 / 03 IDs stay.
+**Live deploy SHA:** see `/health` `deploy.gitSha`.
 
 ---
 
-## 🟡 Infrastructure is UP · chat is DOWN
+## Diagnosis (leave-dev blockers)
 
-| Check | Result (2026-09-10 unless noted) |
+| Blocker | Kind | Status |
+|---------|------|--------|
+| **xAI credits / spending limit** | **Human / billing** | Only Gary can top up at [console.x.ai](https://console.x.ai). Code cannot invent credits. 2026-09-10: 0/12 turns. 2026-09-13 probe: this API process had `llm.ok=true` and 1 successful turn — **do not treat that as a permanent top-up**. If chat dies again, top up first. |
+| Chat shows vendor/billing text as character dialogue | Code | ✅ Fixed earlier (`smoke-llm-failure`) + this cook: failed turns are **Chat notice** bubbles, not her voice |
+| No user-facing outage when brain is dead | Code | ✅ This cook: gallery + chat banner from `/health`; Account System pulse shows **Chat brain down** instead of “Production healthy” |
+| Age floor cosmetic only | Code | ✅ Hard 21+ interstitial (PR #103) + this cook: **product tree does not mount** until Enter; cookie + localStorage, 30 days |
+| Stripe Day Pass | Human | Live keys wired · **not phone-smoked** (your card). Free path still on. |
+| Candy unique Drive clip | Content | Human — Aria’s file is already used |
+
+**Remaining human-only steps to leave “dev stage”:**
+
+1. **Keep xAI credits funded** and set a balance alert at console.x.ai. Chat is 0% when the balance hits zero. This is not a code deploy.
+2. Optional: phone-smoke Stripe Day Pass (live money).
+3. Optional: unique Candy Drive link.
+
+---
+
+## 🟡 Infrastructure is UP · chat depends on xAI balance
+
+| Check | Result (2026-09-13 probe unless noted) |
 |-------|---------------------|
-| **Chat replies** | ⛔ **0/12 turns succeeded** — xAI credits exhausted |
+| **Chat replies** | Live `/health` `llm.ok` on this process was **true** (1 turn). Treat as **fragile** until credits are confirmed funded. |
 | Web public URL | **200** `/` `/account` `/chat` `/models/studio` `/manifest.webmanifest` |
-| API `/health` | **200** `status: ok` |
+| API `/health` | **200** `status: ok` · use `product` + `llm` for chat |
 | Accounts / DB | `prisma` · `database.ok` true |
 | LiveKit | configured · badge `ready` |
 | Stripe | `live` + webhook true · **free path still on** |
-| Web Push | true · **Send test reclaim shipping** (tap opens last chat / DNA, not Account) |
-| Error alerts | ntfy wired |
+| Web Push | true |
+| Error alerts | ntfy wired · BRAIN DOWN / BRAIN BACK pages |
 | Railway `captivating-vision` | api + web + Postgres-Hw0Y |
-| Pack 01 | **8/8 READY** · Mila Luna Sienna Diego Mateo Rio + defaults · **your clips** |
-| Pack 02 | **13 named minds** · **52/52 clips 200** · **phone-passed** |
-| Pack 03 | **29 unique first-name ids** · **116/116 clips 200** · Candy held (same file as Aria) |
-| Gallery lanes | **Pack 01 / 02 / 03 chips** · `?filter=pack03` |
-| Public floor | **50 named minds** · Prod* / VolumeCheck smoke cards **off the floor** |
-| Studio DNA | ✅ phone-passed Forge → Save · Chat Now |
-| Age floor | ⛔ **cosmetic text swap only — no gate exists** |
-| Resume / Continue | ✅ create 201 · resume-code 200 · resumed session restored full history |
+| Public floor | **50 named minds** · 50/50 deep prompts |
+| Age floor | **Hard 21+ gate** — Enter required; clips do not mount first |
+| Resume / Continue | ✅ create 201 · resume-code 200 |
 
 **Redeploy safety:** API = `backend/Dockerfile`, Web = `frontend/Dockerfile`. Never the root `Dockerfile` (Python WebRTC).
 
@@ -51,50 +64,18 @@
 
 ---
 
-## Pack 02 names (first-name ids)
+## How to verify without live credits
 
-| Girls | Boys |
-|-------|------|
-| Jenny · Sarah · Jessica · Rachel · Samantha · Becca | Peter · Gary · Justin · Mark · Blake · Tommy · Kenny |
+Offline (this repo):
 
-Featured Pack 02: **Jenny, Sarah, Peter, Justin**. Pack 01 IDs stay.
+```bash
+cd backend && npm run test:llm-failure
+cd frontend && npm run test:age-gate && npm run test:outage
+```
 
-## Pack 03 names (first-name ids)
+On prod after deploy: `/health` should show `product` + `llm`. If `llm.ok` is false, gallery/chat show a **Chat is taking a breather** banner (no `console.x.ai` in the user copy). Account → System pulse shows **Chat brain down**.
 
-| Girls | Boys |
-|-------|------|
-| Emma · Olivia · Ava · Sophia · Isabella · Mia · Charlotte · Amelia · Harper · Evelyn · Avery · Scarlett · Zoey · Aria | Liam · Noah · Ethan · Mason · Lucas · Logan · Aiden · Jackson · Jacob · Jayden · Elijah · Carter · Wyatt · Hunter · Alex |
-
-Featured Pack 03: **Liam, Noah, Emma, Olivia**. **Candy held** — same Drive file as Aria.
-
----
-
-## What’s live
-
-| Area | Status |
-|------|--------|
-| Live NSFW chat | ⛔ **DOWN** — xAI credits exhausted · 12/12 turns failed 2026-09-10 · Gary: top up at console.x.ai |
-| Gallery · Pack 01 + Pack 02 + Pack 03 names | 🟢 **50 minds** · pack chips |
-| Pack 03 dedicated loops | 🟢 **116/116 200** · catalog browsed |
-| Pack 01 last-build clips | 🟢 phone-passed |
-| Pack 02 dedicated loops | 🟢 **phone-passed** · 13/13 on site |
-| Pack 02 / 03 mind copy | 🟢 fingerprints `#64` |
-| Same-night reclaim | 🟢 gallery Chat autostart resumes heat |
-| Studio Forge | 🟢 phone-passed (blocked by chat outage) |
-| 21+ | ⛔ **cosmetic only** — `AgeFloor.tsx` rewrites the text “18+”→“21+” after hydration. There is **no age gate**; explicit content loads for anyone. |
-| Resume codes | 🟢 |
-| Stripe Day Pass UI | ✅ live keys · **not phone-smoked** (your card) |
-
----
-
-## Your move (only if you want)
-
-1. Chat someone, leave, tap their gallery **Chat** again — should pick up, not start over  
-2. After deploy: **Enable alerts → Send test → tap the shade** — should open that chat, not Account  
-3. **Candy** — unique Drive link (Aria’s file is already used)  
-4. **Stripe smoke** — signed-in → Soft Support → Day Pass
-
-I will **not** invent MP4s or charge your card.
+I will **not** invent charges, keys, or pretend credits were topped up.
 
 ---
 

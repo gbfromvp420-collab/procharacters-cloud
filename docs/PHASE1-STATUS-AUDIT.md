@@ -1,12 +1,20 @@
 # Phase 1 — Status audit (evidence-based)
 
-**Date:** 2026-09-10
+**Date:** 2026-09-10 (addendum 2026-09-13)
 **Deploy audited:** `00bb201` (matches `main` HEAD)
 **Method:** live probes against production + source read. No claim in this doc comes from another doc.
 
 > This supersedes the green badges in `LIVE-STATUS.md` where the two disagree.
 > `LIVE-STATUS.md` was last updated 2026-08-21 and is now wrong in two places
 > (chat, age floor). Corrections applied there in the same change.
+
+**2026-09-13 addendum (source + live `/health`, no credit invention):**
+P1-4 age gate is no longer cosmetic — hard interstitial shipped in #103; product
+children now hold until Enter (cookie + localStorage). Failed brain turns are
+system notices + a `/health`-driven banner; System pulse no longer says
+“Production healthy” when `llm.ok` is false. P0-1 (xAI credits) remains
+**Gary-only**. A 2026-09-13 probe of production showed `llm.ok=true` and
+`chatTurns: 1` on a fresh process — that is not proof the balance is funded.
 
 ---
 
