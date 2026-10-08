@@ -75,7 +75,6 @@ export function PushEnableHint({
 
   useEffect(() => {
     let cancelled = false;
-    let timer: number | undefined;
 
     async function evaluate() {
       try {
@@ -137,11 +136,11 @@ export function PushEnableHint({
     }
 
     void evaluate();
-    timer = window.setInterval(() => void evaluate(), 4000);
+    const timer = window.setInterval(() => void evaluate(), 4000);
 
     return () => {
       cancelled = true;
-      if (timer) window.clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, [accountTokenProp, hasResumeCodeProp]);
 

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0a0a0f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>Offline · Procharacters</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0a0f;
+        --text: #f4f0f5;
+        --muted: #a89bb0;
+        --accent: #e11d8f;
+        --panel: #14121a;
+        --border: rgba(255, 255, 255, 0.1);
+        --amber: #fbbf24;
+        --rose: #fb7185;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .top {
+        border-bottom: 1px solid var(--border);
+        padding: 0.75rem 1rem;
+        padding-top: max(0.75rem, env(safe-area-inset-top));
+      }
+      .brand {
+        font-size: 0.65rem;
+        letter-spacing: 0.28em;
+        text-transform: uppercase;
+        color: var(--accent);
+        margin: 0 0 0.2rem;
+      }
+      .top h1 {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+      }
+      .card {
+        width: 100%;
+        max-width: 22rem;
+        text-align: center;
+      }
+      .pulse {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.75rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 999px;
+        border: 1px solid rgba(251, 113, 133, 0.35);
+        background: rgba(251, 113, 133, 0.1);
+        color: #fecdd3;
+        font-size: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .pulse i {
+        width: 0.4rem;
+        height: 0.4rem;
+        border-radius: 999px;
+        background: var(--rose);
+        box-shadow: 0 0 8px var(--rose);
+        animation: blink 1.2s ease-in-out infinite;
+      }
+      @keyframes blink {
+        50% {
+          opacity: 0.35;
+        }
+      }
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem;
+      }
+      .lede {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .status {
+        margin-top: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .status.online {
+        color: #6ee7b7;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1.25rem;
+      }
+      a.btn,
+      button.btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 2.5rem;
+        padding: 0.55rem 1rem;
+        border-radius: 0.65rem;
+        border: 1px solid transparent;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-ghost {
+        background: transparent;
+        color: var(--text);
+        border-color: var(--border);
+      }
+      .btn-amber {
+        background: rgba(251, 191, 36, 0.12);
+        color: #fde68a;
+        border-color: rgba(251, 191, 36, 0.4);
+      }
+      .resumes {
+        margin-top: 1.25rem;
+        text-align: left;
+      }
+      .resumes h3 {
+        margin: 0 0 0.5rem;
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        text-align: center;
+      }
+      .resume-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 0.5rem;
+      }
+      .resume-list li {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 0.75rem;
+        padding: 0.65rem 0.75rem;
+      }
+      .resume-list .name {
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+      .resume-list .meta {
+        margin-top: 0.15rem;
+        font-size: 0.7rem;
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .resume-list .row {
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+      }
+      .hint {
+        margin-top: 1rem;
+        font-size: 0.7rem;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top">
+      <p class="brand">Naughty Syntax</p>
+      <h1>Procharacters · offline</h1>
+    </div>
+    <main>
+      <div class="card">
+        <div class="pulse" id="pulse"><i></i> Offline</div>
+        <h2>You're offline</h2>
+        <p class="lede">
+          Live chat needs a connection. Resume codes on this device still show below — Continue works
+          as soon as you're back online.
+        </p>
+        <p class="status" id="status">Waiting for network…</p>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="retry">Try again</button>
+          <a class="btn btn-ghost" href="/">Gallery</a>
+          <a class="btn btn-ghost" href="/chat">Chat</a>
+          <a class="btn btn-ghost" href="/account">Account</a>
+        </div>
+        <div class="resumes" id="resumes-wrap" hidden>
+          <h3>Saved heat on this device</h3>
+          <ul class="resume-list" id="resumes"></ul>
+        </div>
+        <p class="hint">
+          Free path forever. When Wi‑Fi returns this page reloads automatically.
+        </p>
+      </div>
+    </main>
+    <script>
+      (function () {
+        var CACHE_KEY = "procharacters.resumeByCharacter.v1";
+        var statusEl = document.getElementById("status");
+        var pulse = document.getElementById("pulse");
+        var wrap = document.getElementById("resumes-wrap");
+        var list = document.getElementById("resumes");
+        var retry = document.getElementById("retry");
+
+        function nick(entry) {
+          if (entry.characterName && entry.characterName.trim()) {
+            return entry.characterName.trim().split(/\s+/)[0];
+          }
+          return entry.characterId || "chat";
+        }
+
+        function urgent(iso) {
+          if (!iso) return false;
+          var t = Date.parse(iso);
+          if (isNaN(t)) return false;
+          var days = Math.ceil((t - Date.now()) / 86400000);
+          return days <= 2;
+        }
+
+        function loadResumes() {
+          try {
+            var raw = localStorage.getItem(CACHE_KEY);
+            if (!raw) return [];
+            var parsed = JSON.parse(raw);
+            var by = parsed && parsed.byCharacter ? parsed.byCharacter : {};
+            return Object.keys(by)
+              .map(function (k) {
+                return by[k];
+              })
+              .filter(function (e) {
+                return e && e.resumeCode;
+              })
+              .sort(function (a, b) {
+                return String(b.updatedAt || "").localeCompare(String(a.updatedAt || ""));
+              })
+              .slice(0, 5);
+          } catch (e) {
+            return [];
+          }
+        }
+
+        function renderResumes() {
+          var entries = loadResumes();
+          list.innerHTML = "";
+          if (!entries.length) {
+            wrap.hidden = true;
+            return;
+          }
+          wrap.hidden = false;
+          entries.forEach(function (e) {
+            var li = document.createElement("li");
+            var n = nick(e);
+            var code = e.resumeCode;
+            var dna =
+              (e.dnaTreeLabel && String(e.dnaTreeLabel).trim()) ||
+              (e.dnaTreeNodeId && String(e.dnaTreeNodeId).trim()) ||
+              "";
+            var heat = e.heatDepth ? String(e.heatDepth) : "";
+            var dnaPower =
+              /edge|deny|release|gate|tease/i.test(dna) ||
+              heat === "edge" ||
+              heat === "deep" ||
+              heat === "locked";
+            var href =
+              "/chat?resume=" +
+              encodeURIComponent(code) +
+              "&rehydrate=1" +
+              (e.characterId ? "&character=" + encodeURIComponent(e.characterId) : "") +
+              (dnaPower ? "&mode=edge_pace" : "");
+            var isUrgent = urgent(e.resumeExpiresAt);
+            li.innerHTML =
+              '<div class="name">' +
+              escapeHtml(n) +
+              (isUrgent ? ' · <span style="color:var(--rose)">reclaim soon</span>' : "") +
+              (dna
+                ? ' · <span style="color:#c4b5fd">DNA · ' + escapeHtml(dna) + "</span>"
+                : "") +
+              "</div>" +
+              '<div class="meta">' +
+              escapeHtml(code) +
+              (heat ? " · heat " + escapeHtml(heat) : "") +
+              (dnaPower ? " · Edge reclaim" : "") +
+              "</div>" +
+              '<div class="row">' +
+              '<a class="btn ' +
+              (isUrgent || dnaPower ? "btn-primary" : "btn-amber") +
+              '" href="' +
+              href +
+              '">' +
+              (isUrgent
+                ? "Reclaim · "
+                : dnaPower
+                  ? "DNA power · "
+                  : "Continue · ") +
+              escapeHtml(n) +
+              (dna && !dnaPower ? " · DNA" : "") +
+              "</a>" +
+              "</div>";
+            list.appendChild(li);
+          });
+        }
+
+        function escapeHtml(s) {
+          return String(s)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+        }
+
+        function setOnlineUi(online) {
+          if (online) {
+            pulse.innerHTML = "<i></i> Back online";
+            pulse.style.borderColor = "rgba(110, 231, 183, 0.4)";
+            pulse.style.background = "rgba(16, 185, 129, 0.12)";
+            pulse.style.color = "#a7f3d0";
+            statusEl.textContent = "Connection restored — reloading…";
+            statusEl.className = "status online";
+          } else {
+            statusEl.textContent = "Waiting for network…";
+            statusEl.className = "status";
+          }
+        }
+
+        function tryOnline() {
+          if (!navigator.onLine) {
+            setOnlineUi(false);
+            return;
+          }
+          setOnlineUi(true);
+          // Prefer hard reload to rehydrate the app shell
+          window.setTimeout(function () {
+            window.location.replace(window.location.origin + "/");
+          }, 600);
+        }
+
+        retry.addEventListener("click", function () {
+          if (navigator.onLine) {
+            tryOnline();
+          } else {
+            statusEl.textContent = "Still offline — check Wi‑Fi or data.";
+          }
+        });
+
+        window.addEventListener("online", tryOnline);
+        renderResumes();
+        if (navigator.onLine) {
+          // Opened offline.html while online (stale SW) — offer return
+          statusEl.textContent = "You're online — tap Try again to open the gallery.";
+          statusEl.className = "status online";
+        }
+      })();
+    </script>
+  </body>
+</html>

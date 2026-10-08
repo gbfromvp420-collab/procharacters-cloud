@@ -36,8 +36,6 @@ import {
   logoutAccount,
   registerAccount,
   requestMagicLink,
-  resumeAccountSession,
-  resumeByCode,
   setAccountPassphrase,
   verifyMagicLink,
   wipeAccountSessions,
@@ -335,7 +333,6 @@ export function AccountSettings() {
       const sessionId = params.get("session_id");
       let tries = 0;
       let done = false;
-      let poll: number | undefined;
       const openCeremony = (payload: {
         plan: string;
         customsLimit: number;
@@ -397,7 +394,7 @@ export function AccountSettings() {
             /* fall through to poll — webhook may still apply */
           });
       }
-      poll = window.setInterval(() => {
+      const poll = window.setInterval(() => {
         tries += 1;
         void fetchBillingStatus(stored.token)
           .then((b) => {
@@ -444,7 +441,7 @@ export function AccountSettings() {
     const stored = loadStoredAccount();
     setAccount(stored);
     if (stored) {
-      void refresh(stored.token).catch((err) => {
+      void refresh(stored.token).catch(() => {
         invalidateStoredAccount(DEFAULT_REAUTH_NOTICE);
         setAccount(null);
         setEmail(null);
@@ -615,31 +612,6 @@ export function AccountSettings() {
     setMyModels([]);
     setHasPassphrase(false);
     flash("Signed out");
-  };
-
-  const onResumeSession = async (sessionId: string, characterId?: string) => {
-    if (!account) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const session = await resumeAccountSession(account.token, sessionId);
-      // Hand off to chat via resume code when possible — DNA power when trail is hot
-      if (session.resumeCode) {
-        const trail = getResumeForCharacter(characterId || session.characterId);
-        window.location.href = buildResumeChatPath({
-          characterId: session.characterId,
-          resumeCode: session.resumeCode,
-          dnaTreeLabel: trail?.dnaTreeLabel,
-          dnaTreeNodeId: trail?.dnaTreeNodeId,
-          heatDepth: trail?.heatDepth,
-        });
-        return;
-      }
-      window.location.href = `/chat?character=${encodeURIComponent(session.characterId)}&autostart=1&rehydrate=1`;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not resume session");
-      setBusy(false);
-    }
   };
 
   const onOpenCode = async () => {

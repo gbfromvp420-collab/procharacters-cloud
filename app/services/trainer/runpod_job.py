@@ -591,5 +591,6 @@ def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
         data = response.json()
         return data if isinstance(data, dict) else {"output": data}
-    except Exception:
+    except ValueError as exc:
+        logger.debug("non-JSON provider response: %s", exc)
         return {"raw": response.text}

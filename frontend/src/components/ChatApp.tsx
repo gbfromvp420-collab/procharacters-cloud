@@ -33,9 +33,6 @@ import {
   resumeByCode,
   fetchSessionMemory,
   resumeSession,
-  updateCustomCharacter,
-  uploadCharacterClip,
-  uploadCharacterClipsBatch,
   verifyMagicLink,
   isAccountAuthError,
   type AccountSessionSummary,
@@ -89,7 +86,6 @@ import {
   buildCharacterShareUrl,
   buildResumeCodeShareUrl,
   canNativeShare,
-  copyText,
   replaceCharacterInUrl,
   shareOrCopyText,
   shareOrCopyUrl,
@@ -134,7 +130,6 @@ import type {
   ConnectionStatus,
   LiveCharacterOption,
   LiveKitJoinInfo,
-  MediaClipKey,
   MemoryMessage,
   SessionMode,
   SessionModeUiState,
@@ -260,34 +255,34 @@ export function ChatApp() {
   const [creating, setCreating] = useState(false);
   /** Soft cap for My Characters (free 10 / premium higher). */
   const [customsLimit, setCustomsLimit] = useState(10);
-  const [activePremium, setActivePremium] = useState(false);
+  const [, setActivePremium] = useState(false);
   /** Post-create celebration — Start heat / Edge / My models. */
   const [justCreated, setJustCreated] = useState<{
     id: string;
     name: string;
   } | null>(null);
-  const [customName, setCustomName] = useState("");
-  const [customAppearance, setCustomAppearance] = useState("");
-  const [customEnergy, setCustomEnergy] = useState("");
-  const [customClothing, setCustomClothing] = useState("");
+  const [, setCustomName] = useState("");
+  const [, setCustomAppearance] = useState("");
+  const [, setCustomEnergy] = useState("");
+  const [, setCustomClothing] = useState("");
   /** Signature base (any of 8). */
-  const [customBaseModel, setCustomBaseModel] = useState("twink-default");
-  const [customBase, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
-  const [customPhrase1, setCustomPhrase1] = useState("");
-  const [customPhrase2, setCustomPhrase2] = useState("");
-  const [customPhrase3, setCustomPhrase3] = useState("");
-  const [customScene1Title, setCustomScene1Title] = useState("");
-  const [customScene1Body, setCustomScene1Body] = useState("");
-  const [customScene2Title, setCustomScene2Title] = useState("");
-  const [customScene2Body, setCustomScene2Body] = useState("");
-  const [customScene3Title, setCustomScene3Title] = useState("");
-  const [customScene3Body, setCustomScene3Body] = useState("");
-  const [mediaBase, setMediaBase] = useState("");
-  const [clipIdle, setClipIdle] = useState("");
-  const [clipTeasing, setClipTeasing] = useState("");
-  const [clipPlayful, setClipPlayful] = useState("");
-  const [clipAroused, setClipAroused] = useState("");
-  const [showMediaAdvanced, setShowMediaAdvanced] = useState(false);
+  const [customBaseModel] = useState("twink-default");
+  const [, setCustomBase] = useState<"twink-default" | "female-default">("twink-default");
+  const [, setCustomPhrase1] = useState("");
+  const [, setCustomPhrase2] = useState("");
+  const [, setCustomPhrase3] = useState("");
+  const [, setCustomScene1Title] = useState("");
+  const [, setCustomScene1Body] = useState("");
+  const [, setCustomScene2Title] = useState("");
+  const [, setCustomScene2Body] = useState("");
+  const [, setCustomScene3Title] = useState("");
+  const [, setCustomScene3Body] = useState("");
+  const [, setMediaBase] = useState("");
+  const [, setClipIdle] = useState("");
+  const [, setClipTeasing] = useState("");
+  const [, setClipPlayful] = useState("");
+  const [, setClipAroused] = useState("");
+  const [, setShowMediaAdvanced] = useState(false);
   const [savedSession, setSavedSession] = useState<StoredSession | null>(null);
   const [wsToken, setWsToken] = useState<string | null>(null);
   const [resumeCode, setResumeCode] = useState<string | null>(null);
@@ -333,13 +328,13 @@ export function ChatApp() {
     dnaTreeNodeId?: string | null;
   } | null>(null);
   /** Live session stopwatch (seconds) while status === ready. */
-  const [liveSeconds, setLiveSeconds] = useState(0);
+  const [, setLiveSeconds] = useState(0);
   const liveStartedAtRef = useRef<number | null>(null);
   /** Opt-in long-term dossier (across sessions). */
   const [priorNotes, setPriorNotes] = useState<string | null>(null);
   const [messageWindow] = useState<20 | 30 | 50 | 80>(50);
   const [crossSessionOptIn, setCrossSessionOptIn] = useState(true);
-  const [livekitRoomStatus, setLivekitRoomStatus] = useState<
+  const [, setLivekitRoomStatus] = useState<
     "off" | "connecting" | "connected" | "error"
   >("off");
   /** Phase 10 assistant mode (persisted preference for new sessions). */
@@ -2036,20 +2031,6 @@ export function ChatApp() {
     wsToken,
   ]);
 
-  const buildMediaOverrides = () => {
-    const mediaOverrides: {
-      idle?: string;
-      teasing?: string;
-      playful?: string;
-      aroused?: string;
-    } = {};
-    if (clipIdle.trim()) mediaOverrides.idle = clipIdle.trim();
-    if (clipTeasing.trim()) mediaOverrides.teasing = clipTeasing.trim();
-    if (clipPlayful.trim()) mediaOverrides.playful = clipPlayful.trim();
-    if (clipAroused.trim()) mediaOverrides.aroused = clipAroused.trim();
-    return Object.keys(mediaOverrides).length > 0 ? mediaOverrides : undefined;
-  };
-
   const resetCustomForm = () => {
     setEditingCustomId(null);
     setCustomName("");
@@ -2071,65 +2052,6 @@ export function ChatApp() {
     setClipPlayful("");
     setClipAroused("");
     setShowMediaAdvanced(false);
-  };
-
-  const openCreateForm = () => {
-    resetCustomForm();
-    setShowCreate(true);
-  };
-
-  const openEditCustom = (id?: string) => {
-    const selected = characters.find((c) => c.id === (id ?? character));
-    if (!selected || selected.kind !== "custom") {
-      setError("Select a custom My Character to edit");
-      return;
-    }
-    if (!account?.token) {
-      setError("Sign in to edit a My Character");
-      setShowAccount(true);
-      return;
-    }
-    setEditingCustomId(selected.id);
-    setCustomName(selected.displayName);
-    setCustomAppearance(selected.appearance ?? "");
-    setCustomEnergy(selected.energy ?? selected.energyLabel ?? "");
-    setCustomClothing(selected.clothing ?? "");
-    setCustomBaseModel(selected.baseModelId ?? selected.avatarBase ?? "twink-default");
-    const base = selected.avatarBase;
-    if (base === "female-default" || base === "twink-default") {
-      setCustomBase(base);
-    }
-    const phrases = selected.keyPhrases ?? [];
-    setCustomPhrase1(phrases[0] ?? "");
-    setCustomPhrase2(phrases[1] ?? "");
-    setCustomPhrase3(phrases[2] ?? "");
-    const scenes = selected.scenes ?? [];
-    setCustomScene1Title(scenes[0]?.title ?? "");
-    setCustomScene1Body(scenes[0]?.body ?? "");
-    setCustomScene2Title(scenes[1]?.title ?? "");
-    setCustomScene2Body(scenes[1]?.body ?? "");
-    setCustomScene3Title(scenes[2]?.title ?? "");
-    setCustomScene3Body(scenes[2]?.body ?? "");
-    setMediaBase(selected.mediaBase ?? "");
-    setClipIdle(selected.mediaOverrides?.idle ?? "");
-    setClipTeasing(selected.mediaOverrides?.teasing ?? "");
-    setClipPlayful(selected.mediaOverrides?.playful ?? "");
-    setClipAroused(selected.mediaOverrides?.aroused ?? "");
-    setShowCreate(true);
-  };
-
-  const collectCustomFormPayload = () => {
-    const keyPhrases = [customPhrase1, customPhrase2, customPhrase3]
-      .map((p) => p.trim())
-      .filter((p) => p.length >= 2);
-    const scenes = [
-      { title: customScene1Title, body: customScene1Body },
-      { title: customScene2Title, body: customScene2Body },
-      { title: customScene3Title, body: customScene3Body },
-    ]
-      .map((s) => ({ title: s.title.trim(), body: s.body.trim() }))
-      .filter((s) => s.title.length >= 2 && s.body.length >= 12);
-    return { keyPhrases, scenes };
   };
 
   const applyCustomOption = (updated: {
@@ -2177,222 +2099,6 @@ export function ChatApp() {
       return [option, ...prev];
     });
     return option;
-  };
-
-  const handleCreateCustom = async () => {
-    if (!account?.token) {
-      setError("Sign in to save a My Character (private)");
-      setShowAccount(true);
-      return;
-    }
-    setCreating(true);
-    setError(null);
-    try {
-      const { keyPhrases, scenes } = collectCustomFormPayload();
-
-      // Edit path — PATCH identity/vibe/scenes (auth fixed)
-      if (editingCustomId) {
-        const updated = await updateCustomCharacter(
-          editingCustomId,
-          {
-            name: customName.trim(),
-            appearance: customAppearance.trim(),
-            energy: customEnergy.trim() || undefined,
-            clothing: customClothing.trim() || undefined,
-            keyPhrases: keyPhrases.length ? keyPhrases : null,
-            scenes: scenes.length ? scenes : null,
-            mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
-            mediaOverrides: buildMediaOverrides() ?? null,
-          },
-          account.token,
-        );
-        applyCustomOption({
-          ...updated,
-          appearance: updated.appearance ?? customAppearance.trim(),
-          energy: updated.energy ?? customEnergy.trim(),
-          clothing: updated.clothing ?? customClothing.trim(),
-          keyPhrases: updated.keyPhrases ?? keyPhrases,
-          scenes: updated.scenes ?? scenes,
-        });
-        setCharacter(updated.id);
-        replaceCharacterInUrl(updated.id);
-        setShowCreate(false);
-        resetCustomForm();
-        flashCopy(`${updated.displayName} updated · private My Character`);
-        return;
-      }
-
-      const created = await createCustomCharacter(
-        {
-          name: customName.trim(),
-          appearance: customAppearance.trim(),
-          energy: customEnergy.trim() || undefined,
-          clothing: customClothing.trim() || undefined,
-          baseModelId: customBaseModel,
-          avatarBase: customBase,
-          audience: customBase === "female-default" ? "straight" : "gay",
-          keyPhrases: keyPhrases.length ? keyPhrases : undefined,
-          scenes: scenes.length ? scenes : undefined,
-          mediaBase: mediaBase.trim() || undefined,
-          mediaOverrides: buildMediaOverrides(),
-        },
-        account.token,
-      );
-      applyCustomOption({
-        ...created,
-        appearance: customAppearance.trim(),
-        energy: customEnergy.trim() || created.energyLabel,
-        clothing: customClothing.trim() || undefined,
-        keyPhrases,
-        scenes,
-      });
-      setCharacter(created.id);
-      replaceCharacterInUrl(created.id);
-      setShowCreate(false);
-      setJustCreated({ id: created.id, name: created.displayName });
-      resetCustomForm();
-      flashCopy(`${created.displayName} saved · private My Character`);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : editingCustomId
-            ? "Failed to update My Character"
-            : "Failed to create My Character",
-      );
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleSaveMediaForSelected = async () => {
-    const selected = characters.find((c) => c.id === character);
-    if (!selected || selected.kind !== "custom") {
-      setError("Select a custom character to update clips");
-      return;
-    }
-    setCreating(true);
-    setError(null);
-    try {
-      const updated = await updateCustomCharacter(
-        selected.id,
-        {
-          mediaBase: mediaBase.trim() ? mediaBase.trim() : null,
-          mediaOverrides: buildMediaOverrides() ?? null,
-        },
-        account?.token,
-      );
-      setCharacters((prev) =>
-        prev.map((c) =>
-          c.id === selected.id
-            ? {
-                ...c,
-                mediaBase: updated.mediaBase,
-                mediaOverrides: updated.mediaOverrides,
-                clips: updated.clips,
-              }
-            : c,
-        ),
-      );
-      flashCopy("Clip pack updated");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update clips");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const applyClipResult = (
-    selectedId: string,
-    mediaOverrides?: { idle?: string; teasing?: string; playful?: string; aroused?: string },
-    clips?: LiveCharacterOption["clips"],
-  ) => {
-    if (mediaOverrides?.idle) setClipIdle(mediaOverrides.idle);
-    if (mediaOverrides?.teasing) setClipTeasing(mediaOverrides.teasing);
-    if (mediaOverrides?.playful) setClipPlayful(mediaOverrides.playful);
-    if (mediaOverrides?.aroused) setClipAroused(mediaOverrides.aroused);
-    setCharacters((prev) =>
-      prev.map((c) =>
-        c.id === selectedId
-          ? {
-              ...c,
-              mediaOverrides: mediaOverrides ?? c.mediaOverrides,
-              clips: clips ?? c.clips,
-            }
-          : c,
-      ),
-    );
-  };
-
-  const handleUploadClip = async (emotion: MediaClipKey, file: File | null) => {
-    if (!file) return;
-    const selected = characters.find((c) => c.id === character);
-    if (!selected || selected.kind !== "custom") {
-      setError("Select a custom character before uploading clips");
-      return;
-    }
-    if (!account?.token) {
-      setError("Sign in to upload clips");
-      setShowAccount(true);
-      return;
-    }
-    setCreating(true);
-    setError(null);
-    try {
-      const result = await uploadCharacterClip(
-        selected.id,
-        emotion,
-        file,
-        account.token,
-      );
-      applyClipResult(selected.id, result.mediaOverrides, result.clips);
-      flashCopy(`Uploaded ${emotion} clip`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleBatchUpload = async (fileList: FileList | null) => {
-    if (!fileList?.length) return;
-    const selected = characters.find((c) => c.id === character);
-    if (!selected || selected.kind !== "custom") {
-      setError("Select a custom character before uploading clips");
-      return;
-    }
-    if (!account?.token) {
-      setError("Sign in to upload clips");
-      setShowAccount(true);
-      return;
-    }
-    setCreating(true);
-    setError(null);
-    try {
-      const files = Array.from(fileList);
-      const result = await uploadCharacterClipsBatch(
-        selected.id,
-        files,
-        account.token,
-      );
-      applyClipResult(selected.id, result.mediaOverrides, result.clips);
-      const n = result.uploaded.length;
-      const skip = result.skipped.length;
-      flashCopy(
-        skip > 0
-          ? `Uploaded ${n} clip(s), skipped ${skip}`
-          : `Uploaded ${n} clip(s)`,
-      );
-      if (skip > 0) {
-        setError(
-          result.skipped.map((s) => `${s.filename}: ${s.reason}`).join(" · "),
-        );
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Batch upload failed");
-    } finally {
-      setCreating(false);
-    }
   };
 
   const handleDeleteCustom = async () => {

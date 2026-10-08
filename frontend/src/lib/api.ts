@@ -1,6 +1,5 @@
 import type {
   CharacterId,
-  BaseModelPrefill,
   CreateCustomCharacterInput,
   CreateCustomCharacterResponse,
   CreateSessionResponse,

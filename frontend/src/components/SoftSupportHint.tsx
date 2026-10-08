@@ -41,7 +41,6 @@ export function SoftSupportHint({
 
   useEffect(() => {
     let cancelled = false;
-    let poll: number | undefined;
 
     async function run() {
       try {
@@ -98,7 +97,7 @@ export function SoftSupportHint({
 
     void run();
     // Poll lightly so we hide when SessionWin opens mid-session
-    poll = window.setInterval(() => {
+    const poll = window.setInterval(() => {
       if (isSessionWinActive() || isSoftSupportInCooldown()) {
         setShow(false);
       }
@@ -106,7 +105,7 @@ export function SoftSupportHint({
 
     return () => {
       cancelled = true;
-      if (poll != null) window.clearInterval(poll);
+      window.clearInterval(poll);
     };
   }, [hasEngagement]);
 

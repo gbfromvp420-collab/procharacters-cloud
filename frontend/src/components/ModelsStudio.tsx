@@ -3,12 +3,10 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { forgeExpandAction } from "@/app/models/studio/actions";
 import { loadStoredAccount, type StoredAccount } from "@/lib/account-storage";
 import {
   createCustomCharacter,
   fetchAccountMe,
-  forgeExpandFantasy,
   listLiveCharacters,
   updateCustomCharacter,
   uploadCharacterClip,
@@ -171,9 +169,9 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
 
   // Studio Forge v3 Unchained
   const [fantasy, setFantasy] = useState("");
-  const [forging, setForging] = useState(false);
+  const [forging] = useState(false);
   const [dna, setDna] = useState<NaughtySyntaxDna | null>(null);
-  const [forgeMs, setForgeMs] = useState<number | null>(null);
+  const [forgeMs] = useState<number | null>(null);
   const [forgeSource, setForgeSource] = useState<string | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [manualBandLock, setManualBandLock] = useState(false);
@@ -563,66 +561,6 @@ function ModelsStudioInner({ initialEditId = "" }: { initialEditId?: string }) {
     if (name.trim()) return `Hey ${name.trim().split(/\s+/)[0]} — pick up where the heat starts.`;
     return "Start heat — match my pace.";
   }, [dna, phrases, vibeTags, presetId, name]);
-
-  const applyForgeResult = (result: {
-    dna: NaughtySyntaxDna;
-    form: {
-      name: string;
-      appearance: string;
-      energy: string;
-      baseModelId: string;
-      keyPhrases: string[];
-      scenes: Array<{ title: string; body: string }>;
-    };
-    expandMs?: number | null;
-    source?: string;
-  }) => {
-    setDna(result.dna);
-    setForgeMs(result.expandMs ?? result.dna.expandMs ?? null);
-    setForgeSource(result.source ?? result.dna.source);
-    if (!editingId && result.form.baseModelId) {
-      setBaseModelId(result.form.baseModelId);
-    }
-    setName(result.form.name);
-    setAppearance(result.form.appearance.slice(0, VISUAL_MAX));
-    const tagsMatch = result.form.energy.match(/Tags:\s*([^.]+)/i)?.[1];
-    if (tagsMatch) {
-      setVibeTags(
-        uniqueTags(
-          tagsMatch
-            .split(",")
-            .map((t) => t.trim())
-            .filter(Boolean),
-        ).slice(0, TAG_MAX),
-      );
-    } else if (result.dna.vibeTags?.length) {
-      setVibeTags(uniqueTags(result.dna.vibeTags).slice(0, TAG_MAX));
-    }
-    const cleanEnergy = result.form.energy
-      .replace(/\s*Tags:\s*[^.]*\.?/gi, "")
-      .trim();
-    setEnergy(cleanEnergy || result.dna.vibe);
-    const matched = ENERGY_PRESETS.find(
-      (p) =>
-        result.dna.vibeTags?.includes(p.tag) ||
-        cleanEnergy.toLowerCase().includes(p.tag),
-    );
-    if (matched) setPresetId(matched.id);
-    setPhrases((result.form.keyPhrases ?? []).slice(0, PHRASE_MAX));
-    setScenes(
-      (result.form.scenes ?? []).slice(0, SCENE_MAX).map((s) => ({
-        title: s.title,
-        body: s.body,
-      })),
-    );
-    setManualBandLock(false);
-    setPreviewBand(sentimentToBand(result.dna.fantasyRaw || result.form.appearance, result.dna));
-    showFlash(
-      `DNA forged · ${result.source ?? result.dna.source}${
-        result.expandMs != null ? ` · ${result.expandMs}ms` : ""
-      }`,
-    );
-  };
 
   const handleForge = async () => {
     setError("Forge is closed. Tune an existing model.");

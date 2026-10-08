@@ -30,7 +30,6 @@ export function SessionPausedBanner({
   recapLine,
   dnaTreeLabel,
   dnaTreeNodeId,
-  baseModelId,
   isMine = false,
   onResume,
   onDismiss,

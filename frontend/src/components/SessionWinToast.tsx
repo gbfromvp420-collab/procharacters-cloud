@@ -33,11 +33,6 @@ export function SessionWinToast({
   messageCount,
   dnaTreeLabel,
   dnaTreeNodeId,
-  heatDepth,
-  heatChips,
-  recapLine,
-  baseModelId,
-  isMine = false,
 }: {
   show: boolean;
   characterId?: string | null;
