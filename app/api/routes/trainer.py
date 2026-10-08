@@ -145,7 +145,7 @@ def _decode_assets(assets: list[DatasetAssetIn]) -> list[tuple[str, bytes]]:
         if asset.content_b64 is not None:
             try:
                 raw = base64.b64decode(asset.content_b64, validate=False)
-            except Exception as exc:  # noqa: BLE001
+            except Exception as exc:
                 raise HTTPException(
                     status_code=400,
                     detail=f"invalid base64 for {name}: {exc}",
@@ -244,7 +244,7 @@ async def create_dataset_upload(
         default=None,
         description='JSON object mapping filename → caption, e.g. {"a.png":"…"}',
     ),
-    files: list[UploadFile] = File(..., description="Binary image/audio assets"),
+    files: list[UploadFile] = File(..., description="Binary image/audio assets"),  # noqa: B008 - standard FastAPI pattern
 ) -> dict[str, Any]:
     """
     Multipart binary upload path (requires python-multipart).

@@ -34,6 +34,8 @@ backend/dist/
 backend/.env
 frontend/.next/
 frontend/out/
+# Preview static export (built by start.sh for the deploy controller)
+/dist/
 
 # Runtime custom character store (local + volume-backed on Railway)
 data/custom-characters.json
@@ -71,3 +73,19 @@ packs/inbox/*.ZIP
 packs/inbox/**/*.mp4
 packs/inbox/**/*.MP4
 !packs/inbox/README.md
+
+screenshots/
+
+*.log
+
+*.pid
+
+.agents/
+
+.agentsweb/
+
+.omgithub-runtime/
+
+.opencode-ssh/
+
+.opencode-web/

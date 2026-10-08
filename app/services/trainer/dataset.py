@@ -11,11 +11,12 @@ import mimetypes
 import re
 import struct
 import uuid
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, BinaryIO, Iterable
+from typing import Any, BinaryIO
 
 from app.core.config import Settings, get_settings
 
@@ -267,19 +268,17 @@ def _webp_size(data: bytes) -> tuple[int | None, int | None]:
         w = 1 + int.from_bytes(data[24:27], "little")
         h = 1 + int.from_bytes(data[27:30], "little")
         return w, h
-    if chunk == b"VP8 " and len(data) >= 30:
+    if chunk == b"VP8 " and len(data) >= 30 and data[23:26] == b"\x9d\x01\x2a":
         # lossy: start code 0x9d012a then 14-bit width/height
-        if data[23:26] == b"\x9d\x01\x2a":
-            w = struct.unpack("<H", data[26:28])[0] & 0x3FFF
-            h = struct.unpack("<H", data[28:30])[0] & 0x3FFF
-            return w, h
-    if chunk == b"VP8L" and len(data) >= 25:
+        w = struct.unpack("<H", data[26:28])[0] & 0x3FFF
+        h = struct.unpack("<H", data[28:30])[0] & 0x3FFF
+        return w, h
+    if chunk == b"VP8L" and len(data) >= 25 and data[20] == 0x2F:
         # signature 0x2f then 14-bit w-1 / h-1 packed
-        if data[20] == 0x2F:
-            bits = struct.unpack("<I", data[21:25])[0]
-            w = (bits & 0x3FFF) + 1
-            h = ((bits >> 14) & 0x3FFF) + 1
-            return w, h
+        bits = struct.unpack("<I", data[21:25])[0]
+        w = (bits & 0x3FFF) + 1
+        h = ((bits >> 14) & 0x3FFF) + 1
+        return w, h
     return None, None
 
 

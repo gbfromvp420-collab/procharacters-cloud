@@ -591,5 +591,5 @@ def _safe_json(response: httpx.Response) -> dict[str, Any]:
     try:
         data = response.json()
         return data if isinstance(data, dict) else {"output": data}
-    except Exception:
+    except Exception:  # noqa: BLE001 - best-effort fallback: never crash on weird provider payloads
         return {"raw": response.text}
